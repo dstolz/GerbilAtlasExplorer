@@ -8,7 +8,7 @@ on-plate position of every printed abbreviation.
 
 | File | What it is |
 | --- | --- |
-| `gerbil_atlas_explorer.html` | Self-contained browser app. Open it directly — no server, no internet. Search, filter by system, step through plates, and see a selected structure circled on the plate. All 62 plate images are embedded (~6.3 MB). |
+| `gerbil_atlas_explorer.html` | Self-contained browser app. Open it directly — no server, no internet. Search, filter by system, step through plates, see a selected structure circled on the plate, and hover any printed label to read the structure's full name. All 62 plate images are embedded (~6.3 MB). |
 | `gerbil_atlas.json` | Full database: structures, plate coordinates, system tags, aliases, label positions, verification record. |
 | `gerbil_atlas_structures.csv` | One row per structure: abbreviation, name, plate range, bregma range, system tags, explicit plate list. |
 | `gerbil_atlas_plates.csv` | One row per plate: bregma / lambda / interaural / occipital-crest AP coordinates, structure count. |
@@ -51,7 +51,7 @@ common coordinate frame.
 `label_positions` in the JSON records where each abbreviation is printed on each
 plate, as `[cx, cy, w, h]` fractions of the frame-cropped image. Most structures
 appear twice, once per hemisphere. 4,164 individual labels were located, covering
-2,532 of the 3,506 structure-plate entries. These drive the circling in the HTML app
+2,532 of the 3,506 structure-plate entries. These drive the circling and the hover tooltips in the HTML app
 and can be reused for annotation overlays elsewhere.
 
 ## Caveats
