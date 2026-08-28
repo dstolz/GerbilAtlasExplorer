@@ -11,7 +11,8 @@ on-plate position of every printed abbreviation.
 
 | File | What it is |
 | --- | --- |
-| `gerbil_atlas_explorer.html` | Self-contained browser app. Open it directly — no server, no internet. Search, filter by system, step through plates, see a selected structure circled on the plate, and hover any printed label to read the structure's full name or click it to select that structure. Also: a sagittal or top-down projection of every label in the atlas, so a structure can be seen whole; a live bregma/ML/DV readout under the pointer; a reverse lookup that names the structures nearest a set of coordinates; a 1 mm grid and scale bar; zoom and pan; a two-point distance and approach-angle measure; a 3-D view that stacks the 62 plates where they actually sit, ray-marches them, or plots every label as a point cloud you can orbit; PNG and CSV export; and shareable deep links. All 62 plate images are embedded (~6.1 MB). |
+| `gerbil_atlas_explorer.html` | Self-contained browser app. Open it directly — no server, no internet. Search, filter by system, step through plates, see a selected structure circled on the plate, and hover any printed label to read the structure's full name or click it to select that structure. Also: a sagittal or top-down projection of every label in the atlas, so a structure can be seen whole; a live bregma/ML/DV readout under the pointer; a reverse lookup that names the structures nearest a set of coordinates; a 1 mm grid and scale bar; zoom and pan; a two-point distance and approach-angle measure;
+a working coordinate frame, so coordinates can be read at your own head tilt rather than the atlas's; a 3-D view that stacks the 62 plates where they actually sit, ray-marches them, or plots every label as a point cloud you can orbit; PNG and CSV export; and shareable deep links. All 62 plate images are embedded (~6.1 MB). |
 | `gerbil_atlas.json` | Full database: structures, plate coordinates, the plate-frame ML/DV calibration, system tags, aliases, label positions, verification record. |
 | `gerbil_atlas_structures.csv` | One row per structure: abbreviation, name, plate range, bregma range, system tags, explicit plate list. |
 | `gerbil_atlas_plates.csv` | One row per plate: bregma / lambda / interaural / occipital-crest AP coordinates, structure count. |
@@ -98,6 +99,81 @@ was checked against the plate image by eye. That review superseded 17 first-pass
 where the printed text says otherwise (`Cl`→`DCl`, `Su3`→`Su3C`, `PR`→`PrC`, `ml`→`mlf`,
 `Rh`→`PRh`, `La`→`LaV`, `A1`→`A11`, `V1`→`V2L`, `cg`→`Cg1`, `f`→`fr`, `ts`→`rs`, and
 cortical-layer digits that are really `S1` and `AI`).
+
+## Your own coordinate frame
+
+The atlas is cut **perpendicular to the brainstem axis**, which is not how a head sits in
+any particular stereotaxic frame. **Frame** in the header takes a pitch, a roll and a yaw
+about a pivot you choose, plus a translation, and restates the structure card, the pointer
+readout, the coordinate lookup and the CSV export in that frame — keeping the atlas figure
+beside each one, so the two can never be confused. The grid, the measure tool, the
+projections and the 3-D view stay in atlas coordinates and say so while it is on.
+
+```
+pitch  about ML, + = nose down          roll  about AP, + = right ear down
+yaw    about DV, + = nose to the right
+```
+
+Composed yaw, then pitch, then roll, about the pivot. Rotations do not commute, so the
+order is part of the definition, though at a few degrees of roll and yaw it is well below
+anything readable off a manipulator. Nothing in the atlas records which way a given frame
+is tilted, so the app cannot check a sign; the dialog shows what the frame does to a
+familiar structure and the sign is confirmed by reading that back against anatomy.
+
+This is worth more than it might look. At 17° of pitch about the atlas origin the 6,220
+labels move a **median of 2.19 mm** — `MSO` goes from AP −7.95 / DV −8.30 to AP −10.05 /
+DV −5.64. The displacement grows with distance from the pivot, so the pivot matters more
+than the angles do.
+
+Presets put the pivot on **bregma, lambda, the interaural line or the occipital crest**,
+reading each landmark's offset off the plate table rather than carrying a copy of it. A
+preset can only set AP and ML, though: the atlas prints an AP for every one of these
+landmarks and a height for none. That is not a detail for the interaural line, which is
+usually the one you want — pitch turns about a mediolateral axis, so the ear-bar axis is
+only the real pivot once you supply how far below your zero it sits. The difference is
+large: at 17° of pitch, `MSO` reads AP −10.36 with the pivot left at the interaural AP on
+the dorsal surface, and AP −7.73 with the pivot on an ear-bar axis 9 mm lower.
+
+Two consequences the app makes visible. A plate stops being a single AP: under pitch the
+AP of a point drifts by `sin θ` per millimetre of DV — about 2.5 mm between the top and
+the bottom of the brain at 17° — so the readout gives an AP for the point under the
+pointer rather than one figure for the plate. And a coordinate is only foldable to `ML ±x`
+while the frame keeps the atlas's bilateral symmetry: pitch does, but roll, yaw and a
+mediolateral offset do not, and the card then gives each side separately.
+
+### Angles from measurements
+
+Rather than typing an angle, read two points off the skull with the electrode and let the
+slope between them give it — `atan(difference ÷ separation)`:
+
+```
+pitch = atan( (DV_posterior − DV_bregma) / AP apart )   + = nose down
+roll  = atan( (DV_left      − DV_right ) / ML apart )   + = right ear down
+yaw   = atan( (AP_left      − AP_right ) / ML apart )   + = nose right
+```
+
+**The three are not equally determined, and the app says so at each one.** The atlas is
+bilaterally symmetric, so its own roll and yaw against a symmetric skull are zero by
+construction: a roll or yaw measured off symmetric landmarks *is* the deviation from the
+atlas, with no baseline to add. Pitch has no such anchor. The atlas prints an AP for
+bregma, lambda, interaural and occipital crest and a **height for none of them**, so a
+bregma–lambda reading gives the skull's tilt in your frame against *flat skull*, not
+against the atlas plane. Using it replaces the pitch angle outright, discarding whatever
+atlas offset that field held.
+
+Two practical notes the dialog repeats. A longer baseline is proportionally more precise:
+a 0.1 mm depth error over the 4.45 mm from bregma to lambda is **1.3°** of pitch, but only
+**0.58°** over the 9.95 mm to the occipital crest. And read the AP span off the manipulator
+rather than taking the nominal one — the atlas's 4.45 and 7.25 are separations along *its*
+AP axis, and a tilted frame sees them foreshortened, which reads about 0.7° low at 17°. The
+roll and yaw spans have no such problem, because you drive the arm to them rather than
+read them.
+
+It is a rigid rotation of the published numbers and **not** a resectioning. No oblique
+plate is drawn, or could honestly be drawn, from a series sampled 350 µm apart against a
+17.5 µm pixel. An adjusted coordinate is a targeting aid carrying the atlas's own error —
+a label marks where an abbreviation is *printed* — along with your alignment error and
+animal-to-animal skull variation.
 
 ## Projection views
 
