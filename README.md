@@ -11,7 +11,7 @@ on-plate position of every printed abbreviation.
 
 | File | What it is |
 | --- | --- |
-| `gerbil_atlas_explorer.html` | Self-contained browser app. Open it directly — no server, no internet. Search, filter by system, step through plates, see a selected structure circled on the plate, and hover any printed label to read the structure's full name or click it to select that structure. All 62 plate images are embedded (~6.3 MB). |
+| `gerbil_atlas_explorer.html` | Self-contained browser app. Open it directly — no server, no internet. Search, filter by system, step through plates, see a selected structure circled on the plate, and hover any printed label to read the structure's full name or click it to select that structure. Also: a live bregma/ML/DV readout under the pointer, a reverse lookup that names the structures nearest a set of coordinates, a 1 mm grid and scale bar, zoom and pan, a two-point distance and approach-angle measure, PNG and CSV export, and shareable deep links. All 62 plate images are embedded (~6.1 MB). |
 | `gerbil_atlas.json` | Full database: structures, plate coordinates, system tags, aliases, label positions, verification record. |
 | `gerbil_atlas_structures.csv` | One row per structure: abbreviation, name, plate range, bregma range, system tags, explicit plate list. |
 | `gerbil_atlas_plates.csv` | One row per plate: bregma / lambda / interaural / occipital-crest AP coordinates, structure count. |
@@ -40,6 +40,20 @@ occipital crest  = bregma + 9.95
 Sections are coronal, perpendicular to the brainstem axis, at 350 µm intervals.
 DV zero is the plane through the most dorsal points of cerebrum and cerebellum
 (negative = ventral); ML zero is the midsagittal plane.
+
+ML and DV come from each plate's own printed coordinate box, which the frame-relative
+cropping (below) makes common to all 62 plates. In the 1100 × 703 frame the ML axis runs
+−8 to +8 mm across x = 64 to 976 and the DV axis +1 to −10 mm down y = 38.75 to 663.75:
+
+```
+ML(mm) = (x - 520.0) / 57.0
+DV(mm) = 1.0 - (y - 38.75) / 56.818
+```
+
+Tick positions agree within half a pixel on every plate, including plate 31 with its page
+offset. Checked against anatomy rather than the fit alone: midline structures (`3V`, `Aq`,
+`4V`, `cc`, `ME`) land within 0.2 mm of ML 0, and bilateral pairs come out symmetric —
+`MSO` ±1.31, `LSO` ±1.66, `CIC` ±2.00, `Au1` ±6.5.
 
 ## Plate images
 
@@ -87,6 +101,9 @@ cortical-layer digits that are really `S1` and `AI`).
   necessarily labelled** on every plate of that range.
 - Label positions come from OCR. Where a label was not located, the app says so
   rather than showing nothing.
+- A stereotaxic coordinate given for a structure is the median of the positions where its
+  abbreviation is **printed**, which is near but not identical to the structure's centroid.
+  It is a targeting aid, not a substitute for reading the plate.
 - `label_positions` holds only structure-plate pairs the published index lists. Six
   abbreviations were found printed one or two plates beyond their published range, and
   are recorded under `verification.known_source_discrepancies` instead: **AngT** on
