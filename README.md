@@ -52,9 +52,29 @@ common coordinate frame.
 
 `label_positions` in the JSON records where each abbreviation is printed on each
 plate, as `[cx, cy, w, h]` fractions of the frame-cropped image. Most structures
-appear twice, once per hemisphere. 4,164 individual labels were located, covering
-2,532 of the 3,506 structure-plate entries. These drive the circling and the hover tooltips in the HTML app
-and can be reused for annotation overlays elsewhere.
+appear twice, once per hemisphere; layered ones such as cerebellar white matter
+appear many more times. 6,220 individual labels are located, covering 3,270 of the
+3,506 structure-plate entries (93%). These drive the circling and the hover tooltips
+in the HTML app and can be reused for annotation overlays elsewhere.
+
+The labels were read twice. The first pass OCR'd 300 dpi renders with Tesseract and
+located 4,164 labels. The second pass re-read all 62 plates from the lossless 300 dpi
+PNGs embedded in the source PDF, using a recogniser built for this one typeface:
+11,985 labelled glyph exemplars harvested from the first pass, matched as
+baseline-anchored binary templates, then whole tokens parsed against the 723 published
+abbreviations by Viterbi segmentation. Per-character accuracy under leave-one-plate-out
+validation is 96.4% top-1 and 99.75% top-3; the vocabulary constraint resolves the rest.
+Where two abbreviations are indistinguishable in this font — `Gl`/`GI`, `IPl`/`IPI`,
+`GlA`/`GiA` — the published plate ranges break the tie, since those pairs never overlap.
+
+The second pass re-found 96.7% of the first pass's labels and added 2,073 more,
+including second-hemisphere labels the first pass caught on one side only (`Au1` on
+plate 33, for instance). Every reading that disagreed with an existing record, fell
+below the confidence floor, or named a structure the index does not list for that plate
+was checked against the plate image by eye. That review superseded 17 first-pass records
+where the printed text says otherwise (`Cl`→`DCl`, `Su3`→`Su3C`, `PR`→`PrC`, `ml`→`mlf`,
+`Rh`→`PRh`, `La`→`LaV`, `A1`→`A11`, `V1`→`V2L`, `cg`→`Cg1`, `f`→`fr`, `ts`→`rs`, and
+cortical-layer digits that are really `S1` and `AI`).
 
 ## Caveats
 
@@ -66,5 +86,9 @@ and can be reused for annotation overlays elsewhere.
   necessarily labelled** on every plate of that range.
 - Label positions come from OCR. Where a label was not located, the app says so
   rather than showing nothing.
-- One discrepancy in the source: **AngT** is printed on plate 29, but the published
-  index lists only plate 28. The database follows the published index.
+- `label_positions` holds only structure-plate pairs the published index lists. Six
+  abbreviations were found printed one or two plates beyond their published range, and
+  are recorded under `verification.known_source_discrepancies` instead: **AngT** on
+  plate 29 (index: 28), **ZIC** on 35 (34), **Su3C** on 37 (36), **RLi** on 36 (35),
+  **cg** on 35 (17–34), and **Sol** on 52 and 59 (49–50). Each was confirmed by eye on
+  the plate. The database follows the published index.
