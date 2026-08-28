@@ -4,6 +4,8 @@ Queryable index of the Radtke-Schuller et al. (2016) Mongolian gerbil brain atla
 723 structures across 62 coronal plates, with stereotaxic coordinates and the
 on-plate position of every printed abbreviation.
 
+[Use the Gerbil Atlas Explorer](https://dstolz.github.io/GerbilAtlasExplorer/gerbil_atlas_explorer.html)
+
 ## Files
 
 | File | What it is |
