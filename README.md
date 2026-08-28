@@ -11,7 +11,7 @@ on-plate position of every printed abbreviation.
 
 | File | What it is |
 | --- | --- |
-| `gerbil_atlas_explorer.html` | Self-contained browser app. Open it directly — no server, no internet. Search, filter by system, step through plates, see a selected structure circled on the plate, and hover any printed label to read the structure's full name or click it to select that structure. Below the plate, a sagittal or top-down projection scatters every label in the atlas so a structure can be seen whole. All 62 plate images are embedded (~6.3 MB). |
+| `gerbil_atlas_explorer.html` | Self-contained browser app. Open it directly — no server, no internet. Search, filter by system, step through plates, see a selected structure circled on the plate, and hover any printed label to read the structure's full name or click it to select that structure. Also: a sagittal or top-down projection of every label in the atlas, so a structure can be seen whole; a live bregma/ML/DV readout under the pointer; a reverse lookup that names the structures nearest a set of coordinates; a 1 mm grid and scale bar; zoom and pan; a two-point distance and approach-angle measure; PNG and CSV export; and shareable deep links. All 62 plate images are embedded (~6.1 MB). |
 | `gerbil_atlas.json` | Full database: structures, plate coordinates, the plate-frame ML/DV calibration, system tags, aliases, label positions, verification record. |
 | `gerbil_atlas_structures.csv` | One row per structure: abbreviation, name, plate range, bregma range, system tags, explicit plate list. |
 | `gerbil_atlas_plates.csv` | One row per plate: bregma / lambda / interaural / occipital-crest AP coordinates, structure count. |
@@ -41,21 +41,24 @@ Sections are coronal, perpendicular to the brainstem axis, at 350 µm intervals.
 DV zero is the plane through the most dorsal points of cerebrum and cerebellum
 (negative = ventral); ML zero is the midsagittal plane.
 
-Every plate also carries the atlas's own printed ML/DV coordinate box, and because the
-plates are cropped to that box rather than to the page (see below), one calibration
-holds for all 62. `plate_frame` in the JSON records it:
+ML and DV come from each plate's own printed coordinate box, which the frame-relative
+cropping (below) makes common to all 62 plates. In the 1100 × 703 frame the ML axis runs
+−8 to +8 mm across x = 64 to 976 and the DV axis +1 to −10 mm down y = 39.0 to 663.8.
+`plate_frame` in the JSON records the map, and the app reads it from there rather than
+carrying its own copy:
 
 ```
-ML(mm) = (x - 520.0) / 57.0        # x in the 1100-wide frame; ±8 mm at x = 64 / 976
-DV(mm) = (95.81 - y) / 56.80       # y in the 703-tall frame; +1 mm at y = 39.0, -10 mm at y = 663.8
+ML(mm) = (x - 520.0) / 57.0
+DV(mm) = (95.81 - y) / 56.80
 ```
 
-The fit is over the 1 mm tick lattice printed inside that box, read off all 62 plates:
-56.999 ± 0.007 px/mm for ML and 56.798 ± 0.007 px/mm for DV, no single-tick residual
-worse than 0.42 px. It was then checked against anatomy rather than against the fit
-alone — midline structures (`3V`, `Aq`, `4V`, `cc`, `MnR`) land within 0.10 mm of ML 0,
-and bilateral pairs are symmetric at the published widths (`MSO` ±1.33, `LSO` ±1.67,
-`Au1` ±6.48 mm).
+The fit is a least-squares one over the 1 mm tick lattice printed inside that box, read
+off all 62 plates: 56.999 ± 0.007 px/mm for ML and 56.798 ± 0.007 px/mm for DV, with no
+single-tick residual worse than 0.42 px — tick positions agree within half a pixel on
+every plate, including plate 31 with its page offset. Checked against anatomy rather than
+against the fit alone: midline structures (`3V`, `Aq`, `4V`, `cc`, `MnR`) land within
+0.10 mm of ML 0, and bilateral pairs come out symmetric at the published widths —
+`MSO` ±1.33, `LSO` ±1.67, `CIC` ±1.93, `Au1` ±6.48 (mean distance from the midline).
 
 With AP coming from the plate, this gives every one of the 6,220 located labels a full
 stereotaxic triplet.
@@ -121,8 +124,11 @@ columns — those columns are the plates.
 - A structure listed for a plate range is present at those levels, but is **not
   necessarily labelled** on every plate of that range.
 - Label positions come from OCR. Where a label was not located, the app says so
-  rather than showing nothing. 20 of the 723 structures have no located label at all
-  and so cannot be projected.
+  rather than showing nothing. 20 of the 723 structures have no located label at all,
+  so they have no coordinate and cannot be projected.
+- A stereotaxic coordinate given for a structure is the median of the positions where its
+  abbreviation is **printed**, which is near but not identical to the structure's centroid.
+  It is a targeting aid, not a substitute for reading the plate.
 - `label_positions` holds only structure-plate pairs the published index lists. Six
   abbreviations were found printed one or two plates beyond their published range, and
   are recorded under `verification.known_source_discrepancies` instead: **AngT** on
