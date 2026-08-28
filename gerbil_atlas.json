@@ -15,6 +15,19 @@
   "dv_zero": "plane through the most dorsal points of cerebrum and cerebellum; negative is ventral",
   "ml_zero": "midsagittal plane"
  },
+ "plate_frame": {
+  "note": "Converts a position on a frame-cropped plate image into stereotaxic millimetres. The images are cropped to the atlas's own printed coordinate box rather than to fixed page fractions, so this one calibration holds for all 62 plates. AP comes from the plate's bregma; together the three give a full stereotaxic triplet for every entry in label_positions.",
+  "width_px": 1100,
+  "height_px": 703,
+  "ml_mm": "(x_px - ml_zero_px) / ml_px_per_mm",
+  "dv_mm": "(dv_zero_px - y_px) / dv_px_per_mm",
+  "ml_zero_px": 520.0,
+  "ml_px_per_mm": 57.0,
+  "dv_zero_px": 95.81,
+  "dv_px_per_mm": 56.8,
+  "derivation": "Least-squares fit of the 1 mm tick lattice the atlas prints in its own coordinate box, read from all 62 plates: ML ticks -8 to +8 mm in the bottom border (rows 683-691), DV ticks +1 to -10 mm in the right border (columns 1022-1031), thresholded at grey < 140. Across the 62 plates the fits agree to 56.999 +/- 0.007 px/mm about x = 519.99 +/- 0.05 for ML, and 56.798 +/- 0.007 px/mm about y = 95.81 +/- 0.11 for DV; the largest single-tick residual on any plate is 0.42 px.",
+  "validation": "Checked against anatomy, not just the fit. Midline structures sit within 0.10 mm of ML 0 (3V -0.02, Aq -0.04, 4V +0.01, cc +0.03, MnR -0.04 mm mean), and bilateral pairs are symmetric at the published widths (MSO +/-1.33, LSO +/-1.67, Au1 +/-6.48 mm). All 6,220 labels fall between DV -9.02 and -0.52 mm, i.e. below the dorsal surface plane, as they must."
+ },
  "plates": [
   {
    "plate": 1,
@@ -17533,7 +17546,7 @@
   "off_index_labels": "label_positions holds only structure-plate pairs the published index lists, so the printed labels above are recorded here rather than in label_positions."
  },
  "label_positions": {
-  "note": "Screen positions of the printed abbreviation labels on each plate. Keyed by plate, then abbreviation; each entry is a list of [cx, cy, w, h] fractions of the frame-cropped plate image (labels usually appear twice, once per hemisphere, and layered structures such as cerebellar white matter many more times).",
+  "note": "Screen positions of the printed abbreviation labels on each plate. Keyed by plate, then abbreviation; each entry is a list of [cx, cy, w, h] fractions of the frame-cropped plate image (labels usually appear twice, once per hemisphere, and layered structures such as cerebellar white matter many more times). Multiply by width_px/height_px in plate_frame and apply its formulae to read a label's position as stereotaxic ML and DV in millimetres.",
   "data": {
    "1": {
     "Mi": [

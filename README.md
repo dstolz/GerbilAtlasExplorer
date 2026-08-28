@@ -11,8 +11,8 @@ on-plate position of every printed abbreviation.
 
 | File | What it is |
 | --- | --- |
-| `gerbil_atlas_explorer.html` | Self-contained browser app. Open it directly — no server, no internet. Search, filter by system, step through plates, see a selected structure circled on the plate, and hover any printed label to read the structure's full name or click it to select that structure. All 62 plate images are embedded (~6.3 MB). |
-| `gerbil_atlas.json` | Full database: structures, plate coordinates, system tags, aliases, label positions, verification record. |
+| `gerbil_atlas_explorer.html` | Self-contained browser app. Open it directly — no server, no internet. Search, filter by system, step through plates, see a selected structure circled on the plate, and hover any printed label to read the structure's full name or click it to select that structure. Below the plate, a sagittal or top-down projection scatters every label in the atlas so a structure can be seen whole. All 62 plate images are embedded (~6.3 MB). |
+| `gerbil_atlas.json` | Full database: structures, plate coordinates, the plate-frame ML/DV calibration, system tags, aliases, label positions, verification record. |
 | `gerbil_atlas_structures.csv` | One row per structure: abbreviation, name, plate range, bregma range, system tags, explicit plate list. |
 | `gerbil_atlas_plates.csv` | One row per plate: bregma / lambda / interaural / occipital-crest AP coordinates, structure count. |
 | `index_raw.txt` | The authors' published index as extracted, `abbreviation\|name\|plate range`. Source of truth for the rest. |
@@ -40,6 +40,25 @@ occipital crest  = bregma + 9.95
 Sections are coronal, perpendicular to the brainstem axis, at 350 µm intervals.
 DV zero is the plane through the most dorsal points of cerebrum and cerebellum
 (negative = ventral); ML zero is the midsagittal plane.
+
+Every plate also carries the atlas's own printed ML/DV coordinate box, and because the
+plates are cropped to that box rather than to the page (see below), one calibration
+holds for all 62. `plate_frame` in the JSON records it:
+
+```
+ML(mm) = (x - 520.0) / 57.0        # x in the 1100-wide frame; ±8 mm at x = 64 / 976
+DV(mm) = (95.81 - y) / 56.80       # y in the 703-tall frame; +1 mm at y = 39.0, -10 mm at y = 663.8
+```
+
+The fit is over the 1 mm tick lattice printed inside that box, read off all 62 plates:
+56.999 ± 0.007 px/mm for ML and 56.798 ± 0.007 px/mm for DV, no single-tick residual
+worse than 0.42 px. It was then checked against anatomy rather than against the fit
+alone — midline structures (`3V`, `Aq`, `4V`, `cc`, `MnR`) land within 0.10 mm of ML 0,
+and bilateral pairs are symmetric at the published widths (`MSO` ±1.33, `LSO` ±1.67,
+`Au1` ±6.48 mm).
+
+With AP coming from the plate, this gives every one of the 6,220 located labels a full
+stereotaxic triplet.
 
 ## Plate images
 
@@ -77,6 +96,22 @@ where the printed text says otherwise (`Cl`→`DCl`, `Su3`→`Su3C`, `PR`→`PrC
 `Rh`→`PRh`, `La`→`LaV`, `A1`→`A11`, `V1`→`V2L`, `cg`→`Cg1`, `f`→`fr`, `ts`→`rs`, and
 cortical-layer digits that are really `S1` and `AI`).
 
+## Projection views
+
+The explorer plots every located label as a point in **AP × DV** (sagittal) or
+**AP × ML** (top-down), which the printed atlas cannot show you: a coronal series
+gives one plane at a time, and a structure's shape along the brain has to be
+reassembled plate by plate in your head. A selected structure is picked out in blue
+against every other label, so `CA1` visibly sweeps from near the midline out to
+ML ±5 mm as it runs backwards, and the `auditory` system chip lights the whole
+ascending pathway from cochlear nucleus to cortex in one view. Hovering a point names
+it and reads out its coordinates; clicking one opens its plate.
+
+Two things to keep in mind when reading these plots. A point is a *printed label*, so
+it marks where the abbreviation sits, near but not identical to the structure's centre;
+and the atlas samples AP in 350 µm steps, which is why the cloud falls into 62
+columns — those columns are the plates.
+
 ## Caveats
 
 - **System tags** (`auditory`, `hippocampal`, `thalamus`, …) are a convenience layer
@@ -86,7 +121,8 @@ cortical-layer digits that are really `S1` and `AI`).
 - A structure listed for a plate range is present at those levels, but is **not
   necessarily labelled** on every plate of that range.
 - Label positions come from OCR. Where a label was not located, the app says so
-  rather than showing nothing.
+  rather than showing nothing. 20 of the 723 structures have no located label at all
+  and so cannot be projected.
 - `label_positions` holds only structure-plate pairs the published index lists. Six
   abbreviations were found printed one or two plates beyond their published range, and
   are recorded under `verification.known_source_discrepancies` instead: **AngT** on
