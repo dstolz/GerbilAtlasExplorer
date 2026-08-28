@@ -13,7 +13,7 @@
   --maxw:1560px; --pad:clamp(10px,1.5vw,20px); --gap:clamp(10px,1.1vw,15px);
   /* the marker sits on the plate image, which is white with red contours in either
      theme, so it is deliberately not themed and deliberately not the red accent */
-  --mark:#0a5cff; --grid:#5b7085; --meas:#00875a;
+  --mark:#0a5cff; --grid:#5b7085; --meas:#00875a; --pick:#7b23c9;
   /* the projection's two background layers: every label, and the current filter */
   --cloud:#d5d0c4; --cloud2:#736c5e;
 }
@@ -155,6 +155,9 @@ button.z{border:1px solid var(--line);background:var(--panel2);color:var(--ink);
   font-variant-numeric:tabular-nums;font-family:inherit;white-space:nowrap}
 button.z:hover:not([disabled]){border-color:var(--accent);color:var(--accent)}
 button.z[disabled]{opacity:.38;cursor:default}
+/* a button that is waiting for a click somewhere else has to look like it is waiting */
+button.z.armed,button.z.armed:hover{background:var(--accent);border-color:var(--accent);
+  color:var(--chip-on-ink)}
 .zg{display:inline-flex;align-items:center;gap:4px}
 .zlv{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;
   min-width:3.4em;text-align:center}
@@ -184,7 +187,7 @@ input[type=range]{accent-color:var(--accent)}
   border-radius:8px;background:#fff;touch-action:pan-y}
 .imgwrap.zoomed{touch-action:none;cursor:grab}
 .imgwrap.zoomed.grab{cursor:grabbing}
-.imgwrap.meas{cursor:crosshair}
+.imgwrap.meas,.imgwrap.pick{cursor:crosshair}
 .imgwrap.hot{cursor:pointer}
 .pan{position:absolute;inset:0;transform-origin:0 0}
 .imgwrap img{width:100%;height:100%;display:block;object-fit:contain;background:#fff}
@@ -208,6 +211,12 @@ input[type=range]{accent-color:var(--accent)}
 #ms line{stroke:var(--meas);stroke-width:2.2;vector-effect:non-scaling-stroke}
 #ms line.gh{stroke-dasharray:5 4;stroke-opacity:.75}
 #ms circle{fill:none;stroke:var(--meas);stroke-width:2.2;vector-effect:non-scaling-stroke}
+/* the point the coordinate lookup is actually asking about */
+#pk circle{fill:none;stroke:var(--pick);stroke-width:2.4;vector-effect:non-scaling-stroke}
+#pk line{stroke:var(--pick);stroke-width:1.6;vector-effect:non-scaling-stroke}
+/* the same ML/DV seen from a plate the AP does not resolve to: shown, not asserted */
+#pk.off{opacity:.4}
+#pk.off circle{stroke-dasharray:4 4}
 .sbar{position:absolute;left:12px;bottom:11px;z-index:4;pointer-events:none;
   background:rgba(255,255,255,.86);border-radius:5px;padding:4px 7px 3px;
   display:flex;flex-direction:column;align-items:center;gap:3px}
@@ -252,6 +261,27 @@ input[type=range]{accent-color:var(--accent)}
 .pjn{font-size:11.5px;color:var(--muted);margin:7px 0 0;padding:0 14px 10px;
   text-align:center;line-height:1.5;flex:none}
 .pjn b{color:var(--ink);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px}
+
+/* ---------- 3-D view ---------- */
+.v3w{position:relative;flex:1;min-height:0;overflow:hidden}
+.v3w canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+.v3w.drag canvas{cursor:grabbing}
+.v3w.hot canvas{cursor:pointer}
+.v3msg{position:absolute;inset:0;display:grid;place-content:center;justify-items:center;
+  text-align:center;gap:8px;padding:22px;color:var(--muted);font-size:12.5px;line-height:1.55}
+.v3msg b{color:var(--ink);font-size:14px;font-weight:600}
+.v3msg[hidden]{display:none}
+.v3bar{width:150px;height:3px;border-radius:2px;background:var(--line);overflow:hidden}
+.v3bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .1s linear}
+.v3n{font-size:11.5px;color:var(--muted);margin:7px 0 0;padding:0 14px 10px;
+  text-align:center;line-height:1.5;flex:none}
+.v3n b{color:var(--ink);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px}
+.lb3{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;color:var(--muted);
+  white-space:nowrap;user-select:none}
+.lb3 input{width:74px;accent-color:var(--accent);margin:0;cursor:pointer}
+.lb3 b{color:var(--ink);font-variant-numeric:tabular-nums;font-size:11px;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;min-width:1.6em;text-align:right}
+@media (max-width:1100px){ .lb3 input{width:56px} }
 
 /* ---------- footer, one line; the long version lives in About ---------- */
 footer{max-width:var(--maxw);margin:0 auto;width:100%;padding:8px var(--pad) 14px;
@@ -399,7 +429,8 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
         <label class="rvf"><span>ML (mm)</span><input type="number" id="rml" step="0.05" value="2.00"></label>
         <label class="rvf"><span>DV (mm)</span><input type="number" id="rdv" step="0.05" value="-3.60"></label>
       </div>
-      <div class="count"><button class="z" id="rhere" type="button" title="Fill from the current plate and the last position the pointer was over">From the pointer</button></div>
+      <div class="count"><span id="rplate"></span>
+        <button class="z" id="rpick" type="button" title="Arm the plate, then click a point on it: ML and DV come from that point and AP from the plate it is on">Pick on the plate</button></div>
     </div>
 
     <div class="list on" id="list"></div>
@@ -412,6 +443,7 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
       <span class="seg" id="vseg">
         <button type="button" class="on" data-t="plate">Plate</button>
         <button type="button" data-t="proj">Projection</button>
+        <button type="button" data-t="v3d">3D</button>
       </span>
       <span class="vctl" id="ctlPlate">
         <span class="zg">
@@ -434,6 +466,23 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
           <button type="button" data-v="ml">top-down &middot; AP &times; ML</button>
         </span>
       </span>
+      <span class="vctl" id="ctl3d" hidden>
+        <span class="seg" id="m3seg">
+          <button type="button" class="on" data-r="contour">Contours</button>
+          <button type="button" data-r="volume">Volume</button>
+          <button type="button" data-r="points">Labels</button>
+        </span>
+        <span class="tsep"></span>
+        <label class="lb3" title="How strongly each slice contributes"
+          >Density <input type="range" id="v3op" min="4" max="100" value="42"></label>
+        <label class="lb3" title="Anterior edge of the slab that is drawn"
+          >Plates <input type="range" id="v3a" min="1" max="62" value="1"><b id="v3al">1</b></label>
+        <label class="lb3" title="Posterior edge of the slab that is drawn"
+          >&ndash; <input type="range" id="v3b" min="1" max="62" value="62"><b id="v3bl">62</b></label>
+        <span class="tsep"></span>
+        <label class="tg" title="Cut at the midline to see inside"><input type="checkbox" id="v3h">Half</label>
+        <button class="z" id="v3r" type="button" title="Back to the default viewpoint">Reset view</button>
+      </span>
       <button class="z" id="elink" type="button" title="Copy a link back to this plate, structure and view">Copy link</button>
     </div>
 
@@ -454,6 +503,7 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
                 <g id="om"></g>
                 <g id="xh"></g>
                 <g id="ms"></g>
+                <g id="pk"></g>
               </svg>
             </div>
             <div class="sbar" id="sb" hidden><div class="bar" id="sbb"></div><div class="lab" id="sbl"></div></div>
@@ -478,6 +528,15 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
           <div class="tip" id="pjt" hidden></div>
         </div>
         <p class="pjn" id="pjn"></p>
+      </div>
+
+      <div class="view" id="v3dview">
+        <div class="v3w" id="v3w">
+          <canvas id="v3c"></canvas>
+          <div class="tip" id="v3t" hidden></div>
+          <div class="v3msg" id="v3msg" hidden></div>
+        </div>
+        <p class="v3n" id="v3n"></p>
       </div>
     </div>
 
@@ -525,10 +584,26 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
       present at those levels; it is not necessarily labelled on every plate. Label positions come from
       OCR &mdash; where one was not located, the app says so rather than showing nothing.</p>
 
+    <h3>The 3-D view</h3>
+    <p>The plates are already in one common coordinate frame, so they can simply be stacked
+      where they belong: each section is drawn at its own bregma. <em>Contours</em> shows the
+      atlas&rsquo;s own drawn boundaries as a stack, <em>Volume</em> ray-marches the same field, and
+      <em>Labels</em> plots all 6,220 printed abbreviations as a stereotaxic point cloud &mdash; the
+      projection views with the third axis put back. Nothing extra is downloaded; it is built
+      from the plate images already on the page, once, the first time you open it.</p>
+    <p>Two things to keep in mind. Sections are 350&nbsp;µm apart but a plate pixel is about
+      17.5&nbsp;µm, so sampling <em>along</em> the brain is 20&times; coarser than across it: the
+      stack really is discrete, and the streaking in the volume view is interpolation between
+      slices, not anatomy. And a label point marks where an abbreviation is <em>printed</em>,
+      which for thin layered structures is often just outside the structure itself. Most
+      structures carry only a handful of points &mdash; six is the median &mdash; so a single
+      structure reads as a sparse arc rather than a shape. Nothing here is a segmentation.</p>
+
     <h3>Getting around</h3>
     <dl class="keys">
       <dt><kbd>&larr;</kbd> <kbd>&rarr;</kbd></dt><dd>step through plates</dd>
       <dt><kbd>+</kbd> <kbd>&minus;</kbd> <kbd>0</kbd></dt><dd>zoom in, out, and back to fit</dd>
+      <dt>drag in 3-D</dt><dd>orbit; shift-drag or right-drag to pan, wheel to zoom</dd>
       <dt><kbd>/</kbd></dt><dd>jump to the search box</dd>
       <dt><kbd>Esc</kbd></dt><dd>drop the selection, or clear a measurement</dd>
       <dt>double-click</dt><dd>zoom into the plate at that point; drag to pan</dd>
@@ -580,7 +655,7 @@ PTS.forEach(q=>(ptsOf[q.ab]||(ptsOf[q.ab]=[])).push(q));
 let active = new Set(), cur = 30, sel = null, results = S;
 let zoom=1, tx=0, ty=0;                        /* view transform, applied to #pan */
 let showXY=false, showGrid=false, showSB=false, measMode=false;
-let mA=null, mB=null, mHover=null, lastPt=null;
+let mA=null, mB=null, mHover=null, lastPt=null, pickArm=false;
 
 /* ---------- filter chips ---------- */
 const sysEl = $('sys');
@@ -629,7 +704,7 @@ function run(){
   refine();
 }
 function draw(){
-  pj();
+  pj(); v3flags();
   const L=$('list');
   $('cnt').textContent = scope==='plate'
     ? results.length+' of '+nHere+' on plate '+cur
@@ -715,13 +790,21 @@ function go(k){
   $('scP').innerHTML='On plate '+cur+' <b>'+nHere+'</b>';
   if(scope==='plate') refine();
   labels();
-  mark(); fit(); pjGuide(); queueHash();
+  mark(); fit(); pjGuide(); v3note(); v3frame(); revSync(); queueHash();
 }
 
 /* ---------- selection marker, and saying so when it is not on this plate ---------- */
 const HINT='Click a result to circle it here \u00b7 hover a printed label to read it, '+
   'click it to select it \u00b7 <kbd>\u2190</kbd> <kbd>\u2192</kbd> step through plates';
+/* while the plate is armed for a pick it has one job, so it says so and nothing else */
 function mark(){
+  markSel();
+  if(!pickArm) return;
+  const vh=$('vhint'); vh.className='vhint';
+  vh.innerHTML='Click a point on the plate to set <b>ML</b> and <b>DV</b>, '+
+    'and <b>AP</b> from plate '+cur+'.';
+}
+function markSel(){
   const ov=$('om'), vh=$('vhint');
   ov.innerHTML=''; vh.className='vhint';
   if(!sel){ vh.innerHTML=HINT; return; }
@@ -913,6 +996,8 @@ function hover(e){
   const f=s2f(e); if(!f) return;
   lastPt=f;
   if(showXY) drawXH(f);
+  /* armed for a pick, the plate is a surface to aim at, not a legend to read */
+  if(pickArm){ if(hot) hideTip(); return; }
   if(measMode){ if(mA&&!mB){ mHover=f; drawMeas(); } if(hot) hideTip(); return; }
   const L=pick(f[0],f[1]);
   if(L===hot) return;
@@ -921,6 +1006,7 @@ function hover(e){
 IW.addEventListener('click',e=>{
   if(noClick){ noClick=false; return; }          /* the pointer was dragged, not tapped */
   const f=s2f(e); if(!f) return;
+  if(pickArm){ takePick(f); return; }
   if(measMode){
     if(!mA||mB){ mA=f; mB=null; mHover=null; } else { mB=f; }
     drawMeas(); return;
@@ -985,6 +1071,7 @@ function drawMeas(){
 function setMeas(on){
   measMode=on; IW.classList.toggle('meas',on);
   if(!on){ mA=mB=mHover=null; }
+  if(on) setPick(false);            /* both want the next click; measuring just took it */
   drawMeas(); hideTip(); fit(); queueHash();
 }
 
@@ -1032,6 +1119,18 @@ function exportPNG(){
     g.beginPath(); g.moveTo(mA[0],mA[1]); g.lineTo(mB[0],mB[1]); g.stroke();
     [mA,mB].forEach(p=>{ g.beginPath(); g.arc(p[0],p[1],4,0,6.2832); g.stroke(); });
   }
+  /* the coordinate lookup's query point, but only on the plate its AP resolves to */
+  const qml=+$('rml').value, qdv=+$('rdv').value;
+  const qOn = smode==='coord' && Number.isFinite(qml) && Number.isFinite(qdv)
+              && apPlate()===cur;
+  if(qOn){
+    const x=fromML(qml), y=fromDV(qdv), R=12, A=5, B=R+8;
+    g.strokeStyle='#7b23c9'; g.lineWidth=2.4;
+    g.beginPath(); g.arc(x,y,R,0,6.2832); g.stroke();
+    g.lineWidth=1.6;
+    [[x-B,y,x-A,y],[x+A,y,x+B,y],[x,y-B,x,y-A],[x,y+A,x,y+B]].forEach(([a,b,c2,d2])=>{
+      g.beginPath(); g.moveTo(a,b); g.lineTo(c2,d2); g.stroke(); });
+  }
 
   const p=plateOf[cur];
   g.strokeStyle='#dddad3'; g.lineWidth=1;
@@ -1041,11 +1140,14 @@ function exportPNG(){
   g.fillText(`Plate ${cur}`+(sel&&byAb[sel]?`   ·   ${sel} — ${byAb[sel].name}`:''),0,NH+24);
   g.font='15px ui-sans-serif,Segoe UI,Helvetica,Arial,sans-serif'; g.fillStyle='#5a554c';
   g.fillText(`AP   bregma ${p.bregma.toFixed(2)}  ·  lambda ${p.lambda_.toFixed(2)}  ·  interaural ${p.interaural.toFixed(2)}  ·  occipital crest ${p.occipital_crest.toFixed(2)} mm`,0,NH+50);
-  let l3='Radtke-Schuller et al. 2016, Brain Struct Funct 221(Suppl 1):1–272 · doi:10.1007/s00429-016-1259-0';
+  /* whatever else was drawn on the plate gets a word, so the mark is never unexplained */
+  const notes=[];
   if(mA&&mB){ const dml=toML(mB[0])-toML(mA[0]), ddv=toDV(mB[1])-toDV(mA[1]);
-    l3=`Measured ${Math.hypot(dml,ddv).toFixed(2)} mm (ΔML ${sgn(dml)}, ΔDV ${sgn(ddv)})   ·   `+l3; }
+    notes.push(`Measured ${Math.hypot(dml,ddv).toFixed(2)} mm (ΔML ${sgn(dml)}, ΔDV ${sgn(ddv)})`); }
+  if(qOn) notes.push(`Query point ML ${sgn(qml)}, DV ${sgn(qdv)}`);
+  notes.push('Radtke-Schuller et al. 2016, Brain Struct Funct 221(Suppl 1):1–272 · doi:10.1007/s00429-016-1259-0');
   g.font='13px ui-sans-serif,Segoe UI,Helvetica,Arial,sans-serif'; g.fillStyle='#8a8378';
-  g.fillText(l3,0,NH+74);
+  g.fillText(notes.join('   ·   '),0,NH+74);
 
   dl(`gerbil_plate${cur}${sel?'_'+sel.replace(/[^\w-]/g,''):''}.png`, c.toDataURL('image/png'));
 }
@@ -1201,6 +1303,577 @@ function setPView(v){
 }
 [...$('pjseg').children].forEach(el=>el.onclick=()=>setPView(el.dataset.v));
 
+/* ---------- 3-D view ----------
+   The projection plots flatten the atlas onto two axes at a time; this puts the third
+   back. All three renderers read one RG8 3-D texture -- red channel the tissue ink,
+   green the drawn contour -- built once, on first use, from the plate images already
+   embedded above. Nothing extra is downloaded and there is no library: about 24 MB on
+   the GPU, plus the same 6,220 label points the projection already carries.
+
+   The volume covers the interior of the plates' own printed coordinate box, which is
+   what makes the world extent exact -- that box is where the millimetres come from.
+   A flood fill inward from the border drops everything outside the brain, and that is
+   what removes the plate number and the AP-coordinate table without hand-tuned
+   rectangles: they are marginalia, so they lose on area to the section. */
+const V3W=544, V3H=362, V3D=62;
+const V3C=[14,14,1028,688];                        /* the box interior, in frame pixels */
+const V3X0=toML(V3C[0]), V3X1=toML(V3C[2]),
+      V3Y0=toDV(V3C[3]), V3Y1=toDV(V3C[1]),        /* DV grows upward, so [3] is the floor */
+      V3Z0=P[0].bregma,  V3Z1=P[P.length-1].bregma;
+const V3YC=(V3Y0+V3Y1)/2, V3ZS=V3Z0-V3Z1;
+/* world millimetres, centred on the brain: x mediolateral, y dorsoventral, z posterior */
+const w3y=dv=>dv-V3YC, w3z=ap=>(V3Z0-ap)-V3ZS/2;
+
+const V3CV=$('v3c'), V3WRAP=$('v3w'), V3MSG=$('v3msg'), V3TIP=$('v3t');
+let gl=null, v3ready=false, v3busy=false, v3fail='';
+let v3mode='contour', v3op=.42, v3a=0, v3b=61, v3half=false;
+let v3az=-.82, v3el=.30, v3dist=26, v3tx=0, v3ty=0;   /* orbit + screen-space pan */
+let v3hot=null, v3raf=null, v3col={};
+
+/* ---------- the small amount of matrix algebra this needs ---------- */
+function m3mul(a,b){ const o=new Float32Array(16);
+  for(let i=0;i<4;i++)for(let j=0;j<4;j++){ let s=0;
+    for(let k=0;k<4;k++) s+=a[k*4+j]*b[i*4+k]; o[i*4+j]=s; } return o; }
+function m3persp(f,asp,n,fa){ const t=1/Math.tan(f/2), o=new Float32Array(16);
+  o[0]=t/asp; o[5]=t; o[10]=(fa+n)/(n-fa); o[11]=-1; o[14]=2*fa*n/(n-fa); return o; }
+function m3look(e,c,u){
+  const s=[e[0]-c[0],e[1]-c[1],e[2]-c[2]], lz=Math.hypot(...s)||1;
+  const z=[s[0]/lz,s[1]/lz,s[2]/lz];
+  const cx=[u[1]*z[2]-u[2]*z[1], u[2]*z[0]-u[0]*z[2], u[0]*z[1]-u[1]*z[0]];
+  const lx=Math.hypot(...cx)||1, x=[cx[0]/lx,cx[1]/lx,cx[2]/lx];
+  const y=[z[1]*x[2]-z[2]*x[1], z[2]*x[0]-z[0]*x[2], z[0]*x[1]-z[1]*x[0]];
+  const d=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+  return new Float32Array([x[0],y[0],z[0],0, x[1],y[1],z[1],0, x[2],y[2],z[2],0,
+                           -d(x,e),-d(y,e),-d(z,e),1]);
+}
+function v3cam(){
+  const ce=Math.cos(v3el);
+  return [v3dist*ce*Math.sin(v3az), v3dist*Math.sin(v3el), v3dist*ce*Math.cos(v3az)];
+}
+/* the pan is applied after the view matrix, so dragging always tracks the screen */
+function v3mvp(){
+  const w=V3CV.width||1, h=V3CV.height||1;
+  const V=m3look(v3cam(),[0,0,0],[0,1,0]);
+  V[12]+=v3tx; V[13]+=v3ty;
+  return m3mul(m3persp(.72, w/h, .4, 400), V);
+}
+
+/* ---------- shaders ---------- */
+function v3prog(vs,fs){
+  const mk=(t,src)=>{ const o=gl.createShader(t); gl.shaderSource(o,src); gl.compileShader(o);
+    if(!gl.getShaderParameter(o,gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(o));
+    return o; };
+  const p=gl.createProgram();
+  gl.attachShader(p,mk(gl.VERTEX_SHADER,vs)); gl.attachShader(p,mk(gl.FRAGMENT_SHADER,fs));
+  gl.linkProgram(p);
+  if(!gl.getProgramParameter(p,gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p));
+  return p;
+}
+const V3_QUAD=`#version 300 es
+layout(location=0) in vec2 a_p;
+uniform mat4 u_mvp; uniform vec3 u_o,u_u,u_v;
+out vec2 v_uv;
+void main(){ v_uv=a_p; gl_Position=u_mvp*vec4(u_o+u_u*a_p.x+u_v*a_p.y,1.0); }`;
+
+/* one plate: the contour in the accent, the tissue as a faint wash behind it */
+const V3_SLICE=`#version 300 es
+precision highp float; precision highp sampler3D;
+in vec2 v_uv; out vec4 o;
+uniform sampler3D u_vol; uniform vec3 u_ce,u_ti;
+uniform float u_z,u_op,u_half,u_ink;
+void main(){
+  if(u_half>0.5 && v_uv.x<0.5) discard;
+  vec2 s=texture(u_vol, vec3(v_uv.x, 1.0-v_uv.y, u_z)).rg;
+  float a=(s.g + s.r*u_ink)*u_op;
+  if(a<0.004) discard;
+  o=vec4(mix(u_ti,u_ce,smoothstep(0.03,0.30,s.g)), min(a,1.0));
+}`;
+
+/* the same field, ray-marched front to back through the box */
+const V3_BOX=`#version 300 es
+layout(location=0) in vec3 a_p; uniform mat4 u_mvp; out vec3 v_p;
+void main(){ v_p=a_p; gl_Position=u_mvp*vec4(a_p,1.0); }`;
+const V3_VOL=`#version 300 es
+precision highp float; precision highp sampler3D;
+in vec3 v_p; out vec4 o;
+uniform sampler3D u_vol; uniform vec3 u_cam,u_lo,u_hi,u_ce,u_ti;
+uniform float u_op,u_half,u_z0,u_z1,u_ink;
+void main(){
+  vec3 ro=u_cam, rd=normalize(v_p-u_cam);
+  vec3 i0=(u_lo-ro)/rd, i1=(u_hi-ro)/rd;
+  vec3 lo=min(i0,i1), hi=max(i0,i1);
+  float t0=max(max(max(lo.x,lo.y),lo.z),0.0), t1=min(min(hi.x,hi.y),hi.z);
+  if(t1<=t0) discard;
+  float dt=(t1-t0)/288.0;
+  vec4 acc=vec4(0.0);
+  for(int i=0;i<288;i++){
+    vec3 uvw=(ro+rd*(t0+(float(i)+0.5)*dt)-u_lo)/(u_hi-u_lo);
+    if(u_half>0.5 && uvw.x<0.5) continue;
+    if(uvw.z<u_z0||uvw.z>u_z1) continue;
+    /* the volume was filled row 0 first, which is the dorsal edge of the plate, so
+       the DV axis runs the other way to the world's -- the same flip the slice
+       shader applies. Miss it here and the brain renders upside down. */
+    vec2 s=texture(u_vol, vec3(uvw.x, 1.0-uvw.y, uvw.z)).rg;
+    float a=clamp((s.g + s.r*u_ink)*u_op*dt*7.0,0.0,1.0);
+    acc.rgb+=(1.0-acc.a)*a*mix(u_ti,u_ce,smoothstep(0.03,0.30,s.g));
+    acc.a  +=(1.0-acc.a)*a;
+    if(acc.a>0.985) break;
+  }
+  if(acc.a<0.004) discard;
+  o=acc;
+}`;
+
+/* the printed labels: dim for all, mid for the current filter, bright for the selection */
+const V3_PTV=`#version 300 es
+layout(location=0) in vec3 a_p; layout(location=1) in float a_f;
+uniform mat4 u_mvp; uniform float u_size,u_half,u_zl,u_zh,u_only;
+out float v_f;
+void main(){
+  v_f=a_f;
+  gl_Position=u_mvp*vec4(a_p,1.0);
+  /* the slab and the midline cut have to hold here too, or the labels would
+     keep drawing plates the contours have already dropped. Over the contours and
+     the volume only the filtered and selected dots are drawn: the whole cloud on
+     top of a solid render is noise, not information. */
+  if((u_half>0.5 && a_p.x<0.0) || a_p.z<u_zl || a_p.z>u_zh || (u_only>0.5 && a_f<0.5))
+    gl_Position=vec4(2.0,2.0,2.0,1.0);
+  gl_PointSize=u_size*(a_f>1.5?1.85:1.0)*clamp(26.0/max(gl_Position.w,1.0),0.55,2.4);
+}`;
+const V3_PTF=`#version 300 es
+precision highp float; in float v_f; out vec4 o;
+uniform vec3 u_c0,u_c1,u_c2;
+void main(){
+  float r=length(gl_PointCoord-0.5);
+  if(r>0.5) discard;
+  float e=smoothstep(0.5,0.34,r);
+  vec3 c = v_f>1.5 ? u_c2 : (v_f>0.5 ? u_c1 : u_c0);
+  o=vec4(c, e*(v_f>1.5?1.0:(v_f>0.5?0.85:0.62)));
+}`;
+const V3_LINE=`#version 300 es
+precision highp float; out vec4 o; uniform vec3 u_c; uniform float u_a;
+void main(){ o=vec4(u_c,u_a); }`;
+
+let pSlice,pVol,pPts,pLine, vaoQ,vaoB,vaoP, texV, bufF, nPT=0;
+const v3box=new Array(V3D).fill(null);   /* section bounds per plate, set during the build */
+
+/* ---------- build the volume from the plate images ---------- */
+async function v3build(onp){
+  const vol=new Uint8Array(V3W*V3H*V3D*2);
+  const cvs=document.createElement('canvas'); cvs.width=V3W; cvs.height=V3H;
+  const g=cvs.getContext('2d',{willReadFrequently:true});
+  const N=V3W*V3H;
+  const ink=new Uint8Array(N), red=new Uint8Array(N), solid=new Uint8Array(N),
+        bg=new Uint8Array(N), comp=new Int32Array(N), stack=new Int32Array(N);
+  for(let k=0;k<V3D;k++){
+    const n=P[k].plate;
+    const im=new Image(); im.src=IMG[n]||'';
+    try{ await im.decode(); }catch(_){ continue; }
+    g.clearRect(0,0,V3W,V3H);
+    g.drawImage(im, V3C[0],V3C[1], V3C[2]-V3C[0],V3C[3]-V3C[1], 0,0, V3W,V3H);
+    const px=g.getImageData(0,0,V3W,V3H).data;
+    for(let i=0;i<N;i++){
+      const r=px[i*4], gg=px[i*4+1], b=px[i*4+2];
+      const mn=r<gg?(r<b?r:b):(gg<b?gg:b);
+      const d=r-(gg>b?gg:b);
+      red[i]  = (d>30 && r>80) ? Math.min(255,(d-30)*4) : 0;
+      ink[i]  = mn<236 ? Math.min(255,(236-mn)*2) : 0;
+      solid[i]= mn<236 ? 1 : 0;
+      bg[i]=0; comp[i]=-1;
+    }
+    /* paper, flooded in from the border */
+    let sp=0;
+    for(let x=0;x<V3W;x++){ stack[sp++]=x; stack[sp++]=(V3H-1)*V3W+x; }
+    for(let y=0;y<V3H;y++){ stack[sp++]=y*V3W; stack[sp++]=y*V3W+V3W-1; }
+    while(sp>0){
+      const i=stack[--sp];
+      if(bg[i]||solid[i]) continue;
+      bg[i]=1;
+      const x=i%V3W, y=(i/V3W)|0;
+      if(x>0)      stack[sp++]=i-1;
+      if(x<V3W-1)  stack[sp++]=i+1;
+      if(y>0)      stack[sp++]=i-V3W;
+      if(y<V3H-1)  stack[sp++]=i+V3W;
+    }
+    /* what the paper did not reach is the section, plus a little marginalia */
+    const area=[];
+    for(let i=0;i<N;i++){
+      if(bg[i]||comp[i]>=0) continue;
+      const id=area.length; let a=0; let sp2=0;
+      stack[sp2++]=i; comp[i]=id;
+      while(sp2>0){
+        const j=stack[--sp2]; a++;
+        const x=j%V3W, y=(j/V3W)|0;
+        if(x>0     && !bg[j-1]    && comp[j-1]<0)   { comp[j-1]=id;    stack[sp2++]=j-1; }
+        if(x<V3W-1 && !bg[j+1]    && comp[j+1]<0)   { comp[j+1]=id;    stack[sp2++]=j+1; }
+        if(y>0     && !bg[j-V3W]  && comp[j-V3W]<0) { comp[j-V3W]=id;  stack[sp2++]=j-V3W; }
+        if(y<V3H-1 && !bg[j+V3W]  && comp[j+V3W]<0) { comp[j+V3W]=id;  stack[sp2++]=j+V3W; }
+      }
+      area.push(a);
+    }
+    let amax=0; for(const a of area) if(a>amax) amax=a;
+    /* the floor has to clear the plate number and the AP table, whose glyphs run to a
+       few hundred pixels, while still keeping the smallest real section (plate 62 is
+       about 1,300) -- so an absolute floor, not just a fraction of the largest blob */
+    const floor=Math.max(400,.02*amax), off=k*N*2;
+    let x0=V3W, x1=-1, y0=V3H, y1=-1;
+    for(let i=0;i<N;i++){
+      const c=comp[i], keep = c>=0 && area[c]>floor;
+      vol[off+i*2]   = keep?ink[i]:0;
+      vol[off+i*2+1] = keep?red[i]:0;
+      if(keep){ const x=i%V3W, y=(i/V3W)|0;
+        if(x<x0)x0=x; if(x>x1)x1=x; if(y<y0)y0=y; if(y>y1)y1=y; }
+    }
+    /* where the section actually sits on this plate, so the current-plate marker can
+       trace the section rather than float around the whole coordinate box */
+    v3box[k] = x1<0 ? null
+      : [x0/V3W, 1-y1/V3H, (x1+1)/V3W, 1-y0/V3H];
+    if(onp) onp((k+1)/V3D);
+    if((k&3)===3) await new Promise(r=>setTimeout(r));   /* let the bar paint */
+  }
+  return vol;
+}
+
+/* ---------- colours come from the sheet, so the view follows the theme ---------- */
+function v3colours(){
+  const cs=getComputedStyle(document.documentElement);
+  const hex=v=>{ const s=cs.getPropertyValue(v).trim();
+    const m=/^#?([0-9a-f]{6})$/i.exec(s);
+    if(!m) return [.5,.5,.5];
+    const n=parseInt(m[1],16);
+    return [(n>>16&255)/255,(n>>8&255)/255,(n&255)/255]; };
+  v3col={ ce:hex('--accent'), ti:hex('--cloud2'),
+          c0:hex('--cloud'), c1:hex('--cloud2'), c2:hex('--mark'),
+          bg:hex('--panel') };
+}
+
+function v3init(){
+  gl=V3CV.getContext('webgl2',{antialias:true,alpha:false,premultipliedAlpha:false});
+  if(!gl){ v3fail='This browser does not support WebGL 2, which the 3-D view needs.'; return false; }
+  pSlice=v3prog(V3_QUAD,V3_SLICE);
+  pVol  =v3prog(V3_BOX ,V3_VOL);
+  pPts  =v3prog(V3_PTV ,V3_PTF);
+  pLine =v3prog(V3_BOX ,V3_LINE);
+
+  vaoQ=gl.createVertexArray(); gl.bindVertexArray(vaoQ);
+  const qb=gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER,qb);
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([0,0,1,0,0,1,1,1]),gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0,2,gl.FLOAT,false,0,0);
+
+  /* the box the ray-march runs through, and the outline that marks the current plate */
+  const lo=[V3X0,w3y(V3Y0),w3z(V3Z0)], hi=[V3X1,w3y(V3Y1),w3z(V3Z1)];
+  const bv=[]; for(let i=0;i<8;i++) bv.push(i&1?hi[0]:lo[0], i&2?hi[1]:lo[1], i&4?hi[2]:lo[2]);
+  const bi=[]; [[0,2,3,1],[4,5,7,6],[0,1,5,4],[2,6,7,3],[0,4,6,2],[1,3,7,5]]
+    .forEach(f=>bi.push(f[0],f[1],f[2],f[0],f[2],f[3]));
+  vaoB=gl.createVertexArray(); gl.bindVertexArray(vaoB);
+  const bb=gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER,bb);
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(bv),gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0,3,gl.FLOAT,false,0,0);
+  const ib=gl.createBuffer(); gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,ib);
+  gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,new Uint16Array(bi),gl.STATIC_DRAW);
+
+  nPT=PTS.length;
+  const pa=new Float32Array(nPT*3);
+  PTS.forEach((q,i)=>{ pa[i*3]=q.ml; pa[i*3+1]=w3y(q.dv); pa[i*3+2]=w3z(q.ap); });
+  vaoP=gl.createVertexArray(); gl.bindVertexArray(vaoP);
+  const pb=gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER,pb);
+  gl.bufferData(gl.ARRAY_BUFFER,pa,gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0,3,gl.FLOAT,false,0,0);
+  bufF=gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER,bufF);
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(nPT),gl.DYNAMIC_DRAW);
+  gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1,1,gl.FLOAT,false,0,0);
+  gl.bindVertexArray(null);
+  v3colours();
+  return true;
+}
+
+function v3upload(vol){
+  texV=gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_3D,texV);
+  gl.pixelStorei(gl.UNPACK_ALIGNMENT,1);
+  gl.texImage3D(gl.TEXTURE_3D,0,gl.RG8,V3W,V3H,V3D,0,gl.RG,gl.UNSIGNED_BYTE,vol);
+  gl.texParameteri(gl.TEXTURE_3D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_3D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+  for(const p of [gl.TEXTURE_WRAP_S,gl.TEXTURE_WRAP_T,gl.TEXTURE_WRAP_R])
+    gl.texParameteri(gl.TEXTURE_3D,p,gl.CLAMP_TO_EDGE);
+}
+
+/* which points are in the current filter, and which one is selected */
+function v3flags(){
+  if(!v3ready) return;
+  const f=new Float32Array(nPT);
+  const fs = results.length<S.length ? new Set(results.map(r=>r.abbr)) : null;
+  for(let i=0;i<nPT;i++){
+    const ab=PTS[i].ab;
+    f[i] = ab===sel ? 2 : (fs&&fs.has(ab) ? 1 : 0);
+  }
+  gl.bindBuffer(gl.ARRAY_BUFFER,bufF);
+  gl.bufferData(gl.ARRAY_BUFFER,f,gl.DYNAMIC_DRAW);
+  v3note(); v3frame();
+}
+
+function v3render(){
+  if(!v3ready) return;
+  const dpr=Math.min(devicePixelRatio||1,2);
+  const w=Math.max(1,Math.round(V3WRAP.clientWidth*dpr)),
+        h=Math.max(1,Math.round(V3WRAP.clientHeight*dpr));
+  if(V3CV.width!==w||V3CV.height!==h){ V3CV.width=w; V3CV.height=h; }
+  gl.viewport(0,0,w,h);
+  gl.clearColor(v3col.bg[0],v3col.bg[1],v3col.bg[2],1);
+  gl.clear(gl.COLOR_BUFFER_BIT);
+  gl.disable(gl.DEPTH_TEST);
+  gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);
+
+  const M=v3mvp(), cam=v3cam();
+  const z0=v3a/(V3D-1), z1=v3b/(V3D-1);
+  const U=(p,n)=>gl.getUniformLocation(p,n);
+
+  if(v3mode==='contour'){
+    gl.useProgram(pSlice); gl.bindVertexArray(vaoQ);
+    gl.uniformMatrix4fv(U(pSlice,'u_mvp'),false,M);
+    gl.uniform1f(U(pSlice,'u_op'),v3op);
+    gl.uniform1f(U(pSlice,'u_half'),v3half?1:0);
+    gl.uniform1f(U(pSlice,'u_ink'),.30);
+    gl.uniform3fv(U(pSlice,'u_ce'),v3col.ce);
+    gl.uniform3fv(U(pSlice,'u_ti'),v3col.ti);
+    gl.uniform1i(U(pSlice,'u_vol'),0);
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_3D,texV);
+    gl.uniform3f(U(pSlice,'u_u'),V3X1-V3X0,0,0);
+    gl.uniform3f(U(pSlice,'u_v'),0,w3y(V3Y1)-w3y(V3Y0),0);
+    const uo=U(pSlice,'u_o'), uz=U(pSlice,'u_z');
+    /* back to front, or the near slices erase what is behind them */
+    const near = cam[2] < w3z(P[0].bregma);
+    for(let n=0;n<=v3b-v3a;n++){
+      const k = near ? v3a+n : v3b-n;
+      gl.uniform3f(uo,V3X0,w3y(V3Y0),w3z(P[k].bregma));
+      gl.uniform1f(uz,k/(V3D-1));
+      gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+    }
+  } else if(v3mode==='volume'){
+    gl.useProgram(pVol); gl.bindVertexArray(vaoB);
+    gl.enable(gl.CULL_FACE); gl.cullFace(gl.FRONT);
+    gl.uniformMatrix4fv(U(pVol,'u_mvp'),false,M);
+    gl.uniform3fv(U(pVol,'u_cam'),new Float32Array(cam));
+    gl.uniform3f(U(pVol,'u_lo'),V3X0,w3y(V3Y0),w3z(V3Z0));
+    gl.uniform3f(U(pVol,'u_hi'),V3X1,w3y(V3Y1),w3z(V3Z1));
+    gl.uniform3fv(U(pVol,'u_ce'),v3col.ce);
+    gl.uniform3fv(U(pVol,'u_ti'),v3col.ti);
+    gl.uniform1f(U(pVol,'u_op'),v3op);
+    gl.uniform1f(U(pVol,'u_ink'),.30);
+    gl.uniform1f(U(pVol,'u_half'),v3half?1:0);
+    gl.uniform1f(U(pVol,'u_z0'),z0); gl.uniform1f(U(pVol,'u_z1'),z1);
+    gl.uniform1i(U(pVol,'u_vol'),0);
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_3D,texV);
+    gl.drawElements(gl.TRIANGLES,36,gl.UNSIGNED_SHORT,0);
+    gl.disable(gl.CULL_FACE);
+  }
+
+  /* the plate the rest of the app is showing, traced where its section actually sits */
+  const bx=v3box[cur-1];
+  if(v3mode!=='points' && bx && cur-1>=v3a && cur-1<=v3b){
+    const zc=w3z(plateOf[cur].bregma), m=.18;      /* a little air around the section */
+    const lx=V3X0+(V3X1-V3X0)*Math.max(0,bx[0]-.01), hx=V3X0+(V3X1-V3X0)*Math.min(1,bx[2]+.01);
+    const ly=w3y(V3Y0)+(w3y(V3Y1)-w3y(V3Y0))*Math.max(0,bx[1]-.01),
+          hy=w3y(V3Y0)+(w3y(V3Y1)-w3y(V3Y0))*Math.min(1,bx[3]+.01);
+    const x0=v3half?Math.max(lx-m,0):lx-m;
+    gl.useProgram(pLine);
+    const lv=[x0,ly-m,zc, hx+m,ly-m,zc, hx+m,hy+m,zc, x0,hy+m,zc];
+    const vb=gl.createBuffer();
+    const va=gl.createVertexArray(); gl.bindVertexArray(va);
+    gl.bindBuffer(gl.ARRAY_BUFFER,vb);
+    gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(lv),gl.STREAM_DRAW);
+    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0,3,gl.FLOAT,false,0,0);
+    gl.uniformMatrix4fv(U(pLine,'u_mvp'),false,M);
+    gl.uniform3fv(U(pLine,'u_c'),v3col.c2);
+    gl.uniform1f(U(pLine,'u_a'),.42);
+    gl.drawArrays(gl.LINE_LOOP,0,4);
+    gl.deleteBuffer(vb); gl.deleteVertexArray(va);
+  }
+
+  /* the labels ride along in every mode; alone, they are the mode */
+  gl.useProgram(pPts); gl.bindVertexArray(vaoP);
+  gl.uniformMatrix4fv(U(pPts,'u_mvp'),false,M);
+  gl.uniform1f(U(pPts,'u_size'), (v3mode==='points'?4.6:3.4)*dpr);
+  gl.uniform1f(U(pPts,'u_half'),v3half?1:0);
+  gl.uniform1f(U(pPts,'u_zl'),w3z(P[v3a].bregma)-.02);
+  gl.uniform1f(U(pPts,'u_zh'),w3z(P[v3b].bregma)+.02);
+  gl.uniform1f(U(pPts,'u_only'),v3mode==='points'?0:1);
+  gl.uniform3fv(U(pPts,'u_c0'),v3col.c0);
+  gl.uniform3fv(U(pPts,'u_c1'),v3col.c1);
+  gl.uniform3fv(U(pPts,'u_c2'),v3col.c2);
+  gl.drawArrays(gl.POINTS,0,nPT);
+  gl.bindVertexArray(null);
+}
+function v3frame(){ if(v3raf||!v3ready) return;
+  v3raf=requestAnimationFrame(()=>{ v3raf=null; v3render(); }); }
+
+/* ---------- picking: 6,220 points is nothing to project on the CPU ---------- */
+function v3proj(M,p){
+  const x=M[0]*p[0]+M[4]*p[1]+M[8]*p[2]+M[12],
+        y=M[1]*p[0]+M[5]*p[1]+M[9]*p[2]+M[13],
+        w=M[3]*p[0]+M[7]*p[1]+M[11]*p[2]+M[15];
+  if(w<=0) return null;
+  const b=V3WRAP.getBoundingClientRect();
+  return [(x/w*.5+.5)*b.width, (.5-y/w*.5)*b.height, w];
+}
+function v3near(e){
+  if(!v3ready) return -1;
+  const M=v3mvp(), b=V3WRAP.getBoundingClientRect();
+  const mx=e.clientX-b.left, my=e.clientY-b.top;
+  const R2=17*17;
+  let best=-1, bd=Infinity, bw=Infinity;
+  for(let i=0;i<nPT;i++){
+    const q=PTS[i];
+    if(v3half && q.ml<0) continue;
+    const k=q.p-1; if(k<v3a||k>v3b) continue;
+    const s=v3proj(M,[q.ml,w3y(q.dv),w3z(q.ap)]); if(!s) continue;
+    const d=(s[0]-mx)*(s[0]-mx)+(s[1]-my)*(s[1]-my);
+    if(d>R2) continue;
+    /* nearest to the pointer wins; where two are as good, the one nearer the eye,
+       which is what you get with a cloud this deep and dots this close together */
+    if(d<bd-4 || (Math.abs(d-bd)<=4 && s[2]<bw)){ best=i; bd=d; bw=s[2]; }
+  }
+  return best;
+}
+function v3hide(){ V3TIP.hidden=true; V3WRAP.classList.remove('hot'); v3hot=null; }
+function v3show(i){
+  const q=PTS[i], r=byAb[q.ab];
+  V3TIP.innerHTML=`<span class="ta">${esc(q.ab)}</span>`+
+    `<span class="tn">${esc(r?r.name:'not in the published index')}</span>`+
+    `<span class="tx">plate ${q.p} · AP ${sgn(q.ap)} · ML ${sgn(q.ml)} · DV ${sgn(q.dv)} mm</span>`;
+  V3TIP.hidden=false; V3WRAP.classList.add('hot');
+  const s=v3proj(v3mvp(),[q.ml,w3y(q.dv),w3z(q.ap)]); if(!s) return;
+  const b=V3WRAP.getBoundingClientRect(), tw=V3TIP.offsetWidth, th=V3TIP.offsetHeight;
+  let x=s[0]-tw/2; x=Math.max(2,Math.min(b.width-tw-2,x));
+  let y=s[1]-th-12; if(y<2) y=s[1]+14;
+  V3TIP.style.left=x.toFixed(1)+'px'; V3TIP.style.top=y.toFixed(1)+'px';
+}
+
+/* ---------- orbit, pan, zoom ---------- */
+const v3p=new Map();
+let v3drag=null, v3pinch=null, v3moved=0, v3noclick=false;
+V3CV.addEventListener('pointerdown',e=>{
+  v3p.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(v3p.size===1){
+    v3drag={x:e.clientX,y:e.clientY,pan:e.button===2||e.shiftKey}; v3moved=0;
+    try{ V3CV.setPointerCapture(e.pointerId); }catch(_){}
+    V3WRAP.classList.add('drag'); v3hide();
+  } else if(v3p.size===2){
+    const [a,b]=[...v3p.values()];
+    v3pinch={d:Math.hypot(a.x-b.x,a.y-b.y),z:v3dist}; v3drag=null;
+  }
+});
+V3CV.addEventListener('pointermove',e=>{
+  if(v3p.has(e.pointerId)) v3p.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(v3p.size===2&&v3pinch){
+    const [a,b]=[...v3p.values()], d=Math.hypot(a.x-b.x,a.y-b.y);
+    if(d){ v3dist=Math.max(9,Math.min(90,v3pinch.z*v3pinch.d/d)); v3moved=99; v3frame(); }
+    return;
+  }
+  if(v3drag){
+    const dx=e.clientX-v3drag.x, dy=e.clientY-v3drag.y;
+    v3moved+=Math.abs(dx)+Math.abs(dy);
+    v3drag.x=e.clientX; v3drag.y=e.clientY;
+    if(v3drag.pan){ const s=v3dist*.0022; v3tx+=dx*s; v3ty-=dy*s; }
+    else { v3az-=dx*.0062; v3el=Math.max(-1.45,Math.min(1.45,v3el+dy*.0062)); }
+    v3frame();
+    return;
+  }
+  if(e.pointerType==='touch') return;
+  const i=v3near(e);
+  if(i===v3hot) { if(i>=0) v3show(i); return; }
+  v3hot=i; if(i>=0) v3show(i); else v3hide();
+});
+function v3end(e){
+  v3p.delete(e.pointerId);
+  if(v3p.size<2) v3pinch=null;
+  if(v3p.size===0){
+    V3WRAP.classList.remove('drag');
+    if(v3moved>7) v3noclick=true;
+    v3drag=null;
+  }
+}
+V3CV.addEventListener('pointerup',v3end);
+V3CV.addEventListener('pointercancel',v3end);
+V3CV.addEventListener('pointerleave',()=>{ if(!v3p.size) v3hide(); });
+V3CV.addEventListener('contextmenu',e=>e.preventDefault());
+V3CV.addEventListener('wheel',e=>{
+  e.preventDefault();
+  v3dist=Math.max(9,Math.min(90,v3dist*Math.exp(e.deltaY*.0012)));
+  v3hide(); v3frame();
+},{passive:false});
+/* a tap opens the label under it, the way a dot in the projection does */
+V3CV.addEventListener('click',e=>{
+  if(v3noclick){ v3noclick=false; return; }
+  const i=v3near(e); if(i<0) return;
+  const q=PTS[i];
+  if(byAb[q.ab]) select(q.ab);
+  go(q.p);
+});
+
+/* ---------- controls ---------- */
+[...$('m3seg').children].forEach(b=>b.onclick=()=>{
+  v3mode=b.dataset.r;
+  [...$('m3seg').children].forEach(x=>x.classList.toggle('on',x===b));
+  v3note(); v3frame(); queueHash();
+});
+$('v3op').oninput=e=>{ v3op=+e.target.value/100; v3frame(); };
+$('v3a').oninput=e=>{ v3a=Math.min(+e.target.value-1,v3b); e.target.value=v3a+1;
+  $('v3al').textContent=v3a+1; v3note(); v3frame(); queueHash(); };
+$('v3b').oninput=e=>{ v3b=Math.max(+e.target.value-1,v3a); e.target.value=v3b+1;
+  $('v3bl').textContent=v3b+1; v3note(); v3frame(); queueHash(); };
+$('v3h').onchange=e=>{ v3half=e.target.checked; v3note(); v3frame(); queueHash(); };
+$('v3r').onclick=()=>{ v3az=-.82; v3el=.30; v3dist=26; v3tx=v3ty=0; v3frame(); };
+
+function v3note(){
+  const N=$('v3n');
+  if(v3fail){ N.textContent=''; return; }
+  const slab = (v3a>0||v3b<61)
+    ? ` Plates ${v3a+1}–${v3b+1} only (bregma ${sgn(P[v3a].bregma)} to ${sgn(P[v3b].bregma)} mm).` : '';
+  const half = v3half ? ' Cut at the midline.' : '';
+  if(v3mode==='points'){
+    const q=(sel&&ptsOf[sel])||[];
+    N.innerHTML = (sel&&q.length
+      ? `<b>${esc(sel)}</b> in blue: ${q.length} label${q.length>1?'s':''} on `+
+        `${new Set(q.map(t=>t.p)).size} plate${new Set(q.map(t=>t.p)).size>1?'s':''}, against all 6,220. `
+      : `All 6,220 printed labels at their stereotaxic positions. `)+
+      `A dot is where an abbreviation is <em>printed</em> — close to its structure, not its centre. `+
+      `Hover to read one, click to open its plate.`+slab+half;
+    return;
+  }
+  const q=(sel&&ptsOf[sel])||[];
+  const on = sel&&q.length ? ` <b>${esc(sel)}</b> is picked out in blue.`
+           : (results.length<S.length ? ` The current filter is picked out in it.` : '');
+  N.innerHTML = (v3mode==='contour'
+    ? `The atlas's own drawn contours, each at its true bregma. It reads as a stack because that is what it is — 62 sections, 350 µm apart.`
+    : `The same field ray-marched. Sampling along the brain is 20× coarser than across it, so the streaks are interpolation, not anatomy.`)+
+    on+` The ring marks plate ${cur}.`+slab+half;
+}
+
+/* built on first sight, not on load: it costs a second and most visits never open it */
+function v3open(){
+  if(v3ready||v3busy) { if(v3ready){ v3flags(); v3frame(); } return; }
+  if(v3fail){ V3MSG.hidden=false; V3MSG.innerHTML=`<b>3-D is not available here</b><span>${esc(v3fail)}</span>`; return; }
+  v3busy=true;
+  V3MSG.hidden=false;
+  V3MSG.innerHTML='<b>Building the 3-D view</b>'+
+    '<span>Reading the 62 plates already loaded. This happens once.</span>'+
+    '<span class="v3bar"><i id="v3pg"></i></span>';
+  const pg=$('v3pg');
+  setTimeout(async()=>{
+    try{
+      if(!v3init()) throw new Error(v3fail);
+      const vol=await v3build(f=>{ if(pg) pg.style.width=(f*100).toFixed(0)+'%'; });
+      v3upload(vol);
+      v3ready=true; V3MSG.hidden=true;
+      v3flags(); v3frame();
+    }catch(err){
+      v3fail=String(err&&err.message||err);
+      V3MSG.innerHTML=`<b>3-D could not start</b><span>${esc(v3fail)}</span>`;
+    }finally{ v3busy=false; }
+  },30);
+}
+new ResizeObserver(()=>{ if(tab==='v3d') v3frame(); }).observe(V3WRAP);
+
 /* ---------- deep links: #p30/MGV, plus the view state when it is not the default ---------- */
 let hashT=null, lastWritten='';
 function queueHash(){ clearTimeout(hashT); hashT=setTimeout(writeHash,180); }
@@ -1213,6 +1886,9 @@ function writeHash(){
   if(f) h+='&v='+f;
   if(pview!=='dv') h+='&pj='+pview;
   if(tab!=='plate') h+='&t='+tab;
+  if(v3mode!=='contour') h+='&r='+v3mode;
+  if(v3a>0||v3b<61) h+='&sl='+(v3a+1)+','+(v3b+1);
+  if(v3half) h+='&hf=1';
   lastWritten='#'+h;
   /* replaceState can be refused on a file:// origin, which is how the README says to
      open this; falling back to the hash keeps deep links working there too */
@@ -1244,7 +1920,20 @@ function readHash(){
     if(c.length===2&&c.every(Number.isFinite)) centreOn(c[0]*NW,c[1]*NH); else applyView();
   } else { zoom=1; tx=ty=0; applyView(); }
   setPView(par.pj==='ml'?'ml':'dv');
-  setTab(par.t==='proj'?'proj':'plate');
+
+  const r=par.r==='volume'||par.r==='points'?par.r:'contour';
+  v3mode=r;
+  [...$('m3seg').children].forEach(b=>b.classList.toggle('on',b.dataset.r===r));
+  const sl=(par.sl||'').split(',').map(Number);
+  if(sl.length===2&&sl.every(n=>Number.isFinite(n)&&n>=1&&n<=62)&&sl[0]<=sl[1]){
+    v3a=sl[0]-1; v3b=sl[1]-1;
+  } else { v3a=0; v3b=61; }
+  $('v3a').value=v3a+1; $('v3al').textContent=v3a+1;
+  $('v3b').value=v3b+1; $('v3bl').textContent=v3b+1;
+  v3half = par.hf==='1';
+  $('v3h').checked=v3half;
+
+  setTab(par.t==='proj'?'proj':(par.t==='v3d'?'v3d':'plate'));
   return true;
 }
 addEventListener('hashchange',()=>{ if(location.hash!==lastWritten) readHash(); });
@@ -1263,11 +1952,49 @@ function copyLink(btn){
 }
 $('elink').onclick=e=>copyLink(e.currentTarget);
 
-/* ---------- reverse lookup ---------- */
+/* ---------- reverse lookup ----------
+   The three fields are a point, so the plate shows that point rather than leaving the
+   reader to imagine it, and the plate can set it back: arm the pick, click the plate,
+   and ML and DV come from the click while AP comes from the plate it was clicked on.
+   Nothing here reads the hover position, which is why the old shortcut kept filling in
+   wherever the pointer happened to leave the image on its way to the button. */
+
+/* the plate whose bregma is nearest the AP field: the AP this lookup can really resolve */
+function apPlate(){
+  const ap=(+$('rap').value)-(+$('rref').value);
+  if(!Number.isFinite(ap)) return null;
+  return P.reduce((a,b)=>Math.abs(b.bregma-ap)<Math.abs(a.bregma-ap)?b:a).plate;
+}
+/* solid on the plate the AP resolves to, faint on any other, so a result found on a
+   neighbouring plate can still be read against the ML and DV that were asked for */
+function drawPick(){
+  const g=$('pk'), ml=+$('rml').value, dv=+$('rdv').value;
+  if(smode!=='coord'||!Number.isFinite(ml)||!Number.isFinite(dv)){
+    g.innerHTML=''; g.classList.remove('off'); return;
+  }
+  const x=fromML(ml), y=fromDV(dv), R=12, A=5, B=R+8;
+  const arm=(x1,y1,x2,y2)=>`<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}"`+
+                           ` x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}"/>`;
+  g.classList.toggle('off', apPlate()!==cur);
+  g.innerHTML=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${R}"/>`+
+    arm(x-B,y,x-A,y)+arm(x+A,y,x+B,y)+arm(x,y-B,x,y-A)+arm(x,y+A,x,y+B);
+}
+/* which plate the AP lands on, and a way to go there when it is not the one showing */
+function revPlate(){
+  const el=$('rplate'), k=smode==='coord'?apPlate():null;
+  if(!k){ el.textContent=''; return; }
+  const b=plateOf[k].bregma.toFixed(2);
+  el.innerHTML=`AP is plate <b>${k}</b> · bregma ${b}`+
+    (k===cur?'':` <button type="button" class="flink" id="rgo">show it</button>`);
+  if(k!==cur) $('rgo').onclick=()=>{ go(k); setTab('plate'); };
+}
+function revSync(){ revPlate(); drawPick(); }
+
 function revRun(){
   const off=+$('rref').value;
   const ap=(+$('rap').value)-off, ml=+$('rml').value, dv=+$('rdv').value;
   const O=$('revout');
+  revSync();
   if(![ap,ml,dv].every(Number.isFinite)){ O.innerHTML='<p class="empty">Enter AP, ML and DV.</p>'; return; }
   const best=new Map();
   for(const q of PTS){
@@ -1290,11 +2017,27 @@ function revRun(){
 }
 ['rap','rml','rdv'].forEach(i=>$(i).oninput=revRun);
 $('rref').onchange=revRun;
-$('rhere').onclick=()=>{
+
+/* arming is a mode, and the two plate modes cannot both own the next click */
+function setPick(on){
+  if(on===pickArm) return;
+  pickArm=on;
+  IW.classList.toggle('pick',on);
+  const b=$('rpick');
+  b.classList.toggle('armed',on);
+  b.textContent=on?'Click the plate…':'Pick on the plate';
+  b.setAttribute('aria-pressed',on?'true':'false');
+  if(on&&measMode){ $('ckm').checked=false; setMeas(false); }
+  if(on) setTab('plate');
+  hideTip(); mark(); fit();
+}
+function takePick(f){
+  $('rml').value=toML(f[0]).toFixed(2);
+  $('rdv').value=toDV(f[1]).toFixed(2);
   $('rap').value=(plateOf[cur].bregma + +$('rref').value).toFixed(2);
-  if(lastPt){ $('rml').value=toML(lastPt[0]).toFixed(2); $('rdv').value=toDV(lastPt[1]).toFixed(2); }
-  revRun();
-};
+  setPick(false); revRun();
+}
+$('rpick').onclick=()=>setPick(!pickArm);
 
 /* ---------- input plumbing ---------- */
 $('rng').oninput=e=>go(+e.target.value);
@@ -1306,11 +2049,16 @@ addEventListener('keydown',e=>{
   if(t&&(t.tagName==='INPUT'||t.tagName==='SELECT'||t.tagName==='TEXTAREA')) return;
   if(e.key==='ArrowLeft')  go(cur-1);
   if(e.key==='ArrowRight') go(cur+1);
-  if(e.key==='+'||e.key==='=') zoomCentre(zoom*1.6);
-  if(e.key==='-'||e.key==='_') zoomCentre(zoom/1.6);
-  if(e.key==='0'){ zoom=1; tx=ty=0; hideTip(); applyView(); }
+  /* the zoom keys follow whichever view is open */
+  if(e.key==='+'||e.key==='='){ if(tab==='v3d'){ v3dist=Math.max(9,v3dist/1.3); v3frame(); }
+                                else zoomCentre(zoom*1.6); }
+  if(e.key==='-'||e.key==='_'){ if(tab==='v3d'){ v3dist=Math.min(90,v3dist*1.3); v3frame(); }
+                                else zoomCentre(zoom/1.6); }
+  if(e.key==='0'){ if(tab==='v3d') $('v3r').click();
+                   else { zoom=1; tx=ty=0; hideTip(); applyView(); } }
   if(e.key==='/'){ e.preventDefault(); setMode('find'); $('q').focus(); $('q').select(); }
-  if(e.key==='Escape'){ if(measMode&&mA){ mA=mB=mHover=null; drawMeas(); } else clear(); }
+  if(e.key==='Escape'){ if(pickArm) setPick(false);
+                        else if(measMode&&mA){ mA=mB=mHover=null; drawMeas(); } else clear(); }
 });
 
 /* ---------- layout: two modes in the sidebar, two views in the main pane ----------
@@ -1329,7 +2077,8 @@ function setMode(m){
   $('paneCoord').classList.toggle('on',m==='coord');
   $('list').classList.toggle('on',m==='find');
   $('revout').classList.toggle('on',m==='coord');
-  if(m==='coord') revRun(); else reveal();
+  /* the query point belongs to this pane, so it leaves the plate when the pane does */
+  if(m==='coord') revRun(); else { setPick(false); revSync(); reveal(); }
 }
 [...$('mseg').children].forEach(b=>b.onclick=()=>setMode(b.dataset.m));
 
@@ -1338,10 +2087,14 @@ function setTab(t){
   [...$('vseg').children].forEach(b=>b.classList.toggle('on',b.dataset.t===t));
   $('plateview').classList.toggle('on',t==='plate');
   $('projview').classList.toggle('on',t==='proj');
+  $('v3dview').classList.toggle('on',t==='v3d');
   $('ctlPlate').hidden = t!=='plate';
   $('ctlProj').hidden  = t!=='proj';
-  hideTip(); pjHide();
-  if(t==='plate'){ fitW=0; fit(); applyView(); } else pjGuide();
+  $('ctl3d').hidden    = t!=='v3d';
+  hideTip(); pjHide(); v3hide();
+  if(t==='plate'){ fitW=0; fit(); applyView(); }
+  else if(t==='v3d'){ v3note(); v3open(); }
+  else pjGuide();
   queueHash();
 }
 [...$('vseg').children].forEach(b=>b.onclick=()=>setTab(b.dataset.t));
@@ -1404,6 +2157,8 @@ function setTheme(t){
   b.textContent=theme[0].toUpperCase()+theme.slice(1);
   b.title=(theme==='auto'?'Following the system theme':'Held to '+theme)+' \u2014 click to change';
   try{ localStorage.setItem('gae-theme',theme); }catch(_){}
+  /* the 3-D view takes its colours from the sheet, so it has to be told */
+  if(v3ready){ v3colours(); v3frame(); }
 }
 $('themeb').onclick=()=>setTheme(THEMES[(THEMES.indexOf(theme)+1)%THEMES.length]);
 setTheme(theme);

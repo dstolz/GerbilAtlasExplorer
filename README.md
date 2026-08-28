@@ -11,7 +11,7 @@ on-plate position of every printed abbreviation.
 
 | File | What it is |
 | --- | --- |
-| `gerbil_atlas_explorer.html` | Self-contained browser app. Open it directly — no server, no internet. Search, filter by system, step through plates, see a selected structure circled on the plate, and hover any printed label to read the structure's full name or click it to select that structure. Also: a sagittal or top-down projection of every label in the atlas, so a structure can be seen whole; a live bregma/ML/DV readout under the pointer; a reverse lookup that names the structures nearest a set of coordinates; a 1 mm grid and scale bar; zoom and pan; a two-point distance and approach-angle measure; PNG and CSV export; and shareable deep links. All 62 plate images are embedded (~6.1 MB). |
+| `gerbil_atlas_explorer.html` | Self-contained browser app. Open it directly — no server, no internet. Search, filter by system, step through plates, see a selected structure circled on the plate, and hover any printed label to read the structure's full name or click it to select that structure. Also: a sagittal or top-down projection of every label in the atlas, so a structure can be seen whole; a live bregma/ML/DV readout under the pointer; a reverse lookup that names the structures nearest a set of coordinates; a 1 mm grid and scale bar; zoom and pan; a two-point distance and approach-angle measure; a 3-D view that stacks the 62 plates where they actually sit, ray-marches them, or plots every label as a point cloud you can orbit; PNG and CSV export; and shareable deep links. All 62 plate images are embedded (~6.1 MB). |
 | `gerbil_atlas.json` | Full database: structures, plate coordinates, the plate-frame ML/DV calibration, system tags, aliases, label positions, verification record. |
 | `gerbil_atlas_structures.csv` | One row per structure: abbreviation, name, plate range, bregma range, system tags, explicit plate list. |
 | `gerbil_atlas_plates.csv` | One row per plate: bregma / lambda / interaural / occipital-crest AP coordinates, structure count. |
@@ -114,6 +114,40 @@ Two things to keep in mind when reading these plots. A point is a *printed label
 it marks where the abbreviation sits, near but not identical to the structure's centre;
 and the atlas samples AP in 350 µm steps, which is why the cloud falls into 62
 columns — those columns are the plates.
+
+## The 3-D view
+
+The plates are already in one common coordinate frame, so they can simply be stacked
+where they belong: each section drawn at its own bregma. The explorer does this three
+ways, all from the plate images already on the page — nothing extra is downloaded, and
+there is no library.
+
+- **Contours** draws the atlas's own red boundary drawings as a stack. It reads as a
+  contour model of the brain because that is exactly what it is.
+- **Volume** ray-marches the same field through a 3-D texture.
+- **Labels** plots all 6,220 printed abbreviations as a stereotaxic point cloud — the
+  projection views with the third axis put back. The `auditory` chip lights the whole
+  ascending pathway in one rotatable view.
+
+A selected structure is picked out in blue in every mode, hovering a point names it and
+reads its coordinates, clicking one opens its plate, and a ring traces wherever the plate
+viewer currently sits. Anterior/posterior clipping cuts the stack to a slab; **Half**
+cuts it at the midline. The whole thing is built once, the first time the tab is opened,
+in about a second; it needs WebGL 2, and says so plainly if that is missing.
+
+The layers are separable because the plates are not line art: they are Nissl
+photomicrographs with a red vector contour overlay printed on top, so isolating the
+contour channel is a matter of colour, not tracing. A flood fill inward from the border
+drops everything outside the section, which is what keeps the plate number and the
+AP-coordinate table out of the volume.
+
+Two limits are worth stating, and the app states them too. Sections are 350 µm apart
+while a plate pixel is about 17.5 µm, so sampling *along* the brain is 20× coarser than
+across it: the stack really is discrete, and the streaking in the volume view is
+interpolation between slices, not anatomy. And a label point marks where an abbreviation
+is *printed*; most structures carry only a handful — six is the median — so a single
+structure reads as a sparse arc rather than a shape. **None of this is a segmentation**,
+and no surface is fitted to those points.
 
 ## Caveats
 
