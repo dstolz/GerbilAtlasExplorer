@@ -11,7 +11,7 @@ on-plate position of every printed abbreviation.
 
 | File | What it is |
 | --- | --- |
-| `gerbil_atlas_explorer.html` | Self-contained browser app. Open it directly — no server, no internet. Search, filter by system, step through plates, see a selected structure circled on the plate, and hover any printed label to read the structure's full name. All 62 plate images are embedded (~6.3 MB). |
+| `gerbil_atlas_explorer.html` | Self-contained browser app. Open it directly — no server, no internet. Search, filter by system, step through plates, see a selected structure circled on the plate, and hover any printed label to read the structure's full name or click it to select that structure. All 62 plate images are embedded (~6.3 MB). |
 | `gerbil_atlas.json` | Full database: structures, plate coordinates, system tags, aliases, label positions, verification record. |
 | `gerbil_atlas_structures.csv` | One row per structure: abbreviation, name, plate range, bregma range, system tags, explicit plate list. |
 | `gerbil_atlas_plates.csv` | One row per plate: bregma / lambda / interaural / occipital-crest AP coordinates, structure count. |
@@ -55,8 +55,8 @@ common coordinate frame.
 plate, as `[cx, cy, w, h]` fractions of the frame-cropped image. Most structures
 appear twice, once per hemisphere; layered ones such as cerebellar white matter
 appear many more times. 6,220 individual labels are located, covering 3,270 of the
-3,506 structure-plate entries (93%). These drive the circling and the hover tooltips
-in the HTML app and can be reused for annotation overlays elsewhere.
+3,506 structure-plate entries (93%). These drive the circling, the hover tooltips and
+click-to-select in the HTML app and can be reused for annotation overlays elsewhere.
 
 The labels were read twice. The first pass OCR'd 300 dpi renders with Tesseract and
 located 4,164 labels. The second pass re-read all 62 plates from the lossless 300 dpi
