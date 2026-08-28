@@ -114,6 +114,8 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
 /* one column once the two panes stop both being comfortable */
 @media (max-width:900px){
   .wrap{grid-template-columns:minmax(0,1fr)}
+  /* stacked, the plate is the thing being read; the search is how you steer it */
+  .viewer{order:-1}
   .list{max-height:min(46vh,520px);max-height:min(46dvh,520px)}
   input[type=search]{font-size:16px}   /* <16px makes iOS zoom the page on focus */
 }
