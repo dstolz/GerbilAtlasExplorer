@@ -268,27 +268,28 @@ scanner axes; residual yaw 0.1°). The **coronal suture** is visible as a groove
 chevron in a high-pass-filtered height map of the vault; extrapolating its arms to the
 midline — the paper's own construction — gives bregma, constrained to AP 0. The two
 **ear-canal openings** are constrained to the interaural line at AP −7.25, the
-**occipital crest** weakly to −9.95. Tilt, scale and height are then refined against
-the **drawn sections of all 62 plates**: the outer boundary of every section was
+**occipital crest** weakly to −9.95. Tilt and height are then set by the
+**drawn sections of all 62 plates**: the outer boundary of every section was
 extracted, and the signed clearance from each dorsal-arc boundary point to the first
-bone along its outward ray — measured against the full-resolution scan — is driven
-toward a small positive gap, with the landmarks held to their uncertainties. That
-lands at pitch −17.5° of the scan's long axis and scale ×1.00: the CT's millimetres
-are believed outright. The **lambdoid suture could not be resolved** in this scan, so
-lambda is the one printed landmark not independently anchored.
+bone along its outward ray — measured against the full-resolution scan — is levelled
+iteratively, tilting until the clearance no longer trends with AP (slope
+0.0004 mm/mm at convergence) and setting the height to a small positive roof gap.
+That lands at pitch −20.6° of the scan's long axis and scale ×1.00: the CT's
+millimetres are believed outright. The **lambdoid suture could not be resolved** in
+this scan, so lambda is the one printed landmark not independently anchored.
 
-What that fit earns, checked rather than fitted: the foramen magnum centre lands
-0.01 mm from the spinal cord's centre on the last plates, and bregma sits essentially
-on the atlas's dorsal plane. What it cannot remove, and the numbers say so plainly:
-the crest reads −10.7 against the printed −9.95 (the least sharply defined landmark of
-the four), and this skull's **posterior fossa runs about 0.3 mm shallower** relative
-to its calvaria than the atlas animal's — over the cerebellar plates the inner roof
-sits tight against, in places just inside, the drawn sections, where over the cerebrum
-the same fit leaves a comfortable margin. A rigid fit can only split that difference,
-and this one does, deliberately favouring the ear canals and bregma. So expect
-registration error of a few tenths of a millimetre, worst over the posterior fossa
-roof, on top of the animal-to-animal variation that any skull-to-atlas comparison
-carries.
+The plates were deliberately given the last word over the landmarks, because the two
+disagree by a few tenths of a millimetre and the sections are what the skull is drawn
+against. After the tilt is set by the plates, the suture-derived bregma reads
+AP +0.5, the ear canals −7.6 against the printed −7.25, and the foramen magnum
+centre sits 0.5 mm above the cord on the last plates — each within roughly the sum
+of its own measurement uncertainty and the skull-shape difference, and stated here
+rather than fitted away. The residual that remains in the overlays: this skull's
+**posterior fossa runs shallower** relative to its calvaria than the atlas animal's,
+so the cerebellar plates still sit closest to the roof (about +0.1 mm median
+clearance, against +0.4 over the cerebrum) — a shape difference no rigid fit can
+remove. Expect registration error of a few tenths of a millimetre on top of the
+animal-to-animal variation that any skull-to-atlas comparison carries.
 
 For the page the mesh is decimated to 70k triangles (0.42 mm vertex clustering, then
 interior surfaces that are never visible from outside — turbinates, the inner ear —
