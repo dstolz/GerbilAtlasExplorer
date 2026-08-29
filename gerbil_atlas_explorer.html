@@ -156,6 +156,13 @@ input[type=search]:focus{border-color:var(--accent)}
 .tg input{accent-color:var(--accent);margin:0;cursor:pointer}
 .tg:hover{color:var(--ink)}
 .tg:has(input:checked){color:var(--accent)}
+/* a toggle and its footnote marker travel together, inside the control bar's own gap */
+.tgw{display:inline-flex;align-items:center;gap:2px;white-space:nowrap}
+/* the marker itself: a real button, because it opens the note rather than just sitting there */
+.ast{border:0;background:none;padding:0 1px;margin:0;font:inherit;font-size:14px;line-height:1;
+  color:var(--accent);cursor:pointer;align-self:flex-start}
+.ast:hover{text-decoration:underline}
+.ast:focus-visible{outline:2px solid var(--accent);outline-offset:1px;border-radius:3px}
 button.b{border:1px solid var(--line);background:var(--panel2);color:var(--ink);border-radius:8px;
   padding:5px 10px;font-size:13px;cursor:pointer;font-family:inherit;white-space:nowrap}
 button.b:hover{border-color:var(--accent);color:var(--accent)}
@@ -318,6 +325,12 @@ dialog::backdrop{background:rgba(0,0,0,.5)}
 .db h3{color:var(--ink);font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;
   margin:17px 0 6px;font-weight:600}
 .db h3:first-child{margin-top:0}
+/* the paragraph the asterisks point at: marked briefly on arrival so the eye lands on it
+   rather than on the top of a long dialog. Padding is cancelled by the negative margins,
+   so the highlight can breathe without shifting the text out of the column. */
+#skullnote{border-radius:6px;padding:3px 6px;margin:0 -6px 9px}
+#skullnote.lit{animation:sklit 2.2s ease-out}
+@keyframes sklit{0%,40%{background:var(--accent-soft)} 100%{background:transparent}}
 .db p{margin:0 0 9px}
 .db a{color:var(--accent)}
 .keys{display:grid;grid-template-columns:auto 1fr;gap:5px 14px;margin:0;font-size:12.5px}
@@ -520,7 +533,7 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
         <label class="tg" title="1 mm stereotaxic grid"><input type="checkbox" id="ckg">Grid</label>
         <label class="tg" title="Scale bar"><input type="checkbox" id="cks">Scale</label>
         <label class="tg" title="Click two points on the plate to measure between them"><input type="checkbox" id="ckm">Measure</label>
-        <label class="tg" title="Trace the CT skull's cut through this coronal plane — an experimental, approximate fit"><input type="checkbox" id="cksk">Skull</label>
+        <span class="tgw"><label class="tg" title="Trace the CT skull's cut through this coronal plane — an experimental, approximate fit"><input type="checkbox" id="cksk">Skull</label><button type="button" class="ast" title="Skull alignment is approximate — read the note" aria-label="Note on skull alignment">*</button></span>
         <span class="tsep"></span>
         <button class="z" id="epng" type="button" title="Download this plate as a PNG with the current overlays and coordinates">PNG</button>
       </span>
@@ -530,7 +543,7 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
           <button type="button" data-v="ml">top-down &middot; AP &times; ML</button>
         </span>
         <span class="tsep"></span>
-        <label class="tg" title="Outline of the CT skull around the cloud, widening the axes to fit it — an experimental, approximate fit"><input type="checkbox" id="ckpk">Skull</label>
+        <span class="tgw"><label class="tg" title="Outline of the CT skull around the cloud, widening the axes to fit it — an experimental, approximate fit"><input type="checkbox" id="ckpk">Skull</label><button type="button" class="ast" title="Skull alignment is approximate — read the note" aria-label="Note on skull alignment">*</button></span>
       </span>
       <span class="vctl" id="ctl3d" hidden>
         <span class="seg" id="m3seg">
@@ -546,7 +559,7 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
         <label class="lb3" title="Posterior edge of the slab that is drawn"
           >&ndash; <input type="range" id="v3b" min="1" max="62" value="62"><b id="v3bl">62</b></label>
         <span class="tsep"></span>
-        <label class="tg" title="Show the CT skull surface around the atlas — an experimental, approximate fit"><input type="checkbox" id="v3s">Skull</label>
+        <span class="tgw"><label class="tg" title="Show the CT skull surface around the atlas — an experimental, approximate fit"><input type="checkbox" id="v3s">Skull</label><button type="button" class="ast" title="Skull alignment is approximate — read the note" aria-label="Note on skull alignment">*</button></span>
         <label class="lb3" id="v3sol" hidden title="How opaque the skull is drawn"
           >Bone <input type="range" id="v3so" min="6" max="90" value="32"></label>
         <label class="tg" title="Cut at the midline to see inside"><input type="checkbox" id="v3h">Half</label>
@@ -685,7 +698,7 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
       which for thin layered structures is often just outside the structure itself. Most
       structures carry only a handful of points &mdash; six is the median &mdash; so a single
       structure reads as a sparse arc rather than a shape. Nothing here is a segmentation.</p>
-    <p><em>Skull</em> wraps the stack in a CT surface of a gerbil skull at an adjustable
+    <p id="skullnote"><em>Skull</em> wraps the stack in a CT surface of a gerbil skull at an adjustable
       transparency; the same surface can be traced on the current plate (<em>Skull</em> in the
       plate controls) and outlined around either projection. <b>Experimental</b>, and the fit
       is computed, not published: the atlas prints no skull surface, so the scan &mdash; a
@@ -3019,6 +3032,18 @@ const openAbout=()=>{ if(ABOUT.showModal) ABOUT.showModal(); else ABOUT.setAttri
 $('aboutb').onclick=openAbout;
 $('aboutb2').onclick=openAbout;
 $('aboutx').onclick=()=>ABOUT.close();
+/* All three Skull toggles rest on the same approximate registration, so they share one
+   footnote rather than repeating it: the asterisk opens About at the paragraph that
+   explains the fit, and lights it so the reader is not left scanning for it. */
+function skullNote(){
+  openAbout();
+  const p=$('skullnote'); if(!p) return;
+  requestAnimationFrame(()=>{
+    p.scrollIntoView({block:'center'});
+    p.classList.remove('lit'); void p.offsetWidth; p.classList.add('lit');
+  });
+}
+[...document.querySelectorAll('.ast')].forEach(b=>b.onclick=skullNote);
 ABOUT.addEventListener('click',e=>{ if(e.target===ABOUT) ABOUT.close(); });
 
 frameLoad();                 /* before readHash, so a link's frame wins over the stored one */
