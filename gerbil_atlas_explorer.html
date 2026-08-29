@@ -319,6 +319,11 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
 
 /* ---------- the working stereotaxic frame ---------- */
 #frameb.on{border-color:var(--accent);color:var(--accent)}
+/* frame adjustment is still being tested, so the dialog and About both lead with a note
+   that reads as a caution rather than as one more paragraph of body copy */
+.fexp{border:1px solid var(--accent);border-radius:9px;background:var(--accent-soft);
+  color:var(--accent);padding:9px 12px;margin:0 0 13px;font-size:12px;line-height:1.55}
+.fexp b{font-weight:650}
 .fgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 10px}
 .ffld{display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--muted);min-width:0}
 .ffld input{width:100%;padding:7px 8px;border:1px solid var(--line);border-radius:8px;
@@ -430,7 +435,7 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
     <p class="sub">723 structures across 62 coronal plates &middot; <em>Meriones unguiculatus</em></p>
   </div>
   <div class="hbtns">
-    <button class="b" id="frameb" type="button" title="Work in your own stereotaxic frame rather than the atlas's">Frame</button>
+    <button class="b" id="frameb" type="button" title="Experimental — work in your own stereotaxic frame rather than the atlas's">Frame</button>
     <button class="b" id="themeb" type="button">Auto</button>
     <button class="b" id="aboutb" type="button">About</button>
   </div>
@@ -621,6 +626,8 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
       but not exactly at &mdash; its centroid.</p>
 
     <h3>Your own frame</h3>
+    <p class="fexp"><b>Experimental.</b> Frame adjustment is new and not yet fully tested. Check
+      adjusted coordinates against anatomy you already know before relying on them.</p>
     <p>The atlas is cut perpendicular to the brainstem axis, which is not how a head sits in any
       particular stereotaxic frame. <em>Frame</em> in the header takes a pitch, a roll and a yaw
       about a pivot you choose, and restates the structure card, the pointer readout, the
@@ -677,9 +684,12 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
     <button class="b" id="framex" type="button">Close</button>
   </div>
   <div class="db">
+    <p class="fexp"><b>Experimental.</b> Frame adjustment is new and not yet fully tested. Check
+      any adjusted coordinate against anatomy you already know before you rely on it.</p>
+
     <p>The atlas is cut perpendicular to the brainstem axis. If your stereotaxic frame holds the
-      head at some other orientation, describe that orientation here and the coordinate readouts
-      will be given in <em>your</em> frame rather than the atlas&rsquo;s.</p>
+      head at any other angle, describe that angle here and coordinates will be read in
+      <em>your</em> frame rather than the atlas&rsquo;s.</p>
 
     <h3>Orientation</h3>
     <div class="fgrid">
@@ -687,16 +697,15 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
       <label class="ffld"><span>Roll &deg; &middot; right ear down +</span><input type="number" id="froll" step="0.5" value="0"></label>
       <label class="ffld"><span>Yaw &deg; &middot; nose right +</span><input type="number" id="fyaw" step="0.5" value="0"></label>
     </div>
-    <p>Applied about the pivot in the order <b>yaw, then pitch, then roll</b>. Rotations do not
-      commute, so the order is part of the definition &mdash; though at a few degrees of roll and
-      yaw the choice changes nothing you could measure.</p>
+    <p>Applied about the pivot, in the order <b>yaw, pitch, roll</b>. Rotations do not commute,
+      so the order is part of the definition &mdash; though at a few degrees of roll and yaw it
+      makes no difference you could measure.</p>
 
     <h3>From measurements</h3>
-    <p>Read two points off the skull with the electrode and the angle follows from the slope
-      between them &mdash; <code>atan(difference &divide; separation)</code>. A longer baseline
-      is proportionally more precise: a 0.1&nbsp;mm depth error over the 4.45&nbsp;mm from
-      bregma to lambda is 1.3&deg; of pitch, but only 0.58&deg; over the 9.95&nbsp;mm to the
-      occipital crest. Reach for the widest span the skull gives you.</p>
+    <p>Take two readings off the skull with the electrode; the angle is
+      <code>atan(difference &divide; separation)</code>. Use the widest span the skull gives you
+      &mdash; a 0.1&nbsp;mm depth error is 1.3&deg; over the 4.45&nbsp;mm from bregma to lambda,
+      but only 0.58&deg; over the 9.95&nbsp;mm to the occipital crest.</p>
     <div id="fmeas"></div>
 
     <h3>Pivot</h3>
@@ -707,21 +716,20 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
       <label class="ffld"><span>DV (mm)</span><input type="number" id="fpdv" step="0.05" value="0"></label>
     </div>
     <p>The point the rotation turns about &mdash; in practice, wherever you zero the manipulator.
-      This matters more than the angles do, because a coordinate moves further the further it sits
-      from the pivot. The default 0&nbsp;/&nbsp;0&nbsp;/&nbsp;0 is the atlas origin: bregma in AP
-      and the midline in ML, but in DV the <b>plane through the most dorsal points of cerebrum and
-      cerebellum</b> &mdash; the brain&rsquo;s surface, not skull bregma. Those two differ by
-      roughly the skull thickness, so move the DV pivot if you zero on bone.</p>
-    <p><b>A preset sets AP and ML only.</b> The atlas prints an AP for every landmark and a
-      height for none, so DV stays yours to fill in. That matters most for the interaural
-      line, and it is the whole point of choosing it: pitch turns about a mediolateral axis,
-      so the ear-bar axis becomes the real pivot only once DV says how far below your zero it
-      sits &mdash; a negative number, which you have to measure in your own frame. Left at 0
-      the rotation happens at the brain&rsquo;s dorsal surface 7.25&nbsp;mm behind bregma,
-      which is a parallel axis several millimetres higher, not the ear-bar line.</p>
-    <p>For pitch alone the pivot&rsquo;s ML does not matter &mdash; every point on a
-      mediolateral axis gives the same rotation &mdash; so a preset puts it on the midline.
-      Roll and yaw do use it.</p>
+      It matters more than the angles do, because a coordinate moves further the further it sits
+      from the pivot.</p>
+    <p>The default 0&nbsp;/&nbsp;0&nbsp;/&nbsp;0 is the atlas origin: bregma in AP, the midline in
+      ML, and in DV the <b>plane through the most dorsal points of cerebrum and cerebellum</b>
+      &mdash; the brain&rsquo;s surface, not skull bregma. The two differ by roughly the skull
+      thickness, so move the DV pivot if you zero on bone.</p>
+    <p><b>A preset sets AP and ML only</b>, because the atlas prints an AP for every landmark and
+      a height for none. That matters most for the interaural preset: pitch turns about a
+      mediolateral axis, so the ear-bar axis is the true pivot only once DV says how far below
+      your zero it sits &mdash; a negative number, measured in your own frame. Left at 0, the
+      rotation happens at the brain&rsquo;s dorsal surface instead: a parallel axis several
+      millimetres too high.</p>
+    <p>Pitch alone ignores the pivot&rsquo;s ML, so a preset puts it on the midline. Roll and yaw
+      do use it.</p>
 
     <h3>Offset</h3>
     <div class="fgrid">
@@ -733,8 +741,8 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
 
     <h3>Check the signs</h3>
     <div class="fprev" id="fprev"></div>
-    <p>Nothing in the atlas records which way your frame is tilted, so the app cannot check a sign
-      for you. Read this line against somewhere you already know by hand &mdash; if a coordinate
+    <p>Nothing in the atlas records which way your frame is tilted, so the app cannot check a
+      sign for you. Read this line against a structure you already know &mdash; if a coordinate
       moved the wrong way, negate the angle.</p>
 
     <div class="frow">
@@ -743,19 +751,19 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
     </div>
 
     <h3>What it changes</h3>
-    <p>The structure card, the pointer readout on the plate, the coordinate lookup and the CSV
-      export. The 1&nbsp;mm grid, the measure tool, the projections and the 3-D view stay in atlas
-      coordinates, and say so while the frame is on.</p>
-    <p>Note that a plate is no longer a single AP once the frame is tilted: under 17&deg; of pitch
-      the AP of a point drifts by about 0.29&nbsp;mm for every millimetre you move down the plate,
-      some 2.5&nbsp;mm across the depth of the brain. That is why the readout gives an AP for the
-      point under the pointer rather than one figure for the whole plate.</p>
-    <p>This is a rigid rotation of the published coordinates, <b>not</b> a resectioning. The app
-      cannot show what an oblique plate would look like and does not try: plates are 350&nbsp;µm
-      apart against about 17.5&nbsp;µm within a plate, so a cut at an angle would be interpolation
-      rather than anatomy. Treat an adjusted coordinate as a targeting aid that carries the
-      atlas&rsquo;s own error &mdash; a label marks where an abbreviation is <em>printed</em> &mdash;
-      along with your alignment error and animal-to-animal skull variation.</p>
+    <p><b>Adjusted:</b> the structure card, the pointer readout on the plate, the coordinate
+      lookup and the CSV export. <b>Left in atlas coordinates:</b> the 1&nbsp;mm grid, the measure
+      tool, the projections and the 3-D view &mdash; each says so while the frame is on.</p>
+    <p>A plate is no longer a single AP once the frame is tilted: at 17&deg; of pitch the AP of a
+      point drifts about 0.29&nbsp;mm per millimetre down the plate, some 2.5&nbsp;mm across the
+      depth of the brain. That is why the readout gives an AP for the point under the pointer
+      rather than one figure for the whole plate.</p>
+    <p>This is a rigid rotation of the published coordinates, <b>not</b> a resectioning: no oblique
+      plate is drawn, because plates are 350&nbsp;µm apart against about 17.5&nbsp;µm within a
+      plate, so a cut at an angle would be interpolation rather than anatomy. Treat an adjusted
+      coordinate as a targeting aid carrying the atlas&rsquo;s own error &mdash; a label marks
+      where an abbreviation is <em>printed</em> &mdash; plus your alignment error and
+      animal-to-animal skull variation.</p>
   </div>
 </dialog>
 <script>
@@ -2506,8 +2514,8 @@ function frameApply(){
   b.textContent=FRAME.on?'Frame · '+frameTxt():'Frame';
   b.title=FRAME.on
     ? `Coordinates are read in your frame: ${frameTxt()}, about pivot `+
-      `${FRAME.pap}/${FRAME.pml}/${FRAME.pdv} — click to change`
-    : "Work in your own stereotaxic frame rather than the atlas's";
+      `${FRAME.pap}/${FRAME.pml}/${FRAME.pdv} — experimental; click to change`
+    : "Experimental — work in your own stereotaxic frame rather than the atlas's";
   $('fon').textContent=FRAME.on?'Turn off':'Turn on';
   /* lambda, interaural and the occipital crest are AP landmarks with no DV or ML on
      record, so in a tilted frame the dropdown has nothing honest to offer */
@@ -2549,20 +2557,19 @@ function frameMarks(){
 const MEAS=[
   {k:'pitch',t:'Pitch',pre:1,dv:4.45,d:'AP apart, as read in your frame (mm)',
    a:'DV at bregma (anterior)', b:'DV at the posterior landmark',
-   n:"The skull's tilt in your frame, against flat skull — <b>not</b> against the atlas "+
-     "plane, which the atlas gives no way to locate on the skull. Using it replaces the pitch "+
-     "angle outright, so whatever atlas offset that field held is discarded. "+
-     "Read the AP span off the manipulator rather than taking the nominal one: the atlas's "+
-     "4.45 and 7.25 are separations along <em>its</em> AP axis, and a tilted frame sees them "+
-     "foreshortened, which reads about 0.7° low at 17°."},
+   n:"Gives the skull's tilt in your frame against <em>flat skull</em> — <b>not</b> against the "+
+     "atlas plane, which the atlas gives no way to locate on the skull. Using it replaces the "+
+     "pitch field outright. Read the AP span off the manipulator rather than taking a nominal "+
+     "one: the atlas's 4.45 and 7.25 are measured along <em>its</em> AP axis, and a tilted frame "+
+     "sees them foreshortened — about 0.7° low at 17°."},
   {k:'roll',t:'Roll',dv:6,d:'ML apart, as set on the arm (mm)',
    a:'DV at the right point (ML +)', b:'DV at the left point (ML −)',
-   n:'A deviation from the atlas directly: the atlas is bilaterally symmetric, so its own '+
-     'roll against a symmetric skull is zero and there is no baseline to add. The span is '+
+   n:'Measures deviation from the atlas directly: the atlas is bilaterally symmetric, so its '+
+     'own roll against a symmetric skull is zero and there is no baseline to add. The span is '+
      'exact here, unlike the pitch one, because you drive the arm to it rather than read it.'},
   {k:'yaw',t:'Yaw',dv:6,d:'ML apart, as set on the arm (mm)',
    a:'AP at the right point (ML +)', b:'AP at the left point (ML −)',
-   n:'A deviation from the atlas directly, for the same reason.'}
+   n:'Measures deviation from the atlas directly, for the same reason.'}
 ];
 const mId=(k,x)=>'m_'+k+'_'+x;
 /* An empty box is a reading that was not taken, not a reading of zero. Coercing it with +
