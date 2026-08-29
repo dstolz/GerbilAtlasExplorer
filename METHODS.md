@@ -274,8 +274,13 @@ extracted, and the signed clearance from each dorsal-arc boundary point to the f
 bone along its outward ray — measured against the full-resolution scan — is levelled
 iteratively, tilting until the clearance no longer trends with AP (slope
 0.0004 mm/mm at convergence) and setting the height to a small positive roof gap.
-That lands at pitch −20.6° of the scan's long axis and scale ×1.00: the CT's
-millimetres are believed outright. The **lambdoid suture could not be resolved** in
+That lands at pitch −21.6° of the scan's long axis. The three axis scales are fitted
+separately rather than kept uniform, because the two animals are not the same shape:
+AP ×1.032, ML ×1.042, DV ×0.957 relative to the CT's own millimetres. The DV shrink is
+what seats the calvaria on the cortex — the scanned skull's vault sits about a
+millimetre proud of the atlas animal's brain at the midline — and an atlas-AP stretch
+only changes *which* cross-section of the scan lands on each plate, so it never
+distorts the ML/DV outline drawn on any one plate. The **lambdoid suture could not be resolved** in
 this scan, so lambda is the one printed landmark not independently anchored.
 
 The plates were deliberately given the last word over the landmarks, because the two
