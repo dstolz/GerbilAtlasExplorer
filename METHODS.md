@@ -243,30 +243,52 @@ and no surface is fitted to those points.
 > **Experimental.** The skull overlay and its registration are new and not yet fully
 > tested. Treat it as context around the stack, not a surface to measure against.
 
-**Skull** in the 3-D controls wraps the stack in a µCT surface of a gerbil skull
-(`GerbilSkull.stl`, 498k triangles as scanned), drawn as a translucent shell whose
-opacity the **Bone** slider sets. The far wall is drawn behind the sections and the near
-wall in front, so the stack reads as sitting inside the case; **Half** cuts bone and
-brain at the same midline, and a deep link carries the state as `&sk=<opacity>`.
+The skull shows in three places, all off by default. **Skull** in the 3-D controls
+wraps the stack in the surface as a translucent shell whose opacity the **Bone** slider
+sets — the far wall drawn behind the sections and the near wall in front, so the stack
+reads as sitting inside the case, with **Half** cutting bone and brain at the same
+midline. **Skull** in the plate controls traces the surface's cut through the current
+coronal plane over the plate (the mesh is sliced in the browser, once per plate, and
+the PNG export carries the trace). And **Skull** in the projection controls draws the
+skull's silhouette around the label cloud — flattened along the unplotted axis exactly
+as the labels are — widening the axes just enough to hold the bone. Deep links carry
+all three (`&sk=<opacity>` for the shell; `k` and `K` among the `&v=` flags).
 
-The atlas prints no skull surface, so the fit had to be computed, and it is honest to
-say how. The scan — a different animal from the atlas's — was aligned in four steps:
-its own bilateral symmetry fixes the midline (roll −13.6°, yaw 0.1° of the scanner
-frame); the dorsal vault profile is fitted against the brain's dorsal outline read off
-all 62 plates (which sets pitch, −15.5° of the scan's long axis, and height); the two
-ear-canal openings are constrained to the atlas's interaural line at AP −7.25; and a
-uniform rescale (×0.94) reconciles the two animals. Two landmarks were then checked
-rather than fitted: the foramen magnum centre lands 0.13 mm from the cord's centre on
-the last plates, and the occipital crest lands within about 0.8 mm of the printed
-−9.95. So expect registration error of a few tenths of a millimetre, on top of the
-animal-to-animal variation that any skull-to-atlas comparison carries — and note that
-bregma and lambda are suture points, which a surface mesh does not show at all.
+The source is a µCT surface of a gerbil skull (`GerbilSkull.stl`, 498k triangles as
+scanned) — a different animal from the atlas's, in scanner coordinates. The atlas
+prints no skull surface, so the registration had to be computed, and it follows the
+paper's own recipe: Radtke-Schuller et al. define bregma, lambda and the occipital
+crest by intersecting lines approximating the sutures, print an AP for each landmark
+(bregma 0, lambda −4.45, interaural −7.25, occipital crest −9.95), and level the
+atlas on the plane through the most dorsal points of cerebrum and cerebellum.
 
-For the page the mesh is decimated to 62k triangles (0.42 mm vertex clustering, then
+The fit uses those features, found on the scan itself. The scan's bilateral symmetry
+fixes the midline (it lay rolled −13.6° in scanner axes; residual yaw 0.1°). The
+**coronal suture** is visible as a groove chevron in a high-pass-filtered height map of
+the vault; extrapolating its arms to the midline — the paper's own construction — gives
+bregma, constrained to AP 0. The two **ear-canal openings** are constrained to the
+interaural line at AP −7.25. The **occipital crest** (the corner where the posterior
+roof turns down toward the foramen magnum) is constrained, weakly, to −9.95. The
+dorsal vault profile is fitted against the brain's dorsal outline read off all 62
+plates, which is the paper's levelling plane and sets pitch (−16.7° of the scan's long
+axis) and height. Scale comes out at ×0.98 — the CT's millimetres are believed, and
+the landmark spacing agrees with them. The **lambdoid suture could not be resolved**
+in this scan, so lambda is the one printed landmark not independently anchored.
+
+What that fit earns, checked rather than fitted: the foramen magnum centre lands
+0.08 mm from the spinal cord's centre on the last plates, bregma sits at DV −0.2
+(essentially on the atlas's dorsal plane, as it should), and the crest reads −10.7
+against the printed −9.95 — the one landmark that disagrees, by 0.7 mm, and it is the
+least sharply defined of the four. So expect registration error of a few tenths of a
+millimetre, on top of the animal-to-animal variation that any skull-to-atlas
+comparison carries.
+
+For the page the mesh is decimated to 67k triangles (0.42 mm vertex clustering, then
 interior surfaces that are never visible from outside — turbinates, the inner ear —
-dropped), quantised to 0.01 mm and embedded as ~0.7 MB of base64, which is where the
-page's size grows beyond the plate images. Smooth normals are rebuilt at load, and the
-shell renders only when turned on.
+dropped), quantised to 0.01 mm and embedded as ~0.75 MB of base64, which is where the
+page's size grows beyond the plate images; the projection silhouettes ride along as a
+few kilobytes of polylines. Smooth normals are rebuilt at load, and nothing is decoded
+until a skull control is first turned on.
 
 ## Known discrepancies with the published index
 
