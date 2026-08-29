@@ -128,6 +128,31 @@ labels move a **median of 2.19 mm** — `MSO` goes from AP −7.95 / DV −8.30 
 DV −5.64. The displacement grows with distance from the pivot, so the pivot matters more
 than the angles do.
 
+### Where zero is
+
+By default the readout's zero is wherever the rotation carries the atlas origin, which is what
+the pivot decides — the right reading if you zeroed the manipulator *before* tilting the head.
+**Origin** names a landmark instead: drive to it with the head already in the frame, zero
+there, and that point reads 0 / 0 / 0 however the head is turned. Lambda in place of bregma is
+the common case.
+
+```
+origin  none (default)   zero follows the atlas origin through the rotation
+        bregma · lambda · interaural · occipital crest · a point of your own
+```
+
+Naming an origin makes the pivot irrelevant, and not by choice: `R(P−piv)+piv` minus
+`R(O−piv)+piv` is `R(P−O)` for every `piv`, so re-zeroing on a point *is* rotating about it.
+The dialog fades the pivot controls and says so. A landmark sets the origin's AP and ML only,
+for the same reason a pivot preset does — the atlas prints an AP for each of these and a height
+for none — so DV stays yours: 0 zeroes on the brain's dorsal surface, and anything else is the
+depth you actually zeroed at. The offset is still applied after the rotation, so it survives.
+
+Every readout that quotes an AP names what it is measured from once an origin is set —
+`lambda −5.79 · ML ±1.31 · DV −6.94` rather than a bare `AP` — and the CSV's `frame_spec`
+column records `origin=lambda origin_AP/ML/DV=…` in place of the pivot it no longer uses.
+Deep links carry it too; links written before the origin existed still load, with no origin.
+
 Presets put the pivot on **bregma, lambda, the interaural line or the occipital crest**,
 reading each landmark's offset off the plate table rather than carrying a copy of it. A
 preset can only set AP and ML, though: the atlas prints an AP for every one of these

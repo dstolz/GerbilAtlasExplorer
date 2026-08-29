@@ -326,10 +326,16 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
 .fexp b{font-weight:650}
 .fgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 10px}
 .ffld{display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--muted);min-width:0}
-.ffld input{width:100%;padding:7px 8px;border:1px solid var(--line);border-radius:8px;
+.ffld input,.ffld select{width:100%;padding:7px 8px;border:1px solid var(--line);border-radius:8px;
   background:var(--panel2);color:var(--ink);font-size:14px;font-family:inherit;
   font-variant-numeric:tabular-nums;outline:none}
-.ffld input:focus{border-color:var(--accent)}
+.ffld input:focus,.ffld select:focus{border-color:var(--accent)}
+.ffld input:disabled{opacity:.45}
+/* the origin's select stands alone rather than in a .fgrid, so it carries the row gap itself */
+.ffld.solo{margin:0 0 10px}
+/* the pivot has no effect once an origin is named, so the controls say so by fading */
+.fdim{opacity:.45}
+.fnb{margin:0 0 9px;font-size:11.5px;color:var(--accent);line-height:1.5}
 .fprev{border:1px solid var(--line);border-radius:9px;background:var(--panel2);
   padding:10px 12px;font-size:12px;color:var(--ink);font-variant-numeric:tabular-nums}
 .fprev b{color:var(--accent);font-weight:600}
@@ -632,7 +638,9 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
       particular stereotaxic frame. <em>Frame</em> in the header takes a pitch, a roll and a yaw
       about a pivot you choose, and restates the structure card, the pointer readout, the
       coordinate lookup and the CSV export in that frame, keeping the atlas figure beside each
-      one. The grid, the measure tool, the projections and the 3-D view stay in atlas coordinates
+      one. It can also be told where <em>zero</em> is: name lambda, the interaural line or the
+      occipital crest as the origin and coordinates are measured from there instead of bregma,
+      with the readouts labelling AP by the landmark it now comes from. The grid, the measure tool, the projections and the 3-D view stay in atlas coordinates
       and say so while it is on. Note that a plate then stops being a single AP: at 17&deg; of
       pitch the AP of a point drifts about 2.5&nbsp;mm between the top and the bottom of the
       brain, which is why the readout gives an AP per point. It is a rigid rotation of the
@@ -708,12 +716,34 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
       but only 0.58&deg; over the 9.95&nbsp;mm to the occipital crest.</p>
     <div id="fmeas"></div>
 
+    <h3>Origin</h3>
+    <label class="ffld solo"><span>Zero the readout on</span><select id="forg"></select></label>
+    <div class="fgrid" id="forgf">
+      <label class="ffld"><span>AP (mm)</span><input type="number" id="foap" step="0.05" value="0"></label>
+      <label class="ffld"><span>ML (mm)</span><input type="number" id="foml" step="0.05" value="0"></label>
+      <label class="ffld"><span>DV (mm)</span><input type="number" id="fodv" step="0.05" value="0"></label>
+    </div>
+    <p>Where your zero is. Drive to a landmark with the head already in the frame, zero the
+      manipulator there, and name it here: that point then reads 0&nbsp;/&nbsp;0&nbsp;/&nbsp;0
+      and every coordinate is measured from it. <b>Lambda in place of bregma</b> is the common
+      case.</p>
+    <p>Left on <em>the atlas origin</em> nothing changes: zero stays wherever the rotation
+      carries bregma, which is what the pivot below decides. Name a landmark instead and the
+      pivot stops mattering &mdash; rotating about any point and then re-zeroing on the origin
+      is the same as rotating about the origin.</p>
+    <p><b>A landmark sets AP and ML only</b>, for the reason a pivot preset does: the atlas
+      prints an AP for each of these and a height for none. DV stays yours &mdash; leave it at 0
+      to zero on the brain&rsquo;s dorsal surface, or enter the depth you actually zeroed at.</p>
+
     <h3>Pivot</h3>
-    <div class="fset" id="fset"></div>
-    <div class="fgrid">
-      <label class="ffld"><span>AP (mm)</span><input type="number" id="fpap" step="0.05" value="0"></label>
-      <label class="ffld"><span>ML (mm)</span><input type="number" id="fpml" step="0.05" value="0"></label>
-      <label class="ffld"><span>DV (mm)</span><input type="number" id="fpdv" step="0.05" value="0"></label>
+    <p class="fnb" id="fpivn" hidden>An origin is set, so the pivot no longer changes anything.</p>
+    <div id="fpivs">
+      <div class="fset" id="fset"></div>
+      <div class="fgrid">
+        <label class="ffld"><span>AP (mm)</span><input type="number" id="fpap" step="0.05" value="0"></label>
+        <label class="ffld"><span>ML (mm)</span><input type="number" id="fpml" step="0.05" value="0"></label>
+        <label class="ffld"><span>DV (mm)</span><input type="number" id="fpdv" step="0.05" value="0"></label>
+      </div>
     </div>
     <p>The point the rotation turns about &mdash; in practice, wherever you zero the manipulator.
       It matters more than the angles do, because a coordinate moves further the further it sits
@@ -754,6 +784,8 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
     <p><b>Adjusted:</b> the structure card, the pointer readout on the plate, the coordinate
       lookup and the CSV export. <b>Left in atlas coordinates:</b> the 1&nbsp;mm grid, the measure
       tool, the projections and the 3-D view &mdash; each says so while the frame is on.</p>
+    <p>Readouts name what AP is measured from &mdash; <em>lambda</em> rather than <em>AP</em>
+      &mdash; whenever an origin is set, and the atlas figure stays beside them as always.</p>
     <p>A plate is no longer a single AP once the frame is tilted: at 17&deg; of pitch the AP of a
       point drifts about 0.29&nbsp;mm per millimetre down the plate, some 2.5&nbsp;mm across the
       depth of the brain. That is why the readout gives an AP for the point under the pointer
@@ -821,8 +853,19 @@ const LMof = n => LM.find(t=>t[0]===n)[1];
    could be read off a manipulator.
 
    The matrix is orthogonal, so fromFrame() transposes rather than inverting: the round
-   trip is exact and there is no second set of formulae to derive and keep in step. */
-const FRAME={on:false,pitch:0,roll:0,yaw:0,pap:0,pml:0,pdv:0,dap:0,dml:0,ddv:0};
+   trip is exact and there is no second set of formulae to derive and keep in step.
+
+   Two ways to say where zero is, because there are two ways a rig gets set up.
+     org off -- zero is fixed in space where the atlas origin started, and the brain turns
+       about the pivot under it. This is the reading you want if you zeroed before tilting.
+     org on  -- zero is a named point of the animal: drive to lambda with the head already
+       in the frame, zero there, and lambda reads 0/0/0 however the head is turned.
+   The second makes the pivot irrelevant, and not by choice: R(P-piv)+piv - [R(O-piv)+piv]
+   is R(P-O) for every piv, so re-zeroing on a point IS rotating about it. Hence fCen/fAdd
+   rather than two copies of the formulae -- one centre to subtract, one vector to add
+   back, and toFrame/fromFrame never learn which mode they are in. */
+const FRAME={on:false,pitch:0,roll:0,yaw:0,pap:0,pml:0,pdv:0,dap:0,dml:0,ddv:0,
+             org:false,oap:0,oml:0,odv:0};
 let FRM=null;
 const m3=(a,b)=>{ const o=new Array(9);
   for(let i=0;i<3;i++)for(let j=0;j<3;j++){ let t=0;
@@ -837,33 +880,56 @@ function frmBuild(){
          [cy,-sy,0, sy,cy,0, 0,0,1]));
 }
 frmBuild();
+/* the point the rotation is taken about, and what is added back afterwards. With an origin
+   the point is the origin and nothing is added back but the offset, so the origin reads
+   0/0/0; without one it is the pivot, added back so the atlas origin keeps its old place. */
+const fCen = () => FRAME.org ? [FRAME.oap,FRAME.oml,FRAME.odv]
+                             : [FRAME.pap,FRAME.pml,FRAME.pdv];
+const fAdd = () => FRAME.org ? [FRAME.dap,FRAME.dml,FRAME.ddv]
+                             : [FRAME.pap+FRAME.dap,FRAME.pml+FRAME.dml,FRAME.pdv+FRAME.ddv];
 function toFrame(ap,ml,dv){                     /* atlas millimetres -> working frame */
   if(!FRAME.on) return {ap,ml,dv};
-  const M=FRM, a=ap-FRAME.pap, m=ml-FRAME.pml, v=dv-FRAME.pdv;
-  return {ap:M[0]*a+M[1]*m+M[2]*v+FRAME.pap+FRAME.dap,
-          ml:M[3]*a+M[4]*m+M[5]*v+FRAME.pml+FRAME.dml,
-          dv:M[6]*a+M[7]*m+M[8]*v+FRAME.pdv+FRAME.ddv};
+  const M=FRM, C=fCen(), A=fAdd(), a=ap-C[0], m=ml-C[1], v=dv-C[2];
+  return {ap:M[0]*a+M[1]*m+M[2]*v+A[0],
+          ml:M[3]*a+M[4]*m+M[5]*v+A[1],
+          dv:M[6]*a+M[7]*m+M[8]*v+A[2]};
 }
 function fromFrame(ap,ml,dv){                   /* and back, by the transpose */
   if(!FRAME.on) return {ap,ml,dv};
-  const M=FRM, a=ap-FRAME.pap-FRAME.dap, m=ml-FRAME.pml-FRAME.dml, v=dv-FRAME.pdv-FRAME.ddv;
-  return {ap:M[0]*a+M[3]*m+M[6]*v+FRAME.pap,
-          ml:M[1]*a+M[4]*m+M[7]*v+FRAME.pml,
-          dv:M[2]*a+M[5]*m+M[8]*v+FRAME.pdv};
+  const M=FRM, C=fCen(), A=fAdd(), a=ap-A[0], m=ml-A[1], v=dv-A[2];
+  return {ap:M[0]*a+M[3]*m+M[6]*v+C[0],
+          ml:M[1]*a+M[4]*m+M[7]*v+C[1],
+          dv:M[2]*a+M[5]*m+M[8]*v+C[2]};
 }
 /* Whether the transform still commutes with ML -> -ML, i.e. whether the two hemispheres
    can be folded onto one +/- ML figure. Pitch preserves the symmetry: it leaves ML alone
-   whatever the pivot. Roll mixes DV into ML and yaw mixes AP into it, so neither does --
-   and neither does a mediolateral offset, which slides both hemispheres the same way in
-   signed terms and so stops them being mirror images. Miss that last one and a structure
-   whose labels are unevenly split between the sides folds to a median that is not a place
-   on either side of the brain. */
-const bilat = () => !FRAME.on || (!FRAME.roll && !FRAME.yaw && !FRAME.dml);
+   whatever the pivot -- and whatever the origin's AP or DV. Roll mixes DV into ML and yaw
+   mixes AP into it, so neither does -- and neither does a mediolateral offset or an origin
+   off the midline, both of which slide the hemispheres the same way in signed terms and so
+   stop them being mirror images. (A pivot off the midline is the one that does cancel: it
+   is subtracted and added straight back.) Miss any of these and a structure whose labels
+   are unevenly split between the sides folds to a median that is not a place on either
+   side of the brain. */
+const bilat = () => !FRAME.on ||
+  (!FRAME.roll && !FRAME.yaw && !FRAME.dml && !(FRAME.org&&FRAME.oml));
+/* what the origin is called, for the readouts, the button, the CSV and the dialog. A
+   landmark is matched rather than remembered, so an origin typed in by hand still names
+   itself if it lands on one -- the same trick frameMarks() plays on the pivot presets. */
+function orgName(){
+  if(!FRAME.org) return '';
+  const i=LM.findIndex(([,off])=>Math.abs(FRAME.oap+off)<1e-9);
+  return (i>=0 && !FRAME.oml) ? LM[i][0].toLowerCase() : 'origin';
+}
+/* AP stops meaning "from bregma" the moment an origin is named, so every readout that
+   quotes one labels it with what it is really measured from -- exactly as the off-frame
+   plate readout has always said "bregma" rather than "AP". */
+const apLab = F => (F && FRAME.on && FRAME.org) ? orgName() : 'AP';
 /* the frame in one line, for the button, the CSV and the deep link */
 function frameTxt(){
-  const a=[['pitch',FRAME.pitch],['roll',FRAME.roll],['yaw',FRAME.yaw]].filter(t=>t[1]);
-  if(!a.length) return 'no rotation';
-  return a.map(t=>t[0]+' '+(t[1]>0?'+':'')+t[1]+'°').join(' · ');
+  const a=[['pitch',FRAME.pitch],['roll',FRAME.roll],['yaw',FRAME.yaw]].filter(t=>t[1])
+    .map(t=>t[0]+' '+(t[1]>0?'+':'')+t[1]+'°');
+  if(FRAME.org) a.push('from '+orgName());
+  return a.length ? a.join(' · ') : 'no rotation';
 }
 
 /* every located label as a stereotaxic point, for the reverse lookup */
@@ -976,8 +1042,9 @@ function extentOf(a,F){
 }
 /* a centre as one line, or a line per hemisphere once the frame has broken the atlas's
    symmetry and folding the two sides onto one figure would be a fiction */
-function ctrTxt(o){
-  const one=q=>`AP ${sgn(q.ap)} · ML ${o.fold?'±'+Math.abs(q.ml).toFixed(2):sgn(q.ml)} · DV ${sgn(q.dv)} mm`;
+function ctrTxt(o,F){
+  const L=apLab(F);
+  const one=q=>`${L} ${sgn(q.ap)} · ML ${o.fold?'±'+Math.abs(q.ml).toFixed(2):sgn(q.ml)} · DV ${sgn(q.dv)} mm`;
   if(o.fold) return one(o);
   return [o.R?'right '+one(o.R):'', o.L?'left '+one(o.L):''].filter(Boolean).join('<br>');
 }
@@ -998,7 +1065,7 @@ function select(a){
      <dt>Lambda</dt><dd>${(r.bregma_anterior+LMof('Lambda')).toFixed(2)} to ${(r.bregma_posterior+LMof('Lambda')).toFixed(2)} mm</dd>
      <dt>Interaural</dt><dd>${(r.bregma_anterior+LMof('Interaural')).toFixed(2)} to ${(r.bregma_posterior+LMof('Interaural')).toFixed(2)} mm</dd>
      ${c?`<dt title="Median position of this structure's printed labels — near, but not identical to, its centroid">Label centre</dt>
-        <dd>${ctrTxt(fc||c)}${fc?`<span class="atl">atlas ${ctrTxt(c)}</span>`:''}</dd>`:''}
+        <dd>${ctrTxt(fc||c,fc)}${fc?`<span class="atl">atlas ${ctrTxt(c)}</span>`:''}</dd>`:''}
      ${x?`<dt title="The full spread of those labels — what the projection below plots">Label extent</dt>
         <dd>${extTxt(fx||x)}${fx?`<span class="atl">atlas ${extTxt(x)}</span>`:''}</dd>`:''}
      <dt>Systems</dt><dd>${r.systems.map(t=>esc(t.replace(/_/g,' '))).join(', ')}</dd>
@@ -1283,7 +1350,7 @@ function drawXH(f){
        section, by sin(pitch) per millimetre of DV -- about 2.5 mm across the brain at
        17 degrees. So the readout gives the AP of this point, not of the plate. */
     const q=toFrame(p.bregma,ml,dv);
-    $('rd').innerHTML=`AP <b>${sgn(q.ap)}</b> · ML <b>${sgn(q.ml)}</b> · DV <b>${sgn(q.dv)}</b> mm`+
+    $('rd').innerHTML=`${apLab(1)} <b>${sgn(q.ap)}</b> · ML <b>${sgn(q.ml)}</b> · DV <b>${sgn(q.dv)}</b> mm`+
       `<span class="atl">atlas bregma ${sgn(p.bregma)} · ML ${sgn(ml)} · DV ${sgn(dv)}</span>`;
   } else {
     $('rd').innerHTML=`bregma <b>${sgn(p.bregma)}</b> · ML <b>${sgn(ml)}</b> · DV <b>${sgn(dv)}</b> mm`+
@@ -1437,7 +1504,12 @@ function exportCSV(){
   /* deliberately comma-free: it is a quoted field so a comma would be legal, but this
      column exists to be read a year later, often by something that splits on commas */
   const spec=FR?`pitch=${FRAME.pitch} roll=${FRAME.roll} yaw=${FRAME.yaw}`+
-    ` pivot_AP/ML/DV=${FRAME.pap}/${FRAME.pml}/${FRAME.pdv}`+
+    /* whichever of the two decided where zero is; the other has no effect and saying it
+       anyway would leave a reader guessing which of them the numbers came from */
+    (FRAME.org
+      ? ` origin=${orgName().replace(/ /g,'-')}`+
+        ` origin_AP/ML/DV=${FRAME.oap}/${FRAME.oml}/${FRAME.odv}`
+      : ` origin=atlas pivot_AP/ML/DV=${FRAME.pap}/${FRAME.pml}/${FRAME.pdv}`)+
     ` offset_AP/ML/DV=${FRAME.dap}/${FRAME.dml}/${FRAME.ddv}`+
     ` order=yaw>pitch>roll signs=nose-down/right-ear-down/nose-right`:'';
   const rows=results.map(r=>{ const c=coordsOf(r.abbr);
@@ -2180,7 +2252,7 @@ function writeHash(){
   if(v3mode!=='contour') h+='&r='+v3mode;
   if(v3a>0||v3b<61) h+='&sl='+(v3a+1)+','+(v3b+1);
   if(v3half) h+='&hf=1';
-  if(FRAME.on) h+='&fr='+FKEYS.map(k=>FRAME[k]).join(',');
+  if(FRAME.on){ h+='&fr='+FKEYS.map(k=>FRAME[k]).join(','); if(FRAME.org) h+='&fo=1'; }
   lastWritten='#'+h;
   /* replaceState can be refused on a file:// origin, which is how the README says to
      open this; falling back to the hash keeps deep links working there too */
@@ -2228,9 +2300,15 @@ function readHash(){
   /* the frame is sticky: a link carrying one sets it, a link without one leaves whatever
      this browser had stored. Wiping a lab's calibration because somebody opened a bare
      #p30 link would be a nasty way to lose it. */
+  /* links written before the origin existed carry the first nine values only, so a short
+     list is read positionally and the origin left at zero rather than thrown away */
   const fr=(par.fr||'').split(',').map(Number);
-  if(par.fr && fr.length===FKEYS.length && fr.every(Number.isFinite)){
-    const o={on:true}; FKEYS.forEach((k,i)=>o[k]=fr[i]); frameSet(o);
+  if(par.fr && (fr.length===9||fr.length===FKEYS.length) && fr.every(Number.isFinite)){
+    const o={on:true,org:par.fo==='1'};
+    FKEYS.forEach((k,i)=>o[k]= i<fr.length ? fr[i] : 0);
+    /* frameApply() is the only thing that rebuilds the matrix, so a frame arriving by
+       hashchange rather than on load has to go through it too */
+    frameSet(o); frameApply();
   }
 
   setTab(par.t==='proj'?'proj':(par.t==='v3d'?'v3d':'plate'));
@@ -2327,7 +2405,7 @@ function revRun(){
     return `<div class="rrow${d<0.5?' near':''}" data-a="${esc(q.ab)}" data-p="${q.p}">
       <span class="ab">${esc(q.ab)}</span>
       <span class="nm">${esc(r?r.name:'—')}</span>
-      <span class="rd2"${FRAME.on?` title="atlas AP ${sgn(q.ap)} · ML ±${Math.abs(q.ml).toFixed(2)} · DV ${sgn(q.dv)}"`:''}>plate ${q.p} · AP ${sgn(rc.ap)} · ML ±${Math.abs(rc.ml).toFixed(2)} · DV ${sgn(rc.dv)}</span>
+      <span class="rd2"${FRAME.on?` title="atlas AP ${sgn(q.ap)} · ML ±${Math.abs(q.ml).toFixed(2)} · DV ${sgn(q.dv)}"`:''}>plate ${q.p} · ${apLab(1)} ${sgn(rc.ap)} · ML ±${Math.abs(rc.ml).toFixed(2)} · DV ${sgn(rc.dv)}</span>
       <span class="rdist">${d.toFixed(2)} mm</span></div>`; }).join('');
   [...O.querySelectorAll('.rrow')].forEach(el=>el.onclick=()=>{
     go(+el.dataset.p); select(el.dataset.a); setTab('plate');
@@ -2493,9 +2571,11 @@ setTheme(theme);
    matrix and re-renders every readout that quotes a coordinate. Nothing else writes to
    FRAME, so no value can reach the matrix without having been a finite number first. */
 const FDLG=$('frame');
-const FKEYS=['pitch','roll','yaw','pap','pml','pdv','dap','dml','ddv'];
+/* order is load-bearing: it is the order of the values in a deep link, so the origin keys
+   go on the end where an older nine-value link can still be read positionally */
+const FKEYS=['pitch','roll','yaw','pap','pml','pdv','dap','dml','ddv','oap','oml','odv'];
 const FIN={pitch:'fpitch',roll:'froll',yaw:'fyaw',pap:'fpap',pml:'fpml',pdv:'fpdv',
-           dap:'fdap',dml:'fdml',ddv:'fddv'};
+           dap:'fdap',dml:'fdml',ddv:'fddv',oap:'foap',oml:'foml',odv:'fodv'};
 /* the preview names somewhere familiar and shows what the frame does to it. Nothing in
    the atlas records which way a given frame is tilted, so a sign cannot be checked by the
    app -- it has to be read back against anatomy the user already knows. */
@@ -2504,7 +2584,7 @@ function framePreview(){
   const a=coordsOf(FPREV), el=$('fprev');
   if(!a){ el.textContent=''; return; }
   el.innerHTML=FRAME.on
-    ? `<b>${esc(FPREV)}</b> ${ctrTxt(coordsOf(FPREV,1))}<span class="fpa">atlas ${ctrTxt(a)}</span>`
+    ? `<b>${esc(FPREV)}</b> ${ctrTxt(coordsOf(FPREV,1),1)}<span class="fpa">atlas ${ctrTxt(a)}</span>`
     : `<b>${esc(FPREV)}</b> ${ctrTxt(a)}<span class="fpa">the frame is off, so this is the atlas reading</span>`;
 }
 function frameApply(){
@@ -2520,11 +2600,34 @@ function frameApply(){
   /* lambda, interaural and the occipital crest are AP landmarks with no DV or ML on
      record, so in a tilted frame the dropdown has nothing honest to offer */
   $('rref').disabled=FRAME.on;
-  $('rrefl').textContent=FRAME.on?'from the pivot':'relative to';
-  framePreview(); frameMarks();
+  $('rrefl').textContent=FRAME.on?(FRAME.org?'from '+orgName():'from the pivot'):'relative to';
+  framePreview(); frameMarks(); orgSync();
   if(sel) select(sel);
   if(showXY&&lastPt) drawXH(lastPt);
   drawMeas(); revRun(); frameSave(); queueHash();
+}
+/* ---------- the origin: which point reads zero ----------
+   Built from LM rather than spelled out, so it stays in step with the plate table the way
+   the pivot presets do. Picking a landmark writes its AP into the field and clears ML;
+   DV is left alone, because the atlas gives these landmarks no height and guessing one
+   here would be the same fiction the pivot presets refuse to commit. */
+$('forg').innerHTML='<option value="">the atlas origin, as the rotation leaves it</option>'+
+  LM.map(([nm],i)=>`<option value="${i}">${esc(nm.toLowerCase())}</option>`).join('')+
+  '<option value="c">a point of your own</option>';
+$('forg').onchange=e=>{
+  const v=e.target.value;
+  FRAME.org = v!=='';
+  if(v!==''&&v!=='c'){ $('foap').value=-LM[+v][1]; $('foml').value=0; }
+  frameRead();
+};
+/* the select follows the numbers rather than remembering what was picked, and the fields
+   go dead while the origin is off so a stale AP cannot look like it is in use */
+function orgSync(){
+  const i=LM.findIndex(([,off])=>Math.abs(FRAME.oap+off)<1e-9);
+  $('forg').value = !FRAME.org ? '' : (i>=0&&!FRAME.oml) ? String(i) : 'c';
+  ['foap','foml','fodv'].forEach(k=>$(k).disabled=!FRAME.org);
+  $('fpivn').hidden=!FRAME.org;
+  $('fpivs').classList.toggle('fdim',!!FRAME.org);
 }
 /* A preset sets the pivot's AP -- the landmark sits that far anterior of bregma, so the
    pivot goes to minus that -- and puts it on the midline. It cannot set DV, because the
@@ -2615,7 +2718,7 @@ measCalc();
 
 function frameSet(o){
   FKEYS.forEach(k=>{ const v=+o[k]; if(Number.isFinite(v)) FRAME[k]=v; });
-  FRAME.on=!!o.on;
+  FRAME.on=!!o.on; FRAME.org=!!o.org;
   FKEYS.forEach(k=>{ $(FIN[k]).value=FRAME[k]; });
 }
 function frameRead(){
@@ -2633,7 +2736,7 @@ function frameLoad(){
   try{ o=JSON.parse(localStorage.getItem('gae-frame')||'null'); }catch(_){}
   if(o&&typeof o==='object') frameSet(o);
 }
-const frameZero=()=>{ const z={on:false}; FKEYS.forEach(k=>z[k]=0); return z; };
+const frameZero=()=>{ const z={on:false,org:false}; FKEYS.forEach(k=>z[k]=0); return z; };
 FKEYS.forEach(k=>{ $(FIN[k]).oninput=frameRead; });
 $('fon').onclick=()=>{ FRAME.on=!FRAME.on; frameApply(); };
 $('fzero').onclick=()=>{ frameSet(frameZero()); frameApply(); };
