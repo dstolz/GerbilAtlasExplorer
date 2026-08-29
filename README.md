@@ -92,7 +92,7 @@ structures**. Please cite the atlas itself:
 | `index_raw.txt` | The authors' published index as extracted. Source of truth for the rest. |
 
 ## Website development
-This website is developed and maintained by Daniel Stolzberg and the [www.caraslab.org](Caras Lab) in the department of Biology at the University of Maryland.
+This website is developed and maintained by Daniel Stolzberg and the [Caras Lab](www.caraslab.org) in the department of Biology at the University of Maryland.
 
 ## Under the hood
 
