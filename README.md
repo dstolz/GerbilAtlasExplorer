@@ -91,6 +91,9 @@ structures**. Please cite the atlas itself:
 | `gerbil_atlas_plates.csv` | One row per plate: bregma / lambda / interaural / occipital-crest AP. |
 | `index_raw.txt` | The authors' published index as extracted. Source of truth for the rest. |
 
+## Website development
+This website is developed and maintained by Daniel Stolzberg and the [www.caraslab.org](Caras Lab) in the department of Biology at the University of Maryland.
+
 ## Under the hood
 
 How the coordinates were calibrated, how the plate images were cropped and the labels
