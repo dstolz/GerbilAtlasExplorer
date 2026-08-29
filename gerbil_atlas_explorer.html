@@ -317,6 +317,42 @@ dialog::backdrop{background:rgba(0,0,0,.5)}
 kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chip);
   padding:1px 5px;border-radius:4px;color:var(--ink)}
 
+/* ---------- the working stereotaxic frame ---------- */
+#frameb.on{border-color:var(--accent);color:var(--accent)}
+.fgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 10px}
+.ffld{display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--muted);min-width:0}
+.ffld input{width:100%;padding:7px 8px;border:1px solid var(--line);border-radius:8px;
+  background:var(--panel2);color:var(--ink);font-size:14px;font-family:inherit;
+  font-variant-numeric:tabular-nums;outline:none}
+.ffld input:focus{border-color:var(--accent)}
+.fprev{border:1px solid var(--line);border-radius:9px;background:var(--panel2);
+  padding:10px 12px;font-size:12px;color:var(--ink);font-variant-numeric:tabular-nums}
+.fprev b{color:var(--accent);font-weight:600}
+.fprev .fpa{display:block;color:var(--muted);margin-top:3px}
+.frow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:13px 0 0}
+/* the atlas value, kept beside every adjusted one so the two can never be confused */
+.atl{display:block;color:var(--muted);font-size:11px;margin-top:1px}
+/* a readout that stayed in atlas coordinates says so inline, with the why on hover,
+   rather than spending a whole row of the strip under the plate on the explanation */
+.fnote{color:var(--muted);border-bottom:1px dotted currentColor;cursor:help}
+/* three across is comfortable in the dialog's 700px; on a phone the labels carry more
+   words than the column can hold, so they pair up rather than wrapping to ribbons */
+@media (max-width:560px){ .fgrid{grid-template-columns:repeat(2,1fr)} }
+.fset{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:0 0 9px;
+  font-size:11px;color:var(--muted)}
+.fset button{font-size:11.5px;padding:3px 9px}
+.fset button.on{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+.fmb{border:1px solid var(--line);border-radius:9px;padding:11px 12px;margin:0 0 9px}
+.fmh{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin:0 0 8px;
+  font-size:11px;color:var(--muted)}
+.fmh b{color:var(--ink);font-size:12.5px;font-weight:650;margin-right:3px}
+.fmh button{font-size:11px;padding:2px 7px}
+.fmo{display:flex;align-items:center;gap:10px;margin-top:9px}
+.fmo .v{color:var(--ink);font-weight:650;font-size:14px;font-variant-numeric:tabular-nums}
+.fmo button{margin-left:auto;font-size:11.5px;padding:3px 9px}
+.fmo button[disabled]{opacity:.45;cursor:default}
+.fmn{margin:7px 0 0;font-size:11px;color:var(--muted);line-height:1.5}
+
 /* ---------- adapting to the window ---------- */
 /* two columns once both panes can be comfortable */
 @media (min-width:900px){
@@ -394,6 +430,7 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
     <p class="sub">723 structures across 62 coronal plates &middot; <em>Meriones unguiculatus</em></p>
   </div>
   <div class="hbtns">
+    <button class="b" id="frameb" type="button" title="Work in your own stereotaxic frame rather than the atlas's">Frame</button>
     <button class="b" id="themeb" type="button">Auto</button>
     <button class="b" id="aboutb" type="button">About</button>
   </div>
@@ -425,7 +462,7 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
       <p class="hint" title="AP resolves only to the nearest plate (350 µm), and ML is matched to whichever hemisphere is closer.">The nearest printed labels, ranked by 3-D distance.</p>
       <div class="revin">
         <label class="rvf"><span>AP (mm)</span><input type="number" id="rap" step="0.05" value="-6.00"></label>
-        <label class="rvf"><span>relative to</span><select id="rref">
+        <label class="rvf"><span id="rrefl">relative to</span><select id="rref">
           <option value="0">bregma</option>
           <option value="4.45">lambda</option>
           <option value="7.25">interaural</option>
@@ -583,6 +620,18 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
       coordinate given for a structure is the median of its printed <em>labels</em>, which sit near &mdash;
       but not exactly at &mdash; its centroid.</p>
 
+    <h3>Your own frame</h3>
+    <p>The atlas is cut perpendicular to the brainstem axis, which is not how a head sits in any
+      particular stereotaxic frame. <em>Frame</em> in the header takes a pitch, a roll and a yaw
+      about a pivot you choose, and restates the structure card, the pointer readout, the
+      coordinate lookup and the CSV export in that frame, keeping the atlas figure beside each
+      one. The grid, the measure tool, the projections and the 3-D view stay in atlas coordinates
+      and say so while it is on. Note that a plate then stops being a single AP: at 17&deg; of
+      pitch the AP of a point drifts about 2.5&nbsp;mm between the top and the bottom of the
+      brain, which is why the readout gives an AP per point. It is a rigid rotation of the
+      published numbers and <em>not</em> a resectioning &mdash; no oblique plate is drawn, or
+      could honestly be drawn, from a series sampled 350&nbsp;µm apart.</p>
+
     <h3>Caveats</h3>
     <p>System tags (auditory, hippocampal, &hellip;) are a convenience layer added on top of the
       published nomenclature, not part of the original atlas. A structure listed for a plate range is
@@ -621,6 +670,94 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
       Build <a href="https://github.com/dstolz/GerbilAtlasExplorer/commit/7939ba7" target="_blank" rel="noopener"><code>7939ba7</code></a>.</p>
   </div>
 </dialog>
+
+<dialog id="frame">
+  <div class="dh">
+    <h2>Working coordinate frame</h2>
+    <button class="b" id="framex" type="button">Close</button>
+  </div>
+  <div class="db">
+    <p>The atlas is cut perpendicular to the brainstem axis. If your stereotaxic frame holds the
+      head at some other orientation, describe that orientation here and the coordinate readouts
+      will be given in <em>your</em> frame rather than the atlas&rsquo;s.</p>
+
+    <h3>Orientation</h3>
+    <div class="fgrid">
+      <label class="ffld"><span>Pitch &deg; &middot; nose down +</span><input type="number" id="fpitch" step="0.5" value="0"></label>
+      <label class="ffld"><span>Roll &deg; &middot; right ear down +</span><input type="number" id="froll" step="0.5" value="0"></label>
+      <label class="ffld"><span>Yaw &deg; &middot; nose right +</span><input type="number" id="fyaw" step="0.5" value="0"></label>
+    </div>
+    <p>Applied about the pivot in the order <b>yaw, then pitch, then roll</b>. Rotations do not
+      commute, so the order is part of the definition &mdash; though at a few degrees of roll and
+      yaw the choice changes nothing you could measure.</p>
+
+    <h3>From measurements</h3>
+    <p>Read two points off the skull with the electrode and the angle follows from the slope
+      between them &mdash; <code>atan(difference &divide; separation)</code>. A longer baseline
+      is proportionally more precise: a 0.1&nbsp;mm depth error over the 4.45&nbsp;mm from
+      bregma to lambda is 1.3&deg; of pitch, but only 0.58&deg; over the 9.95&nbsp;mm to the
+      occipital crest. Reach for the widest span the skull gives you.</p>
+    <div id="fmeas"></div>
+
+    <h3>Pivot</h3>
+    <div class="fset" id="fset"></div>
+    <div class="fgrid">
+      <label class="ffld"><span>AP (mm)</span><input type="number" id="fpap" step="0.05" value="0"></label>
+      <label class="ffld"><span>ML (mm)</span><input type="number" id="fpml" step="0.05" value="0"></label>
+      <label class="ffld"><span>DV (mm)</span><input type="number" id="fpdv" step="0.05" value="0"></label>
+    </div>
+    <p>The point the rotation turns about &mdash; in practice, wherever you zero the manipulator.
+      This matters more than the angles do, because a coordinate moves further the further it sits
+      from the pivot. The default 0&nbsp;/&nbsp;0&nbsp;/&nbsp;0 is the atlas origin: bregma in AP
+      and the midline in ML, but in DV the <b>plane through the most dorsal points of cerebrum and
+      cerebellum</b> &mdash; the brain&rsquo;s surface, not skull bregma. Those two differ by
+      roughly the skull thickness, so move the DV pivot if you zero on bone.</p>
+    <p><b>A preset sets AP and ML only.</b> The atlas prints an AP for every landmark and a
+      height for none, so DV stays yours to fill in. That matters most for the interaural
+      line, and it is the whole point of choosing it: pitch turns about a mediolateral axis,
+      so the ear-bar axis becomes the real pivot only once DV says how far below your zero it
+      sits &mdash; a negative number, which you have to measure in your own frame. Left at 0
+      the rotation happens at the brain&rsquo;s dorsal surface 7.25&nbsp;mm behind bregma,
+      which is a parallel axis several millimetres higher, not the ear-bar line.</p>
+    <p>For pitch alone the pivot&rsquo;s ML does not matter &mdash; every point on a
+      mediolateral axis gives the same rotation &mdash; so a preset puts it on the midline.
+      Roll and yaw do use it.</p>
+
+    <h3>Offset</h3>
+    <div class="fgrid">
+      <label class="ffld"><span>AP (mm)</span><input type="number" id="fdap" step="0.05" value="0"></label>
+      <label class="ffld"><span>ML (mm)</span><input type="number" id="fdml" step="0.05" value="0"></label>
+      <label class="ffld"><span>DV (mm)</span><input type="number" id="fddv" step="0.05" value="0"></label>
+    </div>
+    <p>A pure translation, added after the rotation. A dura-versus-skull DV zero belongs here.</p>
+
+    <h3>Check the signs</h3>
+    <div class="fprev" id="fprev"></div>
+    <p>Nothing in the atlas records which way your frame is tilted, so the app cannot check a sign
+      for you. Read this line against somewhere you already know by hand &mdash; if a coordinate
+      moved the wrong way, negate the angle.</p>
+
+    <div class="frow">
+      <button class="b" id="fon" type="button">Turn on</button>
+      <button class="b" id="fzero" type="button">Reset to atlas</button>
+    </div>
+
+    <h3>What it changes</h3>
+    <p>The structure card, the pointer readout on the plate, the coordinate lookup and the CSV
+      export. The 1&nbsp;mm grid, the measure tool, the projections and the 3-D view stay in atlas
+      coordinates, and say so while the frame is on.</p>
+    <p>Note that a plate is no longer a single AP once the frame is tilted: under 17&deg; of pitch
+      the AP of a point drifts by about 0.29&nbsp;mm for every millimetre you move down the plate,
+      some 2.5&nbsp;mm across the depth of the brain. That is why the readout gives an AP for the
+      point under the pointer rather than one figure for the whole plate.</p>
+    <p>This is a rigid rotation of the published coordinates, <b>not</b> a resectioning. The app
+      cannot show what an oblique plate would look like and does not try: plates are 350&nbsp;µm
+      apart against about 17.5&nbsp;µm within a plate, so a cut at an angle would be interpolation
+      rather than anatomy. Treat an adjusted coordinate as a targeting aid that carries the
+      atlas&rsquo;s own error &mdash; a label marks where an abbreviation is <em>printed</em> &mdash;
+      along with your alignment error and animal-to-animal skull variation.</p>
+  </div>
+</dialog>
 <script>
 const DB = window.__ATLAS__, IMG = window.__IMG__;
 const S = DB.structures, P = DB.plates, AL = DB.aliases, LB = window.__BOX__;
@@ -647,6 +784,79 @@ const toML = x => (x-ML_X0)/ML_PXMM,   fromML = m => m*ML_PXMM+ML_X0;
 const toDV = y => 1-(y-DV_Y0)/DV_PXMM, fromDV = v => (1-v)*DV_PXMM+DV_Y0;
 const BX0=10, BX1=1032, BY0=10.5, BY1=692.5;   /* the printed coordinate box */
 const sgn = v => (v<0?'':'+')+v.toFixed(2);
+
+/* The AP landmarks the atlas prints, taken off the plate table rather than copied out of
+   the prose. Every plate carries its own bregma, lambda, interaural and occipital-crest
+   coordinate, and the constant offset is just the difference, so this stays in step with
+   the data the way plate_frame does. Each entry is [name, mm anterior of bregma]. */
+const LM=[['Bregma','bregma'],['Lambda','lambda_'],
+          ['Interaural','interaural'],['Occipital crest','occipital_crest']]
+  .map(([n,k])=>[n, +(P[0][k]-P[0].bregma).toFixed(2)]);
+const LMof = n => LM.find(t=>t[0]===n)[1];
+
+/* ---------- the working stereotaxic frame ----------
+   The atlas is cut perpendicular to the brainstem axis, which is not how a head sits in
+   any particular stereotaxic frame. Given the orientation of the frame actually in use,
+   the coordinates below can be restated in it. This is a rigid rotation of the published
+   numbers about a pivot, plus a translation -- not a resectioning. The plate images stay
+   exactly where they are and nothing here can show an oblique cut: sections are 350 um
+   apart against about 17.5 um within a plate, so a cut at an angle would be interpolation
+   rather than anatomy.
+
+   Each rotation is named by what it does to the animal rather than by a sign rule, because
+   (AP, ML, DV) in that order is left-handed and a handedness convention would invite the
+   very error the dialog's preview exists to catch:
+     pitch  about ML, + = nose down        roll  about AP, + = right ear down
+     yaw    about DV, + = nose to the right
+   Composed yaw, then pitch, then roll. Rotations do not commute, so the order is part of
+   the definition -- though at a few degrees of roll and yaw it is far below anything that
+   could be read off a manipulator.
+
+   The matrix is orthogonal, so fromFrame() transposes rather than inverting: the round
+   trip is exact and there is no second set of formulae to derive and keep in step. */
+const FRAME={on:false,pitch:0,roll:0,yaw:0,pap:0,pml:0,pdv:0,dap:0,dml:0,ddv:0};
+let FRM=null;
+const m3=(a,b)=>{ const o=new Array(9);
+  for(let i=0;i<3;i++)for(let j=0;j<3;j++){ let t=0;
+    for(let k=0;k<3;k++) t+=a[i*3+k]*b[k*3+j]; o[i*3+j]=t; } return o; };
+function frmBuild(){
+  const d=Math.PI/180;
+  const cp=Math.cos(FRAME.pitch*d), sp=Math.sin(FRAME.pitch*d);
+  const cr=Math.cos(FRAME.roll *d), sr=Math.sin(FRAME.roll *d);
+  const cy=Math.cos(FRAME.yaw  *d), sy=Math.sin(FRAME.yaw  *d);
+  FRM=m3([1,0,0, 0,cr,sr, 0,-sr,cr],
+      m3([cp,0,sp, 0,1,0, -sp,0,cp],
+         [cy,-sy,0, sy,cy,0, 0,0,1]));
+}
+frmBuild();
+function toFrame(ap,ml,dv){                     /* atlas millimetres -> working frame */
+  if(!FRAME.on) return {ap,ml,dv};
+  const M=FRM, a=ap-FRAME.pap, m=ml-FRAME.pml, v=dv-FRAME.pdv;
+  return {ap:M[0]*a+M[1]*m+M[2]*v+FRAME.pap+FRAME.dap,
+          ml:M[3]*a+M[4]*m+M[5]*v+FRAME.pml+FRAME.dml,
+          dv:M[6]*a+M[7]*m+M[8]*v+FRAME.pdv+FRAME.ddv};
+}
+function fromFrame(ap,ml,dv){                   /* and back, by the transpose */
+  if(!FRAME.on) return {ap,ml,dv};
+  const M=FRM, a=ap-FRAME.pap-FRAME.dap, m=ml-FRAME.pml-FRAME.dml, v=dv-FRAME.pdv-FRAME.ddv;
+  return {ap:M[0]*a+M[3]*m+M[6]*v+FRAME.pap,
+          ml:M[1]*a+M[4]*m+M[7]*v+FRAME.pml,
+          dv:M[2]*a+M[5]*m+M[8]*v+FRAME.pdv};
+}
+/* Whether the transform still commutes with ML -> -ML, i.e. whether the two hemispheres
+   can be folded onto one +/- ML figure. Pitch preserves the symmetry: it leaves ML alone
+   whatever the pivot. Roll mixes DV into ML and yaw mixes AP into it, so neither does --
+   and neither does a mediolateral offset, which slides both hemispheres the same way in
+   signed terms and so stops them being mirror images. Miss that last one and a structure
+   whose labels are unevenly split between the sides folds to a median that is not a place
+   on either side of the brain. */
+const bilat = () => !FRAME.on || (!FRAME.roll && !FRAME.yaw && !FRAME.dml);
+/* the frame in one line, for the button, the CSV and the deep link */
+function frameTxt(){
+  const a=[['pitch',FRAME.pitch],['roll',FRAME.roll],['yaw',FRAME.yaw]].filter(t=>t[1]);
+  if(!a.length) return 'no rotation';
+  return a.map(t=>t[0]+' '+(t[1]>0?'+':'')+t[1]+'°').join(' · ');
+}
 
 /* every located label as a stereotaxic point, for the reverse lookup */
 const PTS=[];
@@ -729,31 +939,60 @@ function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','
 
 /* ---------- detail ---------- */
 /* the printed label positions give a structure a stereotaxic centre; ML is folded to
-   one side first, because the two hemispheres would otherwise average to the midline */
-function coordsOf(a){
-  const v=PTS.filter(q=>q.ab===a); if(!v.length) return null;
-  const med=arr=>{const s=[...arr].sort((x,y)=>x-y),h=s.length>>1;
-    return s.length%2?s[h]:(s[h-1]+s[h])/2;};
-  return {ap:med(v.map(q=>q.ap)), ml:med(v.map(q=>Math.abs(q.ml))), dv:med(v.map(q=>q.dv)), n:v.length};
+   one side first, because the two hemispheres would otherwise average to the midline.
+   Pass F to read the centre in the working frame. Every label is transformed before the
+   medians are taken, not after: a median is not linear, so rotating the median of the
+   atlas positions is not the median of the rotated ones. The atlas itself is always
+   bilaterally symmetric, so only the transformed reading can need splitting by side. */
+const med=arr=>{const s=[...arr].sort((x,y)=>x-y),h=s.length>>1;
+  return s.length%2?s[h]:(s[h-1]+s[h])/2;};
+function coordsOf(a,F){
+  const v=ptsOf[a]; if(!v||!v.length) return null;
+  const T=F&&FRAME.on, at=q=>T?toFrame(q.ap,q.ml,q.dv):q;
+  const cen=w=>({ap:med(w.map(q=>q.ap)),ml:med(w.map(q=>q.ml)),dv:med(w.map(q=>q.dv))});
+  if(!T||bilat()){
+    const w=v.map(at).map(q=>({ap:q.ap,ml:Math.abs(q.ml),dv:q.dv}));
+    return Object.assign(cen(w),{n:v.length,fold:true});
+  }
+  const side=k=>{ const w=v.filter(q=>k*q.ml>0).map(at); return w.length?cen(w):null; };
+  return {n:v.length,fold:false,L:side(-1),R:side(1)};
 }
 /* the spread of those same labels, which is what the projection plots */
-function extentOf(a){
+function extentOf(a,F){
   const v=ptsOf[a]; if(!v) return null;
-  const ml=v.map(q=>Math.abs(q.ml)), dv=v.map(q=>q.dv);
-  return {ml0:Math.min(...ml),ml1:Math.max(...ml),dv0:Math.min(...dv),dv1:Math.max(...dv),n:v.length};
+  const T=F&&FRAME.on, fold=!T||bilat();
+  const w=T?v.map(q=>toFrame(q.ap,q.ml,q.dv)):v;
+  const ml=w.map(q=>fold?Math.abs(q.ml):q.ml), dv=w.map(q=>q.dv);
+  return {fold,ml0:Math.min(...ml),ml1:Math.max(...ml),
+          dv0:Math.min(...dv),dv1:Math.max(...dv),n:v.length};
+}
+/* a centre as one line, or a line per hemisphere once the frame has broken the atlas's
+   symmetry and folding the two sides onto one figure would be a fiction */
+function ctrTxt(o){
+  const one=q=>`AP ${sgn(q.ap)} · ML ${o.fold?'±'+Math.abs(q.ml).toFixed(2):sgn(q.ml)} · DV ${sgn(q.dv)} mm`;
+  if(o.fold) return one(o);
+  return [o.R?'right '+one(o.R):'', o.L?'left '+one(o.L):''].filter(Boolean).join('<br>');
+}
+function extTxt(x){
+  const ml=x.fold
+    ? '±'+x.ml0.toFixed(2)+(x.ml1-x.ml0<.005?'':'–'+x.ml1.toFixed(2))
+    : sgn(x.ml0)+(x.ml1-x.ml0<.005?'':' to '+sgn(x.ml1));
+  return `ML ${ml} · DV ${sgn(x.dv0)}${x.dv1-x.dv0<.005?'':' to '+sgn(x.dv1)} mm`;
 }
 function select(a){
   sel=a; const r=byAb[a]; const D=$('det'); D.hidden=false;
   const c=coordsOf(a), x=extentOf(a);
+  const fc=FRAME.on?coordsOf(a,1):null, fx=FRAME.on?extentOf(a,1):null;
   D.innerHTML=`<p class="dn">${esc(r.name)}</p><span class="da">${esc(r.abbr)}</span>
    <dl class="kv">
      <dt>Plates</dt><dd>${r.first_plate}–${r.last_plate} <span style="color:var(--muted)">(${r.n_plates})</span></dd>
      <dt>Bregma</dt><dd>${r.bregma_anterior.toFixed(2)} to ${r.bregma_posterior.toFixed(2)} mm</dd>
-     <dt>Interaural</dt><dd>${(r.bregma_anterior+7.25).toFixed(2)} to ${(r.bregma_posterior+7.25).toFixed(2)} mm</dd>
+     <dt>Lambda</dt><dd>${(r.bregma_anterior+LMof('Lambda')).toFixed(2)} to ${(r.bregma_posterior+LMof('Lambda')).toFixed(2)} mm</dd>
+     <dt>Interaural</dt><dd>${(r.bregma_anterior+LMof('Interaural')).toFixed(2)} to ${(r.bregma_posterior+LMof('Interaural')).toFixed(2)} mm</dd>
      ${c?`<dt title="Median position of this structure's printed labels — near, but not identical to, its centroid">Label centre</dt>
-        <dd>AP ${sgn(c.ap)} · ML ±${c.ml.toFixed(2)} · DV ${sgn(c.dv)} mm</dd>`:''}
+        <dd>${ctrTxt(fc||c)}${fc?`<span class="atl">atlas ${ctrTxt(c)}</span>`:''}</dd>`:''}
      ${x?`<dt title="The full spread of those labels — what the projection below plots">Label extent</dt>
-        <dd>ML ±${x.ml0.toFixed(2)}${x.ml1-x.ml0<.005?'':'–'+x.ml1.toFixed(2)} · DV ${sgn(x.dv0)}${x.dv1-x.dv0<.005?'':' to '+sgn(x.dv1)} mm</dd>`:''}
+        <dd>${extTxt(fx||x)}${fx?`<span class="atl">atlas ${extTxt(x)}</span>`:''}</dd>`:''}
      <dt>Systems</dt><dd>${r.systems.map(t=>esc(t.replace(/_/g,' '))).join(', ')}</dd>
    </dl>
    <div class="plines">${r.plates.map(p=>`<span class="pbtn" data-p="${p}">${p}</span>`).join('')}</div>
@@ -1030,8 +1269,18 @@ function drawXH(f){
   $('xh').innerHTML=`<line x1="${BX0}" y1="${y}" x2="${BX1}" y2="${y}"/>`+
                     `<line x1="${x}" y1="${BY0}" x2="${x}" y2="${BY1}"/>`;
   const p=plateOf[cur];
-  $('rd').innerHTML=`bregma <b>${sgn(p.bregma)}</b> · ML <b>${sgn(toML(f[0]))}</b> · DV <b>${sgn(toDV(f[1]))}</b> mm`+
-    `<span style="color:var(--muted)"> · interaural ${sgn(p.interaural)}</span>`;
+  const ml=toML(f[0]), dv=toDV(f[1]);
+  if(FRAME.on){
+    /* AP is no longer a property of the plate: tilt the frame and it drifts down the
+       section, by sin(pitch) per millimetre of DV -- about 2.5 mm across the brain at
+       17 degrees. So the readout gives the AP of this point, not of the plate. */
+    const q=toFrame(p.bregma,ml,dv);
+    $('rd').innerHTML=`AP <b>${sgn(q.ap)}</b> · ML <b>${sgn(q.ml)}</b> · DV <b>${sgn(q.dv)}</b> mm`+
+      `<span class="atl">atlas bregma ${sgn(p.bregma)} · ML ${sgn(ml)} · DV ${sgn(dv)}</span>`;
+  } else {
+    $('rd').innerHTML=`bregma <b>${sgn(p.bregma)}</b> · ML <b>${sgn(ml)}</b> · DV <b>${sgn(dv)}</b> mm`+
+      `<span style="color:var(--muted)"> · interaural ${sgn(p.interaural)}</span>`;
+  }
 }
 function drawGrid(){
   const g=$('grid');
@@ -1069,6 +1318,11 @@ function drawMeas(){
   out.hidden=false;
   out.innerHTML=`<b>${d.toFixed(2)} mm</b> in plane · ΔML ${sgn(dml)} · ΔDV ${sgn(ddv)}`+
     ` · ${Math.abs(ang).toFixed(1)}° from vertical`+
+    /* a rotation preserves length, so the millimetres hold in any frame; the angle does
+       not, and this tool was scoped to stay in the atlas, so it says which frame it is in */
+    (FRAME.on?` <span class="fnote" title="A rotation preserves length, so the millimetres`+
+      ` hold in any frame. The angle does not — this tool was left in atlas coordinates.">`+
+      `in the atlas frame</span>`:'')+
     (mB?` <button type="button" class="z" id="mclr">Clear</button>`:'');
   if(mB) $('mclr').onclick=()=>{ mA=mB=mHover=null; drawMeas(); };
   done();
@@ -1125,11 +1379,10 @@ function exportPNG(){
     [mA,mB].forEach(p=>{ g.beginPath(); g.arc(p[0],p[1],4,0,6.2832); g.stroke(); });
   }
   /* the coordinate lookup's query point, but only on the plate its AP resolves to */
-  const qml=+$('rml').value, qdv=+$('rdv').value;
-  const qOn = smode==='coord' && Number.isFinite(qml) && Number.isFinite(qdv)
-              && apPlate()===cur;
+  const qa = smode==='coord' ? revAtlas() : null;
+  const qOn = !!qa && apPlate()===cur;
   if(qOn){
-    const x=fromML(qml), y=fromDV(qdv), R=12, A=5, B=R+8;
+    const x=fromML(qa.ml), y=fromDV(qa.dv), R=12, A=5, B=R+8;
     g.strokeStyle='#7b23c9'; g.lineWidth=2.4;
     g.beginPath(); g.arc(x,y,R,0,6.2832); g.stroke();
     g.lineWidth=1.6;
@@ -1149,7 +1402,10 @@ function exportPNG(){
   const notes=[];
   if(mA&&mB){ const dml=toML(mB[0])-toML(mA[0]), ddv=toDV(mB[1])-toDV(mA[1]);
     notes.push(`Measured ${Math.hypot(dml,ddv).toFixed(2)} mm (ΔML ${sgn(dml)}, ΔDV ${sgn(ddv)})`); }
-  if(qOn) notes.push(`Query point ML ${sgn(qml)}, DV ${sgn(qdv)}`);
+  if(qOn) notes.push(`Query point ML ${sgn(qa.ml)}, DV ${sgn(qa.dv)}`);
+  /* the sheet carries the plate and its overlays, all of which are atlas-framed, so it
+     says so rather than letting a working frame be assumed from the app around it */
+  if(FRAME.on) notes.push(`Atlas coordinates — working frame (${frameTxt()}) not applied to this plate`);
   notes.push('Radtke-Schuller et al. 2016, Brain Struct Funct 221(Suppl 1):1–272 · doi:10.1007/s00429-016-1259-0');
   g.font='13px ui-sans-serif,Segoe UI,Helvetica,Arial,sans-serif'; g.fillStyle='#8a8378';
   g.fillText(notes.join('   ·   '),0,NH+74);
@@ -1159,14 +1415,36 @@ function exportPNG(){
 function exportCSV(){
   const q=v=>`"${String(v).replace(/"/g,'""')}"`;
   const head=['abbr','name','first_plate','last_plate','n_plates','plates',
-    'bregma_anterior_mm','bregma_posterior_mm','interaural_anterior_mm','interaural_posterior_mm',
+    'bregma_anterior_mm','bregma_posterior_mm','lambda_anterior_mm','lambda_posterior_mm',
+    'interaural_anterior_mm','interaural_posterior_mm',
     'label_AP_bregma_mm','label_ML_abs_mm','label_DV_mm','n_labels','systems'];
+  /* the atlas columns are left exactly as they were and the working frame is added
+     beside them, never in place of them: a CSV outlives the session that set the frame,
+     so the file carries both readings and a spec saying which frame produced the second */
+  const FR=FRAME.on, fold=bilat();
+  if(FR) head.push(...(fold
+      ? ['frame_AP_mm','frame_ML_abs_mm','frame_DV_mm']
+      : ['frame_AP_right_mm','frame_ML_right_mm','frame_DV_right_mm',
+         'frame_AP_left_mm','frame_ML_left_mm','frame_DV_left_mm']),'frame_spec');
+  /* deliberately comma-free: it is a quoted field so a comma would be legal, but this
+     column exists to be read a year later, often by something that splits on commas */
+  const spec=FR?`pitch=${FRAME.pitch} roll=${FRAME.roll} yaw=${FRAME.yaw}`+
+    ` pivot_AP/ML/DV=${FRAME.pap}/${FRAME.pml}/${FRAME.pdv}`+
+    ` offset_AP/ML/DV=${FRAME.dap}/${FRAME.dml}/${FRAME.ddv}`+
+    ` order=yaw>pitch>roll signs=nose-down/right-ear-down/nose-right`:'';
   const rows=results.map(r=>{ const c=coordsOf(r.abbr);
-    return [r.abbr,r.name,r.first_plate,r.last_plate,r.n_plates,r.plates.join(' '),
+    const row=[r.abbr,r.name,r.first_plate,r.last_plate,r.n_plates,r.plates.join(' '),
       r.bregma_anterior.toFixed(2),r.bregma_posterior.toFixed(2),
-      (r.bregma_anterior+7.25).toFixed(2),(r.bregma_posterior+7.25).toFixed(2),
+      (r.bregma_anterior+LMof('Lambda')).toFixed(2),(r.bregma_posterior+LMof('Lambda')).toFixed(2),
+      (r.bregma_anterior+LMof('Interaural')).toFixed(2),(r.bregma_posterior+LMof('Interaural')).toFixed(2),
       c?c.ap.toFixed(2):'', c?c.ml.toFixed(2):'', c?c.dv.toFixed(2):'', c?c.n:0,
-      r.systems.join(' ')].map(q).join(','); });
+      r.systems.join(' ')];
+    if(FR){
+      const k=coordsOf(r.abbr,1);
+      const t=o=>o?[o.ap.toFixed(2),o.ml.toFixed(2),o.dv.toFixed(2)]:['','',''];
+      row.push(...(fold?t(k):[...t(k&&k.R),...t(k&&k.L)]), spec);
+    }
+    return row.map(q).join(','); });
   const csv='﻿'+[head.map(q).join(',')].concat(rows).join('\r\n')+'\r\n';
   dl('gerbil_atlas_structures.csv',
      URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'})), true);
@@ -1273,7 +1551,7 @@ function pjShow(q){
   const V=VIEWS[pview], r=byAb[q.ab], cx=pjx(q.ap), cy=pjy(V,q[V.k]);
   PJT.innerHTML=`<span class="ta">${esc(q.ab)}</span>`+
     `<span class="tn">${esc(r?r.name:'not in the published index')}</span>`+
-    `<span class="tx">plate ${q.p} \u00b7 AP ${sgn(q.ap)} \u00b7 ML ${sgn(q.ml)} \u00b7 DV ${sgn(q.dv)} mm</span>`;
+    `<span class="tx">plate ${q.p} · ${FRAME.on?'atlas ':''}AP ${sgn(q.ap)} · ML ${sgn(q.ml)} · DV ${sgn(q.dv)} mm</span>`;
   PJT.hidden=false;
   PJH.setAttribute('cx',cx.toFixed(1)); PJH.setAttribute('cy',cy.toFixed(1));
   PJH.style.display=''; PJW.classList.add('hot');
@@ -1744,7 +2022,7 @@ function v3show(i){
   const q=PTS[i], r=byAb[q.ab];
   V3TIP.innerHTML=`<span class="ta">${esc(q.ab)}</span>`+
     `<span class="tn">${esc(r?r.name:'not in the published index')}</span>`+
-    `<span class="tx">plate ${q.p} · AP ${sgn(q.ap)} · ML ${sgn(q.ml)} · DV ${sgn(q.dv)} mm</span>`;
+    `<span class="tx">plate ${q.p} · ${FRAME.on?'atlas ':''}AP ${sgn(q.ap)} · ML ${sgn(q.ml)} · DV ${sgn(q.dv)} mm</span>`;
   V3TIP.hidden=false; V3WRAP.classList.add('hot');
   const s=v3proj(v3mvp(),[q.ml,w3y(q.dv),w3z(q.ap)]); if(!s) return;
   const b=V3WRAP.getBoundingClientRect(), tw=V3TIP.offsetWidth, th=V3TIP.offsetHeight;
@@ -1894,6 +2172,7 @@ function writeHash(){
   if(v3mode!=='contour') h+='&r='+v3mode;
   if(v3a>0||v3b<61) h+='&sl='+(v3a+1)+','+(v3b+1);
   if(v3half) h+='&hf=1';
+  if(FRAME.on) h+='&fr='+FKEYS.map(k=>FRAME[k]).join(',');
   lastWritten='#'+h;
   /* replaceState can be refused on a file:// origin, which is how the README says to
      open this; falling back to the hash keeps deep links working there too */
@@ -1938,6 +2217,14 @@ function readHash(){
   v3half = par.hf==='1';
   $('v3h').checked=v3half;
 
+  /* the frame is sticky: a link carrying one sets it, a link without one leaves whatever
+     this browser had stored. Wiping a lab's calibration because somebody opened a bare
+     #p30 link would be a nasty way to lose it. */
+  const fr=(par.fr||'').split(',').map(Number);
+  if(par.fr && fr.length===FKEYS.length && fr.every(Number.isFinite)){
+    const o={on:true}; FKEYS.forEach((k,i)=>o[k]=fr[i]); frameSet(o);
+  }
+
   setTab(par.t==='proj'?'proj':(par.t==='v3d'?'v3d':'plate'));
   return true;
 }
@@ -1964,20 +2251,35 @@ $('elink').onclick=e=>copyLink(e.currentTarget);
    Nothing here reads the hover position, which is why the old shortcut kept filling in
    wherever the pointer happened to leave the image on its way to the button. */
 
-/* the plate whose bregma is nearest the AP field: the AP this lookup can really resolve */
+/* the three fields as atlas millimetres. With a working frame they are read in that
+   frame and inverted, and the landmark dropdown steps aside: lambda, interaural and the
+   occipital crest are AP landmarks with no DV or ML recorded anywhere in the database,
+   so their position in a tilted frame cannot be worked out honestly. Without a frame
+   nothing changes and the dropdown is the plain AP offset it always was. */
+function revAtlas(){
+  const ap=+$('rap').value, ml=+$('rml').value, dv=+$('rdv').value;
+  if(![ap,ml,dv].every(Number.isFinite)) return null;
+  return FRAME.on ? fromFrame(ap,ml,dv) : {ap:ap-(+$('rref').value),ml,dv};
+}
+/* the plate whose bregma is nearest the AP field: the AP this lookup can really resolve.
+   Under a tilted frame the inverse mixes all three axes, so this now depends on ML and DV
+   as well -- which is why it takes the whole triplet rather than reading rap alone. */
 function apPlate(){
-  const ap=(+$('rap').value)-(+$('rref').value);
-  if(!Number.isFinite(ap)) return null;
-  return P.reduce((a,b)=>Math.abs(b.bregma-ap)<Math.abs(a.bregma-ap)?b:a).plate;
+  const a=revAtlas();
+  if(!a) return null;
+  return P.reduce((x,b)=>Math.abs(b.bregma-a.ap)<Math.abs(x.bregma-a.ap)?b:x).plate;
 }
 /* solid on the plate the AP resolves to, faint on any other, so a result found on a
    neighbouring plate can still be read against the ML and DV that were asked for */
 function drawPick(){
-  const g=$('pk'), ml=+$('rml').value, dv=+$('rdv').value;
-  if(smode!=='coord'||!Number.isFinite(ml)||!Number.isFinite(dv)){
-    g.innerHTML=''; g.classList.remove('off'); return;
-  }
-  const x=fromML(ml), y=fromDV(dv), R=12, A=5, B=R+8;
+  const g=$('pk'), ml0=+$('rml').value, dv0=+$('rdv').value;
+  /* off the frame this is a plain ML/DV mark and AP need not be filled in; on it the
+     point's place on the plate depends on AP too, so all three have to be there */
+  const pt = smode!=='coord' ? null
+    : FRAME.on ? revAtlas()
+    : (Number.isFinite(ml0)&&Number.isFinite(dv0) ? {ml:ml0,dv:dv0} : null);
+  if(!pt){ g.innerHTML=''; g.classList.remove('off'); return; }
+  const x=fromML(pt.ml), y=fromDV(pt.dv), R=12, A=5, B=R+8;
   const arm=(x1,y1,x2,y2)=>`<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}"`+
                            ` x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}"/>`;
   g.classList.toggle('off', apPlate()!==cur);
@@ -1996,11 +2298,13 @@ function revPlate(){
 function revSync(){ revPlate(); drawPick(); }
 
 function revRun(){
-  const off=+$('rref').value;
-  const ap=(+$('rap').value)-off, ml=+$('rml').value, dv=+$('rdv').value;
+  const a=revAtlas();
   const O=$('revout');
   revSync();
-  if(![ap,ml,dv].every(Number.isFinite)){ O.innerHTML='<p class="empty">Enter AP, ML and DV.</p>'; return; }
+  if(!a){ O.innerHTML='<p class="empty">Enter AP, ML and DV.</p>'; return; }
+  /* the search itself never moved: it runs in atlas millimetres, which is also why its
+     bilateral ML matching stays right under a roll or a yaw that is not itself symmetric */
+  const {ap,ml,dv}=a;
   const best=new Map();
   for(const q of PTS){
     /* the atlas is bilaterally symmetric, so match ML against whichever side is nearer */
@@ -2008,12 +2312,14 @@ function revRun(){
     const d=Math.hypot(q.ap-ap,dm,q.dv-dv);
     const e=best.get(q.ab); if(!e||d<e.d) best.set(q.ab,{d,q});
   }
-  O.innerHTML=[...best.values()].sort((a,b)=>a.d-b.d).slice(0,10).map(({d,q})=>{
+  O.innerHTML=[...best.values()].sort((x,y)=>x.d-y.d).slice(0,10).map(({d,q})=>{
     const r=byAb[q.ab];
+    /* the row is read in whichever frame was asked in; the atlas figures stay on the title */
+    const rc=FRAME.on?toFrame(q.ap,q.ml,q.dv):q;
     return `<div class="rrow${d<0.5?' near':''}" data-a="${esc(q.ab)}" data-p="${q.p}">
       <span class="ab">${esc(q.ab)}</span>
       <span class="nm">${esc(r?r.name:'—')}</span>
-      <span class="rd2">plate ${q.p} · AP ${sgn(q.ap)} · ML ±${Math.abs(q.ml).toFixed(2)} · DV ${sgn(q.dv)}</span>
+      <span class="rd2"${FRAME.on?` title="atlas AP ${sgn(q.ap)} · ML ±${Math.abs(q.ml).toFixed(2)} · DV ${sgn(q.dv)}"`:''}>plate ${q.p} · AP ${sgn(rc.ap)} · ML ±${Math.abs(rc.ml).toFixed(2)} · DV ${sgn(rc.dv)}</span>
       <span class="rdist">${d.toFixed(2)} mm</span></div>`; }).join('');
   [...O.querySelectorAll('.rrow')].forEach(el=>el.onclick=()=>{
     go(+el.dataset.p); select(el.dataset.a); setTab('plate');
@@ -2037,9 +2343,15 @@ function setPick(on){
   hideTip(); mark(); fit();
 }
 function takePick(f){
-  $('rml').value=toML(f[0]).toFixed(2);
-  $('rdv').value=toDV(f[1]).toFixed(2);
-  $('rap').value=(plateOf[cur].bregma + +$('rref').value).toFixed(2);
+  const ml=toML(f[0]), dv=toDV(f[1]), ap=plateOf[cur].bregma;
+  if(FRAME.on){
+    const q=toFrame(ap,ml,dv);
+    $('rap').value=q.ap.toFixed(2); $('rml').value=q.ml.toFixed(2); $('rdv').value=q.dv.toFixed(2);
+  } else {
+    $('rml').value=ml.toFixed(2);
+    $('rdv').value=dv.toFixed(2);
+    $('rap').value=(ap + +$('rref').value).toFixed(2);
+  }
   setPick(false); revRun();
 }
 $('rpick').onclick=()=>setPick(!pickArm);
@@ -2168,6 +2480,163 @@ function setTheme(t){
 $('themeb').onclick=()=>setTheme(THEMES[(THEMES.indexOf(theme)+1)%THEMES.length]);
 setTheme(theme);
 
+/* ---------- the working frame: the dialog, and everything a change has to refresh ----
+   One way in and one way out: frameRead() takes the fields, frameApply() rebuilds the
+   matrix and re-renders every readout that quotes a coordinate. Nothing else writes to
+   FRAME, so no value can reach the matrix without having been a finite number first. */
+const FDLG=$('frame');
+const FKEYS=['pitch','roll','yaw','pap','pml','pdv','dap','dml','ddv'];
+const FIN={pitch:'fpitch',roll:'froll',yaw:'fyaw',pap:'fpap',pml:'fpml',pdv:'fpdv',
+           dap:'fdap',dml:'fdml',ddv:'fddv'};
+/* the preview names somewhere familiar and shows what the frame does to it. Nothing in
+   the atlas records which way a given frame is tilted, so a sign cannot be checked by the
+   app -- it has to be read back against anatomy the user already knows. */
+const FPREV=['MSO','CIC','Au1','CA1'].find(a=>ptsOf[a]&&ptsOf[a].length)||S[0].abbr;
+function framePreview(){
+  const a=coordsOf(FPREV), el=$('fprev');
+  if(!a){ el.textContent=''; return; }
+  el.innerHTML=FRAME.on
+    ? `<b>${esc(FPREV)}</b> ${ctrTxt(coordsOf(FPREV,1))}<span class="fpa">atlas ${ctrTxt(a)}</span>`
+    : `<b>${esc(FPREV)}</b> ${ctrTxt(a)}<span class="fpa">the frame is off, so this is the atlas reading</span>`;
+}
+function frameApply(){
+  frmBuild();
+  const b=$('frameb');
+  b.classList.toggle('on',FRAME.on);
+  b.textContent=FRAME.on?'Frame · '+frameTxt():'Frame';
+  b.title=FRAME.on
+    ? `Coordinates are read in your frame: ${frameTxt()}, about pivot `+
+      `${FRAME.pap}/${FRAME.pml}/${FRAME.pdv} — click to change`
+    : "Work in your own stereotaxic frame rather than the atlas's";
+  $('fon').textContent=FRAME.on?'Turn off':'Turn on';
+  /* lambda, interaural and the occipital crest are AP landmarks with no DV or ML on
+     record, so in a tilted frame the dropdown has nothing honest to offer */
+  $('rref').disabled=FRAME.on;
+  $('rrefl').textContent=FRAME.on?'from the pivot':'relative to';
+  framePreview(); frameMarks();
+  if(sel) select(sel);
+  if(showXY&&lastPt) drawXH(lastPt);
+  drawMeas(); revRun(); frameSave(); queueHash();
+}
+/* A preset sets the pivot's AP -- the landmark sits that far anterior of bregma, so the
+   pivot goes to minus that -- and puts it on the midline. It cannot set DV, because the
+   atlas gives every one of these an AP and none of them a height. For pitch that is not a
+   detail: pitch turns about a mediolateral axis, so the interaural preset only becomes the
+   ear-bar axis once DV says how far below the user's zero that axis sits. */
+$('fset').innerHTML='<span>Put the pivot on</span>'+LM.map(([n,off],i)=>
+  `<button class="b" type="button" data-i="${i}" title="Pivot AP ${sgn(-off)} mm, on the midline">${esc(n)}</button>`).join('');
+[...$('fset').children].forEach(b=>{ if(b.dataset.i===undefined) return;
+  b.onclick=()=>{ $('fpap').value=-LM[+b.dataset.i][1]; $('fpml').value=0; frameRead(); }; });
+/* a preset lights up while the pivot still sits where it put it; DV is free to be anything */
+function frameMarks(){
+  [...$('fset').children].forEach(b=>{ if(b.dataset.i===undefined) return;
+    b.classList.toggle('on', Math.abs(FRAME.pap+LM[+b.dataset.i][1])<1e-9 && !FRAME.pml); });
+}
+/* ---------- angles from two readings ----------
+   Two points and the distance between them give an angle: atan(difference / separation).
+   One shape serves all three axes; only which axis is read changes. The inputs are ordered
+   so that "second minus first" is always the positive sense of the convention -- anterior
+   then posterior for pitch, right then left for roll and yaw.
+
+   What the answer is relative to is NOT the same for all three, and that is the part worth
+   knowing. The atlas is bilaterally symmetric -- midline structures sit within 0.10 mm of
+   ML 0 -- so its own roll and yaw against a symmetric skull are zero by construction, and a
+   roll or yaw measured off symmetric landmarks IS the deviation from the atlas. Pitch has no
+   such anchor: the atlas prints an AP for bregma, lambda, interaural and occipital crest and
+   a height for none of them, so bregma-to-lambda gives the skull's tilt in the frame against
+   flat skull, not against the atlas's own plane. The reading is written straight into the
+   field, so the note under each result says what it actually measured. */
+const MEAS=[
+  {k:'pitch',t:'Pitch',pre:1,dv:4.45,d:'AP apart, as read in your frame (mm)',
+   a:'DV at bregma (anterior)', b:'DV at the posterior landmark',
+   n:"The skull's tilt in your frame, against flat skull — <b>not</b> against the atlas "+
+     "plane, which the atlas gives no way to locate on the skull. Using it replaces the pitch "+
+     "angle outright, so whatever atlas offset that field held is discarded. "+
+     "Read the AP span off the manipulator rather than taking the nominal one: the atlas's "+
+     "4.45 and 7.25 are separations along <em>its</em> AP axis, and a tilted frame sees them "+
+     "foreshortened, which reads about 0.7° low at 17°."},
+  {k:'roll',t:'Roll',dv:6,d:'ML apart, as set on the arm (mm)',
+   a:'DV at the right point (ML +)', b:'DV at the left point (ML −)',
+   n:'A deviation from the atlas directly: the atlas is bilaterally symmetric, so its own '+
+     'roll against a symmetric skull is zero and there is no baseline to add. The span is '+
+     'exact here, unlike the pitch one, because you drive the arm to it rather than read it.'},
+  {k:'yaw',t:'Yaw',dv:6,d:'ML apart, as set on the arm (mm)',
+   a:'AP at the right point (ML +)', b:'AP at the left point (ML −)',
+   n:'A deviation from the atlas directly, for the same reason.'}
+];
+const mId=(k,x)=>'m_'+k+'_'+x;
+/* An empty box is a reading that was not taken, not a reading of zero. Coercing it with +
+   the way the frame fields do would turn a half-filled form into a confident angle, so a
+   blank leaves the result blank and the Use button disabled. */
+function measAngle(m){
+  const num=x=>{ const t=$(mId(m.k,x)).value.trim(); if(!t) return NaN;
+    const v=+t; return Number.isFinite(v)?v:NaN; };
+  const a=num('a'), b=num('b'), d=num('d');
+  if([a,b,d].some(Number.isNaN)||!d) return null;
+  return Math.atan2(b-a,Math.abs(d))*180/Math.PI;
+}
+$('fmeas').innerHTML=MEAS.map(m=>
+  `<div class="fmb">
+     <div class="fmh"><b>${m.t}</b>${m.pre?'<span>nominal span</span>'+LM.filter(l=>l[1]).map(l=>
+       `<button class="b" type="button" data-k="${m.k}" data-d="${l[1]}"`+
+       ` title="The atlas's own AP separation. A span you read in your own frame is better.">`+
+       `bregma–${esc(l[0].toLowerCase())} ${l[1].toFixed(2)}</button>`).join(''):''}</div>
+     <div class="fgrid">
+       <label class="ffld"><span>${m.a}</span><input type="number" step="0.05" id="${mId(m.k,'a')}"></label>
+       <label class="ffld"><span>${m.b}</span><input type="number" step="0.05" id="${mId(m.k,'b')}"></label>
+       <label class="ffld"><span>${m.d}</span><input type="number" step="0.05" id="${mId(m.k,'d')}" value="${m.dv.toFixed(2)}"></label>
+     </div>
+     <div class="fmo"><span class="v" id="${mId(m.k,'r')}">—</span>
+       <button class="b" type="button" id="${mId(m.k,'u')}" disabled>Use as ${m.k}</button></div>
+     <p class="fmn">${m.n}</p>
+   </div>`).join('');
+function measCalc(){
+  MEAS.forEach(m=>{
+    const v=measAngle(m);
+    $(mId(m.k,'r')).textContent = v===null?'—':sgn(v)+'°';
+    $(mId(m.k,'u')).disabled = v===null;
+  });
+}
+MEAS.forEach(m=>{
+  ['a','b','d'].forEach(x=>$(mId(m.k,x)).oninput=measCalc);
+  $(mId(m.k,'u')).onclick=()=>{ const v=measAngle(m); if(v===null) return;
+    $(FIN[m.k]).value=+v.toFixed(2); frameRead(); };
+});
+[...$('fmeas').querySelectorAll('button[data-d]')].forEach(b=>
+  b.onclick=()=>{ $(mId(b.dataset.k,'d')).value=(+b.dataset.d).toFixed(2); measCalc(); });
+measCalc();
+
+function frameSet(o){
+  FKEYS.forEach(k=>{ const v=+o[k]; if(Number.isFinite(v)) FRAME[k]=v; });
+  FRAME.on=!!o.on;
+  FKEYS.forEach(k=>{ $(FIN[k]).value=FRAME[k]; });
+}
+function frameRead(){
+  FKEYS.forEach(k=>{ const v=+$(FIN[k]).value; FRAME[k]=Number.isFinite(v)?v:0; });
+  frameApply();
+}
+function frameSave(){
+  try{
+    if(FRAME.on) localStorage.setItem('gae-frame',JSON.stringify(FRAME));
+    else localStorage.removeItem('gae-frame');
+  }catch(_){}
+}
+function frameLoad(){
+  let o=null;
+  try{ o=JSON.parse(localStorage.getItem('gae-frame')||'null'); }catch(_){}
+  if(o&&typeof o==='object') frameSet(o);
+}
+const frameZero=()=>{ const z={on:false}; FKEYS.forEach(k=>z[k]=0); return z; };
+FKEYS.forEach(k=>{ $(FIN[k]).oninput=frameRead; });
+$('fon').onclick=()=>{ FRAME.on=!FRAME.on; frameApply(); };
+$('fzero').onclick=()=>{ frameSet(frameZero()); frameApply(); };
+$('frameb').onclick=()=>{
+  framePreview();
+  if(FDLG.showModal) FDLG.showModal(); else FDLG.setAttribute('open','');
+};
+$('framex').onclick=()=>FDLG.close();
+FDLG.addEventListener('click',e=>{ if(e.target===FDLG) FDLG.close(); });
+
 /* ---------- about: the long form of what the footer says in one line ---------- */
 const ABOUT=$('about');
 const openAbout=()=>{ if(ABOUT.showModal) ABOUT.showModal(); else ABOUT.setAttribute('open',''); };
@@ -2176,8 +2645,10 @@ $('aboutb2').onclick=openAbout;
 $('aboutx').onclick=()=>ABOUT.close();
 ABOUT.addEventListener('click',e=>{ if(e.target===ABOUT) ABOUT.close(); });
 
+frameLoad();                 /* before readHash, so a link's frame wins over the stored one */
 pjAxes(); run();
 if(!readHash()) go(30);
+frameApply();
 fit(); applyView(); revRun();
 </script>
 </body>
