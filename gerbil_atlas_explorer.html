@@ -577,6 +577,7 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
         <label class="lb3" id="v3sol" hidden title="How opaque the skull is drawn"
           >Bone <input type="range" id="v3so" min="6" max="90" value="32"></label>
         <label class="tg" title="Cut at the midline to see inside"><input type="checkbox" id="v3h">Half</label>
+        <label class="tg" title="Parallel projection — no perspective foreshortening, so equal lengths read equally wherever they sit"><input type="checkbox" id="v3o">Ortho</label>
         <button class="z" id="v3r" type="button" title="Back to the default viewpoint">Reset view</button>
       </span>
       <button class="z" id="elink" type="button" title="Copy a link back to this plate, structure and view">Copy link</button>
@@ -706,7 +707,10 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
       atlas&rsquo;s own drawn boundaries as a stack, <em>Volume</em> ray-marches the same field, and
       <em>Labels</em> plots all 6,220 printed abbreviations as a stereotaxic point cloud &mdash; the
       projection views with the third axis put back. Nothing extra is downloaded; it is built
-      from the plate images already on the page, once, the first time you open it.</p>
+      from the plate images already on the page, once, the first time you open it.
+      <em>Ortho</em> swaps the perspective camera for a parallel one: nothing is
+      foreshortened, so equal lengths read equally wherever they sit in depth, which is
+      what you want when comparing positions rather than looking at the brain.</p>
     <p>Two things to keep in mind. Sections are 350&nbsp;µm apart but a plate pixel is about
       17.5&nbsp;µm, so sampling <em>along</em> the brain is 20&times; coarser than across it: the
       stack really is discrete, and the streaking in the volume view is interpolation between
@@ -1850,6 +1854,7 @@ const w3y=dv=>dv-V3YC, w3z=ap=>(V3Z0-ap)-V3ZS/2;
 const V3CV=$('v3c'), V3WRAP=$('v3w'), V3MSG=$('v3msg'), V3TIP=$('v3t');
 let gl=null, v3ready=false, v3busy=false, v3fail='';
 let v3mode='contour', v3op=.42, v3a=0, v3b=61, v3half=false;
+let v3ortho=false;                 /* parallel vs perspective projection */
 let v3sk=false, v3sko=.32;             /* the skull shell: off by default, opacity 0..1 */
 let v3az=-.82, v3el=.30, v3dist=26, v3tx=0, v3ty=0;   /* orbit + screen-space pan */
 let v3hot=null, v3raf=null, v3col={};
@@ -1860,6 +1865,11 @@ function m3mul(a,b){ const o=new Float32Array(16);
     for(let k=0;k<4;k++) s+=a[k*4+j]*b[i*4+k]; o[i*4+j]=s; } return o; }
 function m3persp(f,asp,n,fa){ const t=1/Math.tan(f/2), o=new Float32Array(16);
   o[0]=t/asp; o[5]=t; o[10]=(fa+n)/(n-fa); o[11]=-1; o[14]=2*fa*n/(n-fa); return o; }
+/* Parallel projection. The near plane goes behind the eye because nothing here is
+   depth-tested and the camera can be closer to the brain than the box's front face:
+   a positive near would clip the near half of the stack away. */
+function m3ortho(hh,asp,n,fa){ const o=new Float32Array(16);
+  o[0]=1/(hh*asp); o[5]=1/hh; o[10]=-2/(fa-n); o[14]=-(fa+n)/(fa-n); o[15]=1; return o; }
 function m3look(e,c,u){
   const s=[e[0]-c[0],e[1]-c[1],e[2]-c[2]], lz=Math.hypot(...s)||1;
   const z=[s[0]/lz,s[1]/lz,s[2]/lz];
@@ -1875,11 +1885,20 @@ function v3cam(){
   return [v3dist*ce*Math.sin(v3az), v3dist*Math.sin(v3el), v3dist*ce*Math.cos(v3az)];
 }
 /* the pan is applied after the view matrix, so dragging always tracks the screen */
+/* the unit vector from the brain toward the eye, kept for the picker: with no w to
+   divide by, an orthographic projection has to measure depth along the view axis */
+let v3dep=null;
 function v3mvp(){
   const w=V3CV.width||1, h=V3CV.height||1;
-  const V=m3look(v3cam(),[0,0,0],[0,1,0]);
+  const c=v3cam(), L=Math.hypot(c[0],c[1],c[2])||1;
+  v3dep=[c[0]/L,c[1]/L,c[2]/L];
+  const V=m3look(c,[0,0,0],[0,1,0]);
   V[12]+=v3tx; V[13]+=v3ty;
-  return m3mul(m3persp(.72, w/h, .4, 400), V);
+  /* the parallel view is framed to match the perspective one at the pivot plane, so
+     switching between them neither jumps nor rescales and the wheel still zooms */
+  const P = v3ortho ? m3ortho(v3dist*Math.tan(.36), w/h, -400, 400)
+                    : m3persp(.72, w/h, .4, 400);
+  return m3mul(P, V);
 }
 
 /* ---------- shaders ---------- */
@@ -1920,10 +1939,13 @@ void main(){ v_p=a_p; gl_Position=u_mvp*vec4(a_p,1.0); }`;
 const V3_VOL=`#version 300 es
 precision highp float; precision highp sampler3D;
 in vec3 v_p; out vec4 o;
-uniform sampler3D u_vol; uniform vec3 u_cam,u_lo,u_hi,u_ce,u_ti;
-uniform float u_op,u_half,u_z0,u_z1,u_ink;
+uniform sampler3D u_vol; uniform vec3 u_cam,u_lo,u_hi,u_ce,u_ti,u_vdir;
+uniform float u_op,u_half,u_z0,u_z1,u_ink,u_ortho;
 void main(){
-  vec3 ro=u_cam, rd=normalize(v_p-u_cam);
+  /* under a parallel projection every ray shares the view direction, and starts far
+     enough back that the box-entry clamp below still finds the front face */
+  vec3 rd = u_ortho>0.5 ? u_vdir : normalize(v_p-u_cam);
+  vec3 ro = u_ortho>0.5 ? v_p-u_vdir*400.0 : u_cam;
   vec3 i0=(u_lo-ro)/rd, i1=(u_hi-ro)/rd;
   vec3 lo=min(i0,i1), hi=max(i0,i1);
   float t0=max(max(max(lo.x,lo.y),lo.z),0.0), t1=min(min(hi.x,hi.y),hi.z);
@@ -1950,7 +1972,7 @@ void main(){
 /* the printed labels: dim for all, mid for the current filter, bright for the selection */
 const V3_PTV=`#version 300 es
 layout(location=0) in vec3 a_p; layout(location=1) in float a_f;
-uniform mat4 u_mvp; uniform float u_size,u_half,u_zl,u_zh,u_only;
+uniform mat4 u_mvp; uniform float u_size,u_half,u_zl,u_zh,u_only,u_ow;
 out float v_f;
 void main(){
   v_f=a_f;
@@ -1961,7 +1983,10 @@ void main(){
      top of a solid render is noise, not information. */
   if((u_half>0.5 && a_p.x<0.0) || a_p.z<u_zl || a_p.z>u_zh || (u_only>0.5 && a_f<0.5))
     gl_Position=vec4(2.0,2.0,2.0,1.0);
-  gl_PointSize=u_size*(a_f>1.5?1.85:1.0)*clamp(26.0/max(gl_Position.w,1.0),0.55,2.4);
+  /* perspective shrinks far dots by their w; a parallel view has none, so the whole
+     cloud takes one size from the camera distance instead of all clamping to the max */
+  float wv = u_ow>0.0 ? u_ow : max(gl_Position.w,1.0);
+  gl_PointSize=u_size*(a_f>1.5?1.85:1.0)*clamp(26.0/wv,0.55,2.4);
 }`;
 const V3_PTF=`#version 300 es
 precision highp float; in float v_f; out vec4 o;
@@ -2380,6 +2405,9 @@ function v3render(){
     gl.enable(gl.CULL_FACE); gl.cullFace(gl.FRONT);
     gl.uniformMatrix4fv(U(pVol,'u_mvp'),false,M);
     gl.uniform3fv(U(pVol,'u_cam'),new Float32Array(cam));
+    const cl=Math.hypot(cam[0],cam[1],cam[2])||1;
+    gl.uniform3f(U(pVol,'u_vdir'),-cam[0]/cl,-cam[1]/cl,-cam[2]/cl);
+    gl.uniform1f(U(pVol,'u_ortho'),v3ortho?1:0);
     gl.uniform3f(U(pVol,'u_lo'),V3X0,w3y(V3Y0),w3z(V3Z0));
     gl.uniform3f(U(pVol,'u_hi'),V3X1,w3y(V3Y1),w3z(V3Z1));
     gl.uniform3fv(U(pVol,'u_ce'),v3col.ce);
@@ -2426,6 +2454,7 @@ function v3render(){
   gl.uniform1f(U(pPts,'u_zl'),w3z(P[v3a].bregma)-.02);
   gl.uniform1f(U(pPts,'u_zh'),w3z(P[v3b].bregma)+.02);
   gl.uniform1f(U(pPts,'u_only'),v3mode==='points'?0:1);
+  gl.uniform1f(U(pPts,'u_ow'), v3ortho ? v3dist : 0);
   gl.uniform3fv(U(pPts,'u_c0'),v3col.c0);
   gl.uniform3fv(U(pPts,'u_c1'),v3col.c1);
   gl.uniform3fv(U(pPts,'u_c2'),v3col.c2);
@@ -2442,7 +2471,10 @@ function v3proj(M,p){
         w=M[3]*p[0]+M[7]*p[1]+M[11]*p[2]+M[15];
   if(w<=0) return null;
   const b=V3WRAP.getBoundingClientRect();
-  return [(x/w*.5+.5)*b.width, (.5-y/w*.5)*b.height, w];
+  /* w is the eye distance under perspective and a constant 1 under a parallel one, so
+     ties there are broken along the view axis instead -- smaller is still nearer */
+  const d = (v3ortho&&v3dep) ? -(p[0]*v3dep[0]+p[1]*v3dep[1]+p[2]*v3dep[2]) : w;
+  return [(x/w*.5+.5)*b.width, (.5-y/w*.5)*b.height, d];
 }
 function v3near(e){
   if(!v3ready) return -1;
@@ -2559,6 +2591,7 @@ $('v3a').oninput=e=>{ v3a=Math.min(+e.target.value-1,v3b); e.target.value=v3a+1;
 $('v3b').oninput=e=>{ v3b=Math.max(+e.target.value-1,v3a); e.target.value=v3b+1;
   $('v3bl').textContent=v3b+1; v3note(); v3frame(); queueHash(); };
 $('v3h').onchange=e=>{ v3half=e.target.checked; v3note(); v3frame(); queueHash(); };
+$('v3o').onchange=e=>{ v3ortho=e.target.checked; v3note(); v3frame(); queueHash(); };
 $('v3r').onclick=()=>{ v3az=-.82; v3el=.30; v3dist=v3sk?38:26; v3tx=v3ty=0; v3frame(); };
 
 function v3note(){
@@ -2568,6 +2601,7 @@ function v3note(){
     ? ` Plates ${v3a+1}–${v3b+1} only (bregma ${sgn(P[v3a].bregma)} to ${sgn(P[v3b].bregma)} mm).` : '';
   const half = v3half ? ' Cut at the midline.' : '';
   const bone = v3sk ? ' Skull fit is experimental and approximate.' : '';
+  const proj = v3ortho ? ' Parallel projection: equal lengths read equally at any depth.' : '';
   if(v3mode==='points'){
     const q=(sel&&ptsOf[sel])||[];
     N.innerHTML = (sel&&q.length
@@ -2575,7 +2609,7 @@ function v3note(){
         `${new Set(q.map(t=>t.p)).size} plate${new Set(q.map(t=>t.p)).size>1?'s':''}, against all 6,220. `
       : `All 6,220 printed labels at their stereotaxic positions. `)+
       `A dot is where an abbreviation is <em>printed</em> — close to its structure, not its centre. `+
-      `Hover to read one, click to open its plate.`+slab+half+bone;
+      `Hover to read one, click to open its plate.`+slab+half+proj+bone;
     return;
   }
   const q=(sel&&ptsOf[sel])||[];
@@ -2584,7 +2618,7 @@ function v3note(){
   N.innerHTML = (v3mode==='contour'
     ? `The atlas's own drawn contours, each at its true bregma. It reads as a stack because that is what it is — 62 sections, 350 µm apart.`
     : `The same field ray-marched. Sampling along the brain is 20× coarser than across it, so the streaks are interpolation, not anatomy.`)+
-    on+` The ring marks plate ${cur}.`+slab+half+bone;
+    on+` The ring marks plate ${cur}.`+slab+half+proj+bone;
 }
 
 /* built on first sight, not on load: it costs a second and most visits never open it */
@@ -2629,6 +2663,7 @@ function writeHash(){
   if(v3mode!=='contour') h+='&r='+v3mode;
   if(v3a>0||v3b<61) h+='&sl='+(v3a+1)+','+(v3b+1);
   if(v3half) h+='&hf=1';
+  if(v3ortho) h+='&or=1';
   if(v3sk) h+='&sk='+Math.round(v3sko*100);
   if(FRAME.on){ h+='&fr='+FKEYS.map(k=>FRAME[k]).join(','); if(FRAME.org) h+='&fo=1'; }
   lastWritten='#'+h;
@@ -2680,6 +2715,8 @@ function readHash(){
   $('v3b').value=v3b+1; $('v3bl').textContent=v3b+1;
   v3half = par.hf==='1';
   $('v3h').checked=v3half;
+  v3ortho = par.or==='1';
+  $('v3o').checked=v3ortho;
   const sk=parseInt(par.sk,10);
   v3sk = Number.isFinite(sk)&&sk>=6&&sk<=90;
   if(v3sk){ v3sko=sk/100; $('v3so').value=sk; if(gl) v3skullBuild();
