@@ -37,7 +37,8 @@ so you can also download it and open it offline, on a rig computer with no inter
   with your selected structure highlighted, so you can see how it runs through the brain.
 - **3D** stacks the 62 plates where they actually sit: as contours, as a ray-marched
   volume, or as a point cloud of all 6,220 labels you can orbit. Clip to a slab or cut
-  it in half at the midline. (Needs WebGL 2.)
+  it in half at the midline. **Skull** (experimental) wraps the stack in a CT skull
+  surface at whatever transparency you set. (Needs WebGL 2.)
 
 **Take it with you**
 - **PNG** of the current plate with overlays, **CSV** of the structures you've listed,
@@ -47,7 +48,8 @@ so you can also download it and open it offline, on a rig computer with no inter
 axis, which is not how a head sits in your stereotaxic frame. **Frame** in the header
 lets you enter a pitch / roll / yaw and a pivot (bregma, lambda, interaural, occipital
 crest), and restates coordinates in your frame — or derive the angles from two points
-you read off the skull. This is new and not fully tested: check adjusted coordinates
+you read off the skull. You can also name where **zero** is, so coordinates read from
+lambda instead of bregma. This is new and not fully tested: check adjusted coordinates
 against anatomy you already know before relying on them.
 
 ## Before you trust a coordinate
@@ -64,6 +66,9 @@ against anatomy you already know before relying on them.
 - The **system tags** are a convenience layer added here, not part of the published atlas.
 - Nothing here is a segmentation, and the 3D views interpolate between sections that
   are 350 µm apart — the streaking is arithmetic, not anatomy.
+- The **skull** in the 3D view is a CT surface of a *different* animal, registered to the
+  atlas here rather than published with it — good to a few tenths of a millimetre. It is
+  context around the stack, not a surface to measure against.
 
 ## Source
 
@@ -78,7 +83,7 @@ structures**. Please cite the atlas itself:
 
 | File | What it is |
 | --- | --- |
-| `gerbil_atlas_explorer.html` | The app. Self-contained (~6.1 MB), works offline. |
+| `gerbil_atlas_explorer.html` | The app. Self-contained (~6.9 MB, including the skull mesh), works offline. |
 | `gerbil_atlas.json` | Full database: structures, coordinates, label positions, calibration. |
 | `gerbil_atlas_structures.csv` | One row per structure: abbreviation, name, plate and bregma range, tags. |
 | `gerbil_atlas_plates.csv` | One row per plate: bregma / lambda / interaural / occipital-crest AP. |

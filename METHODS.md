@@ -113,6 +113,31 @@ labels move a **median of 2.19 mm** — `MSO` goes from AP −7.95 / DV −8.30 
 DV −5.64. The displacement grows with distance from the pivot, so the pivot matters more
 than the angles do.
 
+### Where zero is
+
+By default the readout's zero is wherever the rotation carries the atlas origin, which is what
+the pivot decides — the right reading if you zeroed the manipulator *before* tilting the head.
+**Origin** names a landmark instead: drive to it with the head already in the frame, zero
+there, and that point reads 0 / 0 / 0 however the head is turned. Lambda in place of bregma is
+the common case.
+
+```
+origin  none (default)   zero follows the atlas origin through the rotation
+        bregma · lambda · interaural · occipital crest · a point of your own
+```
+
+Naming an origin makes the pivot irrelevant, and not by choice: `R(P−piv)+piv` minus
+`R(O−piv)+piv` is `R(P−O)` for every `piv`, so re-zeroing on a point *is* rotating about it.
+The dialog fades the pivot controls and says so. A landmark sets the origin's AP and ML only,
+for the same reason a pivot preset does — the atlas prints an AP for each of these and a height
+for none — so DV stays yours: 0 zeroes on the brain's dorsal surface, and anything else is the
+depth you actually zeroed at. The offset is still applied after the rotation, so it survives.
+
+Every readout that quotes an AP names what it is measured from once an origin is set —
+`lambda −5.79 · ML ±1.31 · DV −6.94` rather than a bare `AP` — and the CSV's `frame_spec`
+column records `origin=lambda origin_AP/ML/DV=…` in place of the pivot it no longer uses.
+Deep links carry it too; links written before the origin existed still load, with no origin.
+
 Presets put the pivot on **bregma, lambda, the interaural line or the occipital crest**,
 reading each landmark's offset off the plate table rather than carrying a copy of it. A
 preset can only set AP and ML, though: the atlas prints an AP for every one of these
@@ -212,6 +237,36 @@ interpolation between slices, not anatomy. And a label point marks where an abbr
 is *printed*; most structures carry only a handful — six is the median — so a single
 structure reads as a sparse arc rather than a shape. **None of this is a segmentation**,
 and no surface is fitted to those points.
+
+### The skull
+
+> **Experimental.** The skull overlay and its registration are new and not yet fully
+> tested. Treat it as context around the stack, not a surface to measure against.
+
+**Skull** in the 3-D controls wraps the stack in a µCT surface of a gerbil skull
+(`GerbilSkull.stl`, 498k triangles as scanned), drawn as a translucent shell whose
+opacity the **Bone** slider sets. The far wall is drawn behind the sections and the near
+wall in front, so the stack reads as sitting inside the case; **Half** cuts bone and
+brain at the same midline, and a deep link carries the state as `&sk=<opacity>`.
+
+The atlas prints no skull surface, so the fit had to be computed, and it is honest to
+say how. The scan — a different animal from the atlas's — was aligned in four steps:
+its own bilateral symmetry fixes the midline (roll −13.6°, yaw 0.1° of the scanner
+frame); the dorsal vault profile is fitted against the brain's dorsal outline read off
+all 62 plates (which sets pitch, −15.5° of the scan's long axis, and height); the two
+ear-canal openings are constrained to the atlas's interaural line at AP −7.25; and a
+uniform rescale (×0.94) reconciles the two animals. Two landmarks were then checked
+rather than fitted: the foramen magnum centre lands 0.13 mm from the cord's centre on
+the last plates, and the occipital crest lands within about 0.8 mm of the printed
+−9.95. So expect registration error of a few tenths of a millimetre, on top of the
+animal-to-animal variation that any skull-to-atlas comparison carries — and note that
+bregma and lambda are suture points, which a surface mesh does not show at all.
+
+For the page the mesh is decimated to 62k triangles (0.42 mm vertex clustering, then
+interior surfaces that are never visible from outside — turbinates, the inner ear —
+dropped), quantised to 0.01 mm and embedded as ~0.7 MB of base64, which is where the
+page's size grows beyond the plate images. Smooth normals are rebuilt at load, and the
+shell renders only when turned on.
 
 ## Known discrepancies with the published index
 
