@@ -12,7 +12,7 @@ on-plate position of every printed abbreviation.
 | File | What it is |
 | --- | --- |
 | `gerbil_atlas_explorer.html` | Self-contained browser app. Open it directly — no server, no internet. Search, filter by system, step through plates, see a selected structure circled on the plate, and hover any printed label to read the structure's full name or click it to select that structure. Also: a sagittal or top-down projection of every label in the atlas, so a structure can be seen whole; a live bregma/ML/DV readout under the pointer; a reverse lookup that names the structures nearest a set of coordinates; a 1 mm grid and scale bar; zoom and pan; a two-point distance and approach-angle measure;
-a working coordinate frame, so coordinates can be read at your own head tilt rather than the atlas's; a 3-D view that stacks the 62 plates where they actually sit, ray-marches them, or plots every label as a point cloud you can orbit; PNG and CSV export; and shareable deep links. All 62 plate images are embedded (~6.1 MB). |
+a working coordinate frame (experimental), so coordinates can be read at your own head tilt rather than the atlas's; a 3-D view that stacks the 62 plates where they actually sit, ray-marches them, or plots every label as a point cloud you can orbit; PNG and CSV export; and shareable deep links. All 62 plate images are embedded (~6.1 MB). |
 | `gerbil_atlas.json` | Full database: structures, plate coordinates, the plate-frame ML/DV calibration, system tags, aliases, label positions, verification record. |
 | `gerbil_atlas_structures.csv` | One row per structure: abbreviation, name, plate range, bregma range, system tags, explicit plate list. |
 | `gerbil_atlas_plates.csv` | One row per plate: bregma / lambda / interaural / occipital-crest AP coordinates, structure count. |
@@ -101,6 +101,9 @@ where the printed text says otherwise (`Cl`→`DCl`, `Su3`→`Su3C`, `PR`→`PrC
 cortical-layer digits that are really `S1` and `AI`).
 
 ## Your own coordinate frame
+
+> **Experimental.** Frame adjustment is new and not yet fully tested. Check adjusted
+> coordinates against anatomy you already know before relying on them.
 
 The atlas is cut **perpendicular to the brainstem axis**, which is not how a head sits in
 any particular stereotaxic frame. **Frame** in the header takes a pitch, a roll and a yaw
