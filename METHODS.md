@@ -254,6 +254,15 @@ skull's silhouette around the label cloud — flattened along the unplotted axis
 as the labels are — widening the axes just enough to hold the bone. Deep links carry
 all three (`&sk=<opacity>` for the shell; `k` and `K` among the `&v=` flags).
 
+**Landmarks** rides on the same registration. The atlas prints an AP for bregma, lambda,
+the interaural line and the occipital crest and a height for none of them, so the AP rules
+are exact and drawn whatever the skull says, while the marker heights — the vault at each
+landmark's AP — and the ear canals the interaural line runs between (ML ±10.4, DV −9.1,
+putting bregma 8.8 mm above the ear-bar plane) are read off the fitted mesh. A point
+landmark is drawn only on the plate whose plane it falls in; the interaural line is a
+mediolateral axis, so it is solid in its own plane, a dashed height reference elsewhere, a
+point seen end-on in the sagittal projection, and a real line only in the top-down one.
+
 The source is a µCT surface of a gerbil skull (`GerbilSkull.stl`, 498k triangles as
 scanned) — a different animal from the atlas's, in scanner coordinates. The atlas
 prints no skull surface, so the registration had to be computed, and it follows the

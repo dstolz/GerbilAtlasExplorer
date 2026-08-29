@@ -33,6 +33,8 @@ so you can also download it and open it offline, on a rig computer with no inter
   planning an electrode track.
 - **Skull** (experimental) traces a CT skull's cut through the current plate, and outlines
   it around either projection — the same surface the 3D view shows.
+- **Landmarks** marks bregma, lambda and the occipital crest where they fall, and draws the
+  interaural line. The APs are the atlas's own; the heights come off the skull fit.
 
 **See a structure whole** — the printed atlas gives you one coronal plane at a time.
 - **Projection** plots every printed label in side view (AP × DV) or top-down (AP × ML),
