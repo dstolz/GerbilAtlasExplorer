@@ -533,7 +533,7 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
         <label class="tg" title="1 mm stereotaxic grid"><input type="checkbox" id="ckg">Grid</label>
         <label class="tg" title="Scale bar"><input type="checkbox" id="cks">Scale</label>
         <label class="tg" title="Click two points on the plate to measure between them"><input type="checkbox" id="ckm">Measure</label>
-        <span class="tgw"><label class="tg" title="Trace the CT skull's cut through this coronal plane — an experimental, approximate fit"><input type="checkbox" id="cksk">Skull</label><button type="button" class="ast" title="Skull alignment is approximate — read the note" aria-label="Note on skull alignment">*</button></span>
+        <span class="tgw"><label class="tg" title="Trace the skull's cut through this coronal plane"><input type="checkbox" id="cksk">Skull</label><button type="button" class="ast" title="Skull alignment is approximate — read the note" aria-label="Note on skull alignment">*</button></span>
         <span class="tsep"></span>
         <button class="z" id="epng" type="button" title="Download this plate as a PNG with the current overlays and coordinates">PNG</button>
       </span>
@@ -543,7 +543,7 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
           <button type="button" data-v="ml">top-down &middot; AP &times; ML</button>
         </span>
         <span class="tsep"></span>
-        <span class="tgw"><label class="tg" title="Outline of the CT skull around the cloud, widening the axes to fit it — an experimental, approximate fit"><input type="checkbox" id="ckpk">Skull</label><button type="button" class="ast" title="Skull alignment is approximate — read the note" aria-label="Note on skull alignment">*</button></span>
+        <span class="tgw"><label class="tg" title="Outline the skull around the cloud, widening the axes to fit it"><input type="checkbox" id="ckpk">Skull</label><button type="button" class="ast" title="Skull alignment is approximate — read the note" aria-label="Note on skull alignment">*</button></span>
       </span>
       <span class="vctl" id="ctl3d" hidden>
         <span class="seg" id="m3seg">
@@ -559,7 +559,7 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
         <label class="lb3" title="Posterior edge of the slab that is drawn"
           >&ndash; <input type="range" id="v3b" min="1" max="62" value="62"><b id="v3bl">62</b></label>
         <span class="tsep"></span>
-        <span class="tgw"><label class="tg" title="Show the CT skull surface around the atlas — an experimental, approximate fit"><input type="checkbox" id="v3s">Skull</label><button type="button" class="ast" title="Skull alignment is approximate — read the note" aria-label="Note on skull alignment">*</button></span>
+        <span class="tgw"><label class="tg" title="Show the skull surface around the atlas"><input type="checkbox" id="v3s">Skull</label><button type="button" class="ast" title="Skull alignment is approximate — read the note" aria-label="Note on skull alignment">*</button></span>
         <label class="lb3" id="v3sol" hidden title="How opaque the skull is drawn"
           >Bone <input type="range" id="v3so" min="6" max="90" value="32"></label>
         <label class="tg" title="Cut at the midline to see inside"><input type="checkbox" id="v3h">Half</label>
@@ -698,23 +698,16 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
       which for thin layered structures is often just outside the structure itself. Most
       structures carry only a handful of points &mdash; six is the median &mdash; so a single
       structure reads as a sparse arc rather than a shape. Nothing here is a segmentation.</p>
-    <p id="skullnote"><em>Skull</em> wraps the stack in a CT surface of a gerbil skull at an adjustable
-      transparency; the same surface can be traced on the current plate (<em>Skull</em> in the
-      plate controls) and outlined around either projection. <b>Experimental</b>, and the fit
-      is computed, not published: the atlas prints no skull surface, so the scan &mdash; a
-      different animal &mdash; was registered by the paper&rsquo;s own skull features. Its
-      bilateral symmetry fixes the midline; the coronal suture, found as a groove in the vault
-      and extended to the midline the way the paper defines its landmarks, pins bregma at
-      AP&nbsp;0; the ear canals pin the interaural line at &minus;7.25; the occipital crest
-      leans on &minus;9.95; and the tilt, scale and height were then refined against the drawn
-      sections of all 62 plates &mdash; the calvaria&rsquo;s inner wall held just outside the
-      section outlines. Scale comes out at 1.00, and the foramen magnum lands 0.01&nbsp;mm
-      from the cord on the last plates without being asked to. The lambdoid suture could not
-      be resolved, so lambda is anchored only through the others; and this skull&rsquo;s
-      posterior fossa runs about a third of a millimetre shallower than the atlas
-      animal&rsquo;s, which no rigid fit can remove &mdash; the cerebellar plates sit tightest
-      against the roof. Treat it all as context, not a surface to measure against: a few
-      tenths of a millimetre of registration error, plus animal-to-animal variation.</p>
+    <p id="skullnote"><em>Skull</em> draws a CT skull around the atlas: a translucent shell in
+      3-D, a trace on the current plate, an outline around either projection.
+      <b>Experimental &mdash; the alignment is approximate.</b></p>
+    <p>The atlas prints no skull, so the fit is computed rather than published. The scan is a
+      different animal, aligned on the paper&rsquo;s own landmarks &mdash; the coronal suture
+      pins bregma at AP&nbsp;0, the ear canals the interaural line at &minus;7.25 &mdash; then
+      refined against the drawn sections of all 62 plates. Good to a few tenths of a
+      millimetre, worst over the cerebellum, where this skull runs shallower than the atlas
+      animal&rsquo;s. Context around the sections, not a surface to measure against.
+      <a href="https://github.com/dstolz/GerbilAtlasExplorer/blob/main/METHODS.md" target="_blank" rel="noopener">Full method</a>.</p>
 
     <h3>Getting around</h3>
     <dl class="keys">
@@ -1535,7 +1528,7 @@ function exportPNG(){
   if(qOn) notes.push(`Query point ML ${sgn(qa.ml)}, DV ${sgn(qa.dv)}`);
   /* the sheet carries the plate and its overlays, all of which are atlas-framed, so it
      says so rather than letting a working frame be assumed from the app around it */
-  if(showSK) notes.push('Skull outline: a CT surface registered to the atlas — experimental, approximate');
+  if(showSK) notes.push('Skull outline — experimental, approximate fit');
   if(FRAME.on) notes.push(`Atlas coordinates — working frame (${frameTxt()}) not applied to this plate`);
   notes.push('Radtke-Schuller et al. 2016, Brain Struct Funct 221(Suppl 1):1–272 · doi:10.1007/s00429-016-1259-0');
   g.font='13px ui-sans-serif,Segoe UI,Helvetica,Arial,sans-serif'; g.fillStyle='#8a8378';
@@ -2459,8 +2452,7 @@ function v3note(){
   const slab = (v3a>0||v3b<61)
     ? ` Plates ${v3a+1}–${v3b+1} only (bregma ${sgn(P[v3a].bregma)} to ${sgn(P[v3b].bregma)} mm).` : '';
   const half = v3half ? ' Cut at the midline.' : '';
-  const bone = v3sk ? ' The skull is a CT surface fitted to the atlas — the fit is'+
-    ' experimental and approximate, not part of the published atlas.' : '';
+  const bone = v3sk ? ' Skull fit is experimental and approximate.' : '';
   if(v3mode==='points'){
     const q=(sel&&ptsOf[sel])||[];
     N.innerHTML = (sel&&q.length

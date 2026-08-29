@@ -31,10 +31,8 @@ so you can also download it and open it offline, on a rig computer with no inter
 - 1 mm grid and scale bar overlays.
 - Click two points to get the **distance and approach angle** between them — useful for
   planning an electrode track.
-- **Skull** (experimental) traces a CT skull surface's cut through the current plate,
-  and outlines it around either projection — the same surface the 3D view can show,
-  registered to the atlas by its own skull features (bregma's coronal suture, the ear
-  canals, the occipital crest, and the paper's dorsal levelling plane).
+- **Skull** (experimental) traces a CT skull's cut through the current plate, and outlines
+  it around either projection — the same surface the 3D view shows.
 
 **See a structure whole** — the printed atlas gives you one coronal plane at a time.
 - **Projection** plots every printed label in side view (AP × DV) or top-down (AP × ML),
@@ -70,10 +68,9 @@ against anatomy you already know before relying on them.
 - The **system tags** are a convenience layer added here, not part of the published atlas.
 - Nothing here is a segmentation, and the 3D views interpolate between sections that
   are 350 µm apart — the streaking is arithmetic, not anatomy.
-- The **skull** overlays (plate, projections, 3D) are a CT surface of a *different*
-  animal, registered to the atlas here rather than published with it — anchored on the
-  bregma suture, the ear canals and the occipital crest, good to a few tenths of a
-  millimetre. Context, not a surface to measure against.
+- The **skull** overlays are a CT surface of a *different* animal, aligned here rather than
+  published with the atlas — good to a few tenths of a millimetre. Context, not a surface to
+  measure against.
 
 ## Source
 
