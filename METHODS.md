@@ -262,28 +262,35 @@ crest by intersecting lines approximating the sutures, print an AP for each land
 (bregma 0, lambda −4.45, interaural −7.25, occipital crest −9.95), and level the
 atlas on the plane through the most dorsal points of cerebrum and cerebellum.
 
-The fit uses those features, found on the scan itself. The scan's bilateral symmetry
-fixes the midline (it lay rolled −13.6° in scanner axes; residual yaw 0.1°). The
-**coronal suture** is visible as a groove chevron in a high-pass-filtered height map of
-the vault; extrapolating its arms to the midline — the paper's own construction — gives
-bregma, constrained to AP 0. The two **ear-canal openings** are constrained to the
-interaural line at AP −7.25. The **occipital crest** (the corner where the posterior
-roof turns down toward the foramen magnum) is constrained, weakly, to −9.95. The
-dorsal vault profile is fitted against the brain's dorsal outline read off all 62
-plates, which is the paper's levelling plane and sets pitch (−16.7° of the scan's long
-axis) and height. Scale comes out at ×0.98 — the CT's millimetres are believed, and
-the landmark spacing agrees with them. The **lambdoid suture could not be resolved**
-in this scan, so lambda is the one printed landmark not independently anchored.
+The fit uses those features, found on the scan itself, then refines against the
+plates. The scan's bilateral symmetry fixes the midline (it lay rolled −13.6° in
+scanner axes; residual yaw 0.1°). The **coronal suture** is visible as a groove
+chevron in a high-pass-filtered height map of the vault; extrapolating its arms to the
+midline — the paper's own construction — gives bregma, constrained to AP 0. The two
+**ear-canal openings** are constrained to the interaural line at AP −7.25, the
+**occipital crest** weakly to −9.95. Tilt, scale and height are then refined against
+the **drawn sections of all 62 plates**: the outer boundary of every section was
+extracted, and the signed clearance from each dorsal-arc boundary point to the first
+bone along its outward ray — measured against the full-resolution scan — is driven
+toward a small positive gap, with the landmarks held to their uncertainties. That
+lands at pitch −17.5° of the scan's long axis and scale ×1.00: the CT's millimetres
+are believed outright. The **lambdoid suture could not be resolved** in this scan, so
+lambda is the one printed landmark not independently anchored.
 
 What that fit earns, checked rather than fitted: the foramen magnum centre lands
-0.08 mm from the spinal cord's centre on the last plates, bregma sits at DV −0.2
-(essentially on the atlas's dorsal plane, as it should), and the crest reads −10.7
-against the printed −9.95 — the one landmark that disagrees, by 0.7 mm, and it is the
-least sharply defined of the four. So expect registration error of a few tenths of a
-millimetre, on top of the animal-to-animal variation that any skull-to-atlas
-comparison carries.
+0.01 mm from the spinal cord's centre on the last plates, and bregma sits essentially
+on the atlas's dorsal plane. What it cannot remove, and the numbers say so plainly:
+the crest reads −10.7 against the printed −9.95 (the least sharply defined landmark of
+the four), and this skull's **posterior fossa runs about 0.3 mm shallower** relative
+to its calvaria than the atlas animal's — over the cerebellar plates the inner roof
+sits tight against, in places just inside, the drawn sections, where over the cerebrum
+the same fit leaves a comfortable margin. A rigid fit can only split that difference,
+and this one does, deliberately favouring the ear canals and bregma. So expect
+registration error of a few tenths of a millimetre, worst over the posterior fossa
+roof, on top of the animal-to-animal variation that any skull-to-atlas comparison
+carries.
 
-For the page the mesh is decimated to 67k triangles (0.42 mm vertex clustering, then
+For the page the mesh is decimated to 70k triangles (0.42 mm vertex clustering, then
 interior surfaces that are never visible from outside — turbinates, the inner ear —
 dropped), quantised to 0.01 mm and embedded as ~0.75 MB of base64, which is where the
 page's size grows beyond the plate images; the projection silhouettes ride along as a
