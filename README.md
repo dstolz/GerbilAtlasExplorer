@@ -12,7 +12,7 @@ on-plate position of every printed abbreviation.
 | File | What it is |
 | --- | --- |
 | `gerbil_atlas_explorer.html` | Self-contained browser app. Open it directly — no server, no internet. Search, filter by system, step through plates, see a selected structure circled on the plate, and hover any printed label to read the structure's full name or click it to select that structure. Also: a sagittal or top-down projection of every label in the atlas, so a structure can be seen whole; a live bregma/ML/DV readout under the pointer; a reverse lookup that names the structures nearest a set of coordinates; a 1 mm grid and scale bar; zoom and pan; a two-point distance and approach-angle measure;
-a working coordinate frame (experimental), so coordinates can be read at your own head tilt rather than the atlas's; a 3-D view that stacks the 62 plates where they actually sit, ray-marches them, or plots every label as a point cloud you can orbit; PNG and CSV export; and shareable deep links. All 62 plate images are embedded (~6.1 MB). |
+a working coordinate frame (experimental), so coordinates can be read at your own head tilt rather than the atlas's; a 3-D view that stacks the 62 plates where they actually sit, ray-marches them, or plots every label as a point cloud you can orbit — optionally inside a CT skull surface with adjustable transparency (experimental); PNG and CSV export; and shareable deep links. All 62 plate images and the skull mesh are embedded (~6.9 MB). |
 | `gerbil_atlas.json` | Full database: structures, plate coordinates, the plate-frame ML/DV calibration, system tags, aliases, label positions, verification record. |
 | `gerbil_atlas_structures.csv` | One row per structure: abbreviation, name, plate range, bregma range, system tags, explicit plate list. |
 | `gerbil_atlas_plates.csv` | One row per plate: bregma / lambda / interaural / occipital-crest AP coordinates, structure count. |
@@ -252,6 +252,36 @@ interpolation between slices, not anatomy. And a label point marks where an abbr
 is *printed*; most structures carry only a handful — six is the median — so a single
 structure reads as a sparse arc rather than a shape. **None of this is a segmentation**,
 and no surface is fitted to those points.
+
+### The skull
+
+> **Experimental.** The skull overlay and its registration are new and not yet fully
+> tested. Treat it as context around the stack, not a surface to measure against.
+
+**Skull** in the 3-D controls wraps the stack in a µCT surface of a gerbil skull
+(`GerbilSkull.stl`, 498k triangles as scanned), drawn as a translucent shell whose
+opacity the **Bone** slider sets. The far wall is drawn behind the sections and the near
+wall in front, so the stack reads as sitting inside the case; **Half** cuts bone and
+brain at the same midline, and a deep link carries the state as `&sk=<opacity>`.
+
+The atlas prints no skull surface, so the fit had to be computed, and it is honest to
+say how. The scan — a different animal from the atlas's — was aligned in four steps:
+its own bilateral symmetry fixes the midline (roll −13.6°, yaw 0.1° of the scanner
+frame); the dorsal vault profile is fitted against the brain's dorsal outline read off
+all 62 plates (which sets pitch, −15.5° of the scan's long axis, and height); the two
+ear-canal openings are constrained to the atlas's interaural line at AP −7.25; and a
+uniform rescale (×0.94) reconciles the two animals. Two landmarks were then checked
+rather than fitted: the foramen magnum centre lands 0.13 mm from the cord's centre on
+the last plates, and the occipital crest lands within about 0.8 mm of the printed
+−9.95. So expect registration error of a few tenths of a millimetre, on top of the
+animal-to-animal variation that any skull-to-atlas comparison carries — and note that
+bregma and lambda are suture points, which a surface mesh does not show at all.
+
+For the page the mesh is decimated to 62k triangles (0.42 mm vertex clustering, then
+interior surfaces that are never visible from outside — turbinates, the inner ear —
+dropped), quantised to 0.01 mm and embedded as ~0.7 MB of base64, which is where the
+page's size grows beyond the plate images. Smooth normals are rebuilt at load, and the
+shell renders only when turned on.
 
 ## Caveats
 
