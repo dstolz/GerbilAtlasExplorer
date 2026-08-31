@@ -57,6 +57,49 @@ figure sits 118 px (at 300 dpi) lower on the page than every other plate, and pl
 and 10 are offset by 2–3 px. Frame-relative cropping puts all 62 images in one
 common coordinate frame.
 
+### The three plates of a level
+
+The atlas prints each of the 62 levels three times — the Nissl-stained section, the
+Gallyas myelin-stained section from an adjacent section, and the labelled drawing traced
+over them — on consecutive pages of the supplement, with a fourth page carrying that
+level's abbreviation list and its CT/MRI reference. All 186 section pages are in the app,
+selected with **Labelled / Nissl / Myelin**.
+
+Registration between them is by construction rather than by fitting. Every page carries
+the atlas's own printed ML/DV box, and each page is cropped to *its own* box by the same
+detector, so all three land in the coordinate frame above — the frame the 6,220 label
+positions are recorded in. Nothing is warped, translated or scaled to match anything else.
+
+Three things had to be got right, and each is checked rather than assumed:
+
+- **The box, not a box.** The detector takes the outermost full-length rules. Measured on
+  the finished 1100×703 images, the box lands within 0.5 px of (10.25, 10.25)–(1031.5,
+  692.25) on all 186.
+- **Which way up.** One page — plate 5's Nissl, supplement page S40 — stores its image
+  rotated by half a turn. The box and its tick lattice are very nearly symmetric under that
+  rotation, so the cue is content: the vertical *dorso-ventral coordinate* caption sits
+  outside the box on the right and nothing at all sits outside it on the left. This is read
+  on the native page, before the mapping. Turning the mapped image instead is wrong in a way
+  that is easy to miss — the box is not centred in the 1100 px canvas, so a half-turn
+  there lands it 58 px, a full millimetre of ML, off.
+- **The mapping itself.** Re-deriving the 62 labelled plates through the same code lands
+  them on the images already in the app, pixel for pixel, on 61 of 62; plate 61 is out by
+  one pixel in x.
+
+The myelin section is an *adjacent* section, not the same one — the two stains cannot be
+applied to a single slice — and is aligned as the authors published it.
+
+The alternates are stored at the same 1100×703 as the drawings, as greyscale JPEG at
+quality 65: 5.8 MB of Nissl and 5.1 MB of myelin, taking the single file from 7.3 MB to
+18.2 MB. **Grey** and **Contrast** in the toolbar are a CSS filter on the image, and the
+same filter string is set on the canvas the PNG export draws through, so what is saved is
+what was on screen. The 3-D view reads whichever source is selected and rebuilds its volume
+when it changes; it is left out of the contrast control because Density already does that
+job there. A histology section has no contour channel, only tissue, so the weight given to
+the tissue channel differs by source and by mode — a slice is composited once and needs
+enough to be seen through 62 of them, while a ray is composited at 288 samples and goes
+opaque a fifth of the way in at anything near that.
+
 ## Label positions
 
 `label_positions` in the JSON records where each abbreviation is printed on each
@@ -123,20 +166,39 @@ the common case.
 
 ```
 origin  none (default)   zero follows the atlas origin through the rotation
-        bregma · lambda · interaural · occipital crest · a point of your own
+        bregma · lambda · interaural · occipital crest
+        + an AP / ML / DV offset from whichever of those is named
 ```
+
+The three numbers are an **offset from the landmark**, not an absolute coordinate, which is
+how a zero that is not quite on a landmark gets said: lambda with an AP offset of −0.50 is
+half a millimetre behind lambda. Leave them at 0 and zero is the landmark itself. Internally
+the landmark contributes only its AP — the atlas prints one for each of these and neither an
+ML nor a height — so on those two axes the offset is the whole story. Bregma is landmark 0
+and its AP offset is 0, so a stored frame or a link written before the offset existed reads
+back unchanged.
+
+Moving zero is not a rotation and is not hedged as one: it moves no point, and every distance
+and angle is the one the atlas printed. So with every angle left at 0 the projections rule and
+label their axes from the origin, the measure tool needs no caveat, and the header button says
+so rather than warning about an approximation that is not being made. Set an angle as well and
+the projections, the grid, the measure tool and the 3-D view fall back to atlas coordinates and
+say so, as before.
 
 Naming an origin makes the pivot irrelevant, and not by choice: `R(P−piv)+piv` minus
 `R(O−piv)+piv` is `R(P−O)` for every `piv`, so re-zeroing on a point *is* rotating about it.
-The dialog fades the pivot controls and says so. A landmark sets the origin's AP and ML only,
-for the same reason a pivot preset does — the atlas prints an AP for each of these and a height
-for none — so DV stays yours: 0 zeroes on the brain's dorsal surface, and anything else is the
-depth you actually zeroed at. The offset is still applied after the rotation, so it survives.
+The dialog fades the pivot controls and says so. DV stays yours: 0 zeroes on the brain's dorsal
+surface, and anything else is the depth you actually zeroed at. The frame's own offset is still
+applied after the rotation, so it survives.
 
 Every readout that quotes an AP names what it is measured from once an origin is set —
 `lambda −5.79 · ML ±1.31 · DV −6.94` rather than a bare `AP` — and the CSV's `frame_spec`
-column records `origin=lambda origin_AP/ML/DV=…` in place of the pivot it no longer uses.
-Deep links carry it too; links written before the origin existed still load, with no origin.
+column records the landmark, the offset and the atlas coordinate zero ended up at, in place of
+the pivot it no longer uses. The landmark is matched on where zero landed rather than on which
+one was picked, so an origin reached by typing an offset from bregma still names itself lambda
+if that is where it came out. Deep links carry it too, in the flag that used to be a bare `1`
+for “an origin is set” and now holds `1 + the landmark's index`, so links written before the
+landmark existed still read correctly.
 
 Presets put the pivot on **bregma, lambda, the interaural line or the occipital crest**,
 reading each landmark's offset off the plate table rather than carrying a copy of it. A

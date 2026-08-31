@@ -1,13 +1,16 @@
 # Gerbil Atlas Explorer
 
 A searchable, clickable version of the Radtke-Schuller et al. (2016) Mongolian gerbil
-brain atlas: 723 structures across 62 coronal plates, each with stereotaxic coordinates.
+brain atlas: 723 structures across 62 coronal plates, each with stereotaxic coordinates,
+and each plate in all three of the ways the atlas prints it — labelled drawing, Nissl,
+myelin.
 
 ## ▶ [Open the Explorer](https://dstolz.github.io/GerbilAtlasExplorer/gerbil_atlas_explorer.html)
 
 Runs in any modern browser — nothing to install, no account, no server. The whole
-atlas (all 62 plate images) lives inside the single `gerbil_atlas_explorer.html` file,
+atlas (all 186 plate images) lives inside the single `gerbil_atlas_explorer.html` file,
 so you can also download it and open it offline, on a rig computer with no internet.
+It is 18 MB, most of that the plates.
 
 ## Quick start
 
@@ -17,8 +20,20 @@ so you can also download it and open it offline, on a rig computer with no inter
    bregma / ML / DV.
 3. **Hover anywhere on the plate** to read the coordinates under your pointer. Hover a
    printed abbreviation to see its full name; click it to jump to that structure.
+4. Switch the plate to **Nissl** or **Myelin** to see the histology the drawing was made
+   from. Everything stays where it was — same coordinates, same circle, same labels
+   under your pointer.
 
 ## What you can do
+
+**See the actual sections**
+- **Labelled / Nissl / Myelin** switches each level between the atlas's own drawing, the
+  Nissl-stained section and the Gallyas myelin section printed beside it. All three carry
+  the atlas's printed coordinate box and were cropped to it, so they are registered exactly:
+  the grid, the measure tool, the circled structure and the hover labels are all still in
+  the right place on a section with nothing printed on it.
+- **Grey** drops the drawing's colour so the three read alike, and **Contrast** stretches
+  whichever one is showing. Both carry into the PNG.
 
 **Find things**
 - Search by abbreviation, name, or alias; filter by system chips (`auditory`,
@@ -39,8 +54,9 @@ so you can also download it and open it offline, on a rig computer with no inter
 **See a structure whole** — the printed atlas gives you one coronal plane at a time.
 - **Projection** plots every printed label in side view (AP × DV) or top-down (AP × ML),
   with your selected structure highlighted, so you can see how it runs through the brain.
-- **3D** stacks the 62 plates where they actually sit: as contours, as a ray-marched
-  volume, or as a point cloud of all 6,220 labels you can orbit. Clip to a slab or cut
+- **3D** stacks the 62 plates where they actually sit: as contours — or as the Nissl or
+  myelin sections themselves — as a ray-marched volume, or as a point cloud of all 6,220
+  labels you can orbit. Clip to a slab or cut
   it in half at the midline. **Skull** (experimental) wraps the stack in a CT skull
   surface at whatever transparency you set. **Ortho** switches to a parallel projection,
   so nothing is foreshortened. (Needs WebGL 2.)
@@ -49,13 +65,17 @@ so you can also download it and open it offline, on a rig computer with no inter
 - **PNG** of the current plate with overlays, **CSV** of the structures you've listed,
   and **Copy link** for a URL back to exactly this plate, structure and view.
 
-**Your own frame** (experimental) — the atlas is cut perpendicular to the brainstem
-axis, which is not how a head sits in your stereotaxic frame. **Frame** in the header
-lets you enter a pitch / roll / yaw and a pivot (bregma, lambda, interaural, occipital
-crest), and restates coordinates in your frame — or derive the angles from two points
-you read off the skull. You can also name where **zero** is, so coordinates read from
-lambda instead of bregma. This is new and not fully tested: check adjusted coordinates
-against anatomy you already know before relying on them.
+**Where zero is** — **Frame** in the header lets you move the origin: name bregma, lambda,
+the interaural line or the occipital crest, and give an AP / ML / DV offset from it if your
+zero is not quite on it. Every coordinate is then measured from there, and the readouts say
+so — `lambda −5.79` rather than a bare `AP`. Moving zero moves no point, so this is exact:
+the projections read their axes from it too, and nothing has to be hedged.
+
+**Your own frame** (experimental) — the same dialog takes a pitch / roll / yaw and a pivot,
+since the atlas is cut perpendicular to the brainstem axis and that is not how a head sits in
+your stereotaxic frame. You can derive the angles from two points read off the skull. The
+*rotation* is new and not fully tested: check adjusted coordinates against anatomy you already
+know before relying on them.
 
 ## Before you trust a coordinate
 
@@ -71,6 +91,8 @@ against anatomy you already know before relying on them.
 - The **system tags** are a convenience layer added here, not part of the published atlas.
 - Nothing here is a segmentation, and the 3D views interpolate between sections that
   are 350 µm apart — the streaking is arithmetic, not anatomy.
+- The **myelin** plate of a level is an *adjacent* section, not the same slice as the Nissl:
+  the two stains cannot both be applied to one section. It is aligned as published.
 - The **skull** overlays are a CT surface of a *different* animal, aligned here rather than
   published with the atlas — good to a few tenths of a millimetre. Context, not a surface to
   measure against.
@@ -88,7 +110,7 @@ structures**. Please cite the atlas itself:
 
 | File | What it is |
 | --- | --- |
-| `gerbil_atlas_explorer.html` | The app. Self-contained (~6.9 MB, including the skull mesh), works offline. |
+| `gerbil_atlas_explorer.html` | The app. Self-contained (~18 MB: 186 plate images and the skull mesh), works offline. |
 | `gerbil_atlas.json` | Full database: structures, coordinates, label positions, calibration. |
 | `gerbil_atlas_structures.csv` | One row per structure: abbreviation, name, plate and bregma range, tags. |
 | `gerbil_atlas_plates.csv` | One row per plate: bregma / lambda / interaural / occipital-crest AP. |
