@@ -12,6 +12,57 @@ structures** in the open-access paper, not from OCR of the plates:
 > Brain atlas of the Mongolian gerbil (*Meriones unguiculatus*) in CT/MRI-aided stereotaxic
 > coordinates. *Brain Struct Funct* 221(Suppl 1):1–272. doi:10.1007/s00429-016-1259-0
 
+## Reading the index against itself
+
+The paper prints its structure list twice: an **Index of structures** ordered by name
+(pp. S7–S14) and an **Index of abbreviations** ordered by abbreviation (pp. S15–S22).
+`data/index_raw.txt` came from the second. `data/index_structures_raw.txt` is the
+first, transcribed separately so that the two could disagree, and
+`tools/check_indexes.py` compares them.
+
+They agree on all 723 abbreviations, on every structure name, and on every plate range.
+That is not independent confirmation of the atlas — both indexes were near certainly set
+from one master table, so a mistake in that table sits in both — but it is the only
+check available that the 723 entries reached this repository intact, and it passes. The
+two differences it reports are in the printing, not the content: `Bar` differs by an
+apostrophe, and `VMHVL`'s name is mangled in the Index of structures text layer.
+
+### Where the index gives itself away
+
+What the Index of structures carries alone is its typography. The atlas writes a bare
+number for a structure that appears on one plate and a range for one that appears on
+several — 104 entries bare, 612 proper ranges. Seven are written with a dash and no
+second plate to go with it, and the Index of abbreviations renders three of those as a
+plain number, hiding them:
+
+| abbr | printed range | printed on the next plate? |
+|---|---|---|
+| AngT | `28–28` | yes, plate 29, both hemispheres |
+| ZIC  | `34–34` | yes, plate 35, both hemispheres |
+| Su3C | `36–36` | yes, plate 37, both hemispheres |
+| RLi  | `35–35` | yes, plate 36, one hemisphere |
+| CAT  | `43–`   | no |
+| IVF  | `25–`   | no |
+| MnM  | `34–`   | no |
+
+Those seven are the only entries in the atlas whose printed range is malformed, and the
+four set as `N–N` are exactly the four abbreviations the label pass had found printed one
+plate past their published range. Two facts that independently single out the same four
+entries is not a coincidence worth preserving: the dash is taken at its word, and the
+database reads those ranges as N to N+1. It is the one place the database departs from
+the printed index, and it is recorded in
+`verification.index_range_corrections`.
+
+The other three were checked the same way and came back empty. Every candidate scoring
+over 0.55 on the following plates was read against the plate image and was a different
+word — `VEn` and `VP` for `IVF`, `MoDG` for `MnM`, and for `CAT` nothing on plates 42, 44
+or 45 scored over 0.60 at all. Their dash has no second plate to recover, so they stay
+at the single plate the Index of abbreviations gives them.
+
+This restored four printed labels that the app could not previously do anything with:
+each was on the page, but excluded from `label_positions` for falling outside its
+published range, so it had no box, no region and nothing to point at.
+
 ## Coordinates
 
 Plate AP coordinates were read from all 62 plates and match the printed series exactly:
@@ -22,6 +73,14 @@ lambda           = bregma + 4.45
 interaural       = bregma + 7.25
 occipital crest  = bregma + 9.95
 ```
+
+Those three offsets are the skull landmark distances the paper measures by CT (Table 2).
+Two of them are the atlas animal's own: lambda 4.45 mm, interaural line 7.25 mm. The third
+is not — Table 2 gives the atlas animal an occipital crest 9.98 mm behind bregma, where the
+plate headers use 9.95, which is the median across the ten CT scans. The plate headers are
+what the app has to agree with, since they are what a reader reads off the page, so 9.95 is
+what the database carries; the 0.03 mm is noted here because it is a difference inside the
+paper and not an error in the transcription.
 
 Sections are coronal, perpendicular to the brainstem axis, at 350 µm intervals.
 DV zero is the plane through the most dorsal points of cerebrum and cerebellum
@@ -46,7 +105,7 @@ against the fit alone: midline structures (`3V`, `Aq`, `4V`, `cc`, `MnR`) land w
 0.10 mm of ML 0, and bilateral pairs come out symmetric at the published widths —
 `MSO` ±1.33, `LSO` ±1.67, `CIC` ±1.93, `Au1` ±6.48 (mean distance from the midline).
 
-With AP coming from the plate, this gives every one of the 6,257 located labels a full
+With AP coming from the plate, this gives every one of the 6,266 located labels a full
 stereotaxic triplet.
 
 ## Plate images
@@ -67,7 +126,7 @@ selected with **Labelled / Nissl / Myelin**.
 
 Registration between them is by construction rather than by fitting. Every page carries
 the atlas's own printed ML/DV box, and each page is cropped to *its own* box by the same
-detector, so all three land in the coordinate frame above — the frame the 6,257 label
+detector, so all three land in the coordinate frame above — the frame the 6,266 label
 positions are recorded in. Nothing is warped, translated or scaled to match anything else.
 
 Three things had to be got right, and each is checked rather than assumed:
@@ -139,8 +198,8 @@ on, each in its own named group, with the same caption the PNG carries.
 `label_positions` in the JSON records where each abbreviation is printed on each
 plate, as `[cx, cy, w, h]` fractions of the frame-cropped image. Most structures
 appear twice, once per hemisphere; layered ones such as cerebellar white matter
-appear many more times. 6,257 individual labels are located, covering 3,293 of the
-3,506 structure-plate entries (94%). These drive the circling, the hover tooltips and
+appear many more times. 6,266 individual labels are located, covering 3,298 of the
+3,510 structure-plate entries (94%). These drive the circling, the hover tooltips and
 click-to-select in the HTML app and can be reused for annotation overlays elsewhere.
 
 The labels were read twice. The first pass OCR'd 300 dpi renders with Tesseract and
@@ -164,7 +223,7 @@ cortical-layer digits that are really `S1` and `AI`).
 
 ### The words the passes missed
 
-Two passes still left 236 of the 3,506 index entries with no located label, and those are
+Two passes still left 236 index entries with no located label, and those are
 two different things. A structure listed for a plate range is present at those levels but
 is **not necessarily printed** on every plate of it, so some were never on the page. Others
 were, and were missed — `MPtA` is printed twice on plate 30, in the same type as everywhere
@@ -188,6 +247,18 @@ reading the letters, which is the pass this one exists to patch rather than repe
 47 candidates were put beside the printed plate and read. **37 were the word and 23 entries
 gained one**; the 8 that were not are listed in the tool with what they turned out to be, so
 a re-run reproduces the committed data and the judgement can be checked rather than taken.
+
+**The pass is not idempotent, and that matters.** Every label it writes becomes a template
+the next run can cut from, so a word invisible to one pass can be unambiguous to the next.
+Running it again after the third pass found `mlf` on plate 44 — printed on both sides, the
+only plate between 38 and 55 the abbreviation was missing from — which the earlier run had
+not had the templates to reach. That fourth pass added 9 labels over 5 pairs: `mlf`, and the
+four abbreviations that the index-range correction above had just brought into range. A
+fifth pass over that result found nothing, so the run is now at a fixed point, and the four
+`CONFIRM` entries in the tool are the mirror of `REJECT` — candidates read against the plate
+and found to *be* the word while scoring under the threshold. `Su3C` on plate 37 reads 0.620
+where a false `ZID` on plate 33 reaches 0.772, which is the same reason the page and not the
+score decides.
 
 Three things hold afterwards, and all three are checked: every located pair is one the
 published index lists (0 exceptions); `window.__BOX__` in the app is byte-identical to
@@ -235,7 +306,7 @@ Three checks, none of which the extraction was tuned to pass:
 | --- | --- | --- |
 | Highest point of any outline | DV 0 is the plane through the most dorsal points of cerebrum and cerebellum | **DV −0.06 mm** — reaches it, never crosses it |
 | Lowest point of any outline | the deepest printed label sits at DV −9.02 | **DV −9.09 mm** — just below it |
-| Printed labels inside their own plate's outline | — | **97.8%** (6,117 of 6,257) |
+| Printed labels inside their own plate's outline | — | **97.8%** (6,126 of 6,266) |
 
 Of the 135 labels that fall outside, most are on the olfactory bulb plates 5–9, where the
 section is small and the drawing prints the labels beside it; the median one is 0.14 mm
@@ -247,8 +318,8 @@ out, and the 90th percentile 0.20 mm.
 *names*: the area of each structure on each plate, as a list of closed polygons of `[x, y]`
 fractions of the frame-cropped image — the same frame and the same convention
 `brain_outline` uses, so the app's existing point-in-polygon test reads them unchanged.
-**3,112 structure-plate entries carry an area**, 95% of the 3,293 the label pass located
-and 89% of the 3,506 the published index lists, as 5,693 polygons over 77,612 points. Where
+**3,117 structure-plate entries carry an area**, 95% of the 3,298 the label pass located
+and 89% of the 3,510 the published index lists, as 5,702 polygons over 77,689 points. Where
 the atlas prints two names as one label the two share an entry, so a name having no entry of
 its own does not mean it has no area — see step 6.
 
@@ -325,8 +396,8 @@ outlines and says so rather than presenting them as drawn. The weak ones are whe
 would expect them: `PM` on plates 51–54, `7Cb` on 51, `RRF` on 39, `imvc` on 29 — thin
 cerebellar and reticular subdivisions the pages bound with faint or dashed print, if at all.
 
-End to end, in the app: pointing at each of the 6,257 printed labels in turn resolves to a
-structure every time, and to the right one 6,254 times. **6,039 of them resolve to an area**
+End to end, in the app: pointing at each of the 6,266 printed labels in turn resolves to a
+structure every time, and to the right one 6,263 times. **6,048 of them resolve to an area**
 and the remaining 218 to the printed name itself, which is the honest answer where the atlas
 prints a name outside the section it belongs to — `rf` on the rhinal fissure is 50 of the
 218 — or where no extent could be cut. The three misses are three places where one located
@@ -334,7 +405,7 @@ box sits inside another (`StA` around `STMA` on plate 23, `PVP` around `VL` on 2
 around `sf` on 53) and the smaller of the two wins the point, which is the right tie-break
 everywhere else.
 
-262 of the 6,254 printed labels sit outside the face they name, on a leader line or on a
+262 of the 6,263 printed labels sit outside the face they name, on a leader line or on a
 boundary, and were pulled to the nearest face; most are on the olfactory bulb plates 5–9,
 where the section is small and the drawing sets the abbreviations beside it. Three could not
 be resolved at all and have no extent.
@@ -402,7 +473,7 @@ anything readable off a manipulator. Nothing in the atlas records which way a gi
 is tilted, so the app cannot check a sign; the dialog shows what the frame does to a
 familiar structure and the sign is confirmed by reading that back against anatomy.
 
-This is worth more than it might look. At 17° of pitch about the atlas origin the 6,257
+This is worth more than it might look. At 17° of pitch about the atlas origin the 6,266
 labels move a **median of 2.19 mm** — `MSO` goes from AP −7.95 / DV −8.30 to AP −10.05 /
 DV −5.64. The displacement grows with distance from the pivot, so the pivot matters more
 than the angles do.
@@ -613,7 +684,7 @@ there is no library.
 - **Contours** draws the atlas's own red boundary drawings as a stack. It reads as a
   contour model of the brain because that is exactly what it is.
 - **Volume** ray-marches the same field through a 3-D texture.
-- **Labels** plots all 6,257 printed abbreviations as a stereotaxic point cloud — the
+- **Labels** plots all 6,266 printed abbreviations as a stereotaxic point cloud — the
   projection views with the third axis put back. The `auditory` chip lights the whole
   ascending pathway in one rotatable view.
 
@@ -713,12 +784,17 @@ until a skull control is first turned on.
 
 ## Known discrepancies with the published index
 
-`label_positions` holds only structure-plate pairs the published index lists. Six
-abbreviations were found printed one or two plates beyond their published range, and
-are recorded under `verification.known_source_discrepancies` instead: **AngT** on
-plate 29 (index: 28), **ZIC** on 35 (34), **Su3C** on 37 (36), **RLi** on 36 (35),
-**cg** on 35 (17–34), and **Sol** on 52 and 59 (49–50). Each was confirmed by eye on
-the plate. The database follows the published index.
+`label_positions` holds only structure-plate pairs the published index lists. Two
+abbreviations are printed beyond their published range with nothing in the index's own
+typography to justify extending it, and are recorded under
+`verification.known_source_discrepancies` instead: **cg** on plate 35 (index: 17–34)
+and **Sol** on 52 and 59 (49–50). Both were confirmed by eye on the plate; the database
+follows the published index for them. `Sol` in particular is printed inside longer
+abbreviations that *are* listed at those levels — `5Sol` on 52, `SolM` and `SolC` on 59
+— so what is printed there may not be the abbreviation `Sol` at all.
+
+The four abbreviations whose published range is itself malformed are a separate case and
+are handled above, under [Where the index gives itself away](#where-the-index-gives-itself-away).
 
 System tags (`auditory`, `hippocampal`, `thalamus`, …) are a convenience layer added on
 top of the published nomenclature and are not part of the original atlas. The `auditory`
