@@ -370,6 +370,51 @@ Across all 703 structures that have located labels, at three angle settings each
 2,109 solves return finite, bounded numbers; 7 return no entry at all, every one of them a
 structure whose label centre lies outside the section.
 
+### Naming the target: which plate, and how far off the label
+
+The target has always been the median of the structure's printed labels, folded onto the
+chosen hemisphere. Two controls narrow that, and both sit on the same side of one line.
+
+**Which plate.** `CA1` is labelled on 20 sections; the median of all 20 labels is a point
+somewhere in the middle of the structure, and no experiment aims at it. *Take the label
+from* names one plate and takes the median of that section's labels alone. The menu is
+built from the plates the abbreviation is actually *printed* on, not the plate range the
+structure is listed for — a structure present at a level is not necessarily labelled
+there, and only a plate carrying a label can be a plate to read one from. Picking a plate
+also turns the viewer to it: the plan is drawn on the plates, and a target taken from
+plate 13 read against plate 30 is a picture of a track somewhere else. A pick is dropped
+the moment the target changes to a structure not printed on that plate.
+
+**How far off it.** The three *offset* boxes move the aim off the label in millimetres —
+0.2 mm dorsal to `VO`, the classic quarter-turn above a structure. With an offset set the
+panel prints the label and the target as two rows rather than one: the plan is then a
+claim about a point nothing in the atlas is printed at, and the point it was measured from
+has to be readable beside it.
+
+**The offset is in atlas millimetres, and it is the only thing in the planner that is.**
+It is applied beside the fold and *before* the carry into the working frame, because
+naming a target is anatomy: *dorsal* has to mean dorsal in the brain rather than up the
+manipulator's own axis, or the same offset would mean something different at every pitch.
+Everything downstream — entry, angles, drive — is still the rig's. The boundary between
+the two runs exactly through `tgTarget()`. ML is signed by the hemisphere so that
+*lateral* is lateral on both sides and the two stay mirror images, which is what the side
+toggle already promises.
+
+Both narrowings are affine, so folding label by label still commutes with taking the
+median: adding a constant to every point moves the median by that constant, in whichever
+frame it is measured. The label median and the target are computed by the same code path
+with and without the offset, so the two rows cannot drift apart.
+
+An offset can walk the target off the plate its label was read from, or past either end of
+the series. Neither is an error — the first is a perfectly good plan for a point on a
+neighbouring section — but neither is what the plate menu appears to promise, so the panel
+says which happened.
+
+Deep links carry both, appended after the five fields a plan link has always had and only
+when they are not the defaults. A plan aiming at the label itself writes the exact link it
+wrote before, and a reader that stops at the fifth field reads a new link as the plan
+minus its offset rather than as nonsense.
+
 ### What it does not do
 
 It plans a **straight track to where an abbreviation is printed** — not to a centroid. The

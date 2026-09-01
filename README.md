@@ -61,8 +61,17 @@ drive from the brain surface.
 - **The angles are in your frame, not the atlas's.** Set a **Frame** and the plan moves with
   it: at 17° of nose-down pitch, a track that is vertical on the manipulator enters 2.1 mm
   further back than the plate would suggest.
+- **Take the label from** picks the plate to read the target off. A structure printed on a
+  dozen sections has a label on each, and the median of all of them sits in the middle of
+  the structure rather than on the section you are aiming at; naming one plate reads that
+  section's labels alone, and turns the viewer to it.
+- **Offset** aims somewhere other than the label itself — 0.2 mm dorsal to `VO` on plate 13,
+  say. The plan then prints the label and the target as separate rows, so the point the
+  numbers were measured from stays readable beside the point they are about. The offset is
+  in *atlas* millimetres, not the frame's, because naming a target is anatomy; lateral is
+  taken toward whichever hemisphere is chosen, so the two sides stay mirror images.
 - **Copy notes** or **Download** writes the plan as plain text with the frame it was planned
-  in, and **Copy link** restores the whole thing — target, side and angles.
+  in, and **Copy link** restores the whole thing — target, side, angles, plate and offset.
 - The surface is the outline of the section, traced off the atlas's own drawings. It is a
   *fixed, sectioned* brain, not the surface under intact dura, and the sections are 350 µm
   apart, so an entry AP is only resolved to the nearest plate.

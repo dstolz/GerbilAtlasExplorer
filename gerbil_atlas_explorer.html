@@ -139,6 +139,11 @@ input[type=search]:focus{border-color:var(--accent)}
 .texp b{font-weight:650}
 .tgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .tgrid .rvf input:disabled{opacity:.45}
+.rvf select:disabled{opacity:.45}
+/* the caption over a group of boxes, saying what the three of them are between them --
+   the angles alone needed none, but two grids of three numbers in a row do */
+.tlbl{margin:-3px 0 -4px;font-size:11px;color:var(--muted)}
+.tlbl b{color:var(--ink);font-weight:600}
 /* the plan itself: a definition list that reads like the note it writes out */
 .tplan{margin:0;font-size:12px;font-variant-numeric:tabular-nums;
   display:grid;grid-template-columns:auto minmax(0,1fr);gap:3px 10px;align-items:baseline}
@@ -575,12 +580,20 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
         <button type="button" data-h="-1">Left</button>
         <button type="button" class="on" data-h="1">Right</button>
       </div>
+      <label class="rvf" id="tplatew" hidden title="An abbreviation printed on several plates has a label on each, and the target is the median of all of them. Name one plate to read that section's labels alone. Picking a plate also turns the viewer to it."><span>Take the label from</span><select id="tplate"></select></label>
+      <p class="tlbl"><b>Approach</b> &mdash; the angles to set on the arm</p>
       <div class="tgrid">
         <label class="rvf" title="Tilt about the mediolateral axis. Positive drives the tip anterior, so the entry is behind the target."><span>Tilt &deg; &middot; tip fwd +</span><input type="number" id="ttilt" step="1" value="0"></label>
         <label class="rvf" title="Roll about the anteroposterior axis. Positive drives the tip to the right, so the entry is left of the target."><span>Roll &deg; &middot; tip right +</span><input type="number" id="troll" step="1" value="0"></label>
         <label class="rvf" id="tyaww" title="Turns the heading the tilt and roll point in. With both of those at 0 the track is vertical and there is nothing for a yaw to turn."><span>Yaw &deg; &middot; heading</span><input type="number" id="tyaw" step="1" value="0"></label>
       </div>
       <p class="tnote" id="tyawn" hidden>The track is vertical, so yaw has nothing to turn.</p>
+      <p class="tlbl"><b>Offset</b> &mdash; where to aim relative to the label</p>
+      <div class="tgrid" id="toffg">
+        <label class="rvf" title="Moves the target anterior of the label, in millimetres. The offset says where to aim relative to the printed abbreviation, so it is measured along the atlas's own axes and stays anatomical whatever frame the plan is read in."><span>AP mm &middot; ant +</span><input type="number" id="toap" step="0.05" value="0"></label>
+        <label class="rvf" title="Moves the target away from the midline on whichever hemisphere is chosen, so left and right stay mirror images of each other."><span>ML mm &middot; lat +</span><input type="number" id="toml" step="0.05" value="0"></label>
+        <label class="rvf" title="Moves the target dorsal of the label. Positive is up, toward the surface."><span>DV mm &middot; dors +</span><input type="number" id="todv" step="0.05" value="0"></label>
+      </div>
       <dl class="tplan" id="tplan"></dl>
       <p class="tnote" id="twarn" hidden></p>
       <label class="tg" title="Draw the vertical drop and the horizontal offset that the track is the hypotenuse of — what you set on the arm before you lower it"><input type="checkbox" id="tlegs">Right-triangle sides</label>
@@ -588,6 +601,7 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
         <button class="b" id="tcopy" type="button" title="Copy the plan as plain text">Copy notes</button>
         <button class="b" id="tdl" type="button" title="Download the plan as a text file">Download</button>
         <button class="b" id="tzero" type="button" title="Back to a vertical dorsal approach">Straight down</button>
+        <button class="b" id="tozero" type="button" hidden title="Back to the label itself: clears the offset and the plate it was taken from">On the label</button>
       </div>
     </div>
 
@@ -838,6 +852,21 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
       structure&rsquo;s centroid &mdash; the caveat that runs through everything here, and that
       matters most in a tool that invites this much trust. The plan knows nothing about
       vasculature, the sinus or the ventricles, and does not check the entry against the skull.</p>
+    <p><b>Which plate, and how far off the label.</b> A structure that spans a dozen sections is
+      labelled on each of them, and the median of all those labels is a point somewhere in the
+      middle of the structure rather than a point on the section anybody is aiming at.
+      <em>Take the label from</em> names one plate and reads that section&rsquo;s labels alone;
+      picking a plate also turns the viewer to it. Below the angles, the three <em>offset</em>
+      boxes move the aim off the label &mdash; 0.2&nbsp;mm dorsal to VO on plate 13, say &mdash;
+      and the plan then prints the label and the target as separate rows, so the point the
+      numbers were measured from stays readable beside the point they are about.</p>
+    <p>The offset is in <b>atlas millimetres</b>, not the working frame&rsquo;s, and this is the
+      one place in the planner where that is true. Naming a target is anatomy: <em>dorsal</em>
+      has to mean dorsal in the brain rather than up the manipulator&rsquo;s own axis, or an
+      offset would mean something different at every pitch. Lateral is taken toward whichever
+      hemisphere is chosen, so the two sides stay mirror images. Everything downstream &mdash;
+      the entry, the angles, the drive &mdash; is still in your frame; the boundary between the
+      two is exactly the point where the target is named.</p>
 
     <h3>Caveats</h3>
     <p>System tags (auditory, hippocampal, &hellip;) are a convenience layer added on top of the
@@ -1230,6 +1259,12 @@ let mA=null, mB=null, mHover=null, lastPt=null, pickArm=false;
 /* the track being planned: which side of the brain, and the three angles of the approach.
    All three default to 0, which is the vertical dorsal approach. */
 let targSide=1, tgTilt=0, tgRoll=0, tgYaw=0, tgLegs=false;
+/* and what the target is, which is not always the label itself. tgPlate is the one plate
+   to read the abbreviation from -- 0 for all of them, which is the median the planner has
+   always taken -- and tgOff moves the aim off the label in millimetres. Both default to
+   the old behaviour, so a plan made before either existed still means what it meant. */
+let tgPlate=0, tgOff={ap:0,ml:0,dv:0};
+const tgOffOn = () => !!(tgOff.ap||tgOff.ml||tgOff.dv);
 
 /* ---------- filter chips ---------- */
 const sysEl = $('sys');
@@ -1799,17 +1834,49 @@ function tgDir(){
   return [a,m,v];
 }
 
+/* which plates an abbreviation is actually printed on, in order. Not r.plates: that is
+   the range the structure is listed for, and a structure present at a level is not
+   necessarily labelled there. Only a plate carrying a label can be a plate to read one
+   from. */
+function tgPlates(a){
+  const v=(a&&ptsOf[a])||[];
+  return [...new Set(v.map(q=>q.p))].sort((x,y)=>x-y);
+}
+
 /* the target: the label centre of the selection, folded onto the chosen hemisphere.
    Folded in atlas coordinates, where the atlas really is mirror-symmetric and the fold is
    exact, and only then carried into the frame -- and each label separately, because a
    median is not linear and the median of the rotated points is not the rotation of the
-   median. That makes this the same number the structure card prints. */
+   median. That makes this the same number the structure card prints.
+
+   Two things narrow it. A plate, if one is named: a structure that spans a dozen sections
+   has a label on each, and the median of all of them is a point in the middle of the
+   structure rather than a point on the section anybody is aiming at. And an offset, which
+   moves the aim off the label -- 0.2 mm dorsal to it, say. The offset goes on beside the
+   fold, in atlas millimetres and before the carry into the frame, because it is part of
+   naming the target and naming a target is anatomy: "dorsal" has to mean dorsal in the
+   brain, not up the manipulator's own axis. Everything downstream of here -- the entry,
+   the angles, the drive -- is still the rig's. The line between the two is exactly this
+   function. ML is signed by the hemisphere so that "lateral" is lateral on both, and the
+   two sides stay mirror images the way the side toggle promises.
+
+   Both are affine, so folding label by label still commutes with the median: adding a
+   constant to every point moves the median by that constant, whichever frame it is
+   measured in. */
 function tgTarget(){
-  const v=sel&&ptsOf[sel];
+  let v=sel&&ptsOf[sel];
   if(!v||!v.length) return null;
-  const w=v.map(q=>({ap:q.ap, ml:targSide*Math.abs(q.ml), dv:q.dv}))
-           .map(q=>FRAME.on?toFrame(q.ap,q.ml,q.dv):q);
-  return {ap:med(w.map(q=>q.ap)), ml:med(w.map(q=>q.ml)), dv:med(w.map(q=>q.dv)), n:v.length};
+  let pick=0;
+  if(tgPlate){ const u=v.filter(q=>q.p===tgPlate); if(u.length){ v=u; pick=tgPlate; } }
+  const o={ap:tgOff.ap, ml:targSide*tgOff.ml, dv:tgOff.dv};
+  const carry=f=>{
+    const w=v.map(f).map(q=>FRAME.on?toFrame(q.ap,q.ml,q.dv):q);
+    return {ap:med(w.map(q=>q.ap)), ml:med(w.map(q=>q.ml)), dv:med(w.map(q=>q.dv))};
+  };
+  const L=carry(q=>({ap:q.ap, ml:targSide*Math.abs(q.ml), dv:q.dv}));
+  const T=carry(q=>({ap:q.ap+o.ap, ml:targSide*Math.abs(q.ml)+o.ml, dv:q.dv+o.dv}));
+  T.n=v.length; T.pick=pick; T.L=L;
+  return T;
 }
 const tgBack = q => FRAME.on ? fromFrame(q.ap,q.ml,q.dv) : q;
 
@@ -1856,7 +1923,9 @@ function tgSolve(){
   if(!OUTOK||!sel) return;
   const T=tgTarget(); if(!T) return;
   const Ta=tgBack(T), pl=plateAt(Ta.ap);
+  const La=tgBack(T.L), lpl=plateAt(La.ap);
   const o={abbr:sel, side:targSide, T, Ta, plate:pl?pl.plate:null,
+           pick:T.pick, La, lplate:lpl?lpl.plate:null,
            inside:inBrain(Ta.ap,Ta.ml,Ta.dv), d:tgDir()};
   const w=tgWalk(T,o.d);
   if(w){
@@ -1887,12 +1956,46 @@ function tgHead(o){
   return tgDeg(o.deg)+' from vertical, tip toward '+w;
 }
 function tgCoord(q,F){ return `${apLab(F)} ${sgn(q.ap)} · ML ${sgn(q.ml)} · DV ${sgn(q.dv)}`; }
+/* the offset in words, dorsoventral first because that is the one anybody sets: a plan is
+   usually so many millimetres above or below a label, and only then off it in the plane.
+   Named by direction rather than by sign for the same reason the heading is. */
+function tgOffTxt(){
+  const a=[], say=(v,p,m)=>{ if(v) a.push(`${Math.abs(v).toFixed(2)} mm ${v>0?p:m}`); };
+  say(tgOff.dv,'dorsal','ventral');
+  say(tgOff.ml,'lateral','medial');
+  say(tgOff.ap,'anterior','posterior');
+  return a.join(' · ');
+}
+/* where the target came from, in one line: how many labels, off which plates, on which
+   side. It is the sentence the plan is only as good as. */
+function tgFrom(o){
+  return `median of ${o.T.n} label${o.T.n===1?'':'s'} on `+
+         (o.pick ? 'plate '+o.pick : tgPlates(o.abbr).length>1 ? 'all its plates' : 'its plate')+
+         `, folded onto the ${o.side>0?'right':'left'}`;
+}
+/* the plate menu. Rebuilt only when the plates behind it change, so typing in an angle
+   box does not reset a menu the pointer is sitting on. */
+let tgPlSig=null;
+function tgPlateSel(){
+  const el=$('tplate'), ps=tgPlates(sel), sig=ps.length?sel+'|'+ps.join(','):null;
+  $('tplatew').hidden=!sig;
+  if(!sig){ tgPlSig=null; return; }
+  if(sig!==tgPlSig){
+    tgPlSig=sig;
+    el.innerHTML=`<option value="0">every plate${ps.length>1?` · median of ${ps.length}`:''}</option>`+
+      ps.map(p=>`<option value="${p}">plate ${p} · AP ${sgn(plateOf[p].bregma)}</option>`).join('');
+  }
+  el.value=String(tgPlate);
+  el.disabled=ps.length<2;                    /* one plate is not a choice, but it is a fact */
+}
 function tgPanel(){
   const D=$('tplan'), N=$('twarn'), o=tgPlan;
   $('ttgt').textContent = sel ? '' : 'Pick a target below, or search above.';
   [...$('tside').children].forEach(b=>b.classList.toggle('on',+b.dataset.h===targSide));
   const flat = !tgTilt && !tgRoll;
   $('tyaw').disabled=flat; $('tyawn').hidden=!flat;
+  tgPlateSel();
+  $('tozero').hidden = !tgPlate && !tgOffOn();
   if(!OUTOK){
     D.innerHTML=''; N.hidden=false;
     N.textContent='This build carries no brain outline, so a depth from the surface cannot be measured.';
@@ -1901,10 +2004,15 @@ function tgPanel(){
   if(!o){ D.innerHTML=''; N.hidden=true; return; }
   $('ttgt').innerHTML=`<b style="color:var(--targ)">${esc(o.abbr)}</b> · `+
     `${o.side>0?'right':'left'} · ${o.plate?'plate '+o.plate:'off the series'}`+
-    ` · ${o.T.n} label${o.T.n===1?'':'s'}`;
-  const F=FRAME.on?1:0, rows=[];
+    ` · ${o.T.n} label${o.T.n===1?'':'s'}${o.pick?' on it':''}`;
+  const F=FRAME.on?1:0, rows=[], off=tgOffOn();
+  /* with an offset set the label is no longer the target, so both are printed: the plan
+     is a claim about a point that nothing in the atlas is printed at, and the point it
+     was measured from has to be readable beside it. */
+  if(off) rows.push(['Label', tgCoord(o.T.L,F)+' mm', tgFrom(o)]);
   rows.push(['Target', tgCoord(o.T,F)+' mm',
-             'median of the printed labels, folded onto the '+(o.side>0?'right':'left')]);
+             off ? tgOffTxt()+' from the label'+(FRAME.on?' · along the atlas axes':'')
+                 : tgFrom(o)]);
   if(o.len!==undefined){
     rows.push(['Approach', tgHead(o),
                `tilt ${tgDeg(tgTilt)} · roll ${tgDeg(tgRoll)} · yaw ${tgDeg(tgYaw)}`]);
@@ -1919,11 +2027,29 @@ function tgPanel(){
   D.innerHTML=rows.map(([k,v,s])=>
     `<dt>${k}</dt><dd>${v}${s?`<span class="sub">${s}</span>`:''}</dd>`).join('');
   const warn=[];
-  if(!o.inside) warn.push(`The label for ${esc(o.abbr)} sits outside the traced outline of its `+
-    `plate — the drawing prints some abbreviations beside the section and points at them. `+
-    (o.len===undefined
-      ? `Nothing of the brain lies along this approach to it, so there is no depth to give.`
-      : `The track is measured to it anyway; read the entry with that in mind.`));
+  /* an offset can walk the target off the section it was taken from, which is a real
+     plan for a point on a neighbouring plate and not an error -- but it is not what the
+     plate menu appears to promise, so it is said out loud */
+  if(o.pick && o.plate && o.plate!==o.pick)
+    warn.push(`The offset carries the target off plate ${o.pick} and onto `+
+      `plate ${o.plate}; the label was read from plate ${o.pick}.`);
+  if(!o.plate) warn.push(tgOffOn()
+    ? `The offset carries the target past the end of the plate series, so there is no `+
+      `section to measure it against.`
+    : `This label lies beyond either end of the plate series, so there is no section to `+
+      `measure it against.`);
+  else if(!o.inside) warn.push(tgOffOn()
+    ? `The target — ${esc(o.abbr)}’s label plus the offset — falls outside the traced `+
+      `outline of its plate. Either the offset reaches past the surface, or the atlas prints `+
+      `this abbreviation beside the section and points at it. `+
+      (o.len===undefined
+        ? `Nothing of the brain lies along this approach to it, so there is no depth to give.`
+        : `The track is measured to it anyway; read the entry with that in mind.`)
+    : `The label for ${esc(o.abbr)} sits outside the traced outline of its `+
+      `plate — the drawing prints some abbreviations beside the section and points at them. `+
+      (o.len===undefined
+        ? `Nothing of the brain lies along this approach to it, so there is no depth to give.`
+        : `The track is measured to it anyway; read the entry with that in mind.`));
   else if(o.len===undefined) warn.push('No surface lies along this direction from the target.');
   if(o.flank) warn.push('The entry is on the flank of the section, not its dorsal surface: '+
     'this track goes in through the side of the head.');
@@ -2002,6 +2128,16 @@ function tgPJ(){
    Plain text, one field a line, carrying the frame it was planned in. A plan read back in
    six months has to say which zero its numbers were measured from, or it is a set of
    numbers about nothing. */
+/* hard-wrapping for the caveat paragraph below, which is now assembled from what the
+   plan actually did rather than fixed at the width it was typed at */
+const tgWrap=(t,w)=>{
+  const out=[]; let ln='';
+  for(const word of t.split(/\s+/)){
+    if(ln && (ln+' '+word).length>w){ out.push(ln); ln=word; } else ln = ln ? ln+' '+word : word;
+  }
+  if(ln) out.push(ln);
+  return out;
+};
 function tgNotes(){
   const o=tgPlan; if(!o) return '';
   const r=byAb[o.abbr], L=apLab(FRAME.on?1:0);
@@ -2011,6 +2147,12 @@ function tgNotes(){
   ln.push(`target        ${o.abbr}  (${r?r.name:''})`);
   ln.push(`hemisphere    ${o.side>0?'right':'left'}`);
   ln.push(`plate         ${o.plate||'off the series'}`);
+  ln.push(`labels read   ${o.pick ? `plate ${o.pick} only, ${o.T.n} label${o.T.n===1?'':'s'}`
+                                  : `every plate the abbreviation is printed on, ${o.T.n} label${o.T.n===1?'':'s'}`}`);
+  if(tgOffOn()){
+    ln.push(`label         ${L} ${sgn(o.T.L.ap)}  ML ${sgn(o.T.L.ml)}  DV ${sgn(o.T.L.dv)}  mm`);
+    ln.push(`offset        ${tgOffTxt()}`);
+  }
   ln.push(`target        ${L} ${sgn(o.T.ap)}  ML ${sgn(o.T.ml)}  DV ${sgn(o.T.dv)}  mm`);
   if(o.len!==undefined){
     ln.push(`entry         ${L} ${sgn(o.E.ap)}  ML ${sgn(o.E.ml)}  DV ${sgn(o.E.dv)}  mm`);
@@ -2025,10 +2167,24 @@ function tgNotes(){
   ln.push(`angle order   roll, then tilt, then yaw about the vertical`);
   ln.push(`signs         tilt + drives the tip anterior, roll + to the right`);
   ln.push('');
-  ln.push('The target is the median position of the structure’s printed abbreviation,');
-  ln.push('not its centroid. The surface is the outline of the nearest plate, so the entry');
-  ln.push(`AP is quantised at the ${(PSTEP*1000).toFixed(0)} um section spacing, and it is a fixed,`);
-  ln.push('sectioned brain rather than the surface under intact dura. Experimental.');
+  /* the caveats, wrapped rather than written out line by line, because what has to be
+     said now depends on how the target was named and a fixed set of lines cannot say it */
+  ln.push(...tgWrap(
+    (tgOffOn()
+      ? 'The target is an offset in atlas millimetres from the median position of the '+
+        'structure’s printed abbreviation, with lateral taken toward the chosen side; the '+
+        'label is not a centroid. '
+      : 'The target is the median position of the structure’s printed abbreviation, not its '+
+        'centroid. ')+
+    (o.pick
+      ? `It was read from the label${o.T.n===1?'':'s'} on plate ${o.pick} alone. `
+      : tgPlates(o.abbr).length>1
+        ? 'It is the median across every plate the abbreviation is printed on, which is a '+
+          'point inside the structure rather than a point on any one section. '
+        : '')+
+    `The surface is the outline of the nearest plate, so the entry AP is quantised at the `+
+    `${(PSTEP*1000).toFixed(0)} um section spacing, and it is a fixed, sectioned brain rather than the `+
+    'surface under intact dura. Experimental.', 78));
   ln.push('');
   ln.push(location.href);
   return ln.join('\n');
@@ -2054,12 +2210,42 @@ function tgOffPlate(){
   const ap0=plateOf[cur].bregma, h=PSTEP/2;
   return Math.abs(o.Ta.ap-ap0)>h || Math.abs(o.Ea.ap-ap0)>h;
 }
-function tgSync(){ tgSolve(); tgPanel(); mark(); tgDraw(); }
+/* a plate named for one structure means nothing for the next one, and a menu holding a
+   plate its target is not printed on would quietly go on reading every plate while
+   claiming one. So the pick is dropped the moment it stops being available. */
+function tgSync(){
+  if(tgPlate && !tgPlates(sel).includes(tgPlate)) tgPlate=0;
+  tgSolve(); tgPanel(); mark(); tgDraw();
+}
 function tgAng(id,set){
   const el=$(id);
   el.oninput=()=>{ const v=+el.value; set(Number.isFinite(v)?Math.max(-89,Math.min(89,v)):0); tgSync(); queueHash(); };
 }
 tgAng('ttilt',v=>tgTilt=v); tgAng('troll',v=>tgRoll=v); tgAng('tyaw',v=>tgYaw=v);
+/* Naming a plate also turns the viewer to it. The plan is drawn on the plates, and a
+   target taken from plate 13 that is being read against plate 30 is a picture of a track
+   somewhere else; the pick is a deliberate act, so it is allowed to move the view. */
+$('tplate').onchange=e=>{
+  const p=+e.target.value||0;
+  tgPlate = plateOf[p] ? p : 0;
+  if(tgPlate && tgPlate!==cur) go(tgPlate);
+  tgSync(); queueHash();
+};
+/* the offset is a distance, not an angle, so it is clamped by the brain rather than by
+   the arm: 10 mm reaches past either end of a gerbil brain from anywhere inside it */
+const TG_OFFMAX=10;
+function tgOffIn(id,k){
+  const el=$(id);
+  el.oninput=()=>{ const v=+el.value;
+    tgOff[k]=Number.isFinite(v)?Math.max(-TG_OFFMAX,Math.min(TG_OFFMAX,v)):0;
+    tgSync(); queueHash(); };
+}
+tgOffIn('toap','ap'); tgOffIn('toml','ml'); tgOffIn('todv','dv');
+$('tozero').onclick=()=>{
+  tgPlate=0; tgOff={ap:0,ml:0,dv:0};
+  $('toap').value=0; $('toml').value=0; $('todv').value=0;
+  tgSync(); queueHash();
+};
 [...$('tside').children].forEach(b=>b.onclick=()=>{ targSide=+b.dataset.h; tgSync(); queueHash(); });
 $('tlegs').onchange=e=>{ tgLegs=e.target.checked; tgDraw(); queueHash(); };
 $('tzero').onclick=()=>{
@@ -2206,7 +2392,9 @@ function exportPNG(){
     notes.push(`Measured ${Math.hypot(dml,ddv).toFixed(2)} mm (ΔML ${sgn(dml)}, ΔDV ${sgn(ddv)})`); }
   if(qOn) notes.push(`Query point ML ${sgn(qa.ml)}, DV ${sgn(qa.dv)}`);
   if(tgPlan&&tgPlan.len!==undefined&&smode==='targ')
-    notes.push(`Track to ${tgPlan.abbr} (${tgPlan.side>0?'right':'left'}) — `+
+    notes.push(`Track to ${tgPlan.abbr} (${tgPlan.side>0?'right':'left'})`+
+      `${tgOffOn()?`, ${tgOffTxt()} from its label`:''}`+
+      `${tgPlan.pick?`${tgOffOn()?'':', from its label'} on plate ${tgPlan.pick}`:''} — `+
       `${tgPlan.len.toFixed(2)} mm from the surface at tilt ${tgTilt}°, roll ${tgRoll}°, `+
       `yaw ${tgYaw}° — experimental`);
   /* the sheet carries the plate and its overlays, all of which are atlas-framed, so it
@@ -3366,9 +3554,17 @@ function writeHash(){
   if(tab!=='plate') h+='&t='+tab;
   /* the plan: target, side and the three angles, written only while the planner is the
      pane in front. A link without it is a link that was never planning anything, so no
-     link ever written before this existed changes meaning. */
-  if(smode==='targ'&&sel) h+='&tg='+encodeURIComponent(sel)+','+(targSide>0?'R':'L')+
-    ','+tgTilt+','+tgRoll+','+tgYaw;
+     link ever written before this existed changes meaning.
+     The plate and the offset are appended after those five, and only when they are not
+     the defaults -- so a plan that aims at the label itself still writes the exact link
+     it always wrote, and an older reader that stops at the fifth field reads a new one as
+     the plan minus its offset rather than as nonsense. */
+  if(smode==='targ'&&sel){
+    h+='&tg='+encodeURIComponent(sel)+','+(targSide>0?'R':'L')+
+       ','+tgTilt+','+tgRoll+','+tgYaw;
+    if(tgPlate||tgOffOn())
+      h+=','+tgPlate+','+tgOff.ap+','+tgOff.ml+','+tgOff.dv;
+  }
   if(v3mode!=='contour') h+='&r='+v3mode;
   if(v3a>0||v3b<61) h+='&sl='+(v3a+1)+','+(v3b+1);
   if(v3half) h+='&hf=1';
@@ -3466,6 +3662,14 @@ function readHash(){
     const num=(i)=>{ const q=+tg[i]; return Number.isFinite(q)?Math.max(-89,Math.min(89,q)):0; };
     tgTilt=num(2); tgRoll=num(3); tgYaw=num(4);
     $('ttilt').value=tgTilt; $('troll').value=tgRoll; $('tyaw').value=tgYaw;
+    /* a plate the target is not printed on is dropped rather than honoured: tgSync()
+       would drop it a moment later anyway, and the menu should never show one */
+    const pk=+tg[5];
+    tgPlate = Number.isFinite(pk)&&plateOf[pk]&&tgPlates(tga).includes(pk) ? pk : 0;
+    const off=(i)=>{ const q=+tg[i]; return Number.isFinite(q)?Math.max(-10,Math.min(10,q)):0; };
+    tgOff={ap:off(6), ml:off(7), dv:off(8)};
+    $('toap').value=tgOff.ap; $('toml').value=tgOff.ml; $('todv').value=tgOff.dv;
+    /* set before the selection, because selecting is what solves the plan */
     if(sel!==tga) select(tga);
     setMode('targ');
   }
