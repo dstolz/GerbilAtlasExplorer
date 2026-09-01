@@ -128,6 +128,51 @@ where the printed text says otherwise (`Cl`→`DCl`, `Su3`→`Su3C`, `PR`→`PrC
 `Rh`→`PRh`, `La`→`LaV`, `A1`→`A11`, `V1`→`V2L`, `cg`→`Cg1`, `f`→`fr`, `ts`→`rs`, and
 cortical-layer digits that are really `S1` and `AI`).
 
+## The brain outline
+
+`brain_outline` in the JSON gives the outline of the section on each plate: what a track
+has to cross to reach a target, and the surface the track planner measures a depth from.
+The atlas publishes no segmentation and no brain surface, and the CT skull that ships
+here is bone from a different animal — the right surface for deciding where to drill and
+the wrong one for deciding how far to drive. So the outline was taken from the drawings
+themselves.
+
+It uses the same steps the 3-D view already runs to build its volume, which is the reason
+to trust it rather than a second pipeline nobody has looked at: crop to the atlas's own
+printed coordinate box at `[14, 14, 1020, 681]` of the 1100 × 703 frame, call a pixel ink
+where its smallest channel is below 236, flood the paper in from the border, and keep the
+connected components of what the paper did not reach that are larger than
+`max(400 px scaled to full resolution, 2% of the largest)`. Holes are filled, so a
+ventricle counts as brain. The boundary of each surviving component is traced and
+simplified by Douglas-Peucker at 2 px — 35 µm, well inside the atlas's own error — giving
+81 polygons over the 62 plates, 8,815 points in all.
+
+**Most plates give one polygon, and the ones that give more do so anatomically.** The
+interhemispheric fissure separates the two hemispheres on plates 10–14, the cortex parts
+from the midbrain on 37–42, and the cerebellum from the brainstem on 56–59. A reader that
+kept only the largest blob would silently lose a hemisphere.
+
+**No morphological opening.** The drawing prints some abbreviations beside the section and
+points at them, and the flood runs a few pixels out along those leader lines. An opening
+large enough to take them off also eats the thin cortical sheet on plates 36 and 38, which
+is real anatomy: at a radius of 3 px the labels falling outside their own outline go from
+135 to 316, and 32 of the new ones are on plate 36 alone. The contour is therefore left
+honest, and the app's ray-caster takes **the first crossing that is followed by 0.2 mm of
+brain** rather than the first crossing outright, which rejects a leader line without
+touching the geometry.
+
+Three checks, none of which the extraction was tuned to pass:
+
+| Check | The atlas says | Extracted |
+| --- | --- | --- |
+| Highest point of any outline | DV 0 is the plane through the most dorsal points of cerebrum and cerebellum | **DV −0.06 mm** — reaches it, never crosses it |
+| Lowest point of any outline | the deepest printed label sits at DV −9.02 | **DV −9.09 mm** — just below it |
+| Printed labels inside their own plate's outline | — | **97.8%** (6,085 of 6,220) |
+
+Of the 135 labels that fall outside, most are on the olfactory bulb plates 5–9, where the
+section is small and the drawing prints the labels beside it; the median one is 0.14 mm
+out, and the 90th percentile 0.20 mm.
+
 ## Your own coordinate frame
 
 > **Experimental.** Frame adjustment is new and not yet fully tested. Check adjusted
@@ -249,6 +294,92 @@ plate is drawn, or could honestly be drawn, from a series sampled 350 µm apart 
 17.5 µm pixel. An adjusted coordinate is a targeting aid carrying the atlas's own error —
 a label marks where an abbreviation is *printed* — along with your alignment error and
 animal-to-animal skull variation.
+
+## Planning a track
+
+> **Experimental.** New, and not yet checked against a track anybody has driven. Read a
+> plan against anatomy you already know before relying on it.
+
+*Plan a track* takes a structure, a hemisphere and three approach angles and returns the
+entry point, the angles to set on the manipulator, and the distance from the brain surface
+to the target — drawn live on the plate, the projections and the 3-D view, and carried in
+the link.
+
+### The angles are in your frame, not the atlas's
+
+This is the decision the rest follows from. The atlas is cut perpendicular to the
+brainstem axis and a head in a stereotaxic frame is not, so an angle quoted in atlas
+coordinates is one nobody can dial into a manipulator. The target is carried into the
+working frame by the same `toFrame()` the structure card uses, the track is built there,
+and `fromFrame()` is used only to put it back on the plates for drawing.
+
+Because the drawing is done from the true atlas positions, the picture is exact in any
+frame. This is the one tool here that a rotation does not push back into atlas
+coordinates, and the only one that needs no "in the atlas frame" footnote.
+
+What that buys is visible at a realistic tilt. With a 17° nose-down pitch and zero on
+lambda, `MSO` reads `lambda −5.79 · ML +1.31 · DV −6.94` — and a track that is *vertical
+on the manipulator* enters the brain at atlas AP −10.09 rather than −7.95, and is
+7.28 mm long rather than 7.51. Neither of those numbers is available from the plate.
+
+### Three angles, two of which set the direction
+
+```
+tilt   about ML,  + drives the tip anterior      (entry behind the target)
+roll   about AP,  + drives the tip to the right  (entry left of the target)
+yaw    about DV,    turns the heading the other two aim in
+```
+
+Composed roll, then tilt, then yaw. **Yaw goes outside the other two on purpose.** A
+straight probe spun about its own axis points where it pointed before, so a yaw applied to
+the down vector first could never do anything at all — which is exactly what composing in
+the Frame dialog's order (`roll · pitch · yaw`) would have done. Outside, it re-aims
+whichever way the tilt and roll are pointing, and is inert only while both of those are
+zero. The app disables the field and says so then, rather than leaving a control that will
+not move.
+
+That the order differs from the Frame dialog's is deliberate: that one turns the animal,
+this one turns the probe. Each angle is named here by what it does to the tip, for the
+same reason the frame names its own by what they do to the head.
+
+Two angles span every direction; the third is redundant, and kept because a manipulator
+has three settings and a note that omits one is a note you cannot follow. The panel also
+reports the resulting direction as a single angle from vertical plus a heading in words,
+which is the form to check against the rig.
+
+### Finding the entry
+
+Marched from 22 mm outside the target back along the approach at 20 µm, then refined at
+2 µm inside the step that hit — taking the outermost point that is inside the section
+**and** has 0.2 mm of brain behind it. That guard is what makes the honest outline usable:
+without it, a leader line would be reported as the brain surface. A solve costs about
+**0.9 ms**, so the track redraws on every keystroke.
+
+The surface is the nearest plate's outline, and nothing interpolates between plates: at
+350 µm spacing an interpolated surface would be arithmetic rather than anatomy, the same
+objection the 3-D view's streaking already carries. An entry AP is therefore quantised at
+the section spacing however smooth the drawn line looks.
+
+Two things the panel says rather than hides. The **entry on the flank** — the track went
+in through the side of the head, not the top — is found by asking what the dorsal surface
+directly above the entry is: more than 0.5 mm of brain above it and the entry is not a
+dorsal approach. And a **target outside its own outline**, which is the case for 18 of the
+723 structures, whose labels the drawing prints beside the section and points at.
+
+Across all 703 structures that have located labels, at three angle settings each, all
+2,109 solves return finite, bounded numbers; 7 return no entry at all, every one of them a
+structure whose label centre lies outside the section.
+
+### What it does not do
+
+It plans a **straight track to where an abbreviation is printed** — not to a centroid. The
+caveat that runs through this whole project matters most here, because a targeting tool
+invites more trust than a coordinate readout does. It knows nothing about vasculature, the
+sinus or the ventricles: the outline is a silhouette, and a track through a ventricle is
+drawn no differently from one that is not. It does not check the entry against the skull,
+which would need the skull overlay to be something to measure against, and it is not. And
+the surface is a **fixed, sectioned** brain — the brain sits lower under intact dura, and
+lower again once it is opened.
 
 ## Projection views
 

@@ -51,6 +51,22 @@ It is 18 MB, most of that the plates.
 - **Landmarks** marks bregma, lambda and the occipital crest where they fall, and draws the
   interaural line. The APs are the atlas's own; the heights come off the skull fit.
 
+**Plan a track** (experimental) — pick a structure and a hemisphere, set the approach
+angles, and get the entry point, the angles to dial into the manipulator, and how far to
+drive from the brain surface.
+- The track draws live on the plate, both projections and the 3D view, dashed on the plate
+  where it passes in front of or behind that section. **Right-triangle sides** adds the
+  vertical drop and horizontal offset it is the hypotenuse of — what you set on the arm
+  before you lower it.
+- **The angles are in your frame, not the atlas's.** Set a **Frame** and the plan moves with
+  it: at 17° of nose-down pitch, a track that is vertical on the manipulator enters 2.1 mm
+  further back than the plate would suggest.
+- **Copy notes** or **Download** writes the plan as plain text with the frame it was planned
+  in, and **Copy link** restores the whole thing — target, side and angles.
+- The surface is the outline of the section, traced off the atlas's own drawings. It is a
+  *fixed, sectioned* brain, not the surface under intact dura, and the sections are 350 µm
+  apart, so an entry AP is only resolved to the nearest plate.
+
 **See a structure whole** — the printed atlas gives you one coronal plane at a time.
 - **Projection** plots every printed label in side view (AP × DV) or top-down (AP × ML),
   with your selected structure highlighted, so you can see how it runs through the brain.
@@ -96,6 +112,10 @@ know before relying on them.
 - The **skull** overlays are a CT surface of a *different* animal, aligned here rather than
   published with the atlas — good to a few tenths of a millimetre. Context, not a surface to
   measure against.
+- The **track planner** is experimental and has not been checked against a track anybody has
+  driven. Its brain surface is the outline of the atlas's own drawn section — it reaches
+  DV 0 and never crosses it, and 98% of printed labels fall inside it, but it is a fixed,
+  sectioned brain and knows nothing about vessels, the sinus or the ventricles.
 
 ## Source
 
@@ -111,7 +131,7 @@ structures**. Please cite the atlas itself:
 | File | What it is |
 | --- | --- |
 | `gerbil_atlas_explorer.html` | The app. Self-contained (~18 MB: 186 plate images and the skull mesh), works offline. |
-| `gerbil_atlas.json` | Full database: structures, coordinates, label positions, calibration. |
+| `gerbil_atlas.json` | Full database: structures, coordinates, label positions, brain outlines, calibration. |
 | `gerbil_atlas_structures.csv` | One row per structure: abbreviation, name, plate and bregma range, tags. |
 | `gerbil_atlas_plates.csv` | One row per plate: bregma / lambda / interaural / occipital-crest AP. |
 | `index_raw.txt` | The authors' published index as extracted. Source of truth for the rest. |
@@ -125,10 +145,5 @@ How the coordinates were calibrated, how the plate images were cropped and the l
 read, how the frame-adjustment math works, and what was verified against what:
 **[METHODS.md](METHODS.md)**.
 
-## Planned
-
-A **Brain Region Targeting Tool** — pick a structure and a hemisphere, set the approach
-angles, and get the entry point, the angles to dial in and the depth from the brain
-surface, drawn across all three views and restorable from a link. Not built yet; the
-design, and what had to be settled first, is in
-**[TARGETING_PLAN.md](TARGETING_PLAN.md)**.
+The design the track planner was built from, and the questions that had to be settled
+before it could be: **[TARGETING_PLAN.md](TARGETING_PLAN.md)**.

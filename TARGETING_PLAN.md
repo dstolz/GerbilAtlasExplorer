@@ -6,11 +6,16 @@ point, the angles to dial into the manipulator, and how far to drive from the br
 surface — drawn live on the plate, the projections and the 3-D view, and recoverable
 from a link.
 
-Nothing here is built yet. This document is the plan:
-[issue #1](https://github.com/dstolz/GerbilAtlasExplorer-tasks/issues/1) asked for one.
-It settles the questions that have to be settled before code is worth writing — which
-frame the angles live in, where the brain surface comes from, and what the tool is
-allowed to claim — and states what was checked to settle them.
+**Built.** This was the design
+[issue #1](https://github.com/dstolz/GerbilAtlasExplorer-tasks/issues/1) asked for, and it
+is kept here as the record of what was decided and why — which frame the angles live in,
+where the brain surface comes from, and what the tool is allowed to claim. It has been
+updated where building it changed the answer, and those changes are marked. For how the
+shipped tool actually works, see [METHODS.md](METHODS.md#planning-a-track).
+
+Three things moved between plan and build, all noted in place below: the angle
+composition order, the decision not to interpolate between plates, and a millimetre-sized
+arithmetic error in the first surface extraction that three independent checks caught.
 
 ## What already exists
 
@@ -53,27 +58,35 @@ The default is **vertical dorsal** — straight down the working frame's DV, whi
 `(0, 0, −1)` direction — and it is the default because it is what most people do and
 because it is the case where the report is unambiguous.
 
-### Three angles, two of which do anything
-
-Compose in the same order `frmBuild()` uses, yaw then pitch then roll, so there is one
-convention in the app rather than two:
+### Three angles, two of which set the direction
 
 ```
-tilt   about ML, + = tip driven posterior      (a nose-down-looking approach)
-roll   about AP, + = tip driven toward the right
-yaw    about DV, + = rotation of the tilt's heading
+tilt   about ML, + drives the tip anterior      (entry behind the target)
+roll   about AP, + drives the tip to the right  (entry left of the target)
+yaw    about DV,   turns the heading the other two aim in
 ```
 
-`FRM` is `R_roll · R_pitch · R_yaw`, and `R_yaw` fixes the DV axis. So **with tilt and
-roll both zero, yaw does nothing at all** — it spins the probe about its own axis, and a
-straight probe has no way to show that. This is not a bug to be fixed but a fact to be
-surfaced: the UI should fade the yaw control and say *"yaw turns the tilt; with no tilt
-there is nothing to turn"* rather than let a user set 30° of it and watch the picture
-refuse to move.
+**Yaw has to go outside the other two, not inside.** This section first proposed composing
+in `frmBuild()`'s order, `R_roll · R_pitch · R_yaw`, so that one convention served the
+whole app. That is wrong here, and the reason is worth keeping: `R_yaw` fixes the DV axis,
+so a yaw applied to the down vector *first* leaves it untouched — and then everything after
+it is applied to an unchanged vector. Composed that way the yaw field would be inert at
+**every** tilt and roll, not just at zero. Built as `yaw ∘ tilt ∘ roll`, it re-aims whatever
+direction the first two produce, and is inert only while both of them are zero.
 
-Two angles set the direction; the third names which way the first two are aimed. Report
-all three anyway — a manipulator has three knobs and a note that omits one is a note you
-cannot follow.
+That is still a fact to surface rather than a bug to fix: a straight probe spun about its
+own axis points where it pointed before. The built tool disables the field then and says
+*"the track is vertical, so yaw has nothing to turn"*, rather than letting someone set 30°
+of it and watch the picture refuse to move.
+
+So there are two composition orders in the app, deliberately: the Frame dialog turns the
+animal, this turns the probe. Each angle is named by what it does to the tip, which is the
+same rule the frame uses for the head.
+
+Two angles span every direction; the third is redundant, and reported anyway — a
+manipulator has three settings and a note that omits one is a note you cannot follow. The
+panel also gives the resulting direction as one angle from vertical plus a heading in
+words, which is the form to check against the rig.
 
 ## Where the brain surface comes from
 
@@ -89,28 +102,40 @@ connected components above a floor, and gets the section as a single blob — th
 outline **is** the brain outline at that level, in plate pixels, which `plate_frame`
 converts to millimetres.
 
-**This was checked, not assumed.** Running that flood fill offline over plates 20, 30 and
-45 with the app's own crop (`V3C = [14, 14, 1020, 681]`) and threshold (min channel < 236)
-returns the section as exactly one surviving component out of ~400, on each plate. The
-dorsal edge lands where the atlas's DV convention says it must — DV 0 is defined as the
-plane through the most dorsal points of cerebrum and cerebellum, and on plate 30 the
-extracted surface reads **−0.02 mm at ML −4, +0.40 at ML −2, −0.08 at ML 0, +0.43 at
-ML +2, −0.06 at ML +4**. Symmetric to about 0.03 mm, and within about 0.4 mm of the plane
-it is supposed to define. That residual is the outline stroke's own width plus wherever
-that particular level sits relative to the vertex; it is a bias to state, not to hide.
+**This was checked, not assumed.** Running that flood fill offline with the app's own crop
+(`V3C = [14, 14, 1020, 681]`) and threshold (min channel < 236) returns the section, and
+the dorsal edge lands where the atlas's DV convention says it must: DV 0 is the plane
+through the most dorsal points of cerebrum and cerebellum, and over all 62 plates the
+**highest point of any outline is DV −0.06 mm**. The surface reaches that plane and never
+crosses it. The lowest is DV −9.09, and the deepest printed label sits at DV −9.02, just
+inside it.
+
+Getting there took one correction worth recording, because it is the kind of error a
+plausible-looking answer hides. The first pass read the plate pixels with
+`dv_zero_px` as the pixel of DV 0, which is what the JSON's own formula does — but the app
+uses `DV_Y0 = dv_zero_px − dv_px_per_mm`, the pixel of DV **+1**. Every extracted height
+was a millimetre high, which put the brain's apex at +0.94 mm and made it look as though
+the surface floated most of a millimetre above the plane that defines it. Corrected, the
+three independent checks above agree to within 0.07 mm. **Read the app's constant, not the
+JSON's prose.**
 
 **Precompute it, do not derive it at runtime.** The runtime version only exists once the
 3-D view has been opened and takes seconds to build. Extract the outline offline and ship
-it in `gerbil_atlas.json` as a new `brain_outline` block — one closed polyline per plate,
-in the same `[x, y]` image fractions `label_positions` already uses, so it reads with the
-same two formulae. That also makes it a thing that can be looked at and argued with,
-rather than a side effect of a shader.
+it in `gerbil_atlas.json` as a new `brain_outline` block, in the same `[x, y]` image
+fractions `label_positions` already uses, so it reads with the same two formulae. That also
+makes it a thing that can be looked at and argued with, rather than a side effect of a
+shader.
 
-Ray/surface intersection then works on a stack of 62 outlines: walk the track from the
-target outward and take the first crossing. Between plates the surface is linearly
-interpolated, exactly as the 3-D view interpolates everything else, and the note has to
-say so — the sections are 350 µm apart, so the entry AP is quantised at 350 µm however
-smooth the drawn line looks.
+**Not one polyline per plate — a list of them.** The drawing genuinely separates in three
+places, and a reader that kept only the largest blob would silently lose a hemisphere: the
+interhemispheric fissure splits plates 10–14, the cortex parts from the midbrain on 37–42,
+and the cerebellum from the brainstem on 56–59. 81 polygons over the 62 plates.
+
+Ray/surface intersection then walks the track from outside toward the target and takes the
+first crossing. **Nothing is interpolated between plates** — this is a change from what
+this section first proposed. At 350 µm spacing an interpolated surface would be arithmetic
+rather than anatomy, which is the objection the 3-D view's streaking already carries; the
+surface is the nearest plate's, and the entry AP is quantised at the section spacing.
 
 ### What this surface is and is not
 
@@ -118,9 +143,15 @@ smooth the drawn line looks.
   brain sits lower under intact dura and lower again after it is opened. Treat the depth
   as a plan to check against your own surface reading, not as a number to drive blind.
 - Laterally the outline is the side of the section. A track that enters there enters
-  through temporal bone, which is a real approach but not a dorsal one — at 30° of roll
-  toward MSO the entry lands on the flank at DV −2.50, and the tool should say the entry
-  is lateral rather than quietly report a depth.
+  through temporal bone, which is a real approach but not a dorsal one — at 55° of roll
+  toward `MSO` the entry lands on the flank at DV −6.52 with 5 mm of brain above it, and
+  the tool should say the entry is lateral rather than quietly report a depth.
+- The contour runs a few pixels out along the leader lines the drawing uses to point at
+  labels printed beside the section. A morphological opening would take those off, and was
+  tried: at a radius that removes them it also eats the thin cortical sheet on plates 36
+  and 38, and the labels falling outside their own outline go from 135 to 316. Leave the
+  outline honest and make the *reader* robust — take the first crossing followed by 0.2 mm
+  of brain, not the first crossing outright.
 - It is the **drawing's** outline. The Nissl and myelin plates are registered to the same
   box, so the same extraction runs on them; the drawing is the one to ship because its
   contour is drawn rather than stained, and its edge is therefore the one the atlas
@@ -131,23 +162,23 @@ smooth the drawn line looks.
 For a target, a hemisphere and three angles:
 
 ```
-Target       MSO, right · plate 45 · lambda −3.15 · ML +1.35 · DV −8.20
-Entry        lambda −3.15 · ML +4.03 · DV −0.83        (surface)
-Angles       tilt 0° · roll 20° · yaw 0°
-Drive        7.84 mm from the surface along the track
-Vertical     8.33 mm if you went straight down at the target's ML
+Target        MSO · right · plate 46 · AP −7.95 · ML +1.31 · DV −8.30
+Approach      25° from vertical, tip toward left
+Entry         AP −7.95 · ML +4.33 · DV −1.83
+Drive         7.14 mm from the surface to the target
+Sides         6.47 mm down · 3.02 mm across
+Straight down 7.51 mm
 ```
 
-The `Drive` and `Vertical` figures above are real: computed from the extracted plate-45
-outline against the published `MSO` label at ML +1.35 / DV −8.20. A vertical approach
-crosses 8.33 mm of brain; a 20° lateral approach shortens the track to 7.84 mm and moves
-the entry 2.7 mm lateral. That the angled track is *shorter* is not an error — it enters
-on the shoulder of the section, above the ML at which the vertical one enters.
+Those figures are real — the built tool's, against `MSO`'s label centre. A vertical
+approach crosses 7.51 mm of brain; a 25° lateral one is 7.14 mm and enters 3 mm further
+out. That the angled track is *shorter* is not an error: it enters on the shoulder of the
+section, where the surface is already lower.
 
 **The right triangle.** The issue asks for the track's legs plotted with the track as
 hypotenuse, and they are worth having because they are what you set on the arm before you
 lower it: the pure-DV leg and the horizontal offset from entry to the point above the
-target. For the 20° case that is 7.37 mm down and 2.68 mm across. Drawn as two thin
+target. For the 25° case that is 6.47 mm down and 3.02 mm across. Drawn as two thin
 construction lines on the plate and in the projections, behind a toggle, off by default.
 
 **Notes** go out as a copyable block and a download — plain text, one field per line, with
@@ -209,17 +240,21 @@ track has to be visible in all three views at once.
 
 ## Build order
 
-Each stage is useful on its own, which is the point of the ordering.
+Each stage was useful on its own, which was the point of the ordering. All four are done.
 
-1. **Extract the outlines offline** and add `brain_outline` to `gerbil_atlas.json`, with
-   the extraction written up in METHODS.md the way the label reading and the plate
-   calibration already are. Check every plate for a single surviving component, and check
-   the dorsal reading against DV 0 near the vertex. This is the stage that can fail, so it
-   goes first.
-2. **Vertical approach only.** Target, hemisphere, depth from surface. No angles, no new
-   convention, and it already answers the most common question.
+1. **Extract the outlines offline** and add `brain_outline` to `gerbil_atlas.json`, written
+   up in METHODS.md the way the label reading and the plate calibration already are. This
+   was the stage that could fail, so it went first — and it is where the DV error above
+   was caught, by a check that had been written down before the number was known.
+2. **Vertical approach only.** Target, hemisphere, depth from surface.
 3. **Angles**, the working-frame math, and the plate and projection overlays.
 4. **The 3-D line**, the right-triangle construction lines, notes export and the `tg` link.
+
+What it cost, once built: 8,815 points of outline, about 152 KB wherever it is stored, and
+about 0.9 ms per solve — so the track redraws on every keystroke without a debounce, as
+planned. The app went from 17.37 MB to 17.55 MB, outline and code together.
+All 703 structures with located labels solve at three angle settings each without an
+exception, a non-finite number or an out-of-range length.
 
 ## What it will not do
 
@@ -238,5 +273,6 @@ Worth writing down now so it does not have to be argued later.
   published numbers, carrying the atlas's own error, your alignment error and
   animal-to-animal variation.
 
-It should ship behind the same *experimental* wording the frame adjustment carries, until
-somebody has driven a track by it and looked at the section afterwards.
+It ships behind the same *experimental* wording the frame adjustment carries — in the
+panel, in About, in the README and in the exported notes — until somebody has driven a
+track by it and looked at the section afterwards.
