@@ -36,6 +36,9 @@ It is 20 MB, most of that the plates.
   whichever one is showing. Both carry into the PNG.
 
 **Find things**
+- **Hover anywhere on a structure** — not just on its printed abbreviation — to read what it
+  is, how much of the section it takes up, and how much of its outline the atlas actually
+  draws. Click to select it and the whole region is outlined on both hemispheres.
 - Search by abbreviation, name, or alias; filter by system chips (`auditory`,
   `hippocampal`, `thalamus`, …) to see a whole pathway at once.
 - **At a coordinate** — go the other way: type bregma / ML / DV and get the structures
@@ -111,6 +114,11 @@ know before relying on them.
 - A structure listed for a plate range is present at those levels but is **not
   necessarily printed** on every plate of that range.
 - The **system tags** are a convenience layer added here, not part of the published atlas.
+- The **region outlines** are cut from the atlas's own drawn lines, not from a published
+  segmentation — the atlas has none. 3,120 structure–plate entries have one, and each says
+  how much of its own boundary the atlas prints: the median is 98%, but **6% of regions are
+  under half drawn**, and those outlines are dashed and labelled as inferred because that is
+  what they are. Where the drawing seals a face and names nothing, nothing is claimed.
 - Nothing here is a segmentation, and the 3D views interpolate between sections that
   are 350 µm apart — the streaking is arithmetic, not anatomy.
 - The **myelin** plate of a level is an *adjacent* section, not the same slice as the Nissl:
@@ -139,12 +147,13 @@ structures**. Please cite the atlas itself:
 | `gerbil_atlas_explorer.html` | The app. Self-contained (~20 MB: 186 plate images, the vectorized outlines and the skull mesh), works offline. Stays at the repository root — it is the published address. |
 | `METHODS.md` | How everything here was derived, and what its accuracy is. |
 | `TARGETING_PLAN.md` | The design behind the track planner. |
-| `data/gerbil_atlas.json` | Full database: structures, coordinates, label positions, brain outlines, calibration. |
+| `data/gerbil_atlas.json` | Full database: structures, coordinates, label positions, brain outlines, region extents, calibration. |
 | `data/gerbil_atlas_structures.csv` | One row per structure: abbreviation, name, plate and bregma range, tags. |
 | `data/gerbil_atlas_plates.csv` | One row per plate: bregma / lambda / interaural / occipital-crest AP. |
 | `data/index_raw.txt` | The authors' published index as extracted. Source of truth for the rest. |
 | `svg/` | The traced regional outlines, one SVG per plate, in the published page frame. What the app's SVG export is built from. |
-| `qc/` | Verification renders kept from the build — label boxes, coordinate-box detection, plate previews. Not used by the app. |
+| `qc/` | Verification renders kept from the build — label boxes, coordinate-box detection, plate previews, region overlays. Not used by the app. |
+| `tools/` | The region-extent extraction, the one derivation here involved enough that prose alone would not let anyone check it. Run it to rebuild `region_extents` from `svg/` and re-inline it into the app. |
 
 ## Website development
 This website is developed and maintained by Daniel Stolzberg and the [Caras Lab](https://www.caraslab.org) in the department of Biology at the University of Maryland.

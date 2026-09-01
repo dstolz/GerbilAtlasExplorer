@@ -207,6 +207,94 @@ Of the 135 labels that fall outside, most are on the olfactory bulb plates 5–9
 section is small and the drawing prints the labels beside it; the median one is 0.14 mm
 out, and the 90th percentile 0.20 mm.
 
+## Region extents
+
+`label_positions` says where an abbreviation is *printed*. `region_extents` says what it
+*names*: the area of each structure on each plate, as a list of closed polygons of `[x, y]`
+fractions of the frame-cropped image — the same frame and the same convention
+`brain_outline` uses, so the app's existing point-in-polygon test reads them unchanged.
+**3,120 structure-plate entries carry an area**, 95% of the 3,270 the label pass located
+and 89% of the 3,506 the published index lists, as 5,704 polygons over 77,545 points.
+
+The atlas publishes no segmentation. What it does publish is a line drawing in which every
+region is a cell of a planar subdivision with one abbreviation printed inside it, and both
+halves of that are already in this repository: the lines as the tracings in `svg/`, the
+abbreviations as `label_positions`. The extents are the third thing neither is alone.
+
+The steps, in order, run by `tools/build_region_extents.py`:
+
+1. **Read the traced paths in the page frame they were traced in** — 3296 × 2481, and 2481
+   × 3296 for plate 20, which the journal set at a quarter turn — and flatten the cubics.
+2. **Bridge the dangling ends.** The tracing is a nearly connected network: over 1,661 open
+   endpoints the median sits **1.9 px** from another path, 94% within 12 px, 99% within 25.
+   But a boundary that misses by two pixels leaks two regions into one, so each dangling end
+   is joined to the nearest point on another path within 20 px (140 µm). This is far gentler
+   than a morphological close, which welds shut the thin laminae the drawing does separate —
+   the same objection that kept an opening out of the brain-outline extraction.
+3. **Close against `brain_outline`**, inverse-transformed into the page frame, and fill it
+   for the section interior.
+4. **Cut the empty space into faces.** A face sealed by traced ink and holding exactly one
+   abbreviation is that structure's area *as drawn*, and that is 3,404 of the faces.
+5. **Split the rest.** Where a face holds several abbreviations, ink is missing somewhere on
+   the boundary between them. A watershed seeded on the printed labels and ridged on the
+   distance transform of the ink splits the face along the strongest evidence there is. The
+   drawn lines themselves belong to no face and are in play, so the split falls down the
+   middle of the printed line, where a boundary between two regions ought to fall.
+6. **Leave the unnamed faces alone.** A face holding no label is not absorbed by a
+   neighbour. The atlas seals it and declines to name it, and the largest such class is the
+   ventricles; calling a ventricle `CPu` would propagate into every readout downstream.
+   These are written out separately as `region_extents.unassigned`, and they are a mean 7%
+   of section area.
+7. **Score each polygon** by the share of its border lying within 3 px of ink the tracing
+   *actually drew*, as opposed to a ridge the watershed invented, walked at one pixel so it
+   is length-weighted.
+8. **Trace and simplify on the crack lattice**, Douglas-Peucker at 2 px as `brain_outline`
+   already does.
+
+**Step 8 is not the obvious thing, and the obvious thing is wrong.** Contouring each region
+on its own and simplifying its ring gives two different polylines for the same shared
+boundary, because Douglas-Peucker is global to the ring it is handed; at a 2 px tolerance
+they cross, and the regions then overlap and leave slivers. So the boundary is traced on the
+lattice *between* pixels, where both neighbours see the identical chain of corners, and it
+is cut at the corners where three or more regions meet — a purely local test, so both sides
+cut in the same places. Each arc is simplified once. Douglas-Peucker keeps its endpoints and
+is symmetric under reversal, so the two owners of an arc keep the same vertices although
+they walk it in opposite directions.
+
+Three checks, none of which the extraction was tuned to pass:
+
+| Check | Extracted |
+| --- | --- |
+| Every boundary between two regions stored as one polyline, twice | **100%** of directed boundary edges have their reverse in exactly one neighbour, so the regions tile the section — a point is inside exactly one, or inside none |
+| Printed labels inside the region they name | **97%** |
+| Regions plus unassigned faces against the section area | within **5%** on the worst plate |
+
+**What the numbers do not say is which boundaries are real, so every polygon carries that
+too.** `s` is the traced share of that polygon's border: median **0.98**, 75% at or above
+0.90, 87% at or above 0.75, **6% below 0.50**. A polygon at 0.98 is the boundary the atlas
+prints. A polygon at 0.16 is a split the extraction had to invent because the drawing does
+not separate those structures, and it should be read as an estimate — the app dashes those
+outlines and says so rather than presenting them as drawn. The weak ones are where a reader
+would expect them: `PM` on plates 51–54, `7Cb` on 51, `RRF` on 39, `imvc` on 29 — thin
+cerebellar and reticular subdivisions the pages bound with faint or dashed print, if at all.
+
+End to end, in the app: pointing at each of the 6,220 printed labels in turn resolves to a
+structure every time, and to the right one 6,217 times — the three misses are the three
+labels below that have no extent at all.
+
+256 of the 6,217 printed labels sit outside the face they name, on a leader line or on a
+boundary, and were pulled to the nearest face; most are on the olfactory bulb plates 5–9,
+where the section is small and the drawing sets the abbreviations beside it. Three could not
+be resolved at all and have no extent.
+
+`qc/chk_regions_NN.png` overlays the result on the plate for five levels, tinted green where
+the boundary is drawn and red where it is inferred, which is the check a reader can make by
+eye and the one that catches a leak the medians average away.
+
+**This is still not a segmentation.** It is one animal's drawing, cut along the lines that
+drawing prints, and where it prints none the split is this extraction's guess rather than
+the atlas's claim.
+
 ## Your own coordinate frame
 
 > **Experimental.** Frame adjustment is new and not yet fully tested. Check adjusted
