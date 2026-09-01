@@ -378,14 +378,22 @@ def validate(db, frame, grid, labels, brain, raw, ids, present, meshes, plates,
     out['dv_highest_mm'] = round(float(grid.y[ys.max()]), 3)
     out['dv_lowest_mm'] = round(float(grid.y[ys.min()]), 3)
 
-    # (4) every printed label inside the region it names, at its own plate
+    # (4) every printed label inside the region it names, at its own plate. Where the
+    #     atlas typesets two names into one printed label -- "S1Tr/ LPtA", "Au1 (A1)" --
+    #     they name one region between them and only one of them carries the extent, so
+    #     either name counts as a hit on the one outline they share
+    blocks = db.get('label_blocks', {}).get('data', {})
     hit = tot = inside = before = 0
     for p in plates:
         z = grid.plane(idx[p])
         sl = labels[z]
         br, raw_br = brain[z], raw[z]
+        joined = {}
+        for g in blocks.get(str(p), []):
+            for a in g:
+                joined[a] = {ids[b] for b in g if b in ids}
         for ab, boxes in lp.get(str(p), {}).items():
-            key = ids.get(db['region_extents'].get('synonyms', {}).get(ab, ab))
+            want = joined.get(ab) or ({ids[ab]} if ab in ids else set())
             for cx, cy, w, h in boxes:
                 x = int(round((float(frame.ml(cx)) - grid.x[0]) / grid.res))
                 y = int(round((float(frame.dv(cy)) - grid.y[0]) / grid.res))
@@ -394,7 +402,7 @@ def validate(db, frame, grid, labels, brain, raw, ids, present, meshes, plates,
                 tot += 1
                 inside += bool(br[y, x])
                 before += bool(raw_br[y, x])
-                if key is not None and sl[y, x] == key:
+                if sl[y, x] in want:
                     hit += 1
     out['labels_in_their_own_region'] = round(hit / max(tot, 1), 4)
     out['labels_inside_the_surface'] = round(inside / max(tot, 1), 4)

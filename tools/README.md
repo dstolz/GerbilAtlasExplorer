@@ -8,6 +8,7 @@ check either.
 
 | Script | What it does |
 | --- | --- |
+| `label_blocks.py` | Reads which abbreviations the atlas typeset into one printed label — `S1Tr/ LPtA`, `Au1 (A1)` — off the source PDF, and writes `label_blocks` into `data/gerbil_atlas.json`. Those name one region between them, so `build_region_extents.py` seeds them as one. |
 | `build_region_extents.py` | Cuts `region_extents` out of the tracings in `svg/` and the located abbreviations in `label_positions`, and writes it into `data/gerbil_atlas.json`. |
 | `regiongeom.py` | The boundary geometry: crack-lattice tracing, junction detection, arc-wise Douglas-Peucker. Kept apart because it is the part that has to be right for the regions to tile. |
 | `inline_region_extents.py` | Copies `region_extents` from the JSON into the app as `window.__REGION__`, so the single file stays self-contained and the JSON stays the readable source. |
@@ -15,8 +16,9 @@ check either.
 | `volume.py` | The voxel geometry: the even-odd fill, the distance fields, marching cubes, hulls. Kept apart for the same reason `regiongeom.py` is — it holds the part that decides whether the regions still partition the volume. |
 
 ```
-pip install numpy scipy scikit-image pillow
+pip install numpy scipy scikit-image pillow pymupdf
 
+python3 tools/label_blocks.py --pdf GerbilAtlas4Analysis.pdf   # rewrites label_blocks
 python3 tools/build_region_extents.py                  # all 62 plates, ~3 min, rewrites the JSON
 python3 tools/build_region_extents.py --plates 30 --dry-run --qc
 python3 tools/inline_region_extents.py                 # then re-inline into the app
@@ -27,6 +29,12 @@ python3 tools/build_volumes.py --plates 28-33 --dry-run --qc
 python3 tools/build_volumes.py --samples 6             # coarser meshes, a quarter the size
 python3 tools/build_volumes.py --stl out/              # the same meshes as STL
 ```
+
+`label_blocks.py` needs the published PDF, because it reads punctuation and the app's plate
+images are too small to carry it — 8 px of glyph, against 20 on the page. It is the only
+script here that reaches outside the repository, for the same reason the label pass did, and
+its output is committed so that nothing downstream needs the PDF. `--qc` writes
+`qc/chk_blocks_NN.png`, every join it made, boxed on the page it read.
 
 `--dry-run` reports and touches nothing. `--qc` writes `qc/chk_regions_NN.png`, the plate
 with its regions tinted by how much of each boundary the atlas actually prints; from

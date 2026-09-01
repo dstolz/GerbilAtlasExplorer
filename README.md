@@ -36,9 +36,11 @@ It is 20 MB, most of that the plates.
   whichever one is showing. Both carry into the PNG.
 
 **Find things**
-- **Hover anywhere on a structure** — not just on its printed abbreviation — to read what it
+- **Hover anywhere on a structure** — the printed abbreviation included — to read what it
   is, how much of the section it takes up, and how much of its outline the atlas actually
-  draws. Click to select it and the whole region is outlined on both hemispheres.
+  draws. Either way it is the whole region that highlights, not the word. Click to select it
+  and the region is outlined on both hemispheres. The few names the atlas prints *outside*
+  the section, `rf` among them, have no region to give and highlight as the label itself.
 - Search by abbreviation, name, or alias; filter by system chips (`auditory`,
   `hippocampal`, `thalamus`, …) to see a whole pathway at once.
 - **At a coordinate** — go the other way: type bregma / ML / DV and get the structures
@@ -115,12 +117,13 @@ know before relying on them.
   necessarily printed** on every plate of that range.
 - The **system tags** are a convenience layer added here, not part of the published atlas.
 - The **region outlines** are cut from the atlas's own drawn lines, not from a published
-  segmentation — the atlas has none. 3,113 structure–plate entries have one, and each says
+  segmentation — the atlas has none. 3,096 structure–plate entries have one, and each says
   how much of its own boundary the atlas prints: the median is 98%, but **6% of regions are
   under half drawn**, and those outlines are dashed and labelled as inferred because that is
   what they are. Where the drawing seals a face and names nothing, nothing is claimed.
-- Where the atlas prints a **second name in parentheses** — `Au1 / (A1)` — the two names
-  share one outline, filed under the name printed above, because they name one field.
+- Where the atlas typesets **two names into one label** — `S1Tr/ LPtA`, `Au1 (A1)` — they
+  name one region between them, so both give the same outline and the app says which label
+  it is. 19 labels on 27 plates are joined this way.
 - Nothing here is a segmentation, and the 3D views interpolate between sections that
   are 350 µm apart — the streaking is arithmetic, not anatomy.
 - The **myelin** plate of a level is an *adjacent* section, not the same slice as the Nissl:

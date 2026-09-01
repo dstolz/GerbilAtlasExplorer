@@ -213,8 +213,10 @@ out, and the 90th percentile 0.20 mm.
 *names*: the area of each structure on each plate, as a list of closed polygons of `[x, y]`
 fractions of the frame-cropped image — the same frame and the same convention
 `brain_outline` uses, so the app's existing point-in-polygon test reads them unchanged.
-**3,113 structure-plate entries carry an area**, 95% of the 3,270 the label pass located
-and 89% of the 3,506 the published index lists, as 5,692 polygons over 77,446 points.
+**3,096 structure-plate entries carry an area**, 95% of the 3,270 the label pass located
+and 88% of the 3,506 the published index lists, as 5,667 polygons over 77,328 points. Where
+the atlas prints two names as one label the two share an entry, so a name having no entry of
+its own does not mean it has no area — see step 6.
 
 The atlas publishes no segmentation. What it does publish is a line drawing in which every
 region is a cell of a planar subdivision with one abbreviation printed inside it, and both
@@ -245,18 +247,17 @@ The steps, in order, run by `tools/build_region_extents.py`:
    ventricles; calling a ventricle `CPu` would propagate into every readout downstream.
    These are written out separately as `region_extents.unassigned`, and they are a mean 7%
    of section area.
-   **And do not split a face on a second name for the same thing.** The atlas sets some
-   labels over two lines with the second in parentheses — `Au1 / (A1)` on plates 30–33,
-   `Au1 / (AAF)` on 28, `Au1 / (A1/AAF)` on 29 — and the label pass reads the parenthesised
-   line as the separate published abbreviation it is. Seeded as a rival it is worse than
-   useless: there is no ink between the two names to split on, so the watershed invents a
-   ridge and hands each of them a slab of the other's cortex, which is how `A1` came to be
-   a rectangle across primary auditory cortex rather than the field itself. `A1` and `AAF`
-   are seeded under `Au1` instead, and `region_extents.synonyms` records that, so selecting
-   either spelling in the app outlines the one field. These two are the only such pair in
-   the atlas: every printed `A1` and `AAF` sits directly under an `Au1`, and a bracket test
-   over all 6,217 located labels — thin, line-height, bowed the way a bracket bows and not
-   the way an `l` or a `1` is — flags no others.
+   **And do not split a face between two names of one label.** The atlas often
+   names a face with two abbreviations typeset into a single label, over one line or two —
+   `S1Tr/ LPtA`, `S2/AuD`, `Au1 (A1)`, `Au1 (A1/AAF)` — and the label pass reads each of
+   them as the separate published abbreviation it is. Seeded as rivals they are worse than
+   useless: there is no ink between two names of one label to split on, so the watershed
+   invents a ridge down the middle of the face and hands each a slab of the other, which is
+   how `A1` came to be a rectangle across primary auditory cortex rather than the field
+   itself. `label_blocks` says which abbreviations the atlas joined, they seed as one, and
+   the app answers for any of them with that label's one outline. **19 labels on 27 plates**
+   are joined this way, over 31 printed occurrences.
+
 7. **Score each polygon** by the share of its border lying within 3 px of ink the tracing
    *actually drew*, as opposed to a ridge the watershed invented, walked at one pixel so it
    is length-weighted.
@@ -291,8 +292,13 @@ would expect them: `PM` on plates 51–54, `7Cb` on 51, `RRF` on 39, `imvc` on 2
 cerebellar and reticular subdivisions the pages bound with faint or dashed print, if at all.
 
 End to end, in the app: pointing at each of the 6,220 printed labels in turn resolves to a
-structure every time, and to the right one 6,217 times — the three misses are the three
-labels below that have no extent at all.
+structure every time, and to the right one 6,217 times. **6,003 of them resolve to an area**
+and the remaining 217 to the printed name itself, which is the honest answer where the atlas
+prints a name outside the section it belongs to — `rf` on the rhinal fissure is 50 of the
+217 — or where no extent could be cut. The three misses are three places where one located
+box sits inside another (`StA` around `STMA` on plate 23, `PVP` around `VL` on 29, `psf`
+around `sf` on 53) and the smaller of the two wins the point, which is the right tie-break
+everywhere else.
 
 256 of the 6,217 printed labels sit outside the face they name, on a leader line or on a
 boundary, and were pulled to the nearest face; most are on the olfactory bulb plates 5–9,
@@ -307,6 +313,38 @@ eye and the one that catches a leak the medians average away.
 drawing prints, and where it prints none the split is this extraction's guess rather than
 the atlas's claim.
 
+### Reading the joins
+
+Which abbreviations the atlas typeset together is not in `label_positions`, and it is not
+recoverable from the geometry: two names of one label sit exactly where two names of two
+adjacent labels would. What separates them is the punctuation — a slash between them, a
+slash ending the line above, a bracket around the line below — so `tools/label_blocks.py`
+reads that, and writes `label_blocks`.
+
+It reads it off the **published page at 2558 × 1708**, not the app's 1100 × 703 plate. There
+a glyph is 8 px tall, its letters run together and a bracket cannot be told from an `l`; on
+the page it is 20 px and the letters stand apart. This is the same source, and the same
+reason, as the label pass itself.
+
+Segmentation comes from `label_positions` rather than from thresholding: it already says
+which pixels are letters, so **the ink on a line that no box claims is the punctuation**.
+Each such stroke is then classified by the path its ink takes down the line — a slash leans
+steadily and straight, a bracket bows, with its extreme column at the vertical middle and
+both ends falling back, and `l`, `1` and `I` do neither.
+
+One thing had to be ruled out rather than measured. A drawn boundary runs through a label at
+any angle and is every bit as thin, as tall and as straight as a slash; every rule of thumb
+tried here either kept a boundary or lost a real slash. It did not have to be a rule of
+thumb: **the boundaries are already vectorised in `svg/`**, so a candidate lying on a traced
+path is a boundary, and that is said rather than guessed. That rules out five would-be joins
+— `Sc/Po` on 32, `Or/Py` on 34, `Oca/icp` on 49, `ts/pyx` and `12N/12GH` on 57 — each of
+which is two labels with a drawn line between them.
+
+It also costs one true join, and that one is recorded in the tool rather than dropped: on
+plate 49 the slash of `PM/ Cop` is drawn along the very boundary it names, and at every
+threshold that keeps it, two of those five come back. Every one of the 31 occurrences was
+checked against the printed page by eye.
+
 ## The third dimension
 
 > **Experimental.** These volumes interpolate across the section gap, which every other
@@ -319,7 +357,7 @@ outlines are 350 µm apart and an interpolated surface would be arithmetic, not 
 and quantises an AP to the nearest section rather than blending two.
 `data/gerbil_atlas_volumes.json` sets that aside on purpose. It stacks the 62 plates and
 fills the six planes between each pair at 50 µm, giving **a brain surface and one mesh for
-each of the 698 structures that carry an area**.
+each of the 697 structures that carry an area**.
 
 **Six planes in seven are arithmetic.** The atlas samples AP twenty times more coarsely
 than it samples a section, so what these meshes add along the brain is a linear guess and
@@ -357,7 +395,7 @@ why this is not a segmentation either.
    with the absent plate: that side's field is a large negative constant and averaging with
    it would swamp the taper and end the structure flat at the plate.
 6. **Bridge a hole in a plate run only where the published index says there should not be
-   one.** 51 structure-plate holes are filled that way, as extraction misses; the rest are
+   one.** 49 structure-plate holes are filled that way, as extraction misses; the rest are
    left as the real absences they are.
 7. **Surface it** with marching cubes on the distance field, read every 1–6 voxels
    depending on the structure's size — about ten samples across whatever it is. Coarsening
@@ -371,8 +409,8 @@ why this is not a segmentation either.
 
 | Grade | What it is | Count |
 | --- | --- | --- |
-| `surface` | At least three consecutive plates. The mesh follows the drawn boundaries, interpolated between them. | 432 |
-| `slab` | One or two plates. The series does not sample the structure along AP at all, so the mesh is a **convex hull per connected component** — a claim about where the structure is, not about what shape it is — closed half a section step beyond the plates that name it. | 266 |
+| `surface` | At least three consecutive plates. The mesh follows the drawn boundaries, interpolated between them. | 430 |
+| `slab` | One or two plates. The series does not sample the structure along AP at all, so the mesh is a **convex hull per connected component** — a claim about where the structure is, not about what shape it is — closed half a section step beyond the plates that name it. | 267 |
 
 A `slab` is what "circumscribed" means here and is marked `bounding: true`. Unlike the
 `surface` meshes, two slabs may overlap: a bounding volume is not a partition. The hull is
@@ -416,20 +454,20 @@ extraction's own guarantees survived into three dimensions.
 | Check | 2-D | Extracted in 3-D |
 | --- | --- | --- |
 | Cross-section area on a plate a structure was built from, against `region_extents` | — | **median 1.4% off**, 90th percentile 7.1% — the lattice's own quantisation |
-| Regions partition the volume | a point is inside one region or none | **holds**: every voxel inside the surface carries exactly one label, or is an unnamed sealed face — 4.6% of the brain |
+| Regions partition the volume | a point is inside one region or none | **holds**: every voxel inside the surface carries exactly one label, or is an unnamed sealed face — 4.5% of the brain |
 | Highest point of the surface | DV −0.06 | **DV −0.10** (one voxel) |
 | Lowest point of the surface | DV −9.09 | **DV −9.05** |
 | Printed labels inside the surface | 97.8% | **97.9%** |
-| Printed labels inside the region they name | 97% | **92.5%** — the 2-D figure is after 256 labels were pulled to the nearest face; this one is not |
+| Printed labels inside the region they name | 97% | **92.7%** — the 2-D figure is after 256 labels were pulled to the nearest face; this one is not |
 | Brain volume | not published | **1,046 mm³** |
 
 Two costs are worth stating because they are larger than the interpolation is likely to be.
-Reading the distance field coarsely costs a mesh a median **3.8%** of its volume; an
+Reading the distance field coarsely costs a mesh a median **3.9%** of its volume; an
 isosurface sitting half a voxel inside the voxels it was cut from accounts for another
 **4.9%**, which is not an error but the difference between a surface and a pile of cubes.
 
 And **74% of structures arrive as the one or two pieces anatomy expects**. Where a thin sheet
-pinches off into more — `CA1`, the ventricle slits, `DCl` — a median 17% of it sits outside
+pinches off into more — `CA1`, the ventricle slits, `DCl` — a median 16% of it sits outside
 the largest two. This is reported rather than closed up: closing it would mean growing a
 structure into a neighbour, and the partition is worth more than a tidy component count. The
 per-component volumes are in the file, so a reader can drop the scraps.
@@ -443,6 +481,7 @@ coronal views of the whole thing.
 **Nothing here is inlined into the app.** The meshes are 21 MB and the app is a single file
 you open; how they should reach it — as a side-car fetched on demand, or as a label volume
 for the ray-marcher it already has — is a decision the geometry should be looked at first.
+
 
 ## Your own coordinate frame
 
