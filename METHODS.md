@@ -46,7 +46,7 @@ against the fit alone: midline structures (`3V`, `Aq`, `4V`, `cc`, `MnR`) land w
 0.10 mm of ML 0, and bilateral pairs come out symmetric at the published widths —
 `MSO` ±1.33, `LSO` ±1.67, `CIC` ±1.93, `Au1` ±6.48 (mean distance from the midline).
 
-With AP coming from the plate, this gives every one of the 6,220 located labels a full
+With AP coming from the plate, this gives every one of the 6,257 located labels a full
 stereotaxic triplet.
 
 ## Plate images
@@ -67,7 +67,7 @@ selected with **Labelled / Nissl / Myelin**.
 
 Registration between them is by construction rather than by fitting. Every page carries
 the atlas's own printed ML/DV box, and each page is cropped to *its own* box by the same
-detector, so all three land in the coordinate frame above — the frame the 6,220 label
+detector, so all three land in the coordinate frame above — the frame the 6,257 label
 positions are recorded in. Nothing is warped, translated or scaled to match anything else.
 
 Three things had to be got right, and each is checked rather than assumed:
@@ -139,8 +139,8 @@ on, each in its own named group, with the same caption the PNG carries.
 `label_positions` in the JSON records where each abbreviation is printed on each
 plate, as `[cx, cy, w, h]` fractions of the frame-cropped image. Most structures
 appear twice, once per hemisphere; layered ones such as cerebellar white matter
-appear many more times. 6,220 individual labels are located, covering 3,270 of the
-3,506 structure-plate entries (93%). These drive the circling, the hover tooltips and
+appear many more times. 6,257 individual labels are located, covering 3,293 of the
+3,506 structure-plate entries (94%). These drive the circling, the hover tooltips and
 click-to-select in the HTML app and can be reused for annotation overlays elsewhere.
 
 The labels were read twice. The first pass OCR'd 300 dpi renders with Tesseract and
@@ -161,6 +161,40 @@ was checked against the plate image by eye. That review superseded 17 first-pass
 where the printed text says otherwise (`Cl`→`DCl`, `Su3`→`Su3C`, `PR`→`PrC`, `ml`→`mlf`,
 `Rh`→`PRh`, `La`→`LaV`, `A1`→`A11`, `V1`→`V2L`, `cg`→`Cg1`, `f`→`fr`, `ts`→`rs`, and
 cortical-layer digits that are really `S1` and `AI`).
+
+### The words the passes missed
+
+Two passes still left 236 of the 3,506 index entries with no located label, and those are
+two different things. A structure listed for a plate range is present at those levels but
+is **not necessarily printed** on every plate of it, so some were never on the page. Others
+were, and were missed — `MPtA` is printed twice on plate 30, in the same type as everywhere
+else, and the app could say nothing about it: no box, so no seed, so no area, so nothing to
+point at. That is what a reader notices, because it looks like the app has lost a region.
+
+A third pass, `tools/find_missing_labels.py`, reads no letters at all. The atlas sets every
+abbreviation in one typeface at one size, so a word missed on one plate is a word already
+located on another, and the only question is where that same picture appears again: cut the
+greyscale patch out of a plate that carries it, and slide it over the plate that does not,
+scoring normalised cross-correlation over the whole page by FFT. Correlation rather than
+pixel overlap, because the halftone ground and half a pixel of set-off put binary agreement
+between two impressions of the same word at 0.6, which is where the wrong words are too.
+
+**The score filters; it does not decide.** It cannot tell a word from the same word inside a
+longer one, and for a short abbreviation that is the whole difficulty: `sol` is printed
+inside `5Sol`, `Cu` inside `9a,bCb`, `I` inside `LaV`. Widening the template's white margin
+so a neighbouring letter falls into it does not separate them — at every margin tried, a
+true `VTT` or `Rh` scores below a false `SHi` — and nothing else does either, short of
+reading the letters, which is the pass this one exists to patch rather than repeat. So all
+47 candidates were put beside the printed plate and read. **37 were the word and 23 entries
+gained one**; the 8 that were not are listed in the tool with what they turned out to be, so
+a re-run reproduces the committed data and the judgement can be checked rather than taken.
+
+Three things hold afterwards, and all three are checked: every located pair is one the
+published index lists (0 exceptions); `window.__BOX__` in the app is byte-identical to
+`label_positions.data`; and the new boxes sit on ink like the old ones, median coverage
+0.274 against 0.300 for the 6,220 already there. One of the 37 falls under the 6% floor —
+the single-glyph `I` on plate 23 — which is the class 30 of the existing boxes were already
+in, `I` and `1` being too thin to survive the app's downsampled plate.
 
 ## The brain outline
 
@@ -201,7 +235,7 @@ Three checks, none of which the extraction was tuned to pass:
 | --- | --- | --- |
 | Highest point of any outline | DV 0 is the plane through the most dorsal points of cerebrum and cerebellum | **DV −0.06 mm** — reaches it, never crosses it |
 | Lowest point of any outline | the deepest printed label sits at DV −9.02 | **DV −9.09 mm** — just below it |
-| Printed labels inside their own plate's outline | — | **97.8%** (6,085 of 6,220) |
+| Printed labels inside their own plate's outline | — | **97.8%** (6,117 of 6,257) |
 
 Of the 135 labels that fall outside, most are on the olfactory bulb plates 5–9, where the
 section is small and the drawing prints the labels beside it; the median one is 0.14 mm
@@ -213,8 +247,8 @@ out, and the 90th percentile 0.20 mm.
 *names*: the area of each structure on each plate, as a list of closed polygons of `[x, y]`
 fractions of the frame-cropped image — the same frame and the same convention
 `brain_outline` uses, so the app's existing point-in-polygon test reads them unchanged.
-**3,096 structure-plate entries carry an area**, 95% of the 3,270 the label pass located
-and 88% of the 3,506 the published index lists, as 5,667 polygons over 77,328 points. Where
+**3,112 structure-plate entries carry an area**, 95% of the 3,293 the label pass located
+and 89% of the 3,506 the published index lists, as 5,693 polygons over 77,612 points. Where
 the atlas prints two names as one label the two share an entry, so a name having no entry of
 its own does not mean it has no area — see step 6.
 
@@ -255,8 +289,8 @@ The steps, in order, run by `tools/build_region_extents.py`:
    invents a ridge down the middle of the face and hands each a slab of the other, which is
    how `A1` came to be a rectangle across primary auditory cortex rather than the field
    itself. `label_blocks` says which abbreviations the atlas joined, they seed as one, and
-   the app answers for any of them with that label's one outline. **19 labels on 27 plates**
-   are joined this way, over 31 printed occurrences.
+   the app answers for any of them with that label's one outline. **22 labels on 31 plates**
+   are joined this way, over 37 printed occurrences.
 
 7. **Score each polygon** by the share of its border lying within 3 px of ink the tracing
    *actually drew*, as opposed to a ridge the watershed invented, walked at one pixel so it
@@ -291,16 +325,16 @@ outlines and says so rather than presenting them as drawn. The weak ones are whe
 would expect them: `PM` on plates 51–54, `7Cb` on 51, `RRF` on 39, `imvc` on 29 — thin
 cerebellar and reticular subdivisions the pages bound with faint or dashed print, if at all.
 
-End to end, in the app: pointing at each of the 6,220 printed labels in turn resolves to a
-structure every time, and to the right one 6,217 times. **6,003 of them resolve to an area**
-and the remaining 217 to the printed name itself, which is the honest answer where the atlas
+End to end, in the app: pointing at each of the 6,257 printed labels in turn resolves to a
+structure every time, and to the right one 6,254 times. **6,039 of them resolve to an area**
+and the remaining 218 to the printed name itself, which is the honest answer where the atlas
 prints a name outside the section it belongs to — `rf` on the rhinal fissure is 50 of the
-217 — or where no extent could be cut. The three misses are three places where one located
+218 — or where no extent could be cut. The three misses are three places where one located
 box sits inside another (`StA` around `STMA` on plate 23, `PVP` around `VL` on 29, `psf`
 around `sf` on 53) and the smaller of the two wins the point, which is the right tie-break
 everywhere else.
 
-256 of the 6,217 printed labels sit outside the face they name, on a leader line or on a
+262 of the 6,254 printed labels sit outside the face they name, on a leader line or on a
 boundary, and were pulled to the nearest face; most are on the olfactory bulb plates 5–9,
 where the section is small and the drawing sets the abbreviations beside it. Three could not
 be resolved at all and have no extent.
@@ -368,7 +402,7 @@ anything readable off a manipulator. Nothing in the atlas records which way a gi
 is tilted, so the app cannot check a sign; the dialog shows what the frame does to a
 familiar structure and the sign is confirmed by reading that back against anatomy.
 
-This is worth more than it might look. At 17° of pitch about the atlas origin the 6,220
+This is worth more than it might look. At 17° of pitch about the atlas origin the 6,257
 labels move a **median of 2.19 mm** — `MSO` goes from AP −7.95 / DV −8.30 to AP −10.05 /
 DV −5.64. The displacement grows with distance from the pivot, so the pivot matters more
 than the angles do.
@@ -579,7 +613,7 @@ there is no library.
 - **Contours** draws the atlas's own red boundary drawings as a stack. It reads as a
   contour model of the brain because that is exactly what it is.
 - **Volume** ray-marches the same field through a 3-D texture.
-- **Labels** plots all 6,220 printed abbreviations as a stereotaxic point cloud — the
+- **Labels** plots all 6,257 printed abbreviations as a stereotaxic point cloud — the
   projection views with the third axis put back. The `auditory` chip lights the whole
   ascending pathway in one rotatable view.
 
