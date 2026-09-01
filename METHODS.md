@@ -628,6 +628,8 @@ the common case.
 origin  none (default)   zero follows the atlas origin through the rotation
         bregma · lambda · interaural · occipital crest
         + an AP / ML / DV offset from whichever of those is named
+height  dorsal surface (0, the atlas's own DV zero)
+        the landmark's own height, off the skull fit — approximate
 ```
 
 The three numbers are an **offset from the landmark**, not an absolute coordinate, which is
@@ -637,6 +639,24 @@ the landmark contributes only its AP — the atlas prints one for each of these 
 ML nor a height — so on those two axes the offset is the whole story. Bregma is landmark 0
 and its AP offset is 0, so a stored frame or a link written before the offset existed reads
 back unchanged.
+
+**Height** fills the DV offset in from the fitted skull, and it is what makes the
+**interaural line** usable as a zero. That landmark is not a point on the brain or on the
+skull: it is the ear-bar axis, and the fit puts it at **DV −9.05** — about 9 mm ventral
+to the dorsal plane the atlas measures DV from. Zero on interaural with DV left at 0 and
+every depth is out by the whole of that; set the height and the readout becomes ordinary
+interaural coordinates, AP behind the ear bars and DV up from them. `MSO` then reads
+`interaural −0.70 · ML ±1.31 · DV +0.75` against an atlas `AP −7.95 · DV −8.30`. For
+bregma, lambda and the occipital crest the button offers the vault at that AP instead
+(−0.22, +0.54, −0.06) — a zero taken on bone rather than on dura.
+
+The AP is the atlas's own and exact; **the height is not**. No height for any of these
+landmarks is published, so it comes off the same approximate skull registration the
+**Skull** overlays are drawn from, and carries the same asterisk to the same note — good
+to a few tenths of a millimetre, before animal-to-animal variation. The button only types
+the number into the DV field: it holds no state of its own, so the deep link, the stored
+frame and the CSV's `frame_spec` carry it as the plain offset they always did, and a
+measured ear-bar depth typed in by hand behaves identically.
 
 Moving zero is not a rotation and is not hedged as one: it moves no point, and every distance
 and angle is the one the atlas printed. So with every angle left at 0 the projections rule and
@@ -662,12 +682,15 @@ landmark existed still read correctly.
 
 Presets put the pivot on **bregma, lambda, the interaural line or the occipital crest**,
 reading each landmark's offset off the plate table rather than carrying a copy of it. A
-preset can only set AP and ML, though: the atlas prints an AP for every one of these
-landmarks and a height for none. That is not a detail for the interaural line, which is
-usually the one you want — pitch turns about a mediolateral axis, so the ear-bar axis is
-only the real pivot once you supply how far below your zero it sits. The difference is
-large: at 17° of pitch, `MSO` reads AP −10.36 with the pivot left at the interaural AP on
-the dorsal surface, and AP −7.73 with the pivot on an ear-bar axis 9 mm lower.
+preset sets AP and ML, for the same reason: the atlas prints an AP for every one of these
+landmarks and a height for none. The same **Height** row as the origin's sets DV, and
+appears once the pivot's AP is on a landmark — matched on AP alone, because the height
+belongs to the landmark's plane and a pivot pushed off the midline for a roll is still on
+it. That is not a detail for the interaural line, which is usually the one you want —
+pitch turns about a mediolateral axis, so that preset is the ear-bar axis only once DV
+says how far below the dorsal surface the axis sits. The difference is large: at 17° of
+pitch, `MSO` reads AP −10.36 with the pivot left at the interaural AP on the dorsal
+surface, and AP −7.72 with the pivot on the fitted ear-bar axis 9.05 mm lower.
 
 Two consequences the app makes visible. A plate stops being a single AP: under pitch the
 AP of a point drifts by `sin θ` per millimetre of DV — about 2.5 mm between the top and
@@ -785,6 +808,51 @@ Across all 703 structures that have located labels, at three angle settings each
 2,109 solves return finite, bounded numbers; 7 return no entry at all, every one of them a
 structure whose label centre lies outside the section.
 
+### Naming the target: which plate, and how far off the label
+
+The target has always been the median of the structure's printed labels, folded onto the
+chosen hemisphere. Two controls narrow that, and both sit on the same side of one line.
+
+**Which plate.** `CA1` is labelled on 20 sections; the median of all 20 labels is a point
+somewhere in the middle of the structure, and no experiment aims at it. *Take the label
+from* names one plate and takes the median of that section's labels alone. The menu is
+built from the plates the abbreviation is actually *printed* on, not the plate range the
+structure is listed for — a structure present at a level is not necessarily labelled
+there, and only a plate carrying a label can be a plate to read one from. Picking a plate
+also turns the viewer to it: the plan is drawn on the plates, and a target taken from
+plate 13 read against plate 30 is a picture of a track somewhere else. A pick is dropped
+the moment the target changes to a structure not printed on that plate.
+
+**How far off it.** The three *offset* boxes move the aim off the label in millimetres —
+0.2 mm dorsal to `VO`, the classic quarter-turn above a structure. With an offset set the
+panel prints the label and the target as two rows rather than one: the plan is then a
+claim about a point nothing in the atlas is printed at, and the point it was measured from
+has to be readable beside it.
+
+**The offset is in atlas millimetres, and it is the only thing in the planner that is.**
+It is applied beside the fold and *before* the carry into the working frame, because
+naming a target is anatomy: *dorsal* has to mean dorsal in the brain rather than up the
+manipulator's own axis, or the same offset would mean something different at every pitch.
+Everything downstream — entry, angles, drive — is still the rig's. The boundary between
+the two runs exactly through `tgTarget()`. ML is signed by the hemisphere so that
+*lateral* is lateral on both sides and the two stay mirror images, which is what the side
+toggle already promises.
+
+Both narrowings are affine, so folding label by label still commutes with taking the
+median: adding a constant to every point moves the median by that constant, in whichever
+frame it is measured. The label median and the target are computed by the same code path
+with and without the offset, so the two rows cannot drift apart.
+
+An offset can walk the target off the plate its label was read from, or past either end of
+the series. Neither is an error — the first is a perfectly good plan for a point on a
+neighbouring section — but neither is what the plate menu appears to promise, so the panel
+says which happened.
+
+Deep links carry both, appended after the five fields a plan link has always had and only
+when they are not the defaults. A plan aiming at the label itself writes the exact link it
+wrote before, and a reader that stops at the fifth field reads a new link as the plan
+minus its offset rather than as nonsense.
+
 ### What it does not do
 
 It plans a **straight track to where an abbreviation is printed** — not to a centroid. The
@@ -872,6 +940,8 @@ putting bregma 8.8 mm above the ear-bar plane) are read off the fitted mesh. A p
 landmark is drawn only on the plate whose plane it falls in; the interaural line is a
 mediolateral axis, so it is solid in its own plane, a dashed height reference elsewhere, a
 point seen end-on in the sagittal projection, and a real line only in the top-down one.
+Those same heights are what the frame dialog's **Height** buttons offer, so an interaural
+origin or pivot inherits this registration's error rather than being silently 9 mm out.
 
 The source is a µCT surface of a gerbil skull (`GerbilSkull.stl`, 498k triangles as
 scanned) — a different animal from the atlas's, in scanner coordinates. The atlas

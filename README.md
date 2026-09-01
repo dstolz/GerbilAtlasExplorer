@@ -66,8 +66,17 @@ drive from the brain surface.
 - **The angles are in your frame, not the atlas's.** Set a **Frame** and the plan moves with
   it: at 17° of nose-down pitch, a track that is vertical on the manipulator enters 2.1 mm
   further back than the plate would suggest.
+- **Take the label from** picks the plate to read the target off. A structure printed on a
+  dozen sections has a label on each, and the median of all of them sits in the middle of
+  the structure rather than on the section you are aiming at; naming one plate reads that
+  section's labels alone, and turns the viewer to it.
+- **Offset** aims somewhere other than the label itself — 0.2 mm dorsal to `VO` on plate 13,
+  say. The plan then prints the label and the target as separate rows, so the point the
+  numbers were measured from stays readable beside the point they are about. The offset is
+  in *atlas* millimetres, not the frame's, because naming a target is anatomy; lateral is
+  taken toward whichever hemisphere is chosen, so the two sides stay mirror images.
 - **Copy notes** or **Download** writes the plan as plain text with the frame it was planned
-  in, and **Copy link** restores the whole thing — target, side and angles.
+  in, and **Copy link** restores the whole thing — target, side, angles, plate and offset.
 - The surface is the outline of the section, traced off the atlas's own drawings. It is a
   *fixed, sectioned* brain, not the surface under intact dura, and the sections are 350 µm
   apart, so an entry AP is only resolved to the nearest plate.
@@ -97,6 +106,14 @@ the interaural line or the occipital crest, and give an AP / ML / DV offset from
 zero is not quite on it. Every coordinate is then measured from there, and the readouts say
 so — `lambda −5.79` rather than a bare `AP`. Moving zero moves no point, so this is exact:
 the projections read their axes from it too, and nothing has to be hedged.
+
+**Height** fills DV in for you, which is what the **interaural line** needs: it is the
+ear-bar axis rather than a point on the brain, running about 9 mm ventral to the dorsal
+plane the atlas measures DV from, so zeroing on it with DV left at 0 is out by all of that.
+Set the height and the readout is ordinary interaural coordinates — AP behind the ear bars,
+DV up from them, with `MSO` at `interaural −0.70 · DV +0.75`. The same row under the pivot
+puts a rotation on the ear-bar axis instead of a parallel one several millimetres too high.
+The APs are the atlas's own and exact; the heights come off the skull fit and are approximate.
 
 **Your own frame** (experimental) — the same dialog takes a pitch / roll / yaw and a pivot,
 since the atlas is cut perpendicular to the brainstem axis and that is not how a head sits in
