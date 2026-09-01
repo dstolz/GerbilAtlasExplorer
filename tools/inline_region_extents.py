@@ -24,10 +24,11 @@ AFTER = '<script>window.__VEC__='
 
 
 def payload():
-    R = json.load(open(JSON))['region_extents']
+    DB = json.load(open(JSON))
+    R = DB['region_extents']
     return TAG + json.dumps(
         {'r': R['data'], 'u': R['unassigned'], 'k': R['grades'],
-         'y': R['synonyms']},
+         'b': DB.get('label_blocks', {}).get('data', {})},
         separators=(',', ':')) + '</script>\n'
 
 
