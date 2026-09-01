@@ -124,3 +124,11 @@ This website is developed and maintained by Daniel Stolzberg and the [Caras Lab]
 How the coordinates were calibrated, how the plate images were cropped and the labels
 read, how the frame-adjustment math works, and what was verified against what:
 **[METHODS.md](METHODS.md)**.
+
+## Planned
+
+A **Brain Region Targeting Tool** — pick a structure and a hemisphere, set the approach
+angles, and get the entry point, the angles to dial in and the depth from the brain
+surface, drawn across all three views and restorable from a link. Not built yet; the
+design, and what had to be settled first, is in
+**[TARGETING_PLAN.md](TARGETING_PLAN.md)**.
