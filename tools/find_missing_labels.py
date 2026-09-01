@@ -82,6 +82,21 @@ REJECT = {
     (56, 'Cu'): 'the Cb of 9a,bCb',
 }
 
+# The mirror of REJECT: candidates that were read against the printed page and
+# *were* the word, but score under KEEP. Four structures are set in the index as
+# `N-N` where all 104 other one-plate structures are a bare number, and all four
+# are printed on N+1 as well (METHODS, "Where the index gives itself away").
+# Short words on a crowded plate score low -- `Su3C` on 37 peaks at 0.620 while
+# a false `ZID` on 33 reaches 0.772 -- which is the same reason the page and not
+# the score decides here. The floor is the score the confirmed candidate
+# reached, so a re-run keeps those and admits nothing new beneath them.
+CONFIRM = {
+    (29, 'AngT'): 0.77,
+    (35, 'ZIC'): 0.85,
+    (37, 'Su3C'): 0.61,
+    (36, 'RLi'): 0.64,
+}
+
 
 def ncc(I, T):
     """Normalised cross-correlation of T over I, by FFT, at every offset.
@@ -223,7 +238,8 @@ def main():
             best = np.maximum.reduce([m[:h, :w] for _t, m in scored])
             pick = max(scored, key=lambda tm: tm[1][:h, :w].max())[0]
             cap = max(len(LP[str(q)][ab]) for q in src[ab])
-            hits = suppress(best, pick['t'].shape, KEEP, cap)
+            thr = CONFIRM.get((p, ab), KEEP)
+            hits = suppress(best, pick['t'].shape, thr, cap)
             for r, c, s in hits:
                 x0, y0 = c + pick['dx'], r + pick['dy']
                 x1, y1 = x0 + pick['w'], y0 + pick['h']
