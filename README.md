@@ -51,6 +51,22 @@ It is 20 MB, most of that the plates.
 - **Landmarks** marks bregma, lambda and the occipital crest where they fall, and draws the
   interaural line. The APs are the atlas's own; the heights come off the skull fit.
 
+**Plan a track** (experimental) — pick a structure and a hemisphere, set the approach
+angles, and get the entry point, the angles to dial into the manipulator, and how far to
+drive from the brain surface.
+- The track draws live on the plate, both projections and the 3D view, dashed on the plate
+  where it passes in front of or behind that section. **Right-triangle sides** adds the
+  vertical drop and horizontal offset it is the hypotenuse of — what you set on the arm
+  before you lower it.
+- **The angles are in your frame, not the atlas's.** Set a **Frame** and the plan moves with
+  it: at 17° of nose-down pitch, a track that is vertical on the manipulator enters 2.1 mm
+  further back than the plate would suggest.
+- **Copy notes** or **Download** writes the plan as plain text with the frame it was planned
+  in, and **Copy link** restores the whole thing — target, side and angles.
+- The surface is the outline of the section, traced off the atlas's own drawings. It is a
+  *fixed, sectioned* brain, not the surface under intact dura, and the sections are 350 µm
+  apart, so an entry AP is only resolved to the nearest plate.
+
 **See a structure whole** — the printed atlas gives you one coronal plane at a time.
 - **Projection** plots every printed label in side view (AP × DV) or top-down (AP × ML),
   with your selected structure highlighted, so you can see how it runs through the brain.
@@ -67,8 +83,9 @@ It is 20 MB, most of that the plates.
   **Copy link** for a URL back to exactly this plate, structure and view.
 - The SVG carries no section image — it is the outlines, traced off the printed plate,
   plus whatever overlays were on: grid, skull, landmarks, the circled structure, the
-  measurement and the query point, each in its own named group so you can restyle or
-  delete one without touching the rest. Opens in Illustrator, Inkscape or a browser.
+  measurement, the planned track and the query point, each in its own named group so you
+  can restyle or delete one without touching the rest. Opens in Illustrator, Inkscape or
+  a browser.
 
 **Where zero is** — **Frame** in the header lets you move the origin: name bregma, lambda,
 the interaural line or the occipital crest, and give an AP / ML / DV offset from it if your
@@ -101,6 +118,10 @@ know before relying on them.
 - The **skull** overlays are a CT surface of a *different* animal, aligned here rather than
   published with the atlas — good to a few tenths of a millimetre. Context, not a surface to
   measure against.
+- The **track planner** is experimental and has not been checked against a track anybody has
+  driven. Its brain surface is the outline of the atlas's own drawn section — it reaches
+  DV 0 and never crosses it, and 98% of printed labels fall inside it, but it is a fixed,
+  sectioned brain and knows nothing about vessels, the sinus or the ventricles.
 
 ## Source
 
@@ -117,7 +138,8 @@ structures**. Please cite the atlas itself:
 | --- | --- |
 | `gerbil_atlas_explorer.html` | The app. Self-contained (~20 MB: 186 plate images, the vectorized outlines and the skull mesh), works offline. Stays at the repository root — it is the published address. |
 | `METHODS.md` | How everything here was derived, and what its accuracy is. |
-| `data/gerbil_atlas.json` | Full database: structures, coordinates, label positions, calibration. |
+| `TARGETING_PLAN.md` | The design behind the track planner. |
+| `data/gerbil_atlas.json` | Full database: structures, coordinates, label positions, brain outlines, calibration. |
 | `data/gerbil_atlas_structures.csv` | One row per structure: abbreviation, name, plate and bregma range, tags. |
 | `data/gerbil_atlas_plates.csv` | One row per plate: bregma / lambda / interaural / occipital-crest AP. |
 | `data/index_raw.txt` | The authors' published index as extracted. Source of truth for the rest. |
@@ -132,3 +154,6 @@ This website is developed and maintained by Daniel Stolzberg and the [Caras Lab]
 How the coordinates were calibrated, how the plate images were cropped and the labels
 read, how the frame-adjustment math works, and what was verified against what:
 **[METHODS.md](METHODS.md)**.
+
+The design the track planner was built from, and the questions that had to be settled
+before it could be: **[TARGETING_PLAN.md](TARGETING_PLAN.md)**.
