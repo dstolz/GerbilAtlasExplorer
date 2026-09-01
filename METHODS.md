@@ -109,6 +109,11 @@ matrix that maps one to the other. Keeping the geometry as the tracer produced i
 bad registration shows as a wrong matrix, which is six numbers to check, instead of being
 baked irreversibly into 9,076 paths.
 
+The tracings are in `svg/`, one file per plate, as they came out of the vectorizer — the
+same paths the app carries, before any matrix is applied. They are the only source asset
+kept in the repository rather than only embedded, because the registration below is
+measured against them and the numbers are otherwise unauditable.
+
 The matrix is **fitted to each plate's own printed ink, not read off the page layout**. The
 scale is shared and comes from the 1 mm ticks the pages print (142.6 px/mm across ML, 142.2
 down DV, against the plate frame's 57.0 and 56.8 — a ratio of 2.502); orientation and

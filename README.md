@@ -10,7 +10,7 @@ myelin.
 Runs in any modern browser — nothing to install, no account, no server. The whole
 atlas (all 186 plate images) lives inside the single `gerbil_atlas_explorer.html` file,
 so you can also download it and open it offline, on a rig computer with no internet.
-It is 18 MB, most of that the plates.
+It is 20 MB, most of that the plates.
 
 ## Quick start
 
@@ -115,11 +115,14 @@ structures**. Please cite the atlas itself:
 
 | File | What it is |
 | --- | --- |
-| `gerbil_atlas_explorer.html` | The app. Self-contained (~20 MB: 186 plate images, the vectorized outlines and the skull mesh), works offline. |
-| `gerbil_atlas.json` | Full database: structures, coordinates, label positions, calibration. |
-| `gerbil_atlas_structures.csv` | One row per structure: abbreviation, name, plate and bregma range, tags. |
-| `gerbil_atlas_plates.csv` | One row per plate: bregma / lambda / interaural / occipital-crest AP. |
-| `index_raw.txt` | The authors' published index as extracted. Source of truth for the rest. |
+| `gerbil_atlas_explorer.html` | The app. Self-contained (~20 MB: 186 plate images, the vectorized outlines and the skull mesh), works offline. Stays at the repository root — it is the published address. |
+| `METHODS.md` | How everything here was derived, and what its accuracy is. |
+| `data/gerbil_atlas.json` | Full database: structures, coordinates, label positions, calibration. |
+| `data/gerbil_atlas_structures.csv` | One row per structure: abbreviation, name, plate and bregma range, tags. |
+| `data/gerbil_atlas_plates.csv` | One row per plate: bregma / lambda / interaural / occipital-crest AP. |
+| `data/index_raw.txt` | The authors' published index as extracted. Source of truth for the rest. |
+| `svg/` | The traced regional outlines, one SVG per plate, in the published page frame. What the app's SVG export is built from. |
+| `qc/` | Verification renders kept from the build — label boxes, coordinate-box detection, plate previews. Not used by the app. |
 
 ## Website development
 This website is developed and maintained by Daniel Stolzberg and the [Caras Lab](https://www.caraslab.org) in the department of Biology at the University of Maryland.
