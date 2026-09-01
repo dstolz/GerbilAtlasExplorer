@@ -312,6 +312,9 @@ input[type=range]{accent-color:var(--accent)}
 .lb3{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;color:var(--muted);
   white-space:nowrap;user-select:none}
 .lb3 input{width:74px;accent-color:var(--accent);margin:0;cursor:pointer}
+.lb3 select{font-family:inherit;font-size:12.5px;color:var(--ink);background:var(--panel2);
+  border:1px solid var(--line);border-radius:7px;padding:2px 5px;cursor:pointer}
+.lb3 select:hover{border-color:var(--accent)}
 .lb3 b{color:var(--ink);font-variant-numeric:tabular-nums;font-size:11px;
   font-family:ui-monospace,SFMono-Regular,Menlo,monospace;min-width:1.6em;text-align:right}
 @media (max-width:1100px){ .lb3 input{width:56px} }
@@ -319,7 +322,9 @@ input[type=range]{accent-color:var(--accent)}
 /* ---------- footer, one line; the long version lives in About ---------- */
 footer{max-width:var(--maxw);margin:0 auto;width:100%;padding:8px var(--pad) 14px;
   font-size:11.5px;color:var(--muted);line-height:1.6}
+footer p{margin:0}
 footer a{color:var(--accent)}
+.fattr{opacity:.85}
 .fsep{opacity:.45;padding:0 5px}
 .flink{border:0;background:none;padding:0;font:inherit;color:var(--accent);cursor:pointer}
 .flink:hover{text-decoration:underline}
@@ -374,7 +379,7 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
   padding:10px 12px;font-size:12px;color:var(--ink);font-variant-numeric:tabular-nums}
 .fprev b{color:var(--accent);font-weight:600}
 .fprev .fpa{display:block;color:var(--muted);margin-top:3px}
-.frow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:13px 0 0}
+.frow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 15px}
 /* the atlas value, kept beside every adjusted one so the two can never be confused */
 .atl{display:block;color:var(--muted);font-size:11px;margin-top:1px}
 /* a readout that stayed in atlas coordinates says so inline, with the why on hover,
@@ -575,9 +580,20 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
         <span class="tsep"></span>
         <span class="tgw"><label class="tg" title="Show the skull surface around the atlas"><input type="checkbox" id="v3s">Skull</label><button type="button" class="ast" title="Skull alignment is approximate — read the note" aria-label="Note on skull alignment">*</button></span>
         <label class="lb3" id="v3sol" hidden title="How opaque the skull is drawn"
-          >Bone <input type="range" id="v3so" min="6" max="90" value="32"></label>
+          >Bone <input type="range" id="v3so" min="6" max="100" value="32"></label>
         <label class="tg" title="Cut at the midline to see inside"><input type="checkbox" id="v3h">Half</label>
         <label class="tg" title="Parallel projection — no perspective foreshortening, so equal lengths read equally wherever they sit"><input type="checkbox" id="v3o">Ortho</label>
+        <label class="lb3" title="Look at the brain from a named direction"
+          >View <select id="v3v">
+            <option value="obl">Oblique</option>
+            <option value="left">Left</option>
+            <option value="right">Right</option>
+            <option value="rost">Rostral &middot; front</option>
+            <option value="caud">Caudal &middot; back</option>
+            <option value="dors">Dorsal &middot; top</option>
+            <option value="vent">Ventral &middot; bottom</option>
+            <option value="" disabled>Custom</option>
+          </select></label>
         <button class="z" id="v3r" type="button" title="Back to the default viewpoint">Reset view</button>
       </span>
       <button class="z" id="elink" type="button" title="Copy a link back to this plate, structure and view">Copy link</button>
@@ -650,8 +666,12 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
 </main>
 
 <footer>
-  Radtke-Schuller et al. (2016), <em>Brain Struct Funct</em> 221(Suppl 1):1&ndash;272
-  <a href="https://doi.org/10.1007/s00429-016-1259-0" target="_blank" rel="noopener">doi:10.1007/s00429-016-1259-0</a><span class="fsep">&middot;</span><button type="button" class="flink" id="aboutb2">About the data</button><span class="fsep">&middot;</span><a href="https://github.com/dstolz/GerbilAtlasExplorer/issues" target="_blank" rel="noopener">Report an issue</a><span class="fsep">&middot;</span>Build <a href="https://github.com/dstolz/GerbilAtlasExplorer/commit/7939ba7" target="_blank" rel="noopener"><code>7939ba7</code></a>
+  <p>Radtke-Schuller et al. (2016), <em>Brain Struct Funct</em> 221(Suppl 1):1&ndash;272
+    <a href="https://doi.org/10.1007/s00429-016-1259-0" target="_blank" rel="noopener">doi:10.1007/s00429-016-1259-0</a><span class="fsep">&middot;</span><button type="button" class="flink" id="aboutb2">About the data</button><span class="fsep">&middot;</span><a href="https://github.com/dstolz/GerbilAtlasExplorer/blob/main/METHODS.md" target="_blank" rel="noopener">Methods</a><span class="fsep">&middot;</span><a href="https://github.com/dstolz/GerbilAtlasExplorer" target="_blank" rel="noopener">Source</a><span class="fsep">&middot;</span><a href="https://github.com/dstolz/GerbilAtlasExplorer/issues" target="_blank" rel="noopener">Report an issue</a><span class="fsep">&middot;</span>Build <a href="https://github.com/dstolz/GerbilAtlasExplorer/commit/7939ba7" target="_blank" rel="noopener"><code>7939ba7</code></a></p>
+  <p class="fattr">Developed and maintained by Daniel Stolzberg and the
+    <a href="https://www.caraslab.org" target="_blank" rel="noopener">Caras Lab</a>,
+    <a href="https://biology.umd.edu" target="_blank" rel="noopener">Department of Biology</a>,
+    <a href="https://umd.edu" target="_blank" rel="noopener">University of Maryland</a>.</p>
 </footer>
 
 <dialog id="about">
@@ -710,7 +730,11 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
       from the plate images already on the page, once, the first time you open it.
       <em>Ortho</em> swaps the perspective camera for a parallel one: nothing is
       foreshortened, so equal lengths read equally wherever they sit in depth, which is
-      what you want when comparing positions rather than looking at the brain.</p>
+      what you want when comparing positions rather than looking at the brain.
+      <em>View</em> puts the camera on an anatomical axis &mdash; left, right, rostral,
+      caudal, dorsal or ventral &mdash; and a link copied from a named view opens on it.
+      Caudal is the one that reads the same way round as the printed plates, which are
+      drawn as seen from behind.</p>
     <p>Two things to keep in mind. Sections are 350&nbsp;µm apart but a plate pixel is about
       17.5&nbsp;µm, so sampling <em>along</em> the brain is 20&times; coarser than across it: the
       stack really is discrete, and the streaking in the volume view is interpolation between
@@ -741,7 +765,8 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
     <dl class="keys">
       <dt><kbd>&larr;</kbd> <kbd>&rarr;</kbd></dt><dd>step through plates</dd>
       <dt><kbd>+</kbd> <kbd>&minus;</kbd> <kbd>0</kbd></dt><dd>zoom in, out, and back to fit</dd>
-      <dt>drag in 3-D</dt><dd>orbit; shift-drag or right-drag to pan, wheel to zoom</dd>
+      <dt>drag in 3-D</dt><dd>orbit &mdash; which leaves any named view; shift-drag or
+        right-drag to pan, wheel to zoom</dd>
       <dt><kbd>/</kbd></dt><dd>jump to the search box</dd>
       <dt><kbd>Esc</kbd></dt><dd>drop the selection, or clear a measurement</dd>
       <dt>double-click</dt><dd>zoom into the plate at that point; drag to pan</dd>
@@ -767,6 +792,11 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
     <p>The atlas is cut perpendicular to the brainstem axis. If your stereotaxic frame holds the
       head at any other angle, describe that angle here and coordinates will be read in
       <em>your</em> frame rather than the atlas&rsquo;s.</p>
+
+    <div class="frow">
+      <button class="b" id="fon" type="button">Turn on</button>
+      <button class="b" id="fzero" type="button">Reset to atlas</button>
+    </div>
 
     <h3>Orientation</h3>
     <div class="fgrid">
@@ -843,11 +873,6 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
     <p>Nothing in the atlas records which way your frame is tilted, so the app cannot check a
       sign for you. Read this line against a structure you already know &mdash; if a coordinate
       moved the wrong way, negate the angle.</p>
-
-    <div class="frow">
-      <button class="b" id="fon" type="button">Turn on</button>
-      <button class="b" id="fzero" type="button">Reset to atlas</button>
-    </div>
 
     <h3>What it changes</h3>
     <p><b>Adjusted:</b> the structure card, the pointer readout on the plate, the coordinate
@@ -1857,6 +1882,7 @@ let v3mode='contour', v3op=.42, v3a=0, v3b=61, v3half=false;
 let v3ortho=false;                 /* parallel vs perspective projection */
 let v3sk=false, v3sko=.32;             /* the skull shell: off by default, opacity 0..1 */
 let v3az=-.82, v3el=.30, v3dist=26, v3tx=0, v3ty=0;   /* orbit + screen-space pan */
+let v3view='obl';                  /* the named viewpoint in force, '' once dragged off it */
 let v3hot=null, v3raf=null, v3col={};
 
 /* ---------- the small amount of matrix algebra this needs ---------- */
@@ -2018,7 +2044,7 @@ void main(){
   vec3 N=normalize(v_n); if(!gl_FrontFacing) N=-N;
   float d=clamp(dot(N,normalize(u_cam-v_p)),0.0,1.0);
   float rim=(1.0-d)*(1.0-d);
-  o=vec4(u_c*(0.50+0.55*d)+0.10*rim, u_op*(0.55+0.35*rim));
+  o=vec4(u_c*(0.50+0.55*d)+0.10*rim, u_op*mix(0.55+0.35*rim, 1.0, pow(u_op,4.0)));
 }`;
 
 let pSlice,pVol,pPts,pLine,pSkull, vaoQ,vaoB,vaoP, texV, bufF, nPT=0;
@@ -2305,9 +2331,24 @@ function v3skullBuild(){
     nrm[b]+=nx; nrm[b+1]+=ny; nrm[b+2]+=nz;
     nrm[c]+=nx; nrm[c+1]+=ny; nrm[c+2]+=nz;
   }
-  for(let i=0;i<nv;i++){
-    const l=Math.hypot(nrm[i*3],nrm[i*3+1],nrm[i*3+2])||1;
-    nrm[i*3]/=l; nrm[i*3+1]/=l; nrm[i*3+2]/=l;
+  const unit=a=>{ for(let i=0;i<nv;i++){
+    const l=Math.hypot(a[i*3],a[i*3+1],a[i*3+2])||1;
+    a[i*3]/=l; a[i*3+1]/=l; a[i*3+2]/=l; } };
+  unit(nrm);
+  /* The 0.42 mm decimation leaves the shell finely dented. Translucent bone blends the
+     dents away; opaque bone shows every one as a dark fleck, so relax the shading normals
+     over the 1-ring a few times. Only the normals move -- the geometry the plate outlines
+     and the silhouettes are cut from is untouched. */
+  for(let it=0;it<4;it++){
+    const acc=new Float32Array(nv*3);
+    const pair=(i,j)=>{ for(let k=0;k<3;k++){ acc[i*3+k]+=nrm[j*3+k]; acc[j*3+k]+=nrm[i*3+k]; } };
+    for(let f=0;f<M.nf;f++){
+      const a=idx[f*3], b=idx[f*3+1], c=idx[f*3+2];
+      pair(a,b); pair(b,c); pair(c,a);
+    }
+    unit(acc);
+    for(let i=0;i<nv*3;i++) nrm[i]=nrm[i]*.35+acc[i]*.65;
+    unit(nrm);
   }
   vaoS=gl.createVertexArray(); gl.bindVertexArray(vaoS);
   const vb=gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER,vb);
@@ -2355,7 +2396,7 @@ function v3render(){
   if(V3CV.width!==w||V3CV.height!==h){ V3CV.width=w; V3CV.height=h; }
   gl.viewport(0,0,w,h);
   gl.clearColor(v3col.bg[0],v3col.bg[1],v3col.bg[2],1);
-  gl.clear(gl.COLOR_BUFFER_BIT);
+  gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
   gl.disable(gl.DEPTH_TEST);
   gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);
 
@@ -2363,19 +2404,26 @@ function v3render(){
   const z0=v3a/(V3D-1), z1=v3b/(V3D-1);
   const U=(p,n)=>gl.getUniformLocation(p,n);
 
-  /* the far side of the skull goes down before the brain content and the near side
-     after it, so the stack shows through the shell instead of being pasted over it */
+  /* Translucent bone: the far side of the skull goes down before the brain content and
+     the near side after it, so the stack shows through the shell instead of being pasted
+     over it. Opaque bone needs neither trick -- one depth-tested pass over the whole
+     shell, laid down last, sorts itself and hides the stack outright. Face culling is
+     what splits near from far, so the opaque pass does without it: the decimated mesh
+     has a few triangles wound inside out, and culling would drop them from the near
+     side and leave brain content showing through the pinholes. */
+  const solid=v3sko>0.97;
   const skull=side=>{
-    if(!v3sk||!vaoS) return;
+    if(!v3sk||!vaoS||(solid&&!side)) return;
     gl.useProgram(pSkull); gl.bindVertexArray(vaoS);
-    gl.enable(gl.CULL_FACE); gl.cullFace(side?gl.BACK:gl.FRONT);
+    if(solid){ gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL); }
+    else { gl.enable(gl.CULL_FACE); gl.cullFace(side?gl.BACK:gl.FRONT); }
     gl.uniformMatrix4fv(U(pSkull,'u_mvp'),false,M);
     gl.uniform3fv(U(pSkull,'u_cam'),new Float32Array(cam));
     gl.uniform3fv(U(pSkull,'u_c'),v3col.bone);
     gl.uniform1f(U(pSkull,'u_op'),v3sko);
     gl.uniform1f(U(pSkull,'u_half'),v3half?1:0);
     gl.drawElements(gl.TRIANGLES,nSK,gl.UNSIGNED_SHORT,0);
-    gl.disable(gl.CULL_FACE);
+    if(solid) gl.disable(gl.DEPTH_TEST); else gl.disable(gl.CULL_FACE);
   };
   skull(false);
 
@@ -2535,7 +2583,8 @@ V3CV.addEventListener('pointermove',e=>{
     v3moved+=Math.abs(dx)+Math.abs(dy);
     v3drag.x=e.clientX; v3drag.y=e.clientY;
     if(v3drag.pan){ const s=v3dist*.0022; v3tx+=dx*s; v3ty-=dy*s; }
-    else { v3az-=dx*.0062; v3el=Math.max(-1.45,Math.min(1.45,v3el+dy*.0062)); }
+    else { v3az-=dx*.0062; v3el=Math.max(-V3POLE,Math.min(V3POLE,v3el+dy*.0062));
+           v3view=''; $('v3v').value=''; }
     v3frame();
     return;
   }
@@ -2592,7 +2641,23 @@ $('v3b').oninput=e=>{ v3b=Math.max(+e.target.value-1,v3a); e.target.value=v3b+1;
   $('v3bl').textContent=v3b+1; v3note(); v3frame(); queueHash(); };
 $('v3h').onchange=e=>{ v3half=e.target.checked; v3note(); v3frame(); queueHash(); };
 $('v3o').onchange=e=>{ v3ortho=e.target.checked; v3note(); v3frame(); queueHash(); };
-$('v3r').onclick=()=>{ v3az=-.82; v3el=.30; v3dist=v3sk?38:26; v3tx=v3ty=0; v3frame(); };
+/* Named viewpoints. World x is the animal's right, y dorsal, z posterior, so each view
+   is just the azimuth and elevation that put the eye on the matching axis. Dorsal and
+   ventral stop a degree short of the pole: a camera exactly there is parallel to the up
+   vector and the view matrix has no way to decide which way is forward. Rostral and
+   caudal are both offered because the plates are printed as seen from behind, so the
+   caudal view is the one that reads the same way round as the plate. */
+const V3POLE=1.553;
+const V3VIEW={ obl:[-.82,.30], left:[-Math.PI/2,0], right:[Math.PI/2,0],
+               rost:[Math.PI,0], caud:[0,0], dors:[0,V3POLE], vent:[Math.PI,-V3POLE] };
+function v3setView(k){
+  const v=V3VIEW[k]; if(!v) return;
+  v3view=k; v3az=v[0]; v3el=v[1]; v3tx=v3ty=0;
+  $('v3v').value=k; v3frame(); queueHash();
+}
+$('v3v').onchange=e=>v3setView(e.target.value);
+/* the reset is the viewpoint plus the framing: distance and pan come back too */
+$('v3r').onclick=()=>{ v3dist=v3sk?38:26; v3setView('obl'); };
 
 function v3note(){
   const N=$('v3n');
@@ -2664,6 +2729,7 @@ function writeHash(){
   if(v3a>0||v3b<61) h+='&sl='+(v3a+1)+','+(v3b+1);
   if(v3half) h+='&hf=1';
   if(v3ortho) h+='&or=1';
+  if(v3view&&v3view!=='obl') h+='&vp='+v3view;
   if(v3sk) h+='&sk='+Math.round(v3sko*100);
   if(FRAME.on){ h+='&fr='+FKEYS.map(k=>FRAME[k]).join(','); if(FRAME.org) h+='&fo=1'; }
   lastWritten='#'+h;
@@ -2717,8 +2783,11 @@ function readHash(){
   $('v3h').checked=v3half;
   v3ortho = par.or==='1';
   $('v3o').checked=v3ortho;
+  /* only a link that names a viewpoint moves the camera; a bare #p30 arriving by
+     hashchange should not throw away the angle the user is looking from */
+  if(par.vp&&V3VIEW[par.vp]) v3setView(par.vp);
   const sk=parseInt(par.sk,10);
-  v3sk = Number.isFinite(sk)&&sk>=6&&sk<=90;
+  v3sk = Number.isFinite(sk)&&sk>=6&&sk<=100;
   if(v3sk){ v3sko=sk/100; $('v3so').value=sk; if(gl) v3skullBuild();
             if(v3dist<34) v3dist=38; }
   $('v3s').checked=v3sk; $('v3sol').hidden=!v3sk;

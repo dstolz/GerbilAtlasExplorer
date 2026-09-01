@@ -42,8 +42,10 @@ so you can also download it and open it offline, on a rig computer with no inter
 - **3D** stacks the 62 plates where they actually sit: as contours, as a ray-marched
   volume, or as a point cloud of all 6,220 labels you can orbit. Clip to a slab or cut
   it in half at the midline. **Skull** (experimental) wraps the stack in a CT skull
-  surface at whatever transparency you set. **Ortho** switches to a parallel projection,
-  so nothing is foreshortened. (Needs WebGL 2.)
+  surface at any transparency from a faint shell to solid bone. **Ortho** switches to a
+  parallel projection, so nothing is foreshortened. **View** puts the camera on an
+  anatomical axis — left, right, rostral, caudal, dorsal or ventral — and the link you
+  copy carries it. (Needs WebGL 2.)
 
 **Take it with you**
 - **PNG** of the current plate with overlays, **CSV** of the structures you've listed,
