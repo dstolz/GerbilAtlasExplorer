@@ -76,7 +76,7 @@ drive from the brain surface.
 - **Projection** plots every printed label in side view (AP × DV) or top-down (AP × ML),
   with your selected structure highlighted, so you can see how it runs through the brain.
 - **3D** stacks the 62 plates where they actually sit: as contours — or as the Nissl or
-  myelin sections themselves — as a ray-marched volume, or as a point cloud of all 6,220
+  myelin sections themselves — as a ray-marched volume, or as a point cloud of all 6,257
   labels you can orbit. Clip to a slab or cut
   it in half at the midline. **Skull** (experimental) wraps the stack in a CT skull
   surface at whatever transparency you set. **Ortho** switches to a parallel projection,
@@ -114,16 +114,17 @@ know before relying on them.
   have no coordinate. The app tells you when a label is missing rather than showing
   nothing — you may notice a region you expected isn't marked.
 - A structure listed for a plate range is present at those levels but is **not
-  necessarily printed** on every plate of that range.
+  necessarily printed** on every plate of that range. Of the 3,506 the index lists, 3,293
+  carry a located label; the shortfall is mostly structures the plate does not name.
 - The **system tags** are a convenience layer added here, not part of the published atlas.
 - The **region outlines** are cut from the atlas's own drawn lines, not from a published
-  segmentation — the atlas has none. 3,096 structure–plate entries have one, and each says
+  segmentation — the atlas has none. 3,112 structure–plate entries have one, and each says
   how much of its own boundary the atlas prints: the median is 98%, but **6% of regions are
   under half drawn**, and those outlines are dashed and labelled as inferred because that is
   what they are. Where the drawing seals a face and names nothing, nothing is claimed.
 - Where the atlas typesets **two names into one label** — `S1Tr/ LPtA`, `Au1 (A1)` — they
   name one region between them, so both give the same outline and the app says which label
-  it is. 19 labels on 27 plates are joined this way.
+  it is. 22 labels on 31 plates are joined this way.
 - Nothing here is a segmentation, and the 3D views interpolate between sections that
   are 350 µm apart — the streaking is arithmetic, not anatomy.
 - The **myelin** plate of a level is an *adjacent* section, not the same slice as the Nissl:
