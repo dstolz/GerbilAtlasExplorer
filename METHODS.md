@@ -213,8 +213,10 @@ out, and the 90th percentile 0.20 mm.
 *names*: the area of each structure on each plate, as a list of closed polygons of `[x, y]`
 fractions of the frame-cropped image — the same frame and the same convention
 `brain_outline` uses, so the app's existing point-in-polygon test reads them unchanged.
-**3,113 structure-plate entries carry an area**, 95% of the 3,270 the label pass located
-and 89% of the 3,506 the published index lists, as 5,692 polygons over 77,446 points.
+**3,096 structure-plate entries carry an area**, 95% of the 3,270 the label pass located
+and 88% of the 3,506 the published index lists, as 5,667 polygons over 77,328 points. Where
+the atlas prints two names as one label the two share an entry, so a name having no entry of
+its own does not mean it has no area — see step 6.
 
 The atlas publishes no segmentation. What it does publish is a line drawing in which every
 region is a cell of a planar subdivision with one abbreviation printed inside it, and both
@@ -245,18 +247,17 @@ The steps, in order, run by `tools/build_region_extents.py`:
    ventricles; calling a ventricle `CPu` would propagate into every readout downstream.
    These are written out separately as `region_extents.unassigned`, and they are a mean 7%
    of section area.
-   **And do not split a face on a second name for the same thing.** The atlas sets some
-   labels over two lines with the second in parentheses — `Au1 / (A1)` on plates 30–33,
-   `Au1 / (AAF)` on 28, `Au1 / (A1/AAF)` on 29 — and the label pass reads the parenthesised
-   line as the separate published abbreviation it is. Seeded as a rival it is worse than
-   useless: there is no ink between the two names to split on, so the watershed invents a
-   ridge and hands each of them a slab of the other's cortex, which is how `A1` came to be
-   a rectangle across primary auditory cortex rather than the field itself. `A1` and `AAF`
-   are seeded under `Au1` instead, and `region_extents.synonyms` records that, so selecting
-   either spelling in the app outlines the one field. These two are the only such pair in
-   the atlas: every printed `A1` and `AAF` sits directly under an `Au1`, and a bracket test
-   over all 6,217 located labels — thin, line-height, bowed the way a bracket bows and not
-   the way an `l` or a `1` is — flags no others.
+   **And do not split a face between two names of one label.** The atlas often
+   names a face with two abbreviations typeset into a single label, over one line or two —
+   `S1Tr/ LPtA`, `S2/AuD`, `Au1 (A1)`, `Au1 (A1/AAF)` — and the label pass reads each of
+   them as the separate published abbreviation it is. Seeded as rivals they are worse than
+   useless: there is no ink between two names of one label to split on, so the watershed
+   invents a ridge down the middle of the face and hands each a slab of the other, which is
+   how `A1` came to be a rectangle across primary auditory cortex rather than the field
+   itself. `label_blocks` says which abbreviations the atlas joined, they seed as one, and
+   the app answers for any of them with that label's one outline. **19 labels on 27 plates**
+   are joined this way, over 31 printed occurrences.
+
 7. **Score each polygon** by the share of its border lying within 3 px of ink the tracing
    *actually drew*, as opposed to a ridge the watershed invented, walked at one pixel so it
    is length-weighted.
@@ -291,8 +292,13 @@ would expect them: `PM` on plates 51–54, `7Cb` on 51, `RRF` on 39, `imvc` on 2
 cerebellar and reticular subdivisions the pages bound with faint or dashed print, if at all.
 
 End to end, in the app: pointing at each of the 6,220 printed labels in turn resolves to a
-structure every time, and to the right one 6,217 times — the three misses are the three
-labels below that have no extent at all.
+structure every time, and to the right one 6,217 times. **6,003 of them resolve to an area**
+and the remaining 217 to the printed name itself, which is the honest answer where the atlas
+prints a name outside the section it belongs to — `rf` on the rhinal fissure is 50 of the
+217 — or where no extent could be cut. The three misses are three places where one located
+box sits inside another (`StA` around `STMA` on plate 23, `PVP` around `VL` on 29, `psf`
+around `sf` on 53) and the smaller of the two wins the point, which is the right tie-break
+everywhere else.
 
 256 of the 6,217 printed labels sit outside the face they name, on a leader line or on a
 boundary, and were pulled to the nearest face; most are on the olfactory bulb plates 5–9,
@@ -306,6 +312,38 @@ eye and the one that catches a leak the medians average away.
 **This is still not a segmentation.** It is one animal's drawing, cut along the lines that
 drawing prints, and where it prints none the split is this extraction's guess rather than
 the atlas's claim.
+
+### Reading the joins
+
+Which abbreviations the atlas typeset together is not in `label_positions`, and it is not
+recoverable from the geometry: two names of one label sit exactly where two names of two
+adjacent labels would. What separates them is the punctuation — a slash between them, a
+slash ending the line above, a bracket around the line below — so `tools/label_blocks.py`
+reads that, and writes `label_blocks`.
+
+It reads it off the **published page at 2558 × 1708**, not the app's 1100 × 703 plate. There
+a glyph is 8 px tall, its letters run together and a bracket cannot be told from an `l`; on
+the page it is 20 px and the letters stand apart. This is the same source, and the same
+reason, as the label pass itself.
+
+Segmentation comes from `label_positions` rather than from thresholding: it already says
+which pixels are letters, so **the ink on a line that no box claims is the punctuation**.
+Each such stroke is then classified by the path its ink takes down the line — a slash leans
+steadily and straight, a bracket bows, with its extreme column at the vertical middle and
+both ends falling back, and `l`, `1` and `I` do neither.
+
+One thing had to be ruled out rather than measured. A drawn boundary runs through a label at
+any angle and is every bit as thin, as tall and as straight as a slash; every rule of thumb
+tried here either kept a boundary or lost a real slash. It did not have to be a rule of
+thumb: **the boundaries are already vectorised in `svg/`**, so a candidate lying on a traced
+path is a boundary, and that is said rather than guessed. That rules out five would-be joins
+— `Sc/Po` on 32, `Or/Py` on 34, `Oca/icp` on 49, `ts/pyx` and `12N/12GH` on 57 — each of
+which is two labels with a drawn line between them.
+
+It also costs one true join, and that one is recorded in the tool rather than dropped: on
+plate 49 the slash of `PM/ Cop` is drawn along the very boundary it names, and at every
+threshold that keeps it, two of those five come back. Every one of the 31 occurrences was
+checked against the printed page by eye.
 
 ## Your own coordinate frame
 
