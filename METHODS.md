@@ -500,7 +500,7 @@ why this is not a segmentation either.
    with the absent plate: that side's field is a large negative constant and averaging with
    it would swamp the taper and end the structure flat at the plate.
 6. **Bridge a hole in a plate run only where the published index says there should not be
-   one.** 49 structure-plate holes are filled that way, as extraction misses; the rest are
+   one.** 44 structure-plate holes are filled that way, as extraction misses; the rest are
    left as the real absences they are.
 7. **Surface it** with marching cubes on the distance field, read every 1–6 voxels
    depending on the structure's size — about ten samples across whatever it is. Coarsening
@@ -514,8 +514,8 @@ why this is not a segmentation either.
 
 | Grade | What it is | Count |
 | --- | --- | --- |
-| `surface` | At least three consecutive plates. The mesh follows the drawn boundaries, interpolated between them. | 430 |
-| `slab` | One or two plates. The series does not sample the structure along AP at all, so the mesh is a **convex hull per connected component** — a claim about where the structure is, not about what shape it is — closed half a section step beyond the plates that name it. | 267 |
+| `surface` | At least three consecutive plates. The mesh follows the drawn boundaries, interpolated between them. | 433 |
+| `slab` | One or two plates. The series does not sample the structure along AP at all, so the mesh is a **convex hull per connected component** — a claim about where the structure is, not about what shape it is — closed half a section step beyond the plates that name it. | 264 |
 
 A `slab` is what "circumscribed" means here and is marked `bounding: true`. Unlike the
 `surface` meshes, two slabs may overlap: a bounding volume is not a partition. The hull is
@@ -559,7 +559,7 @@ extraction's own guarantees survived into three dimensions.
 | Check | 2-D | Extracted in 3-D |
 | --- | --- | --- |
 | Cross-section area on a plate a structure was built from, against `region_extents` | — | **median 1.4% off**, 90th percentile 7.1% — the lattice's own quantisation |
-| Regions partition the volume | a point is inside one region or none | **holds**: every voxel inside the surface carries exactly one label, or is an unnamed sealed face — 4.5% of the brain |
+| Regions partition the volume | a point is inside one region or none | **holds**: every voxel inside the surface carries exactly one label, or is an unnamed sealed face — 4.4% of the brain |
 | Highest point of the surface | DV −0.06 | **DV −0.10** (one voxel) |
 | Lowest point of the surface | DV −9.09 | **DV −9.05** |
 | Printed labels inside the surface | 97.8% | **97.9%** |

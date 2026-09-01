@@ -1,10 +1,11 @@
 # tools
 
-The region extraction and the volume build. Everything else in this repository is data with
-its derivation written out in prose in [METHODS.md](../METHODS.md), which is enough when the
-derivation is a fit with six numbers in it. These two are a segmentation cut out of a line
-drawing and a third axis invented between the plates, and prose alone would not let anyone
-check either.
+The derivations that read something off the page rather than fitting a number to it.
+Everything else in this repository is data with its derivation written out in prose in
+[METHODS.md](../METHODS.md), which is enough when the derivation is a fit with six numbers
+in it. These are not: a word matched back onto a plate that had lost it, a segmentation cut
+out of a line drawing, a third axis invented between the plates. Prose alone would not let
+anyone check any of them, so they are here as code, in the order they run.
 
 | Script | What it does |
 | --- | --- |
@@ -34,11 +35,13 @@ python3 tools/build_volumes.py --samples 6             # coarser meshes, a quart
 python3 tools/build_volumes.py --stl out/              # the same meshes as STL
 ```
 
-`label_blocks.py` and `find_missing_labels.py` need the published PDF, because it reads punctuation and the app's plate
-images are too small to carry it — 8 px of glyph, against 20 on the page. It is the only
-script here that reaches outside the repository, for the same reason the label pass did, and
-its output is committed so that nothing downstream needs the PDF. `--qc` writes
-`qc/chk_blocks_NN.png`, every join it made, boxed on the page it read.
+`label_blocks.py` and `find_missing_labels.py` need the published PDF, because they read the
+page itself — punctuation for the one, the shape of a whole word for the other — and the
+app's plate images are too small to carry either: 8 px of glyph, against 20 on the page.
+They are the only scripts here that reach outside the repository, for the same reason the
+label pass did, and their output is committed so that nothing downstream needs the PDF.
+`label_blocks.py --qc` writes `qc/chk_blocks_NN.png`, every join it made, boxed on the page
+it read.
 
 `--dry-run` reports and touches nothing. `--qc` writes `qc/chk_regions_NN.png`, the plate
 with its regions tinted by how much of each boundary the atlas actually prints; from
