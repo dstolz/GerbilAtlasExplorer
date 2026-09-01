@@ -213,6 +213,8 @@ the common case.
 origin  none (default)   zero follows the atlas origin through the rotation
         bregma · lambda · interaural · occipital crest
         + an AP / ML / DV offset from whichever of those is named
+height  dorsal surface (0, the atlas's own DV zero)
+        the landmark's own height, off the skull fit — approximate
 ```
 
 The three numbers are an **offset from the landmark**, not an absolute coordinate, which is
@@ -222,6 +224,24 @@ the landmark contributes only its AP — the atlas prints one for each of these 
 ML nor a height — so on those two axes the offset is the whole story. Bregma is landmark 0
 and its AP offset is 0, so a stored frame or a link written before the offset existed reads
 back unchanged.
+
+**Height** fills the DV offset in from the fitted skull, and it is what makes the
+**interaural line** usable as a zero. That landmark is not a point on the brain or on the
+skull: it is the ear-bar axis, and the fit puts it at **DV −9.05** — about 9 mm ventral
+to the dorsal plane the atlas measures DV from. Zero on interaural with DV left at 0 and
+every depth is out by the whole of that; set the height and the readout becomes ordinary
+interaural coordinates, AP behind the ear bars and DV up from them. `MSO` then reads
+`interaural −0.70 · ML ±1.31 · DV +0.75` against an atlas `AP −7.95 · DV −8.30`. For
+bregma, lambda and the occipital crest the button offers the vault at that AP instead
+(−0.22, +0.54, −0.06) — a zero taken on bone rather than on dura.
+
+The AP is the atlas's own and exact; **the height is not**. No height for any of these
+landmarks is published, so it comes off the same approximate skull registration the
+**Skull** overlays are drawn from, and carries the same asterisk to the same note — good
+to a few tenths of a millimetre, before animal-to-animal variation. The button only types
+the number into the DV field: it holds no state of its own, so the deep link, the stored
+frame and the CSV's `frame_spec` carry it as the plain offset they always did, and a
+measured ear-bar depth typed in by hand behaves identically.
 
 Moving zero is not a rotation and is not hedged as one: it moves no point, and every distance
 and angle is the one the atlas printed. So with every angle left at 0 the projections rule and
@@ -247,12 +267,15 @@ landmark existed still read correctly.
 
 Presets put the pivot on **bregma, lambda, the interaural line or the occipital crest**,
 reading each landmark's offset off the plate table rather than carrying a copy of it. A
-preset can only set AP and ML, though: the atlas prints an AP for every one of these
-landmarks and a height for none. That is not a detail for the interaural line, which is
-usually the one you want — pitch turns about a mediolateral axis, so the ear-bar axis is
-only the real pivot once you supply how far below your zero it sits. The difference is
-large: at 17° of pitch, `MSO` reads AP −10.36 with the pivot left at the interaural AP on
-the dorsal surface, and AP −7.73 with the pivot on an ear-bar axis 9 mm lower.
+preset sets AP and ML, for the same reason: the atlas prints an AP for every one of these
+landmarks and a height for none. The same **Height** row as the origin's sets DV, and
+appears once the pivot's AP is on a landmark — matched on AP alone, because the height
+belongs to the landmark's plane and a pivot pushed off the midline for a roll is still on
+it. That is not a detail for the interaural line, which is usually the one you want —
+pitch turns about a mediolateral axis, so that preset is the ear-bar axis only once DV
+says how far below the dorsal surface the axis sits. The difference is large: at 17° of
+pitch, `MSO` reads AP −10.36 with the pivot left at the interaural AP on the dorsal
+surface, and AP −7.72 with the pivot on the fitted ear-bar axis 9.05 mm lower.
 
 Two consequences the app makes visible. A plate stops being a single AP: under pitch the
 AP of a point drifts by `sin θ` per millimetre of DV — about 2.5 mm between the top and
@@ -500,6 +523,8 @@ putting bregma 8.8 mm above the ear-bar plane) are read off the fitted mesh. A p
 landmark is drawn only on the plate whose plane it falls in; the interaural line is a
 mediolateral axis, so it is solid in its own plane, a dashed height reference elsewhere, a
 point seen end-on in the sagittal projection, and a real line only in the top-down one.
+Those same heights are what the frame dialog's **Height** buttons offer, so an interaural
+origin or pivot inherits this registration's error rather than being silently 9 mm out.
 
 The source is a µCT surface of a gerbil skull (`GerbilSkull.stl`, 498k triangles as
 scanned) — a different animal from the atlas's, in scanner coordinates. The atlas

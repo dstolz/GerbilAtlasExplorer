@@ -814,6 +814,15 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
       labelling AP by the landmark it now comes from. Moving zero moves no point, so the
       projections read their axes from it too and the measure tool needs no caveat; leave every
       angle at 0 and that is all the frame does.</p>
+    <p>The landmark carries an AP and nothing else, because that is all the atlas prints for
+      it &mdash; but a <em>Height</em> button beside the offset will fill DV in from the fitted
+      skull. That is what the <b>interaural line</b> needs to be usable as a zero: it is the
+      ear-bar axis rather than a point on the brain, about 9&nbsp;mm ventral to the dorsal
+      plane the atlas measures DV from, so with the height set the readout becomes ordinary
+      interaural coordinates &mdash; AP behind the ear bars, DV up from them. The same row
+      under the <em>Pivot</em> puts a rotation on that axis instead of on a parallel one
+      several millimetres too high. The APs stay the atlas&rsquo;s own and exact; the heights
+      inherit the skull fit&rsquo;s approximation, and say so.</p>
     <p>A rotation is the part that has to be hedged. While one is set, the grid, the measure
       tool, the projections and the 3-D view stay in atlas coordinates and say so. Note too that
       a plate then stops being a single AP: at 17&deg; of
@@ -968,6 +977,7 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
       <label class="ffld"><span>ML offset (mm)</span><input type="number" id="foml" step="0.05" value="0"></label>
       <label class="ffld"><span>DV offset (mm)</span><input type="number" id="fodv" step="0.05" value="0"></label>
     </div>
+    <div class="fset" id="fohgt" hidden></div>
     <p class="fnb" id="forgn" hidden></p>
     <p>Where your zero is. Drive to a landmark with the head already in the frame, zero the
       manipulator there, and name it here: that point then reads 0&nbsp;/&nbsp;0&nbsp;/&nbsp;0
@@ -985,6 +995,20 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
       prints an AP for each of these and neither an ML nor a height. On those two axes the
       offset is the whole story &mdash; leave DV at 0 to zero on the brain&rsquo;s dorsal
       surface, or enter the depth you actually zeroed at.</p>
+    <p>The <em>Height</em> buttons fill that DV in for you, and they matter most at the
+      <b>interaural line</b>. That landmark is not a point on the brain or on the skull: it is
+      the ear-bar axis, and it runs <b>about 9&nbsp;mm ventral</b> to the dorsal surface the
+      atlas measures DV from. Zero on it with DV left at 0 and every depth is out by that much.
+      Put the height on the ear-bar plane instead and the readout becomes ordinary interaural
+      coordinates &mdash; AP behind the ear bars, DV up from them, which is what an atlas that
+      prints interaural AP alongside bregma is inviting you to work in. For the other three
+      landmarks the button offers the skull surface at that point, for a zero taken on bone
+      rather than on dura.</p>
+    <p><b>The AP is the atlas&rsquo;s own and exact; the height is not.</b> No height for any of
+      these landmarks is published, so it is read off the same approximate skull registration
+      the <em>Skull</em> overlays use &mdash; good to a few tenths of a millimetre, before
+      animal-to-animal variation. The field stays yours: measure your own ear-bar depth and type
+      it in preference to the button.</p>
 
     <h3>Pivot</h3>
     <p class="fnb" id="fpivn" hidden>An origin is set, so the pivot no longer changes anything.</p>
@@ -995,6 +1019,7 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
         <label class="ffld"><span>ML (mm)</span><input type="number" id="fpml" step="0.05" value="0"></label>
         <label class="ffld"><span>DV (mm)</span><input type="number" id="fpdv" step="0.05" value="0"></label>
       </div>
+      <div class="fset" id="fphgt" hidden></div>
     </div>
     <p>The point the rotation turns about &mdash; in practice, wherever you zero the manipulator.
       It matters more than the angles do, because a coordinate moves further the further it sits
@@ -1003,12 +1028,14 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
       ML, and in DV the <b>plane through the most dorsal points of cerebrum and cerebellum</b>
       &mdash; the brain&rsquo;s surface, not skull bregma. The two differ by roughly the skull
       thickness, so move the DV pivot if you zero on bone.</p>
-    <p><b>A preset sets AP and ML only</b>, because the atlas prints an AP for every landmark and
-      a height for none. That matters most for the interaural preset: pitch turns about a
-      mediolateral axis, so the ear-bar axis is the true pivot only once DV says how far below
-      your zero it sits &mdash; a negative number, measured in your own frame. Left at 0, the
-      rotation happens at the brain&rsquo;s dorsal surface instead: a parallel axis several
-      millimetres too high.</p>
+    <p><b>A preset sets AP and ML</b>, because the atlas prints an AP for every landmark and a
+      height for none; the <em>Height</em> row under the fields sets DV separately, and appears
+      once the pivot's AP is on a landmark. It matters most for the interaural preset. Pitch
+      turns about a mediolateral axis, so that preset is the ear-bar axis only once DV says how
+      far below the dorsal surface the axis sits. Left at 0 the rotation happens at the
+      brain&rsquo;s dorsal surface instead &mdash; a parallel axis some 9&nbsp;mm too high, which
+      at 17&deg; of pitch moves <code>MSO</code> by 2.6&nbsp;mm in AP. As in <em>Origin</em>, the
+      AP is the atlas&rsquo;s own and the height comes off the approximate skull fit.</p>
     <p>Pitch alone ignores the pivot&rsquo;s ML, so a preset puts it on the midline. Roll and yaw
       do use it.</p>
 
@@ -1113,6 +1140,28 @@ const LM=[['Bregma','bregma'],['Lambda','lambda_'],
           ['Interaural','interaural'],['Occipital crest','occipital_crest']]
   .map(([n,k])=>[n, +(P[0][k]-P[0].bregma).toFixed(2)]);
 const LMof = n => LM.find(t=>t[0]===n)[1];
+
+/* A height to go with each of those APs. The atlas publishes none -- it prints an AP for
+   all four landmarks and a DV for none -- so these come off the fitted skull the Skull
+   overlays are drawn from, and carry its approximation while the APs stay exact.
+
+   For bregma, lambda and the occipital crest that is the vault at the landmark's AP: the
+   bone you touch down on, a couple of tenths either side of the atlas's DV zero. The
+   interaural line is the one that is not a surface at all. It is the ear-bar axis, running
+   between the ear canals about 9 mm ventral to the dorsal plane the atlas measures DV from,
+   so a frame zeroed or pivoted on it with DV left at 0 is out by the whole of that -- which
+   is the reason this table exists. Null where the skull data is missing, and the picker
+   below then does not appear. */
+const SKLM=(window.__SKULL__||{}).lm;
+const LMDV=LM.map(([n])=>{ if(!SKLM) return null;
+  const k=n.toLowerCase();
+  if(k==='interaural') return SKLM.ear&&Number.isFinite(SKLM.ear.dv)
+    ? {dv:SKLM.ear.dv, t:'ear-bar plane',
+       w:'the ear-bar axis, roughly 9 mm ventral to the brain, from the skull fit'} : null;
+  const v=SKLM.vault&&SKLM.vault[k];
+  return Number.isFinite(v) ? {dv:v, t:'skull surface',
+    w:'the vault at this landmark, from the skull fit -- a zero taken on bone'} : null;
+});
 
 /* ---------- the working stereotaxic frame ----------
    The atlas is cut perpendicular to the brainstem axis, which is not how a head sits in
@@ -4050,6 +4099,7 @@ function orgSync(){
   ['foap','foml','fodv'].forEach(k=>$(k).disabled=!FRAME.org);
   $('fpivn').hidden=!FRAME.org;
   $('fpivs').classList.toggle('fdim',!!FRAME.org);
+  hgtRow($('fohgt'), FRAME.org?FRAME.oref:null, FRAME.odv, v=>{ $('fodv').value=v; });
   const N=$('forgn');
   N.hidden=!FRAME.org;
   if(FRAME.org){ const o=oAbs();
@@ -4057,10 +4107,12 @@ function orgSync(){
       ` &middot; DV <b>${sgn(o[2])}</b> mm, and reads 0 / 0 / 0.`; }
 }
 /* A preset sets the pivot's AP -- the landmark sits that far anterior of bregma, so the
-   pivot goes to minus that -- and puts it on the midline. It cannot set DV, because the
+   pivot goes to minus that -- and puts it on the midline. It does not set DV, because the
    atlas gives every one of these an AP and none of them a height. For pitch that is not a
    detail: pitch turns about a mediolateral axis, so the interaural preset only becomes the
-   ear-bar axis once DV says how far below the user's zero that axis sits. */
+   ear-bar axis once DV says how far below the dorsal surface that axis sits. That is what
+   hgtRow() below offers, off the skull fit rather than off the atlas, in its own row so the
+   exact half and the approximate half of the pivot are never set by the same click. */
 $('fset').innerHTML='<span>Put the pivot on</span>'+LM.map(([n,off],i)=>
   `<button class="b" type="button" data-i="${i}" title="Pivot AP ${sgn(-off)} mm, on the midline">${esc(n)}</button>`).join('');
 [...$('fset').children].forEach(b=>{ if(b.dataset.i===undefined) return;
@@ -4069,6 +4121,44 @@ $('fset').innerHTML='<span>Put the pivot on</span>'+LM.map(([n,off],i)=>
 function frameMarks(){
   [...$('fset').children].forEach(b=>{ if(b.dataset.i===undefined) return;
     b.classList.toggle('on', Math.abs(FRAME.pap+LM[+b.dataset.i][1])<1e-9 && !FRAME.pml); });
+  hgtRow($('fphgt'), pivLM(), FRAME.pdv, v=>{ $('fpdv').value=v; });
+}
+/* which landmark the pivot's AP is sitting on, or null. Matched on AP alone, unlike the
+   preset lights above: the height belongs to the landmark's plane, and a pivot pushed off
+   the midline for a roll is still on that plane. */
+function pivLM(){
+  const i=LM.findIndex(([,off])=>Math.abs(FRAME.pap+off)<1e-9);
+  return i<0 ? null : i;
+}
+/* ---------- the landmark's height ----------
+   One picker serves the origin and the pivot, because the question is the same in both
+   places: is your DV zero the brain's dorsal surface, or the landmark's own height? It
+   writes into the DV field rather than holding a flag of its own, so the number stays
+   visible and editable and the deep link, the stored frame and the CSV carry it as the
+   plain millimetres they always did -- nothing downstream has to learn about this.
+
+   The dorsal-surface button is the atlas's own zero and exact. The other is off the skull
+   fit, so it is named for what it is and carries the same asterisk the Skull toggles do. */
+function hgtRow(el, idx, cur, put){
+  const h = idx==null ? null : LMDV[idx];
+  el.hidden=!h;
+  if(!h) return;
+  const opts=[[0,'dorsal surface',
+               "the atlas's own DV zero: the plane through the most dorsal points of "+
+               'cerebrum and cerebellum'],
+              [+h.dv.toFixed(2),h.t,h.w]];
+  el.innerHTML='<span>Height</span>'+opts.map(([v,lb,ti],i)=>{
+    const b=`<button class="b${Math.abs(cur-v)<5e-3?' on':''}" type="button" data-v="${v}"`+
+      ` title="Sets DV to ${sgn(v)} mm — ${esc(ti)}">${esc(lb)} ${sgn(v)}</button>`;
+    /* the asterisk belongs to the fitted height, not to the row, so it is tied to that
+       button the way the Skull toggles tie theirs -- one wrapping unit at any width */
+    return i ? `<span class="tgw">${b}<button type="button" class="ast" title="The height`+
+      ` is off the approximate skull fit — read the note"`+
+      ` aria-label="Note on the skull fit">*</button></span>` : b;
+  }).join('');
+  [...el.querySelectorAll('button[data-v]')].forEach(b=>
+    b.onclick=()=>{ put(+b.dataset.v); frameRead(); });
+  el.querySelector('.ast').onclick=skullNote;
 }
 /* ---------- angles from two readings ----------
    Two points and the distance between them give an angle: atan(difference / separation).

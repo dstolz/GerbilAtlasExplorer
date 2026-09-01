@@ -96,6 +96,14 @@ zero is not quite on it. Every coordinate is then measured from there, and the r
 so — `lambda −5.79` rather than a bare `AP`. Moving zero moves no point, so this is exact:
 the projections read their axes from it too, and nothing has to be hedged.
 
+**Height** fills DV in for you, which is what the **interaural line** needs: it is the
+ear-bar axis rather than a point on the brain, running about 9 mm ventral to the dorsal
+plane the atlas measures DV from, so zeroing on it with DV left at 0 is out by all of that.
+Set the height and the readout is ordinary interaural coordinates — AP behind the ear bars,
+DV up from them, with `MSO` at `interaural −0.70 · DV +0.75`. The same row under the pivot
+puts a rotation on the ear-bar axis instead of a parallel one several millimetres too high.
+The APs are the atlas's own and exact; the heights come off the skull fit and are approximate.
+
 **Your own frame** (experimental) — the same dialog takes a pitch / roll / yaw and a pivot,
 since the atlas is cut perpendicular to the brainstem axis and that is not how a head sits in
 your stereotaxic frame. You can derive the angles from two points read off the skull. The
