@@ -62,8 +62,13 @@ It is 18 MB, most of that the plates.
   so nothing is foreshortened. (Needs WebGL 2.)
 
 **Take it with you**
-- **PNG** of the current plate with overlays, **CSV** of the structures you've listed,
-  and **Copy link** for a URL back to exactly this plate, structure and view.
+- **PNG** of the current plate with overlays, **SVG** of the same sheet with the regional
+  outlines as editable vector paths, **CSV** of the structures you've listed, and
+  **Copy link** for a URL back to exactly this plate, structure and view.
+- The SVG carries no section image — it is the outlines, traced off the printed plate,
+  plus whatever overlays were on: grid, skull, landmarks, the circled structure, the
+  measurement and the query point, each in its own named group so you can restyle or
+  delete one without touching the rest. Opens in Illustrator, Inkscape or a browser.
 
 **Where zero is** — **Frame** in the header lets you move the origin: name bregma, lambda,
 the interaural line or the occipital crest, and give an AP / ML / DV offset from it if your
@@ -110,7 +115,7 @@ structures**. Please cite the atlas itself:
 
 | File | What it is |
 | --- | --- |
-| `gerbil_atlas_explorer.html` | The app. Self-contained (~18 MB: 186 plate images and the skull mesh), works offline. |
+| `gerbil_atlas_explorer.html` | The app. Self-contained (~20 MB: 186 plate images, the vectorized outlines and the skull mesh), works offline. |
 | `gerbil_atlas.json` | Full database: structures, coordinates, label positions, calibration. |
 | `gerbil_atlas_structures.csv` | One row per structure: abbreviation, name, plate and bregma range, tags. |
 | `gerbil_atlas_plates.csv` | One row per plate: bregma / lambda / interaural / occipital-crest AP. |

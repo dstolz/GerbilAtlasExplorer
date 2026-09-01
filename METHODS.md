@@ -100,6 +100,35 @@ the tissue channel differs by source and by mode — a slice is composited once 
 enough to be seen through 62 of them, while a ray is composited at 288 samples and goes
 opaque a fifth of the way in at anything near that.
 
+## Vectorized outlines
+
+The **SVG** export saves the plate as paths rather than pixels. The paths are a tracing of
+the regional outlines on the published pages, made at 3296 x 2481 px per page, and they are
+stored in that page frame rather than rewritten into the app's: `__VEC__[plate].m` is the
+matrix that maps one to the other. Keeping the geometry as the tracer produced it means a
+bad registration shows as a wrong matrix, which is six numbers to check, instead of being
+baked irreversibly into 9,076 paths.
+
+The matrix is **fitted to each plate's own printed ink, not read off the page layout**. The
+scale is shared and comes from the 1 mm ticks the pages print (142.6 px/mm across ML, 142.2
+down DV, against the plate frame's 57.0 and 56.8 — a ratio of 2.502); orientation and
+offset are searched per plate over the four right angles and a translation, scored against
+the distance from each traced point to the nearest dark pixel of that plate's own image.
+This is the part that has to be per-plate: the journal set page 20 at a quarter turn, and
+page 31 carries the same displaced figure the plate crops already correct for, which comes
+out here as 47 px in the plate frame. Assuming one layout for all 62 would have put those
+two silently in the wrong place — the failure mode the alternate plates already have.
+
+Result: **worst plate 1.8 px mean, about 0.03 mm; median 0.77 px, 52 of 62 under 1.2 px.**
+Coordinates are
+rounded to whole page pixels, 0.4 px of the plate frame, which is well inside the 0.29 px
+the tracing itself deviates from the printed line. The bundle adds about 1.9 MB to the
+file.
+
+Only the outlines were traced — not the printed abbreviations, the axes or the coordinate
+box, and not the histology. An exported sheet is the drawing plus whatever overlays were
+on, each in its own named group, with the same caption the PNG carries.
+
 ## Label positions
 
 `label_positions` in the JSON records where each abbreviation is printed on each
