@@ -160,11 +160,12 @@ plate range is malformed, and which are printed on one plate more than it gives 
 | `data/gerbil_atlas.json` | Full database: structures, coordinates, label positions, brain outlines, region extents, calibration. |
 | `data/gerbil_atlas_structures.csv` | One row per structure: abbreviation, name, plate and bregma range, tags. |
 | `data/gerbil_atlas_plates.csv` | One row per plate: bregma / lambda / interaural / occipital-crest AP. |
-| `data/index_raw.txt` | The authors' published index as extracted. Source of truth for the rest. |
+| `data/index_raw.txt` | The authors' Index of abbreviations as extracted. Source of truth for the rest. |
+| `data/index_structures_raw.txt` | The authors' Index of structures, the second of the two the atlas prints. Read against the first by `tools/check_indexes.py`, which is what says the 723 entries arrived intact. |
 | `data/gerbil_atlas_volumes.json` | The brain surface and one mesh per structure, built by stacking the 62 plates and interpolating between them. Offline only — not in the app. See [METHODS](METHODS.md#the-third-dimension) before trusting the third axis. |
 | `svg/` | The traced regional outlines, one SVG per plate, in the published page frame. What the app's SVG export is built from. |
 | `qc/` | Verification renders kept from the build — label boxes, coordinate-box detection, plate previews, region overlays. Not used by the app. |
-| `tools/` | The region-extent extraction and the volume build — the two derivations here involved enough that prose alone would not let anyone check them. Run them to rebuild `region_extents` from `svg/`, re-inline it into the app, and build the 3-D meshes. |
+| `tools/` | The derivations that read something off the page rather than fitting a number to it — the index cross-check, the label recovery, the region extraction, the volume build. Prose alone would not let anyone check these, so they are here as code, in the order they run. |
 
 ## Website development
 This website is developed and maintained by Daniel Stolzberg and the [Caras Lab](https://www.caraslab.org) in the department of Biology at the University of Maryland.
