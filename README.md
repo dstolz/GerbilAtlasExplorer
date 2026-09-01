@@ -127,7 +127,9 @@ know before relying on them.
 
 - A structure's coordinate is the **median position of where its abbreviation is
   printed** — close to, but not the same as, the structure's centre. It's a targeting
-  aid, not a substitute for reading the plate.
+  aid, not a substitute for reading the plate. Where the atlas could not fit the name inside
+  the region and set it outside with a line drawn back in, the coordinate is the end of that
+  line rather than the word: 215 labels on 47 plates, a median 0.52 mm apart.
 - Label positions were read from the plates automatically. Coverage is 94% of
   structure–plate entries; **20 of the 723 structures have no located label**, so they
   have no coordinate. The app tells you when a label is missing rather than showing
@@ -137,7 +139,7 @@ know before relying on them.
   carry a located label; the shortfall is mostly structures the plate does not name.
 - The **system tags** are a convenience layer added here, not part of the published atlas.
 - The **region outlines** are cut from the atlas's own drawn lines, not from a published
-  segmentation — the atlas has none. 3,117 structure–plate entries have one, and each says
+  segmentation — the atlas has none. 3,131 structure–plate entries have one, and each says
   how much of its own boundary the atlas prints: the median is 98%, but **6% of regions are
   under half drawn**, and those outlines are dashed and labelled as inferred because that is
   what they are. Where the drawing seals a face and names nothing, nothing is claimed.

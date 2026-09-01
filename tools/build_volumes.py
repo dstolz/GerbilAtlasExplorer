@@ -392,9 +392,16 @@ def validate(db, frame, grid, labels, brain, raw, ids, present, meshes, plates,
         for g in blocks.get(str(p), []):
             for a in g:
                 joined[a] = {ids[b] for b in g if b in ids}
+        # where a label says its structure is: the end of the line the atlas draws
+        # from it where there is one, the word itself where there is not. See
+        # `label_leaders` -- reading the word for a label set outside its region
+        # would score the atlas's own typesetting as a miss.
+        lead = db.get('label_leaders', {}).get('data', {}).get(str(p), {})
         for ab, boxes in lp.get(str(p), {}).items():
             want = joined.get(ab) or ({ids[ab]} if ab in ids else set())
-            for cx, cy, w, h in boxes:
+            tips = {i: (tx, ty) for i, tx, ty in lead.get(ab, [])}
+            for k, (cx, cy, w, h) in enumerate(boxes):
+                cx, cy = tips.get(k, (cx, cy))
                 x = int(round((float(frame.ml(cx)) - grid.x[0]) / grid.res))
                 y = int(round((float(frame.dv(cy)) - grid.y[0]) / grid.res))
                 if not (0 <= x < grid.nx and 0 <= y < grid.ny):

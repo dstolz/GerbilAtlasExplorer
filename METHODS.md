@@ -267,6 +267,56 @@ published index lists (0 exceptions); `window.__BOX__` in the app is byte-identi
 the single-glyph `I` on plate 23 — which is the class 30 of the existing boxes were already
 in, `I` and `1` being too thin to survive the app's downsampled plate.
 
+### Where the name is not the place
+
+A label is not always on the thing it names. Where a region is small, or crowded, or lies
+against the edge of the section, the atlas cannot fit the word inside it: it sets the name
+outside and draws a thin line from the word back into the region. `VMHSh` on plate 30 is
+printed clear of the brain altogether, with its line running back up into the shell of the
+ventromedial nucleus. **215 of the 6,266 located labels are set that way, on 47 of the 62
+plates.** For those the box says where the word is and not where the structure is, and the
+two are a median 0.52 mm apart, a tenth of them over a millimetre.
+
+That gap is not a rounding error anywhere downstream. A seed dropped on the word lands on
+the far side of a boundary, so the extraction below hands the region to whichever name the
+word happens to fall in and the two swap territories. The stereotaxic centre the app quotes
+is the centre of a piece of white paper beside the section. The track planner aims at it.
+
+`tools/label_leaders.py` reads the line off the page and records where it ends, as
+`label_leaders` in the JSON and `window.__LEAD__` in the app, keyed to the box it belongs
+to. It reads no letters either. A leader is the only thing on the page that is all three of:
+ink the tracing did not draw, straight over its whole length, and running out of a located
+label. So the ink is thresholded as the label passes threshold it, but **not** denoised —
+`denoise` wants two orthogonal neighbours and a two-pixel diagonal rule has none, so it
+deletes exactly what this is looking for. Subtract the tracing in `svg/`; subtract the
+printed labels, meaning the located boxes and the gap between two words the atlas set as one
+label, so that the slash of `Cg1/ RSD` or of `LhbL/M` goes with them. What is left is
+leaders and the printed frame. Keep the connected pieces that are long, thin and straight —
+a leader crosses the anatomy it points into, and the tracing is cut out with a 2 px skirt,
+so one line arrives as two or three pieces. Run each piece backwards along its own
+direction, across drawn ink and across the white space the atlas leaves between a word and
+its line, and see whether it reaches a box. The far end, marched the same way, is the tip.
+
+**Two labels can reach the same line and only one of them printed it**, and that is the
+whole difficulty. On plate 30 the line `VMHC` draws into the ventromedial core stops four
+pixels under the last letter of `VMHDM`: read from `VMHC` it leaves the side of a word, read
+from `VMHDM` it leaves the bottom edge three pixels shy of the corner, and there is nothing
+else in the picture to separate the two readings. A leader is drawn out of the side of a
+word far more often than out from under it, so where two labels can claim one line the
+sideways reading wins. That settles most of them and not all, so — as with the words the
+passes missed — the shape tests propose and the page disposes: **all 228 lines were put
+beside the printed plate and read**, and the ten that turned out to be somebody else's line
+are listed in the tool with what they were. Nine of the ten are one failure: a line drawn
+past a label on its way somewhere else, close enough and straight enough to be that label's.
+Two more were dropped for pointing outside the section, which a leader never does. 215
+survive, and every one of them was seen on the plate.
+
+The box stays what it was. It is where the word is printed, so it is still what the app hit
+tests when you hover, and `window.__BOX__` is unchanged. What moves is the *position*: the
+seed the extraction drops, the coordinate the app quotes, the point the planner aims at, and
+the circle it draws when there is no extent to outline — a circle round the word would be a
+circle round blank paper beside the section.
+
 ## The brain outline
 
 `brain_outline` in the JSON gives the outline of the section on each plate: what a track
@@ -318,8 +368,8 @@ out, and the 90th percentile 0.20 mm.
 *names*: the area of each structure on each plate, as a list of closed polygons of `[x, y]`
 fractions of the frame-cropped image — the same frame and the same convention
 `brain_outline` uses, so the app's existing point-in-polygon test reads them unchanged.
-**3,117 structure-plate entries carry an area**, 95% of the 3,298 the label pass located
-and 89% of the 3,510 the published index lists, as 5,702 polygons over 77,689 points. Where
+**3,131 structure-plate entries carry an area**, 95% of the 3,298 the label pass located
+and 89% of the 3,510 the published index lists, as 5,730 polygons over 77,910 points. Where
 the atlas prints two names as one label the two share an entry, so a name having no entry of
 its own does not mean it has no area — see step 6.
 
@@ -341,7 +391,10 @@ The steps, in order, run by `tools/build_region_extents.py`:
 3. **Close against `brain_outline`**, inverse-transformed into the page frame, and fill it
    for the section interior.
 4. **Cut the empty space into faces.** A face sealed by traced ink and holding exactly one
-   abbreviation is that structure's area *as drawn*, and that is 3,404 of the faces.
+   abbreviation is that structure's area *as drawn*, and that is 3,387 of the faces. A label
+   the atlas set outside its region is seeded at the end of the line it draws rather than on
+   the word — see [Where the name is not the place](#where-the-name-is-not-the-place). 215
+   labels are, and seeding those on the word puts them in a neighbour's face.
 5. **Split the rest.** Where a face holds several abbreviations, ink is missing somewhere on
    the boundary between them. A watershed seeded on the printed labels and ridged on the
    distance transform of the ink splits the face along the strongest evidence there is. The
@@ -384,11 +437,11 @@ Three checks, none of which the extraction was tuned to pass:
 | Check | Extracted |
 | --- | --- |
 | Every boundary between two regions stored as one polyline, twice | **100%** of directed boundary edges have their reverse in exactly one neighbour, so the regions tile the section — a point is inside exactly one, or inside none |
-| Printed labels inside the region they name | **97%** |
+| Printed labels inside the region they name | **97%**, read at the end of the label's line where the atlas draws one |
 | Regions plus unassigned faces against the section area | within **5%** on the worst plate |
 
 **What the numbers do not say is which boundaries are real, so every polygon carries that
-too.** `s` is the traced share of that polygon's border: median **0.98**, 76% at or above
+too.** `s` is the traced share of that polygon's border: median **0.98**, 77% at or above
 0.90, 87% at or above 0.75, **6% below 0.50**. A polygon at 0.98 is the boundary the atlas
 prints. A polygon at 0.16 is a split the extraction had to invent because the drawing does
 not separate those structures, and it should be read as an estimate — the app dashes those
@@ -397,18 +450,21 @@ would expect them: `PM` on plates 51–54, `7Cb` on 51, `RRF` on 39, `imvc` on 2
 cerebellar and reticular subdivisions the pages bound with faint or dashed print, if at all.
 
 End to end, in the app: pointing at each of the 6,266 printed labels in turn resolves to a
-structure every time, and to the right one 6,263 times. **6,048 of them resolve to an area**
-and the remaining 218 to the printed name itself, which is the honest answer where the atlas
+structure every time, and to the right one 6,263 times. **6,074 of them resolve to an area**
+and the remaining 192 to the printed name itself, which is the honest answer where the atlas
 prints a name outside the section it belongs to — `rf` on the rhinal fissure is 50 of the
-218 — or where no extent could be cut. The three misses are three places where one located
+192 — or where no extent could be cut. The three misses are three places where one located
 box sits inside another (`StA` around `STMA` on plate 23, `PVP` around `VL` on 29, `psf`
 around `sf` on 53) and the smaller of the two wins the point, which is the right tie-break
 everywhere else.
 
-262 of the 6,263 printed labels sit outside the face they name, on a leader line or on a
-boundary, and were pulled to the nearest face; most are on the olfactory bulb plates 5–9,
-where the section is small and the drawing sets the abbreviations beside it. Three could not
-be resolved at all and have no extent.
+215 of the 6,263 printed labels are set outside their region with a line drawn back into
+it, and are seeded at the end of that line. A further 199 sit outside the face they name
+with no line this pass could follow — printed on a boundary, or beside the section on a line
+the tracing runs along — and are pulled to the largest face within a millimetre; most of
+those are on the olfactory bulb plates 5–9, where the section is small and the drawing sets
+the abbreviations beside it. Following the lines took that fallback down from 262. Three
+labels could not be resolved at all and have no extent.
 
 `qc/chk_regions_NN.png` overlays the result on the plate for five levels, tinted green where
 the boundary is drawn and red where it is inferred, which is the check a reader can make by
@@ -544,10 +600,10 @@ section.
 
 In practice it does not separate them cleanly enough to be the default. It removes 5.8 mm³,
 0.55% of the brain, in **760 pieces spread over 58 of the 62 plates** — not the handful of
-filaments the argument predicts — and it costs 88 printed labels their place inside the
-surface, taking containment from 97.9% to 96.5%. Some of those 88 sat on a spur and belong
-outside; which ones cannot be told from here. Left off, the surface contains **97.9%** of the
-printed labels against the **97.8%** the 2-D outline reports. So the geometry is left honest,
+filaments the argument predicts — and it costs 45 printed labels their place inside the
+surface, taking containment from 98.8% to 98.1%. Some of those 45 sat on a spur and belong
+outside; which ones cannot be told from here. Left off, the surface contains **98.8%** of
+the printed labels against the **97.8%** the 2-D outline reports. So the geometry is left honest,
 as the 2-D extraction left it, and the opening is a flag.
 
 ### Checks
@@ -558,16 +614,16 @@ extraction's own guarantees survived into three dimensions.
 
 | Check | 2-D | Extracted in 3-D |
 | --- | --- | --- |
-| Cross-section area on a plate a structure was built from, against `region_extents` | — | **median 1.4% off**, 90th percentile 7.1% — the lattice's own quantisation |
-| Regions partition the volume | a point is inside one region or none | **holds**: every voxel inside the surface carries exactly one label, or is an unnamed sealed face — 4.4% of the brain |
+| Cross-section area on a plate a structure was built from, against `region_extents` | — | **median 1.4% off**, 90th percentile 6.7% — the lattice's own quantisation |
+| Regions partition the volume | a point is inside one region or none | **holds**: every voxel inside the surface carries exactly one label, or is an unnamed sealed face — 4.2% of the brain |
 | Highest point of the surface | DV −0.06 | **DV −0.10** (one voxel) |
 | Lowest point of the surface | DV −9.09 | **DV −9.05** |
-| Printed labels inside the surface | 97.8% | **97.9%** |
-| Printed labels inside the region they name | 97% | **92.7%** — the 2-D figure is after 256 labels were pulled to the nearest face; this one is not |
+| Printed labels inside the surface | 97.8% | **98.8%** |
+| Printed labels inside the region they name | 97% | **93.1%** — the 2-D figure is after 199 labels were pulled to the nearest face; this one is not |
 | Brain volume | not published | **1,046 mm³** |
 
 Two costs are worth stating because they are larger than the interpolation is likely to be.
-Reading the distance field coarsely costs a mesh a median **3.9%** of its volume; an
+Reading the distance field coarsely costs a mesh a median **4.1%** of its volume; an
 isosurface sitting half a voxel inside the voxels it was cut from accounts for another
 **4.9%**, which is not an error but the difference between a surface and a pile of cubes.
 

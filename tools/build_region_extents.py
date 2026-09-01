@@ -26,7 +26,9 @@ The pipeline, in order:
   5. Where a face holds several abbreviations, ink is missing somewhere on the
      boundary between them. Rather than merge them or drop them, a watershed
      seeded on the printed labels and ridged on the distance transform of the
-     ink splits the face along the strongest evidence there is. Faces holding
+     ink splits the face along the strongest evidence there is. A label the
+     atlas set outside its region with a line drawn back in is seeded at the
+     end of that line -- see `label_leaders` and tools/label_leaders.py. Faces holding
      no label at all are left unassigned: the atlas does not name them here,
      and growing a neighbour over them would invent a claim. Abbreviations
      the atlas typeset into one label are seeded as one, not against
@@ -76,6 +78,7 @@ MIN_FACE_PX = 400   # page px; below this a face is tracer noise, not a region
 MIN_AREA_PX = 600   # page px; a territory smaller than this is not published
 SEED_PAD = 1.0      # label box is used as the marker at this scale
 SNAP_PX = 60        # a label printed beside its section is pulled this far in
+TIP_SEED_PX = 4     # plate px: the mark a label on a leader line seeds with
 SUPPORT_PX = 3      # a border pixel counts as drawn within this of traced ink
 DEC = 5             # fraction decimals, matching brain_outline
 
@@ -222,12 +225,22 @@ def build_plate(plate, DB, VECM, want_qc=False):
     # of the other. See label_blocks and tools/label_blocks.py.
     boxes = DB['label_positions']['data'].get(str(plate), {})
     one_name = name_map(DB, plate)
+    lead = DB.get('label_leaders', {}).get('data', {}).get(str(plate), {})
     seeds = np.zeros((H, W), np.int32)
-    seed_ab, seed_face, snapped, dropped = [], [], 0, 0
+    seed_ab, seed_face, snapped, dropped, led = [], [], 0, 0, 0
     for ab0, bs in boxes.items():
         ab = one_name.get(ab0, ab0)     # a joined label seeds under its first name
-        for cx, cy, bw, bh in bs:
-            px, py = xf(im, cx * NW, cy * NH)
+        tips = {i: (tx, ty) for i, tx, ty in lead.get(ab0, [])}
+        for j, (cx, cy, bw, bh) in enumerate(bs):
+            # A label the atlas could not fit inside its region is printed
+            # outside it with a line drawn back in, and it is the end of that
+            # line that says where the structure is -- see label_leaders and
+            # tools/label_leaders.py. Seeding those on the word instead is not a
+            # near miss: the word is on the far side of a boundary, so the seed
+            # lands in a neighbour's face and the two swap territories.
+            tip = tips.get(j)
+            at = tip or (cx, cy)
+            px, py = xf(im, at[0] * NW, at[1] * NH)
             xi, yi = int(round(px)), int(round(py))
             fid = 0
             if 0 <= xi < W and 0 <= yi < H:
@@ -235,7 +248,8 @@ def build_plate(plate, DB, VECM, want_qc=False):
                 if fid == 0 or fsize[fid] < MIN_FACE_PX:
                     fid = 0
             if not fid:
-                # printed on a wall, or beside the section with a leader line
+                # printed on a wall, or beside the section with a line this pass
+                # could not follow
                 k = SNAP_PX
                 win = faces[max(0, yi - k):yi + k, max(0, xi - k):xi + k]
                 v = win[win > 0]
@@ -249,10 +263,15 @@ def build_plate(plate, DB, VECM, want_qc=False):
             seed_ab.append(ab)
             seed_face.append(fid)
             sid = len(seed_ab)
-            # the glyph box, clipped to the face it was resolved into
-            hw, hh = bw * NW * SEED_PAD / 2, bh * NH * SEED_PAD / 2
-            (ax, ay) = xf(im, (cx * NW - hw), (cy * NH - hh))
-            (bx, by) = xf(im, (cx * NW + hw), (cy * NH + hh))
+            led += bool(tip)
+            # the glyph box -- or, for a label on a line, a mark at the end of
+            # it, because the box is somewhere else entirely
+            if tip:
+                hw = hh = TIP_SEED_PX
+            else:
+                hw, hh = bw * NW * SEED_PAD / 2, bh * NH * SEED_PAD / 2
+            (ax, ay) = xf(im, (at[0] * NW - hw), (at[1] * NH - hh))
+            (bx, by) = xf(im, (at[0] * NW + hw), (at[1] * NH + hh))
             x0, x1 = sorted((int(ax), int(bx)))
             y0, y1 = sorted((int(ay), int(by)))
             sl = (slice(max(0, y0), y1 + 1), slice(max(0, x0), x1 + 1))
@@ -272,6 +291,12 @@ def build_plate(plate, DB, VECM, want_qc=False):
     # would put a one-pixel no-man's-land along every boundary in the atlas.
     named = np.zeros(nfaces + 1, bool)
     named[list(set(seed_face))] = True
+    # a face the drawing seals and one abbreviation names is that structure's
+    # area as drawn; the rest is what the watershed below has to split
+    byface = {}
+    for f, nm in zip(seed_face, seed_ab):
+        byface.setdefault(f, set()).add(nm)
+    sole = sum(1 for v in byface.values() if len(v) == 1)
     unnamed = (faces > 0) & ~named[faces]
     mask = interior & ~unnamed
 
@@ -363,6 +388,7 @@ def build_plate(plate, DB, VECM, want_qc=False):
     stats = dict(plate=plate, paths=len(polys), bridges=bridges,
                  faces=int((fsize[1:] >= MIN_FACE_PX).sum()),
                  seeds=len(seed_ab), snapped=snapped, dropped=dropped,
+                 sole=sole, led=led,
                  regions=len(out),
                  polys=sum(len(v['g']) for v in out.values()),
                  pts=sum(len(g) for v in out.values() for g in v['g']),
@@ -457,6 +483,8 @@ def main():
         polygons=sum(r['polys'] for r in rows),
         points=sum(r['pts'] for r in rows),
         labels_seeded=sum(r['seeds'] for r in rows),
+        faces_named_by_one_abbreviation=sum(r['sole'] for r in rows),
+        labels_on_a_leader=sum(r['led'] for r in rows),
         labels_relocated=sum(r['snapped'] for r in rows),
         labels_dropped=sum(r['dropped'] for r in rows),
         traced_fraction_median=round(float(np.median(sup)), 3),
@@ -551,11 +579,16 @@ def check_tiling(data, unass, DB):
         o = sum(abs(poly_area(g)) for g in DB['brain_outline']['data'][p])
         if o:
             worst_gap = max(worst_gap, abs(abs(s) - o) / o)
+        lead = DB.get('label_leaders', {}).get('data', {}).get(p, {})
         for ab, boxes in DB['label_positions']['data'].get(p, {}).items():
             v = regs.get(name_map(DB, int(p)).get(ab, ab))
             if not v:
                 continue
-            for cx, cy, _w, _h in boxes:
+            # where the label says the structure is: the end of its line where
+            # it draws one, the word itself where it does not
+            tips = {i: (tx, ty) for i, tx, ty in lead.get(ab, [])}
+            for k, (cx, cy, _w, _h) in enumerate(boxes):
+                cx, cy = tips.get(k, (cx, cy))
                 tot += 1
                 c = False
                 for g in v['g']:
@@ -647,21 +680,26 @@ def validation_text(v):
         "%(n)d structure-plate entries carry an area -- 95%% of the 3,270 the "
         "label pass located, 89%% of the 3,506 the published index lists -- as "
         "%(poly)d polygons over %(pts)d points. Of the %(seed)d printed labels "
-        "seeded, %(snap)d were printed outside the face they name, on a leader "
-        "line or on a boundary, and were pulled to it; %(drop)d could not be "
-        "resolved at all. Three checks, none of which the extraction was tuned "
+        "seeded, %(led)d are printed outside their region with a line drawn "
+        "back into it and were seeded at the end of that line rather than on "
+        "the word -- see `label_leaders`. A further %(snap)d sat on a boundary, "
+        "or on a line this pass could not follow, and were pulled to the "
+        "largest face within a millimetre; %(drop)d could not be resolved at "
+        "all. Three checks, none of which the extraction was tuned "
         "to pass. (1) Every boundary between two regions is stored as one "
         "polyline, twice: %(share)s of directed boundary edges have their "
         "reverse in exactly one neighbour, so the regions tile the section "
         "without overlapping it or leaving a sliver. (2) %(inside)s of printed "
-        "labels fall inside the region they name. (3) Regions plus unassigned "
+        "labels fall inside the region they name, read at the end of the line "
+        "where the atlas draws one. (3) Regions plus unassigned "
         "faces account for the section area to within %(resid)s on the worst "
         "plate. Per polygon, the share of the border lying on ink the tracing "
         "actually drew: median %(med).2f, %(ge90)s at or above 0.90, %(ge75)s "
         "at or above 0.75, %(lt50)s below 0.50."
     ) % dict(n=v['structure_plate_entries'], poly=v['polygons'],
              pts=v['points'], seed=v['labels_seeded'],
-             snap=v['labels_relocated'], drop=v['labels_dropped'],
+             led=v['labels_on_a_leader'], snap=v['labels_relocated'],
+             drop=v['labels_dropped'],
              share=pc('boundary_edges_shared_exactly'),
              inside=pc('label_inside_its_own_region'),
              resid=pc('section_area_residual_worst_plate'),
