@@ -450,6 +450,144 @@ plate 49 the slash of `PM/ Cop` is drawn along the very boundary it names, and a
 threshold that keeps it, two of those five come back. Every one of the 31 occurrences was
 checked against the printed page by eye.
 
+## The third dimension
+
+> **Experimental.** These volumes interpolate across the section gap, which every other
+> derivation here refuses to do. Read the next two paragraphs before using them for
+> anything you would have to defend.
+
+`brain_outline` and `region_extents` are 62 coronal drawings and nothing between them. The
+app's own `plateAt()` says so in as many words — *nothing interpolates between plates: the
+outlines are 350 µm apart and an interpolated surface would be arithmetic, not anatomy* —
+and quantises an AP to the nearest section rather than blending two.
+`data/gerbil_atlas_volumes.json` sets that aside on purpose. It stacks the 62 plates and
+fills the six planes between each pair at 50 µm, giving **a brain surface and one mesh for
+each of the 697 structures that carry an area**.
+
+**Six planes in seven are arithmetic.** The atlas samples AP twenty times more coarsely
+than it samples a section, so what these meshes add along the brain is a linear guess and
+not a measurement. Where a structure genuinely changes shape inside 350 µm — and thin
+laminae do — the mesh cannot show it. That is the price, it is paid deliberately, and it is
+why this is not a segmentation either.
+
+### How it is built
+
+`tools/build_volumes.py`, from the two datasets above and nothing else.
+
+1. **Rasterize each plate** onto a 0.05 mm lattice, reading the stored fractions into
+   millimetres with the same `plate_frame` formulae the app uses. The fill is **even-odd
+   across all of a structure's rings together**, which is exactly `regIn()` in the app: the
+   two hemispheres union, a hole subtracts, and no winding order has to be kept right.
+2. **Lay AP out so every plate lands exactly on a sample** — plate *k* at index 4 + 7*k*. A
+   plate's own drawing is then never resampled, so the whole of the interpolation is in the
+   six planes between two plates and none of it is anywhere else.
+3. **Interpolate the signed distance field, not the contour.** Each mask's signed distance
+   is blended between neighbouring plates and thresholded at zero. This is the choice that
+   carries the result: the section outline splits and rejoins along the series — the
+   hemispheres part on plates 10–14, cortex from midbrain on 37–42, cerebellum from
+   brainstem on 56–59 — and a scheme that pairs contours between plates has nothing to pair
+   across a split. A distance field needs no correspondence at all.
+4. **Let every structure compete in the same plane.** Interpolating each structure on its
+   own would let neighbours overlap and leave voids in the gap, throwing away the one
+   property `region_extents` worked hardest for. So every structure on a plate, together
+   with the unassigned faces the atlas seals and declines to name, is blended into the same
+   intermediate plane and each voxel goes to whichever field is highest. **The regions
+   partition the volume exactly as they partition a section**, and a ventricle stays a
+   ventricle rather than being absorbed by whatever borders it.
+5. **Close a run's ends rather than extruding them.** Where a structure is drawn on one of
+   two neighbouring plates and not the other, its field is tapered out from the plate that
+   has it until it is negative everywhere, half a section step beyond. It is *not* blended
+   with the absent plate: that side's field is a large negative constant and averaging with
+   it would swamp the taper and end the structure flat at the plate.
+6. **Bridge a hole in a plate run only where the published index says there should not be
+   one.** 44 structure-plate holes are filled that way, as extraction misses; the rest are
+   left as the real absences they are.
+7. **Surface it** with marching cubes on the distance field, read every 1–6 voxels
+   depending on the structure's size — about ten samples across whatever it is. Coarsening
+   the *field* rather than decimating the *mesh* is not a detail. A distance field is smooth
+   where the mask it came from is not, so the triangles dropped are the ones describing the
+   lattice rather than the structure; vertex clustering tuned to the same triangle count
+   costs about the same median but two to four times as much in the tail (7.4% median and
+   39.8% at the 90th percentile, against 6.1% and 16.7%).
+
+### Grades
+
+| Grade | What it is | Count |
+| --- | --- | --- |
+| `surface` | At least three consecutive plates. The mesh follows the drawn boundaries, interpolated between them. | 433 |
+| `slab` | One or two plates. The series does not sample the structure along AP at all, so the mesh is a **convex hull per connected component** — a claim about where the structure is, not about what shape it is — closed half a section step beyond the plates that name it. | 264 |
+
+A `slab` is what "circumscribed" means here and is marked `bounding: true`. Unlike the
+`surface` meshes, two slabs may overlap: a bounding volume is not a partition. The hull is
+taken per connected component and never over all of them at once, because one hull around a
+bilateral pair would span the midline and claim the brain in between — on a test pair that
+is a tenfold overclaim.
+
+Each entry carries its plate runs, its volume and its connected components. **Nothing is cut
+at ML 0 on principle.** A bilateral structure comes out as two components and a midline one
+as a single component spanning the midline, which is the honest way round: the drawings are
+not perfectly symmetric — plates 43 and 44 sit about a millimetre off centre — so cutting
+every structure at ML 0 would invent a midline the atlas does not draw. The centres bear
+this out against the published widths: `Au1` at ML ±6.5 against the atlas's ±6.48, `LSO` at
+±1.65 against ±1.67, `3V` and `cbw` single and on the midline.
+
+### The spurs, and why the opening is a flag rather than a step
+
+The brain-outline extraction above applies **no morphological opening**, because the flood
+fill runs a few pixels out along the leader lines the drawing points at its abbreviations
+with, and an opening large enough to take those off also eats the thin cortical sheet on
+plates 36 and 38, which is real anatomy. The two are only inseparable *within* a section: a
+leader-line spur is drawn on one plate, and the cortical sheet runs through many. So
+`--despur` opens the volume along **AP alone**, with an element longer than one section step,
+which in principle removes anything confined to a single plate and erodes nothing inside a
+section.
+
+In practice it does not separate them cleanly enough to be the default. It removes 5.8 mm³,
+0.55% of the brain, in **760 pieces spread over 58 of the 62 plates** — not the handful of
+filaments the argument predicts — and it costs 88 printed labels their place inside the
+surface, taking containment from 97.9% to 96.5%. Some of those 88 sat on a spur and belong
+outside; which ones cannot be told from here. Left off, the surface contains **97.9%** of the
+printed labels against the **97.8%** the 2-D outline reports. So the geometry is left honest,
+as the 2-D extraction left it, and the opening is a flag.
+
+### Checks
+
+The interpolation cannot be checked against anything, because there is nothing to check it
+against. What can be checked is that it did not move the plates, and that the 2-D
+extraction's own guarantees survived into three dimensions.
+
+| Check | 2-D | Extracted in 3-D |
+| --- | --- | --- |
+| Cross-section area on a plate a structure was built from, against `region_extents` | — | **median 1.4% off**, 90th percentile 7.1% — the lattice's own quantisation |
+| Regions partition the volume | a point is inside one region or none | **holds**: every voxel inside the surface carries exactly one label, or is an unnamed sealed face — 4.4% of the brain |
+| Highest point of the surface | DV −0.06 | **DV −0.10** (one voxel) |
+| Lowest point of the surface | DV −9.09 | **DV −9.05** |
+| Printed labels inside the surface | 97.8% | **97.9%** |
+| Printed labels inside the region they name | 97% | **92.7%** — the 2-D figure is after 256 labels were pulled to the nearest face; this one is not |
+| Brain volume | not published | **1,046 mm³** |
+
+Two costs are worth stating because they are larger than the interpolation is likely to be.
+Reading the distance field coarsely costs a mesh a median **3.9%** of its volume; an
+isosurface sitting half a voxel inside the voxels it was cut from accounts for another
+**4.9%**, which is not an error but the difference between a surface and a pile of cubes.
+
+And **74% of structures arrive as the one or two pieces anatomy expects**. Where a thin sheet
+pinches off into more — `CA1`, the ventricle slits, `DCl` — a median 16% of it sits outside
+the largest two. This is reported rather than closed up: closing it would mean growing a
+structure into a neighbour, and the partition is worth more than a tidy component count. The
+per-component volumes are in the file, so a reader can drop the scraps.
+
+`qc/chk_vol_NN.png` is the picture a reader can check by eye: a plate, the plane interpolated
+halfway to the next, and that next plate, side by side and coloured the same way — the
+interpolation is either plausible between them or it is not.
+`qc/chk_vol_surface.png` and `chk_vol_regions.png` are depth-shaded sagittal, top-down and
+coronal views of the whole thing.
+
+**Nothing here is inlined into the app.** The meshes are 21 MB and the app is a single file
+you open; how they should reach it — as a side-car fetched on demand, or as a label volume
+for the ray-marcher it already has — is a decision the geometry should be looked at first.
+
+
 ## Your own coordinate frame
 
 > **Experimental.** Frame adjustment is new and not yet fully tested. Check adjusted
@@ -706,7 +844,9 @@ across it: the stack really is discrete, and the streaking in the volume view is
 interpolation between slices, not anatomy. And a label point marks where an abbreviation
 is *printed*; most structures carry only a handful — six is the median — so a single
 structure reads as a sparse arc rather than a shape. **None of this is a segmentation**,
-and no surface is fitted to those points.
+and no surface is fitted to those points. The surfaces that do exist are the separate,
+offline ones in [The third dimension](#the-third-dimension) above; the app does not carry
+them.
 
 ### The skull
 
