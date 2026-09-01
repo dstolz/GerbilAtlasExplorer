@@ -115,10 +115,12 @@ know before relying on them.
   necessarily printed** on every plate of that range.
 - The **system tags** are a convenience layer added here, not part of the published atlas.
 - The **region outlines** are cut from the atlas's own drawn lines, not from a published
-  segmentation — the atlas has none. 3,120 structure–plate entries have one, and each says
+  segmentation — the atlas has none. 3,113 structure–plate entries have one, and each says
   how much of its own boundary the atlas prints: the median is 98%, but **6% of regions are
   under half drawn**, and those outlines are dashed and labelled as inferred because that is
   what they are. Where the drawing seals a face and names nothing, nothing is claimed.
+- Where the atlas prints a **second name in parentheses** — `Au1 / (A1)` — the two names
+  share one outline, filed under the name printed above, because they name one field.
 - Nothing here is a segmentation, and the 3D views interpolate between sections that
   are 350 µm apart — the streaking is arithmetic, not anatomy.
 - The **myelin** plate of a level is an *adjacent* section, not the same slice as the Nissl:

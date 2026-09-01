@@ -213,8 +213,8 @@ out, and the 90th percentile 0.20 mm.
 *names*: the area of each structure on each plate, as a list of closed polygons of `[x, y]`
 fractions of the frame-cropped image — the same frame and the same convention
 `brain_outline` uses, so the app's existing point-in-polygon test reads them unchanged.
-**3,120 structure-plate entries carry an area**, 95% of the 3,270 the label pass located
-and 89% of the 3,506 the published index lists, as 5,704 polygons over 77,545 points.
+**3,113 structure-plate entries carry an area**, 95% of the 3,270 the label pass located
+and 89% of the 3,506 the published index lists, as 5,692 polygons over 77,446 points.
 
 The atlas publishes no segmentation. What it does publish is a line drawing in which every
 region is a cell of a planar subdivision with one abbreviation printed inside it, and both
@@ -245,6 +245,18 @@ The steps, in order, run by `tools/build_region_extents.py`:
    ventricles; calling a ventricle `CPu` would propagate into every readout downstream.
    These are written out separately as `region_extents.unassigned`, and they are a mean 7%
    of section area.
+   **And do not split a face on a second name for the same thing.** The atlas sets some
+   labels over two lines with the second in parentheses — `Au1 / (A1)` on plates 30–33,
+   `Au1 / (AAF)` on 28, `Au1 / (A1/AAF)` on 29 — and the label pass reads the parenthesised
+   line as the separate published abbreviation it is. Seeded as a rival it is worse than
+   useless: there is no ink between the two names to split on, so the watershed invents a
+   ridge and hands each of them a slab of the other's cortex, which is how `A1` came to be
+   a rectangle across primary auditory cortex rather than the field itself. `A1` and `AAF`
+   are seeded under `Au1` instead, and `region_extents.synonyms` records that, so selecting
+   either spelling in the app outlines the one field. These two are the only such pair in
+   the atlas: every printed `A1` and `AAF` sits directly under an `Au1`, and a bracket test
+   over all 6,217 located labels — thin, line-height, bowed the way a bracket bows and not
+   the way an `l` or a `1` is — flags no others.
 7. **Score each polygon** by the share of its border lying within 3 px of ink the tracing
    *actually drew*, as opposed to a ridge the watershed invented, walked at one pixel so it
    is length-weighted.
@@ -270,7 +282,7 @@ Three checks, none of which the extraction was tuned to pass:
 | Regions plus unassigned faces against the section area | within **5%** on the worst plate |
 
 **What the numbers do not say is which boundaries are real, so every polygon carries that
-too.** `s` is the traced share of that polygon's border: median **0.98**, 75% at or above
+too.** `s` is the traced share of that polygon's border: median **0.98**, 76% at or above
 0.90, 87% at or above 0.75, **6% below 0.50**. A polygon at 0.98 is the boundary the atlas
 prints. A polygon at 0.16 is a split the extraction had to invent because the drawing does
 not separate those structures, and it should be read as an estimate — the app dashes those

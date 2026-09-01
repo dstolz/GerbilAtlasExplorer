@@ -28,7 +28,8 @@ The pipeline, in order:
      seeded on the printed labels and ridged on the distance transform of the
      ink splits the face along the strongest evidence there is. Faces holding
      no label at all are left unassigned: the atlas does not name them here,
-     and growing a neighbour over them would invent a claim.
+     and growing a neighbour over them would invent a claim. The exception is
+     a second name for the same thing -- see PRINTED_AS.
   6. Score every polygon by the fraction of its border that lies on ink that
      was actually traced, as opposed to a ridge the watershed invented, and
      write that score out beside the geometry.
@@ -76,6 +77,19 @@ SEED_PAD = 1.0      # label box is used as the marker at this scale
 SNAP_PX = 60        # a label printed beside its section is pulled this far in
 SUPPORT_PX = 3      # a border pixel counts as drawn within this of traced ink
 DEC = 5             # fraction decimals, matching brain_outline
+
+# Abbreviations the atlas prints in parentheses under another one, as a second
+# published name for the same field: "Au1 / (A1)" on plates 30-33, "Au1 /
+# (AAF)" on 28, "Au1 / (A1/AAF)" on 29. They are one label for one region, and
+# seeding them separately is worse than useless -- the watershed has no ink to
+# split on, so it invents a ridge and hands each name a slab of the other's
+# cortex. Seeded under the name above them instead, and recorded in the block
+# so the app can answer for either spelling with the one outline.
+#
+# These are the only two: every printed A1 and AAF in the atlas sits directly
+# under an Au1, and a bracket detector run over all 6,217 located labels (thin,
+# line-height, bowed the way a bracket bows) flags nothing else.
+PRINTED_AS = {'A1': 'Au1', 'AAF': 'Au1'}
 
 
 # ---------------------------------------------------------------- svg reading
@@ -216,7 +230,8 @@ def build_plate(plate, DB, VECM, want_qc=False):
     boxes = DB['label_positions']['data'].get(str(plate), {})
     seeds = np.zeros((H, W), np.int32)
     seed_ab, seed_face, snapped, dropped = [], [], 0, 0
-    for ab, bs in boxes.items():
+    for ab0, bs in boxes.items():
+        ab = PRINTED_AS.get(ab0, ab0)   # a bracketed name seeds the one above it
         for cx, cy, bw, bh in bs:
             px, py = xf(im, cx * NW, cy * NH)
             xi, yi = int(round(px)), int(round(py))
@@ -456,6 +471,7 @@ def main():
         derivation=DERIV,
         validation=validation_text(summary),
         grades={'traced': 0.9, 'estimated': 0.5},
+        synonyms=PRINTED_AS,
         summary=summary,
         data=data,
         unassigned=unass))
@@ -476,6 +492,7 @@ def write_block(block):
     for k in ('note', 'derivation', 'validation'):
         L.append('  %s: %s,' % (j(k), j(block[k])))
     L.append('  "grades": %s,' % j(block['grades']))
+    L.append('  "synonyms": %s,' % j(block['synonyms']))
     L.append('  "summary": %s,' % j(block['summary']))
     for key in ('data', 'unassigned'):
         L.append('  %s: {' % j(key))
@@ -534,7 +551,7 @@ def check_tiling(data, unass, DB):
         if o:
             worst_gap = max(worst_gap, abs(abs(s) - o) / o)
         for ab, boxes in DB['label_positions']['data'].get(p, {}).items():
-            v = regs.get(ab)
+            v = regs.get(PRINTED_AS.get(ab, ab))
             if not v:
                 continue
             for cx, cy, _w, _h in boxes:
@@ -655,10 +672,14 @@ NOTE = ("Area of each structure on each plate, as a list of closed polygons of "
         "[x, y] fractions of the frame-cropped plate image, the same frame and "
         "convention brain_outline uses. `s` is the share of that polygon's "
         "border that lies on ink the tracing actually drew, one entry per "
-        "polygon; `a` is its area as a fraction of the section. A polygon with "
-        "a high `s` is the boundary the atlas printed. A low one is a split the "
-        "extraction had to infer because the drawing does not separate those "
-        "structures, and should be read as an estimate.")
+        "polygon; `a` is the entry's area in mm2 on that plate; `n` is how many "
+        "printed abbreviations seeded it. A polygon with a high `s` is the "
+        "boundary the atlas printed. A low one is a split the extraction had to "
+        "infer because the drawing does not separate those structures, and "
+        "should be read as an estimate. `synonyms` maps an abbreviation the "
+        "atlas prints only in parentheses under another one to the entry that "
+        "holds its area: they name one field between them, so there is one "
+        "outline and it is filed under the name printed above.")
 
 DERIV = ("Built by tools/build_region_extents.py from the traced outlines in "
          "svg/ and the located abbreviations in label_positions. The traced "
@@ -667,7 +688,9 @@ DERIV = ("Built by tools/build_region_extents.py from the traced outlines in "
          "holding one abbreviation is that structure's area as drawn. Faces "
          "holding several abbreviations are split by a watershed seeded on the "
          "printed labels and ridged on the distance transform of the ink. "
-         "Faces holding no label are left unassigned rather than absorbed. "
+         "Faces holding no label are left unassigned rather than absorbed, and "
+         "an abbreviation the atlas prints in parentheses under another is "
+         "seeded under that one rather than against it. "
          "Polygons are simplified by Douglas-Peucker at 2 px, as brain_outline "
          "is. See METHODS.md.")
 

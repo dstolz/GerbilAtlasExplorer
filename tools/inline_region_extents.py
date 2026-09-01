@@ -26,7 +26,8 @@ AFTER = '<script>window.__VEC__='
 def payload():
     R = json.load(open(JSON))['region_extents']
     return TAG + json.dumps(
-        {'r': R['data'], 'u': R['unassigned'], 'k': R['grades']},
+        {'r': R['data'], 'u': R['unassigned'], 'k': R['grades'],
+         'y': R['synonyms']},
         separators=(',', ':')) + '</script>\n'
 
 
