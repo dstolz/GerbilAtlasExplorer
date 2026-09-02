@@ -74,6 +74,46 @@ test('the SVG export carries one named group per region', async ({ page }) => {
   expect(svg).toContain('id="region-Mi"');
 });
 
+/* A name the atlas seals in a bound with other names and prints nothing between: no
+   outline is drawn for it, and every place the plate prints the name highlights instead.
+   `cbw` on plate 52 is the worst of them -- 11 labels through the whole cerebellum. */
+test('a name the atlas draws no boundary round highlights its labels, not a region',
+  async ({ page }) => {
+    await page.goto(BUNDLE + '#p52');
+    const boxes = await page.evaluate(() => window.__REGION__.r['52'].cbw.w
+      && window.__BOX__['52'].cbw.length);
+    expect(boxes).toBe(11);
+    const im = await page.locator('#ov').boundingBox();
+    const at = await page.evaluate(() => window.__BOX__['52'].cbw[0].slice(0, 2));
+    await page.mouse.move(im.x + at[0] * im.width, im.y + at[1] * im.height);
+    await expect(page.locator('#tip')).toContainText('draws none of its own here');
+    const hr = page.locator('#hr');
+    await expect(hr).toHaveClass('lab');
+    // one closed rectangle per printed label, and no region outline
+    expect(await hr.getAttribute('d')).toMatch(/^(M[\d.]+ [\d.]+H[\d.]+V[\d.]+H[\d.]+Z){11}$/);
+    // selecting it circles the labels instead of outlining anything
+    await page.goto(BUNDLE + '#p52/cbw');
+    await expect(page.locator('#vhint')).toContainText('no outline of its own to draw');
+    expect(await page.evaluate(() => document.querySelectorAll('#om ellipse').length)).toBe(11);
+    expect(await page.evaluate(() => document.querySelectorAll('#om path').length)).toBe(0);
+    // a neighbour the atlas does bound is unaffected
+    await page.goto(BUNDLE + '#p52/Sp5I');
+    await expect(page.locator('#vhint')).toContainText('Sp5I outlined');
+  });
+
+/* The atlas letters one hemisphere for some names; the other is named by mirroring. */
+test('a name printed on one hemisphere is outlined on both', async ({ page }) => {
+  await page.goto(BUNDLE + '#p19/S1J');
+  await expect(page.locator('#vhint')).toContainText('S1J outlined');
+  const sides = await page.evaluate(() => {
+    const o = window.__REGION__.r['19'].S1J;
+    return [o.n, o.g.length, o.g.map(g => g[0][0] > 0.4727 ? 1 : -1)];
+  });
+  expect(sides[0]).toBe(1);                    // one printed label
+  expect(sides[1]).toBe(2);                    // two hemispheres
+  expect(new Set(sides[2]).size).toBe(2);      // one either side of ML 0
+});
+
 // A tap is answered by the app's own outline and tooltip, so the platform's tap
 // highlight -- a translucent blue box over the whole element -- must be off, and the
 // handler must not decode plate images while the finger is still down.

@@ -208,7 +208,8 @@ def geojson(db, plate):
                       'geometry': {'type': 'MultiPolygon', 'coordinates': [[ring(g)] for g in e['g']]},
                       'properties': {'abbr': ab, 'name': names.get(ab, ''), 'plate': plate,
                                      'ap_bregma_mm': breg[plate], 'area_mm2': e['a'],
-                                     'traced_fraction': e['s'], 'n_labels': e['n']}})
+                                     'traced_fraction': e['s'], 'n_labels': e['n'],
+                                     'no_drawn_outline': bool(e.get('w'))}})
     for k, g in enumerate(db['region_extents']['unassigned'].get(str(plate), [])):
         feats.append({'type': 'Feature',
                       'geometry': {'type': 'Polygon', 'coordinates': [ring(g)]},
@@ -226,7 +227,9 @@ def geojson(db, plate):
                     'Coordinates are [ML, DV] in mm, ML positive to the right of the plate as printed, '
                     'DV negative below the dorsal surface; AP is the plate bregma. traced_fraction is '
                     'the share of each polygon boundary the atlas actually draws; below 0.5 the '
-                    'boundary is an estimate. Not a segmentation.',
+                    'boundary is an estimate. no_drawn_outline marks a feature that lies only inside '
+                    'boundaries the atlas draws round more than one name and prints nothing within, '
+                    'so the whole of its outline is where the extraction cut it. Not a segmentation.',
             'plate': plate, 'ap_bregma_mm': breg[plate], 'features': feats}
 
 

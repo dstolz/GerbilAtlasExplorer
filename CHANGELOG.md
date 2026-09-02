@@ -51,6 +51,26 @@ carries a `version` block naming the release its derived fields were built for.
 - The working frame no longer persists across visits by default: a new visit starts back
   at the atlas. A **Remember across visits** checkbox in the Frame dialog opts back in;
   that preference is what actually persists, and it is off until set.
+- **The hemisphere the atlas letters once is now named on both sides.** Most abbreviations
+  are printed twice, one per hemisphere, but not all: `S1J` on plate 19, `MPtA` on 28,
+  `LPtA` on 29 are set once, and the sealed face on the other side answered to nothing.
+  `build_region_extents.py` now mirrors every seed about ML 0 and keeps the mirror where it
+  lands in a face the drawing seals and no printed abbreviation names, and where over half
+  of that face reflects back into the faces the mirrors came from. 122 seeds are added; what the page prints still wins in every face it prints in,
+  so nothing is renamed. `region_extents` gains 3 entries and 68 polygons, and the share of
+  a section that has a name rises from 93.6% to 94.3%; `df` gets its first extent, so 698
+  structures now carry a mesh.
+- **No outline is drawn where the atlas draws no boundary.** The drawing sometimes seals
+  several names in one bound and prints nothing between them — the cerebellar lobules and
+  the white matter through them, the mediodorsal thalamus, the lateral hypothalamic zones —
+  and the extraction's split of those is an invention end to end. Entries like that now
+  carry `w` in `region_extents` (372 of 3,134), and the app draws no outline for them at
+  all: hovering or selecting one highlights every place the plate prints its name, and says
+  why. The geometry is still stored and still partitions the section, so tracks, volumes,
+  meshes and the CSVs are unchanged. A face that merely merged through a gap in the tracing
+  is not affected — the test is how much of the wall the watershed put *inside* a face lands
+  on ink, not how much of the whole outline does, so `CPu` and `Po` keep theirs.
+  `no_drawn_outline` carries the same flag into the per-plate GeoJSON.
 
 ## [0.9.0] — 2026-09-02
 

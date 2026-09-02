@@ -629,7 +629,7 @@ async function galThumb(d,a,tok){
     try{ await im.decode(); }catch(_){ return; }
   }
   if(tok!==galTok||!d.isConnected) return;
-  const R=regBuild(p).by[a], bs=(LB[p]||{})[a]||[];
+  const R0=regBuild(p).by[a], R=R0&&!regUnd(R0)?R0:null, bs=(LB[p]||{})[a]||[];
   let x0,y0,x1,y1;
   if(R){ x0=R.x0; y0=R.y0; x1=R.x1; y1=R.y1; }
   else if(bs.length){
@@ -757,8 +757,10 @@ function markSel(){
      of the shape -- so the circle is the fallback, for the structures no extent could be
      cut for. It goes round the end of the label's line where the atlas draws one: a
      circle round the word would be a circle round white paper beside the section, which
-     is where the atlas sets a name it cannot fit inside the region. */
-  const rg=regBy[sel];
+     is where the atlas sets a name it cannot fit inside the region. The circle is also
+     the answer where there is an extent but no boundary the atlas draws round it -- see
+     regUnd() -- because there the outline would be a line this atlas does not have. */
+  const rg=regOut(sel), und=regBy[sel];
   const at=bs.map((b,i)=>{ const [x,y]=ptAt(cur,sel,i,b); return [x,y,b[2],b[3]]; });
   const ell=at.map(([cx,cy,w,h])=>{
     const R=Math.max(w*NW,h*NH), rx=(R*0.85+7).toFixed(1), ry=(R*0.55+6).toFixed(1);
@@ -776,7 +778,10 @@ function markSel(){
     const led=bs.filter((_b,i)=>ldAt(cur,sel,i)).length;
     const how=led===bs.length?(bs.length>1?'each ':''):`${led} of them `;
     vh.innerHTML=`<b>${esc(sel)}</b> circled \u00b7 ${bs.length} label${bs.length>1?'s':''} printed on plate ${cur}`
-      +(led?` \u00b7 ${how}circled at the end of the line the atlas draws from the word`:'');
+      +(led?` \u00b7 ${how}circled at the end of the line the atlas draws from the word`:'')
+      +(und?` \u00b7 ${und.mm2.toFixed(und.mm2<1?3:2)} mm\u00b2 of section here, but every label of it `+
+            `is printed inside a boundary the atlas draws round more than one name, so it has `+
+            `no outline of its own to draw`:'');
     ensureVisible(at);
     return;
   }
@@ -919,7 +924,8 @@ function cmpShow(){
 function cmpMark(){
   const g=$('om2'); if(!cmpOn||!sel){ g.innerHTML=''; return; }
   const rg=regBuild(cmpPlate()).by[sel];
-  g.innerHTML = rg ? `<path class="${isGrp(sel)?'grp':''}${regEst(rg)?' est':''}" d="${regD(rg)}"></path>` : '';
+  if(!rg || regUnd(rg)){ g.innerHTML=''; return; }
+  g.innerHTML = `<path class="${isGrp(sel)?'grp':''}${regEst(rg)?' est':''}" d="${regD(rg)}"></path>`;
 }
 /* ---------- compare: the region under the pointer, highlighted on both panes ----------
    The two plates share a frame but not a region index -- each is cut on its own level --
@@ -936,7 +942,8 @@ function cmpMirror1(ab){
   hot=null; TIP.hidden=true; IW.classList.remove('hot'); HL.style.display='none';
   const rg=ab?regBy[ab]:null;
   if(!rg){ HR.style.display='none'; return; }
-  HR.setAttribute('d',regD(rg)); HR.setAttribute('class',regEst(rg)?'est':'');
+  const hi=regHi(rg);
+  HR.setAttribute('d',hi.d); HR.setAttribute('class',hi.c);
   HR.style.display='';
 }
 /* the mirror onto pane two: driven by pane one's own hover() */
@@ -944,7 +951,8 @@ function cmpMirror2(ab){
   if(!cmpOn) return;
   const rg=ab?regBuild(cmpPlate()).by[ab]:null;
   if(!rg){ HR2.style.display='none'; return; }
-  HR2.setAttribute('d',regD(rg)); HR2.setAttribute('class',regEst(rg)?'est':'');
+  const hi=regHi(rg,cmpPlate());
+  HR2.setAttribute('d',hi.d); HR2.setAttribute('class',hi.c);
   HR2.style.display='';
 }
 function hover2(f){
@@ -953,7 +961,8 @@ function hover2(f){
   if(ab===hot2) return;
   hot2=ab;
   if(!o){ hr2Hide(); cmpMirror1(null); return; }
-  HR2.setAttribute('d',regD(o)); HR2.setAttribute('class',regEst(o)?'est':'');
+  const hi=regHi(o,cmpPlate());
+  HR2.setAttribute('d',hi.d); HR2.setAttribute('class',hi.c);
   HR2.style.display=''; IW2.classList.add('hot');
   cmpMirror1(ab);
 }
@@ -1077,7 +1086,7 @@ function regBuild(pl){
          of the boundary, and a scrap of a second hemisphere does not swing it */
       const w=Math.abs(shoe(gs[i])); wt+=w; tf+=v.s[i]*w;
     }
-    const o={ab,gs,x0,y0,x1,y1,mm2:v.a,n:v.n,tf:wt?tf/wt:0};
+    const o={ab,gs,x0,y0,x1,y1,mm2:v.a,n:v.n,tf:wt?tf/wt:0,w:!!v.w};
     out.regs.push(o); out.by[ab]=o;
   }
   /* every name of a joined label resolves to that label's one entry -- into regBy, which
@@ -1192,12 +1201,45 @@ function blkTxt(o){
 }
 /* how the boundary got there, said plainly rather than as a number nobody can place */
 function regTxt(o){
-  const q=o.tf>=RGRD.traced ? `boundary ${(100*o.tf).toFixed(0)}% drawn`
+  const q=o.w ? 'printed inside a boundary the atlas draws round more than one name — '+
+                'it draws none of its own here'
+        : o.tf>=RGRD.traced ? `boundary ${(100*o.tf).toFixed(0)}% drawn`
         : o.tf>=RGRD.estimated ? `boundary ${(100*o.tf).toFixed(0)}% drawn, the rest inferred`
         : 'boundary mostly inferred — the atlas does not print one here';
   return `${o.mm2.toFixed(o.mm2<1?3:2)} mm² on this plate · ${q}`;
 }
 const regEst = o => o.tf < RGRD.estimated;
+/* ---- the names the atlas draws no boundary around ----
+   `w` marks an entry that lies only inside bounds the atlas draws around more than one
+   name and prints nothing within: the cerebellar lobules and the white matter that runs
+   between them are the whole of the cerebellum, and the mediodorsal thalamus and the
+   lateral hypothalamic zones are most of the rest. The extraction still cuts those apart,
+   because a section has to be partitioned before a track or a volume can be read off it,
+   but the cut is its own. Drawing it would put a line on the plate this atlas does not
+   have, and a dashed one still reads as a boundary. So none is drawn: what is highlighted
+   instead is every place the name is printed, which is the whole of what the plate says
+   about where the structure is. */
+const regUnd = o => !!o.w;
+/* the extent to outline for a name, which is none where the atlas draws none */
+const regOut = ab => { const o=regBy[ab]; return o && !regUnd(o) ? o : null; };
+/* every box the plate prints this name in -- both names of a joined label, since one
+   region carries them both */
+function labBoxes(o,pl){
+  const b=LB[pl===undefined?cur:pl]||{}, out=[];
+  for(const n of (o.also||[o.ab])) for(const [cx,cy,w,h] of (b[n]||[]))
+    out.push([cx*NW-w*NW/2-2, cy*NH-h*NH/2-2, cx*NW+w*NW/2+2, cy*NH+h*NH/2+2]);
+  return out;
+}
+const boxD = bs => bs.map(([x0,y0,x1,y1])=>`M${x0.toFixed(1)} ${y0.toFixed(1)}`+
+  `H${x1.toFixed(1)}V${y1.toFixed(1)}H${x0.toFixed(1)}Z`).join('');
+/* what a highlight draws for a region: its outline, or the printed names where there is
+   no outline to draw. A `w` region with no located label on the plate falls back to the
+   outline, because a highlight that draws nothing at all answers nothing. */
+function regHi(o,pl){
+  const bs = regUnd(o) ? labBoxes(o,pl) : null;
+  return bs && bs.length ? {d:boxD(bs), c:'lab'}
+                         : {d:regD(o), c:regEst(o)?'est':''};
+}
 /* the same sentence for a union, which cannot borrow regTxt(): most of what the members
    draw is interior wall that the union throws away, so a share of *their* boundary is not
    a share of the outline on screen. What can be said exactly is the area -- the atlas's
@@ -1272,8 +1314,8 @@ function tipBody(ab,extra){
    say how much of that outline the atlas actually draws */
 function showTipR(o,ab){
   tipBody(ab||o.ab, regTxt(o) + (o.also ? ' · printed '+o.also.join('/') : ''));
-  HR.setAttribute('d',regD(o));
-  HR.setAttribute('class',regEst(o)?'est':'');
+  const hi=regHi(o);
+  HR.setAttribute('d',hi.d); HR.setAttribute('class',hi.c);
   HR.style.display=''; HL.style.display='none';
   const b=iwRect(), tw=TIP.offsetWidth, th=TIP.offsetHeight;
   const [x0,y0]=f2s(o.x0,o.y0), [x1,y1]=f2s(o.x1,o.y1);
@@ -2354,7 +2396,7 @@ function exportPNG(){
   }
   /* the selection, marked the way the screen marks it: the extent where there is one,
      the circle round where the name falls where there is not */
-  const bs=(LB[cur]||{})[sel]||[], rgS=regBy[sel];
+  const bs=(LB[cur]||{})[sel]||[], rgS=regOut(sel);
   g.strokeStyle=markC(); g.lineWidth=1.8;
   if(rgS){
     g.beginPath();
@@ -2490,7 +2532,8 @@ function exportSVG(){
     const R=regBuild(cur), idOf=t=>t.replace(/[^A-Za-z0-9_-]/g,'_');
     o.push('<g id="regions" fill="none" stroke="#1b1a17" stroke-opacity="0.35" stroke-width="0.8">'+
       R.regs.map(r=>`<g id="region-${idOf(r.ab)}" data-abbr="${xml(r.ab)}" data-name="${xml(byAb[r.ab]?byAb[r.ab].name:'')}"`+
-        `${regEst(r)?' stroke-dasharray="4 3"':''}><title>${xml(r.ab+(byAb[r.ab]?' — '+byAb[r.ab].name:''))}</title>`+
+        `${regEst(r)?' stroke-dasharray="4 3"':''}`+
+        `${regUnd(r)?' data-outline="a split this atlas does not draw"':''}><title>${xml(r.ab+(byAb[r.ab]?' — '+byAb[r.ab].name:''))}</title>`+
         `<path d="${regD(r)}"/></g>`).join('')+
       (RUNA[cur]||[]).map((g,k)=>`<g id="region-unnamed-${k+1}" data-name="unnamed sealed face"><path d="M`+
         g.map(([x,y])=>(x*NW).toFixed(1)+' '+(y*NH).toFixed(1)).join('L')+'Z"/></g>').join('')+'</g>');
@@ -2528,7 +2571,7 @@ function exportSVG(){
     o.push('<g id="landmarks" fill="none" stroke="#0f766e">'+L.join('')+'</g>');
   }
   /* as on the screen and the PNG: the extent where there is one, otherwise the circle */
-  const bs=(LB[cur]||{})[sel]||[], rgS=regBy[sel];
+  const bs=(LB[cur]||{})[sel]||[], rgS=regOut(sel);
   if(rgS) o.push(`<g id="highlight" fill="${markC()}" fill-opacity=".10" fill-rule="evenodd"`+
     ` stroke="${markC()}" stroke-width="1.5"${regEst(rgS)?' stroke-dasharray="6 4"':''}>`+
     `<path d="${regD(rgS)}"/></g>`);

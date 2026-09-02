@@ -371,10 +371,10 @@ out, and the 90th percentile 0.20 mm.
 *names*: the area of each structure on each plate, as a list of closed polygons of `[x, y]`
 fractions of the frame-cropped image — the same frame and the same convention
 `brain_outline` uses, so the app's existing point-in-polygon test reads them unchanged.
-**3,131 structure-plate entries carry an area**, 95% of the 3,298 the label pass located
-and 89% of the 3,510 the published index lists, as 5,730 polygons over 77,910 points. Where
+**3,134 structure-plate entries carry an area**, 95% of the 3,298 the label pass located
+and 89% of the 3,510 the published index lists, as 5,798 polygons over 78,739 points. Where
 the atlas prints two names as one label the two share an entry, so a name having no entry of
-its own does not mean it has no area — see step 6.
+its own does not mean it has no area — see step 7.
 
 The atlas publishes no segmentation. What it does publish is a line drawing in which every
 region is a cell of a planar subdivision with one abbreviation printed inside it, and both
@@ -394,19 +394,33 @@ The steps, in order, run by `tools/build_region_extents.py`:
 3. **Close against `brain_outline`**, inverse-transformed into the page frame, and fill it
    for the section interior.
 4. **Cut the empty space into faces.** A face sealed by traced ink and holding exactly one
-   abbreviation is that structure's area *as drawn*, and that is 3,387 of the faces. A label
+   abbreviation is that structure's area *as drawn*, and that is 3,471 of the faces. A label
    the atlas set outside its region is seeded at the end of the line it draws rather than on
    the word — see [Where the name is not the place](#where-the-name-is-not-the-place). 215
    labels are, and seeding those on the word puts them in a neighbour's face.
-5. **Split the rest.** Where a face holds several abbreviations, ink is missing somewhere on
+5. **Letter the hemisphere the atlas did not.** The atlas prints most abbreviations twice,
+   once per hemisphere, but not all of them: `S1J` on plate 19, `MPtA` on 28, `LPtA` on 29
+   are set once, and the sealed face on the other side is then a hole in the section that
+   answers to nothing — which is what a reader sees as a region the app will not name. The
+   drawing is symmetric about ML 0, so every seed is mirrored across it, and a mirror is
+   kept only where two things hold: it lands in a face the tracing seals and *no printed
+   abbreviation names*, so what the page says always wins and nothing here can rename
+   anything; and that face really is the mirror of the ones the seeds came from, at least
+   half of it reflecting into them, which a face merely opposite a named one does not do.
+   The second test is against all of those faces together, because the drawing need not
+   seal the two hemispheres the same way: where one side draws the boundary between two
+   structures and the other does not, one unnamed face answers two named ones, and it is
+   then seeded from both and split like any other. **122 seeds** are added this way and they carry no weight of their own: `n`
+   counts printed labels, and a mirror exists only where a printed label does.
+6. **Split the rest.** Where a face holds several abbreviations, ink is missing somewhere on
    the boundary between them. A watershed seeded on the printed labels and ridged on the
    distance transform of the ink splits the face along the strongest evidence there is. The
    drawn lines themselves belong to no face and are in play, so the split falls down the
    middle of the printed line, where a boundary between two regions ought to fall.
-6. **Leave the unnamed faces alone.** A face holding no label is not absorbed by a
+7. **Leave the unnamed faces alone.** A face holding no label is not absorbed by a
    neighbour. The atlas seals it and declines to name it, and the largest such class is the
    ventricles; calling a ventricle `CPu` would propagate into every readout downstream.
-   These are written out separately as `region_extents.unassigned`, and they are a mean 7%
+   These are written out separately as `region_extents.unassigned`, and they are a mean 6%
    of section area.
    **And do not split a face between two names of one label.** The atlas often
    names a face with two abbreviations typeset into a single label, over one line or two —
@@ -419,13 +433,13 @@ The steps, in order, run by `tools/build_region_extents.py`:
    the app answers for any of them with that label's one outline. **22 labels on 31 plates**
    are joined this way, over 37 printed occurrences.
 
-7. **Score each polygon** by the share of its border lying within 3 px of ink the tracing
+8. **Score each polygon** by the share of its border lying within 3 px of ink the tracing
    *actually drew*, as opposed to a ridge the watershed invented, walked at one pixel so it
    is length-weighted.
-8. **Trace and simplify on the crack lattice**, Douglas-Peucker at 2 px as `brain_outline`
+9. **Trace and simplify on the crack lattice**, Douglas-Peucker at 2 px as `brain_outline`
    already does.
 
-**Step 8 is not the obvious thing, and the obvious thing is wrong.** Contouring each region
+**Step 9 is not the obvious thing, and the obvious thing is wrong.** Contouring each region
 on its own and simplifying its ring gives two different polylines for the same shared
 boundary, because Douglas-Peucker is global to the ring it is handed; at a 2 px tolerance
 they cross, and the regions then overlap and leave slivers. So the boundary is traced on the
@@ -445,18 +459,39 @@ Three checks, none of which the extraction was tuned to pass:
 
 **What the numbers do not say is which boundaries are real, so every polygon carries that
 too.** `s` is the traced share of that polygon's border: median **0.98**, 77% at or above
-0.90, 87% at or above 0.75, **6% below 0.50**. A polygon at 0.98 is the boundary the atlas
+0.90, 88% at or above 0.75, **6% below 0.50**. A polygon at 0.98 is the boundary the atlas
 prints. A polygon at 0.16 is a split the extraction had to invent because the drawing does
 not separate those structures, and it should be read as an estimate — the app dashes those
 outlines and says so rather than presenting them as drawn. The weak ones are where a reader
 would expect them: `PM` on plates 51–54, `7Cb` on 51, `RRF` on 39, `imvc` on 29 — thin
 cerebellar and reticular subdivisions the pages bound with faint or dashed print, if at all.
 
+**And 372 entries have no boundary of their own at all, which `w` says outright.** A face
+carrying several abbreviations was split in step 6, and that split is one of two quite
+different things. Either the atlas *does* print the boundary and the tracing missed it —
+two faces merged through a gap, the ridge on the distance transform found the ink again,
+and the split sits on a line somebody drew: `CPu` on plate 25 shares its face and keeps a
+rim 98% drawn. Or the atlas prints nothing between those names anywhere, as it does not
+between a cerebellar lobule and the white matter that runs through it, and the split is the
+extraction's invention end to end. The whole outline does not tell them apart, because a
+structure can have a drawn rim and an invented inner wall. So the split itself is measured:
+the share of the wall the watershed put *inside* a face that lands on traced ink. Below
+half, nobody drew it — and an entry that sits only in faces like that, and whose own border
+is under three-quarters drawn, carries `w`. That is the whole cerebellum, the mediodorsal
+thalamus, the lateral hypothalamic zones, and little else: **372 of 3,134 entries**, against
+1,062 that merely share a face. The app draws no outline for them. It highlights every place
+the name is printed instead, which is the whole of what the plate says about where the
+structure is, and a dashed outline would still read as a boundary this atlas does not have.
+The geometry is kept and still partitions the section, because a track and a volume have to
+be read off something; it is a best guess at where one name gives way to the next, and not a
+boundary to show anyone.
+
 End to end, in the app: pointing at each of the 6,266 printed labels in turn resolves to a
-structure every time, and to the right one 6,263 times. **6,074 of them resolve to an area**
-and the remaining 192 to the printed name itself, which is the honest answer where the atlas
-prints a name outside the section it belongs to — `rf` on the rhinal fissure is 50 of the
-192 — or where no extent could be cut. The three misses are three places where one located
+structure every time, and to the right one 6,263 times. **5,384 of them are answered with an
+outline.** 693 are answered with the printed name because the entry carries `w` and there is
+no boundary to draw, and 189 because no extent could be cut at all — which is the honest
+answer where the atlas prints a name outside the section it belongs to, `rf` on the rhinal
+fissure being 50 of the 189. The three misses are three places where one located
 box sits inside another (`StA` around `STMA` on plate 23, `PVP` around `VL` on 29, `psf`
 around `sf` on 53) and the smaller of the two wins the point, which is the right tie-break
 everywhere else.
