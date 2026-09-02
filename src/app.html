@@ -203,6 +203,10 @@
           >Bone <input type="range" id="v3so" min="6" max="100" value="32"></label>
         <label class="tg" title="Cut at the midline to see inside"><input type="checkbox" id="v3h">Half</label>
         <label class="tg" title="Parallel projection — no perspective foreshortening, so equal lengths read equally wherever they sit"><input type="checkbox" id="v3o">Ortho</label>
+        <label class="tg" title="The brain surface and one mesh per structure, built offline from the extents and fetched on first use (20 MB). Interpolated between sections 350 µm apart: not a segmentation."><input type="checkbox" id="v3m">Meshes</label>
+        <span class="tgw" id="v3msw" hidden><label class="tg" title="The interpolated brain surface as a faint shell"><input type="checkbox" id="v3ms">Surface</label>
+        <button class="z" id="v3stl" type="button" hidden title="Download the selected structure's mesh as a binary STL, in atlas millimetres">STL</button>
+        <span id="v3mf" hidden><button class="z" id="v3mfb" type="button" title="Open data/gerbil_atlas_volumes.json from the repository">Load file</button><input type="file" id="v3mfile" accept="application/json,.json" hidden></span></span>
         <label class="lb3" title="Look at the brain from a named direction"
           >View <select id="v3v">
             <option value="obl">Oblique</option>
@@ -520,6 +524,7 @@
       <dt><kbd>?</kbd></dt><dd>open this panel</dd>
       <dt>Compare</dt><dd>a second plate beside the first, sharing zoom, pan and crosshair</dd>
       <dt>Notes</dt><dd>your own markers, kept in this browser; export them as JSON to keep them</dd>
+      <dt>Meshes</dt><dd>in 3D, the structure as a closed surface interpolated between its plates; STL to download it</dd>
       <dt><kbd>Esc</kbd></dt><dd>drop the selection, or clear a measurement</dd>
       <dt>double-click</dt><dd>zoom into the plate at that point; drag to pan</dd>
       <dt>hover a label</dt><dd>read its full name; click it to select that structure</dd>

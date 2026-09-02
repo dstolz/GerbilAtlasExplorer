@@ -526,8 +526,19 @@ function go(k){
   nHere=S.filter(r=>r.plates.includes(cur)).length;
   $('scP').innerHTML='On plate '+cur+' <b>'+nHere+'</b>';
   if(scope==='plate') refine();
-  labels(); galMark(); anDraw(); anClose();
+  labels(); galMark(); anDraw(); anClose(); preload();
   mark(); fit(); drawSK(); drawLM(); tgDraw(); pjGuide(); v3note(); v3frame(); revSync(); queueHash();
+}
+
+/* the plates either side, decoded ahead of the arrow key that will ask for them */
+const PRE=new Set();
+function preload(){
+  for(const p of [cur-1,cur+1]){
+    if(!plateOf[p]) continue;
+    const src=plateImg(p), k=psrc+'|'+p;
+    if(!src||PRE.has(k)) continue;
+    PRE.add(k); const im=new Image(); im.decoding='async'; im.src=src;
+  }
 }
 
 /* ---------- selection marker, and saying so when it is not on this plate ---------- */
@@ -2572,6 +2583,12 @@ const w3y=dv=>dv-V3YC, w3z=ap=>(V3Z0-ap)-V3ZS/2;
 
 const V3CV=$('v3c'), V3WRAP=$('v3w'), V3MSG=$('v3msg'), V3TIP=$('v3t');
 let gl=null, v3ready=false, v3busy=false, v3fail='';
+/* the meshes: the brain surface and one closed mesh per structure, built offline from the
+   extents by tools/build_volumes.py (METHODS, "The third dimension") and fetched here on
+   first use -- 20 MB, so never part of the page. Six planes in seven of them are
+   interpolated, which the note says every time they are shown. */
+let v3m=false, MESH=null, meshBusy=false, meshFail='';
+const MESHC={};                                  /* abbr -> {va, n, type} on the GPU */
 let v3mode='contour', v3op=.42, v3a=0, v3b=61, v3half=false;
 let v3ortho=false;                 /* parallel vs perspective projection */
 let v3sk=false, v3sko=.32;             /* the skull shell: off by default, opacity 0..1 */
@@ -2842,6 +2859,7 @@ function v3colours(){
   v3col={ ce:hex('--accent'), ti:hex('--cloud2'),
           c0:hex('--cloud'), c1:hex('--cloud2'), c2:hex('--mark'),
           bg:hex('--panel'), bone:hex('--bone'), tg:hex('--targ'), an:hex('--note') };
+  for(const k in MESHC) if(MESHC[k].col) MESHC[k].col=null;   /* recoloured on next draw */
 }
 
 function v3init(){
@@ -3230,6 +3248,7 @@ function v3render(){
     gl.deleteBuffer(vb); gl.deleteVertexArray(va);
   }
 
+  meshDraw(M);
   if(anShow && NOTES.length){                  /* the notes, each as a small cross */
     const r=.3, lv=[];
     for(const n of NOTES){ const c=[n.ml,w3y(n.dv),w3z(n.ap)];
@@ -3413,9 +3432,125 @@ $('v3v').onchange=e=>v3setView(e.target.value);
 /* the reset is the viewpoint plus the framing: distance and pan come back too */
 $('v3r').onclick=()=>{ v3dist=v3sk?38:26; v3setView('obl'); };
 
+/* ---- the meshes ---- */
+const MESHURL='data/gerbil_atlas_volumes.json';
+function meshCanFetch(){ return /^https?:$/.test(location.protocol); }
+function meshLoad(){
+  if(MESH||meshBusy) return;
+  if(!meshCanFetch()){ meshFail='This page was opened from disk, so the meshes cannot be fetched; use Load file to open data/gerbil_atlas_volumes.json from the repository.'; v3note(); $('v3mf').hidden=false; return; }
+  meshBusy=true; meshFail=''; v3note();
+  fetch(MESHURL).then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+    .then(meshTake).catch(err=>{ meshFail='The meshes could not be fetched ('+(err&&err.message||err)+').'; $('v3mf').hidden=false; })
+    .finally(()=>{ meshBusy=false; v3note(); v3frame(); });
+}
+function meshTake(j){
+  if(!j||!j.data||!j.surface) throw new Error('not the volumes file');
+  MESH=j; meshFail=''; $('v3mf').hidden=true; v3flags(); v3frame();
+}
+$('v3mfile').onchange=e=>{
+  const f=e.target.files&&e.target.files[0]; if(!f) return;
+  meshBusy=true; v3note();
+  f.text().then(t=>meshTake(JSON.parse(t))).catch(()=>{ meshFail='That file is not the volumes file.'; })
+    .finally(()=>{ meshBusy=false; v3note(); v3frame(); });
+  e.target.value='';
+};
+/* base64 -> the little-endian uint16 the file promises, as positions and normals */
+function meshDecode(m){
+  const bin=atob(m.v), nv=m.nv, q=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) q[i]=bin.charCodeAt(i);
+  const dv=new DataView(q.buffer), P=new Float32Array(nv*3), s=MESH.grid?0.01:0.01;
+  for(let i=0;i<nv*3;i++) P[i]=dv.getUint16(i*2,true)*s;
+  /* stored (ML, DV, AP) offsets from o; the world is (ML, w3y(DV), w3z(AP)) */
+  for(let i=0;i<nv;i++){ const ml=m.o[0]+P[i*3], d=m.o[1]+P[i*3+1], ap=m.o[2]+P[i*3+2];
+    P[i*3]=ml; P[i*3+1]=w3y(d); P[i*3+2]=w3z(ap); }
+  const fb=atob(m.f), fq=new Uint8Array(fb.length);
+  for(let i=0;i<fb.length;i++) fq[i]=fb.charCodeAt(i);
+  const fd=new DataView(fq.buffer), nf=m.nf, F=m.fw===4?new Uint32Array(nf*3):new Uint16Array(nf*3);
+  for(let i=0;i<nf*3;i++) F[i]=m.fw===4?fd.getUint32(i*4,true):fd.getUint16(i*2,true);
+  const N=new Float32Array(nv*3);
+  for(let t=0;t<nf;t++){ const a=F[t*3]*3,b=F[t*3+1]*3,c=F[t*3+2]*3;
+    const ux=P[b]-P[a],uy=P[b+1]-P[a+1],uz=P[b+2]-P[a+2], vx=P[c]-P[a],vy=P[c+1]-P[a+1],vz=P[c+2]-P[a+2];
+    const nx=uy*vz-uz*vy, ny=uz*vx-ux*vz, nz=ux*vy-uy*vx;
+    for(const i of [a,b,c]){ N[i]+=nx; N[i+1]+=ny; N[i+2]+=nz; } }
+  for(let i=0;i<nv;i++){ const L=Math.hypot(N[i*3],N[i*3+1],N[i*3+2])||1; N[i*3]/=L; N[i*3+1]/=L; N[i*3+2]/=L; }
+  return {P,N,F,nf,nv};
+}
+function meshGPU(key,m){
+  if(MESHC[key]) return MESHC[key];
+  const d=meshDecode(m);
+  const va=gl.createVertexArray(); gl.bindVertexArray(va);
+  const pb=gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER,pb); gl.bufferData(gl.ARRAY_BUFFER,d.P,gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0,3,gl.FLOAT,false,0,0);
+  const nb=gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER,nb); gl.bufferData(gl.ARRAY_BUFFER,d.N,gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1,3,gl.FLOAT,false,0,0);
+  const ib=gl.createBuffer(); gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,ib); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,d.F,gl.STATIC_DRAW);
+  gl.bindVertexArray(null);
+  return MESHC[key]={va, n:d.nf*3, type:d.F instanceof Uint32Array?gl.UNSIGNED_INT:gl.UNSIGNED_SHORT};
+}
+/* an HSL colour, as the bars use, to the RGB triple the shader wants */
+function hslRGB(h,sat,l){
+  const a=sat*Math.min(l,1-l), f=n=>{ const k=(n+h/30)%12; return l-a*Math.max(-1,Math.min(k-3,9-k,1)); };
+  return [f(0),f(8),f(4)];
+}
+function meshColor(ab){
+  if(ab===sel) return v3col.c2;
+  let h=0; for(let i=0;i<ab.length;i++) h=(h*31+ab.charCodeAt(i))>>>0;
+  return hslRGB(h%360,.55,.55);
+}
+/* which meshes to show: the selection, or the current filter when it is a short list */
+function meshList(){
+  if(!MESH) return [];
+  const out=[];
+  if(sel&&MESH.data[sel]) out.push(sel);
+  else if(results.length<S.length && results.length<=40)
+    for(const r of results) if(MESH.data[r.abbr]) out.push(r.abbr);
+  return out;
+}
+function meshDraw(M){
+  if(!v3m||!MESH||!gl) return;
+  const list=meshList(), cam=v3cam(), U=(p,n)=>gl.getUniformLocation(p,n);
+  gl.useProgram(pSkull);
+  gl.enable(gl.DEPTH_TEST); gl.depthMask(true); gl.clear(gl.DEPTH_BUFFER_BIT);
+  gl.uniformMatrix4fv(U(pSkull,'u_mvp'),false,M);
+  gl.uniform3fv(U(pSkull,'u_cam'),cam);
+  gl.uniform1f(U(pSkull,'u_half'),v3half?1:0);
+  const draw=(key,m,col,op)=>{ const g=meshGPU(key,m); gl.bindVertexArray(g.va);
+    gl.uniform3fv(U(pSkull,'u_c'),col); gl.uniform1f(U(pSkull,'u_op'),op);
+    gl.drawElements(gl.TRIANGLES,g.n,g.type,0); };
+  for(const ab of list) draw('s:'+ab, MESH.data[ab].mesh, meshColor(ab), .92);
+  if($('v3ms').checked){ gl.depthMask(false); draw('surface', MESH.surface.mesh, v3col.ti, .16); gl.depthMask(true); }
+  gl.disable(gl.DEPTH_TEST); gl.bindVertexArray(null);
+}
+/* the selected structure's mesh as a binary STL, in atlas millimetres (ML, DV, AP) */
+function meshSTL(){
+  if(!MESH||!sel||!MESH.data[sel]) return;
+  const m=MESH.data[sel].mesh, d=meshDecode(m);
+  const P=d.P, F=d.F, nf=d.nf, buf=new ArrayBuffer(84+nf*50), v=new DataView(buf);
+  const head='Gerbil Atlas Explorer '+sel+' (ML,DV,AP mm; interpolated between 350 um sections)';
+  for(let i=0;i<80;i++) v.setUint8(i, i<head.length?head.charCodeAt(i):32);
+  v.setUint32(80,nf,true);
+  /* back from world to atlas: x = ML, y = DV = w3y^-1, z = AP = w3z^-1 */
+  const at=i=>[P[i*3], P[i*3+1]+V3YC, V3Z0-(P[i*3+2]+V3ZS/2)];
+  let o=84;
+  for(let t=0;t<nf;t++){
+    const a=at(F[t*3]), b=at(F[t*3+1]), c=at(F[t*3+2]);
+    const ux=b[0]-a[0],uy=b[1]-a[1],uz=b[2]-a[2], vx=c[0]-a[0],vy=c[1]-a[1],vz=c[2]-a[2];
+    let nx=uy*vz-uz*vy, ny=uz*vx-ux*vz, nz=ux*vy-uy*vx; const L=Math.hypot(nx,ny,nz)||1;
+    for(const val of [nx/L,ny/L,nz/L,...a,...b,...c]){ v.setFloat32(o,val,true); o+=4; }
+    v.setUint16(o,0,true); o+=2;
+  }
+  const u=URL.createObjectURL(new Blob([buf],{type:'model/stl'}));
+  dl(`mesh_${sel.replace(/[^A-Za-z0-9]/g,'')}.stl`,u,u);
+}
+$('v3m').onchange=e=>{ v3m=e.target.checked; if(v3m) meshLoad(); $('v3msw').hidden=!v3m; v3flags(); v3note(); v3frame(); queueHash(); };
+$('v3ms').onchange=()=>v3frame();
+$('v3stl').onclick=meshSTL;
+$('v3mfb').onclick=()=>$('v3mfile').click();
+
 function v3note(){
   const N=$('v3n');
   if(v3fail){ N.textContent=''; return; }
+  $('v3stl').hidden=!(v3m&&MESH&&sel&&MESH.data[sel]);
   /* the slab's own AP bounds, quoted from wherever zero is -- a re-zero does not move the
      plates, only what their APs are called, and this line is the only place the 3-D view
      names one */
@@ -3425,6 +3560,17 @@ function v3note(){
   const half = v3half ? ' Cut at the midline.' : '';
   const bone = v3sk ? ' Skull fit is experimental and approximate.' : '';
   const proj = v3ortho ? ' Parallel projection: equal lengths read equally at any depth.' : '';
+  let mesh='';
+  if(v3m){
+    if(meshBusy) mesh=' Fetching the meshes (20 MB, once)…';
+    else if(meshFail) mesh=' '+meshFail;
+    else if(MESH){
+      const list=meshList(), e=sel&&MESH.data[sel];
+      mesh = (e ? ` <b>${esc(sel)}</b> as a mesh: ${e.grade==='slab'?'a hull, not a shape — the structure is on one or two plates only':'interpolated between its plates'}, ${e.volume_mm3.toFixed(2)} mm³.`
+             : list.length ? ` ${list.length} structures of the filter as meshes.` : ' Select a structure, or filter to a few, to see its mesh.')+
+        ' Six planes in seven are arithmetic between sections 350 µm apart; nothing here is a segmentation.';
+    }
+  }
   if(v3mode==='points'){
     const q=(sel&&ptsOf[sel])||[];
     N.innerHTML = (sel&&q.length
@@ -3432,7 +3578,7 @@ function v3note(){
         `${new Set(q.map(t=>t.p)).size} plate${new Set(q.map(t=>t.p)).size>1?'s':''}, against all 6,220. `
       : `All 6,220 printed labels at their stereotaxic positions. `)+
       `A dot is where an abbreviation is <em>printed</em> — close to its structure, not its centre. `+
-      `Hover to read one, click to open its plate.`+slab+half+proj+bone;
+      `Hover to read one, click to open its plate.`+slab+half+proj+bone+mesh;
     return;
   }
   const q=(sel&&ptsOf[sel])||[];
@@ -3442,7 +3588,7 @@ function v3note(){
   N.innerHTML = (v3mode==='contour'
     ? `${what}, each at its true bregma. It reads as a stack because that is what it is — 62 sections, 350 µm apart.`
     : `The same field ray-marched. Sampling along the brain is 20× coarser than across it, so the streaks are interpolation, not anatomy.`)+
-    on+` The ring marks plate ${cur}.`+slab+half+proj+bone;
+    on+` The ring marks plate ${cur}.`+slab+half+proj+bone+mesh;
 }
 
 /* changing the plate source changes what the stack is made of, so it is read again from
@@ -3519,6 +3665,7 @@ function writeHash(){
   if(v3ortho) h+='&or=1';
   if(v3view&&v3view!=='obl') h+='&vp='+v3view;
   if(v3sk) h+='&sk='+Math.round(v3sko*100);
+  if(v3m) h+='&mh=1';
   /* fo used to be a bare 1 for "an origin is set". It now carries the landmark as 1 + its
      index, so bregma is still 1 and every link ever written still reads correctly. */
   if(FRAME.on){ h+='&fr='+FKEYS.map(k=>FRAME[k]).join(','); if(FRAME.org) h+='&fo='+(1+FRAME.oref); }
@@ -3589,6 +3736,8 @@ function readHash(){
   if(v3sk){ v3sko=sk/100; $('v3so').value=sk; if(gl) v3skullBuild();
             if(v3dist<34) v3dist=38; }
   $('v3s').checked=v3sk; $('v3sol').hidden=!v3sk;
+  v3m = par.mh==='1'; $('v3m').checked=v3m; $('v3msw').hidden=!v3m;
+  if(v3m) meshLoad();
 
   /* the frame is sticky: a link carrying one sets it, a link without one leaves whatever
      this browser had stored. Wiping a lab's calibration because somebody opened a bare
@@ -4233,3 +4382,10 @@ pjAxes(); run();
 if(!readHash()) go(30);
 frameApply();
 fit(); applyView(); revRun();
+
+/* a handle for the tests and for the console: the pure functions and the state they
+   read. Nothing in the app goes through it. */
+window.__gae={toFrame,fromFrame,writeHash,readHash,tgSolve,tgPath,tgFootprint,plan:()=>tgPlan,
+  select,go,clear,frameSet,frameApply,FRAME,frmBuild,BUILD,S,P,byAb,ptsOf,regBuild,plateAt,inBrain,
+  coordsOf,tgJSON,tgNotes,meshList,setCmp,anMake,notes:()=>NOTES,mesh:()=>MESH,
+  state:()=>({cur,sel,zoom,tab,smode,psrc,tgProbe,tgFoot,cmpOn,anShow,targSide,tgTilt,tgRoll,tgYaw,tgPlate,tgOff})};
