@@ -94,7 +94,8 @@ produced them, and the six-number matrix fitted per plate; the matrices are copi
 `plate_registration` in the JSON, and a test keeps the two equal), the skull
 (`data/skull.json`), and `brain_outline`, which the app's own `v3build()` produced.
 
-`requirements.txt` pins the versions the committed data was regenerated with. On those,
+`requirements.txt` pins the versions the committed data was regenerated with, which need
+Python 3.11 or newer. On those,
 `build_region_extents.py` reproduces `region_extents` byte for byte; the meshes come
 back with the same vertices and a different triangle order under a different
 scikit-image, which is why the pins are `==`.

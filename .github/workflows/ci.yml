@@ -11,8 +11,9 @@ jobs:
   python-checks:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        python: ['3.9', '3.12']
+        python: ['3.11', '3.12']     # the pinned numpy and scipy need 3.11 or newer
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
