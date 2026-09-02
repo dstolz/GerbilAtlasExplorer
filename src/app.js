@@ -526,7 +526,7 @@ function go(k){
   nHere=S.filter(r=>r.plates.includes(cur)).length;
   $('scP').innerHTML='On plate '+cur+' <b>'+nHere+'</b>';
   if(scope==='plate') refine();
-  labels(); galMark();
+  labels(); galMark(); anDraw(); anClose();
   mark(); fit(); drawSK(); drawLM(); tgDraw(); pjGuide(); v3note(); v3frame(); revSync(); queueHash();
 }
 
@@ -546,6 +546,11 @@ const hintTxt = () => 'Click a result to outline it here \u00b7 '+
 /* while the plate is armed for a pick it has one job, so it says so and nothing else */
 function mark(){
   markSel();
+  if(anArm){
+    const vh=$('vhint'); vh.className='vhint';
+    vh.innerHTML='Click a point on the plate to place the <b>note</b>.';
+    return;
+  }
   if(pickArm){
     const vh=$('vhint'); vh.className='vhint';
     vh.innerHTML='Click a point on the plate to set <b>ML</b> and <b>DV</b>, '+
@@ -564,6 +569,7 @@ function mark(){
 function markSel(){
   const ov=$('om'), vh=$('vhint');
   ov.innerHTML=''; vh.className='vhint';
+  cmpMark();
   if(!sel){ vh.innerHTML=hintTxt(); return; }
   const r=byAb[sel];
   const bs=(LB[cur]||{})[sel]||[];
@@ -631,6 +637,7 @@ function centreOn(fx,fy){
    #pan carries the translate+scale; everything else maps through f2s / s2f, so the
    overlays, the label hit testing and the tooltip all stay registered to the image. */
 const IW=$('iw'), PAN=$('pan'), TIP=$('tip'), HL=$('hl'), HR=$('hr');
+const IW2=$('iw2'), PAN2=$('pan2');
 const ZMIN=1, ZMAX=10;
 function iwRect(){ return IW.getBoundingClientRect(); }
 function f2s(fx,fy){ const b=iwRect(); return [tx+zoom*fx/NW*b.width, ty+zoom*fy/NH*b.height]; }
@@ -645,6 +652,7 @@ function clampView(){
 function applyView(){
   clampView();
   PAN.style.transform=`translate(${tx.toFixed(2)}px,${ty.toFixed(2)}px) scale(${zoom.toFixed(4)})`;
+  PAN2.style.transform=PAN.style.transform;
   $('zl').textContent=Math.round(zoom*100)+'%';
   $('zo').disabled = zoom<=ZMIN+1e-6;
   $('zi').disabled = zoom>=ZMAX-1e-6;
@@ -676,6 +684,68 @@ IW.addEventListener('dblclick',e=>{
   const b=iwRect();
   zoomAt(zoom<ZMAX?zoom*2:1, e.clientX-b.left, e.clientY-b.top);
 });
+
+/* ---------- compare: a second plate beside the first, under the same transform ----------
+   The three plates of a level are registered by construction and neighbouring levels
+   share the frame, so a second image can sit beside the first with the same zoom, the
+   same pan and the same crosshair: what is at a point on the left is at that point on
+   the right. It shows the other histology of this level, the drawing, or the plate
+   before or after. The overlays stay on the left; the right carries the selection's
+   outline where it is the same level, and the crosshair. */
+let cmpOn=false, cmpWhat='nissl';
+const CMPWHAT=['nissl','myelin','drawing','prev','next'];
+function cmpPlate(){ return cmpWhat==='prev'?Math.max(1,cur-1):cmpWhat==='next'?Math.min(62,cur+1):cur; }
+function cmpSrc(){ return (cmpWhat==='prev'||cmpWhat==='next')?psrc:cmpWhat; }
+function cmpShow(){
+  IW2.hidden=!cmpOn; IMGBOX.classList.toggle('cmp',cmpOn); $('cmpsel').hidden=!cmpOn;
+  if(cmpOn){
+    const p=cmpPlate(), k=cmpSrc(), el=$('pi2');
+    el.src=((srcOK(k)?SRC[k]:IMG)[p])||'';
+    el.style.filter=plateFilter();
+    el.alt=`Atlas plate ${p}, ${SRCN[srcOK(k)?k:'drawing']}`;
+    $('cmplab').textContent=`Plate ${p} · ${SRCN[srcOK(k)?k:'drawing']}`+
+      (p!==cur?` · bregma ${sgn(plateOf[p].bregma)}`:'');
+    cmpMark();
+  } else { $('xh2').innerHTML=''; }
+  fitW=0; fit(); applyView();
+}
+/* the selection, outlined on the second pane too where it is the same level */
+function cmpMark(){
+  const g=$('om2'); if(!cmpOn||!sel){ g.innerHTML=''; return; }
+  const rg=regBuild(cmpPlate()).by[sel];
+  g.innerHTML = rg ? `<path d="${regD(rg)}"${regEst(rg)?' class="est"':''}></path>` : '';
+}
+function setCmp(on,what){
+  cmpOn=!!on; if(what&&CMPWHAT.includes(what)) cmpWhat=what;
+  $('ckcmp').checked=cmpOn; $('cmpsel').value=cmpWhat;
+  cmpShow(); queueHash();
+}
+$('ckcmp').onchange=e=>setCmp(e.target.checked);
+$('cmpsel').onchange=e=>setCmp(true,e.target.value);
+/* the second pane answers the pointer the way the first does: the crosshair and the
+   readout, the wheel and a drag. A click on a neighbouring plate goes to it. */
+function s2f2(e){ const b=IW2.getBoundingClientRect(); if(!b.width||!b.height) return null;
+  return [((e.clientX-b.left)-tx)/zoom/b.width*NW, ((e.clientY-b.top)-ty)/zoom/b.height*NH]; }
+IW2.addEventListener('pointermove',e=>{
+  if(cmpDrag){ tx+=e.clientX-cmpDrag.x; ty+=e.clientY-cmpDrag.y; cmpDrag={x:e.clientX,y:e.clientY,moved:true}; applyView(); return; }
+  const f=s2f2(e); if(!f) return;
+  lastPt=f; if(showXY) drawXH(f,cmpPlate());
+});
+let cmpDrag=null;
+IW2.addEventListener('pointerdown',e=>{ if(zoom>1.01){ cmpDrag={x:e.clientX,y:e.clientY,moved:false}; try{ IW2.setPointerCapture(e.pointerId); }catch(_){} } });
+IW2.addEventListener('pointerup',e=>{ const d=cmpDrag; cmpDrag=null;
+  if(d&&d.moved) return;
+  if(cmpWhat==='prev'||cmpWhat==='next') go(cmpPlate()); });
+IW2.addEventListener('pointercancel',()=>{ cmpDrag=null; });
+IW2.addEventListener('pointerleave',()=>{ $('xh2').innerHTML=''; });
+IW2.addEventListener('wheel',e=>{
+  if(!SHELL.matches && !e.ctrlKey && !e.metaKey && zoom<=1.01) return;
+  e.preventDefault();
+  const b=IW2.getBoundingClientRect();
+  zoomAt(zoom*Math.exp(-e.deltaY*0.0016), e.clientX-b.left, e.clientY-b.top);
+},{passive:false});
+IW2.addEventListener('dblclick',e=>{ const b=IW2.getBoundingClientRect();
+  zoomAt(zoom<ZMAX?zoom*2:1, e.clientX-b.left, e.clientY-b.top); });
 
 /* one pointer drags, two pinch; a press that barely moves is a tap, not a drag */
 const ptrs=new Map();
@@ -906,7 +976,7 @@ function hover(e){
   lastPt=f;
   if(showXY) drawXH(f);
   /* armed for a pick, the plate is a surface to aim at, not a legend to read */
-  if(pickArm){ if(hot) hideTip(); return; }
+  if(pickArm||anArm){ if(hot) hideTip(); return; }
   if(measMode){ if(mA&&!mB){ mHover=f; drawMeas(); } if(hot) hideTip(); return; }
   const h=pickAny(f[0],f[1]);
   /* compared by key, not identity: pickAny wraps a fresh object each call, so `h===hot`
@@ -918,6 +988,8 @@ function hover(e){
 IW.addEventListener('click',e=>{
   if(noClick){ noClick=false; return; }          /* the pointer was dragged, not tapped */
   const f=s2f(e); if(!f) return;
+  const nt=anShow&&anAt(e); if(nt){ anOpen(nt); return; }
+  if(anArm){ anPlace(f); return; }
   if(pickArm){ takePick(f); return; }
   if(measMode){
     if(!mA||mB){ mA=f; mB=null; mHover=null; } else { mB=f; }
@@ -939,13 +1011,138 @@ function hintWarn(msg){
   clearTimeout(hintT); hintT=setTimeout(()=>{ hintT=null; mark(); },4000);
 }
 
+/* ---------- notes: your own markers on the plates ----------
+   A note is a point on a plate with a line of text: an electrode tip found in the
+   histology afterwards, a lesion, a place to come back to. Kept in this browser,
+   exported and imported as JSON, and carried in a link while there are few enough to
+   fit in one. Stored on its plate and in atlas millimetres, so it draws on the plate,
+   the projections and the 3-D view alike, and reads out in whatever frame is set. */
+let NOTES=[], anShow=false, anArm=false, anEdit=null, anClrT=null;
+const anOK = n => n && plateOf[n.p] && Number.isFinite(n.x) && Number.isFinite(n.y) &&
+  n.x>=0 && n.x<=1 && n.y>=0 && n.y<=1 && typeof n.t==='string';
+try{ NOTES=(JSON.parse(localStorage.getItem('gae-notes')||'[]')||[]).filter(anOK).map(n=>anMake(n.p,n.x,n.y,n.t,n.id)); }catch(_){}
+function anSave(){ try{ localStorage.setItem('gae-notes',JSON.stringify(NOTES)); }catch(_){} }
+function anMake(p,x,y,t,id){
+  return {id:id||(Date.now().toString(36)+Math.random().toString(36).slice(2,6)), p:+p,
+          x:+(+x).toFixed(4), y:+(+y).toFixed(4), ap:plateOf[p].bregma,
+          ml:+toML(x*NW).toFixed(2), dv:+toDV(y*NH).toFixed(2), t:String(t||'').slice(0,200)};
+}
+function anDraw(){
+  const g=$('an');
+  g.innerHTML = anShow ? NOTES.filter(n=>n.p===cur).map(n=>
+    `<g class="note" data-id="${esc(n.id)}"><circle cx="${(n.x*NW).toFixed(1)}" cy="${(n.y*NH).toFixed(1)}" r="6"/>`+
+    `<text x="${(n.x*NW+9).toFixed(1)}" y="${(n.y*NH-8).toFixed(1)}">${esc(n.t)}</text></g>`).join('') : '';
+  anPJ(); if(typeof v3frame==='function') v3frame();
+}
+/* the note under a click, if any. The wrapper takes pointer capture on pointerdown, so
+   the click is retargeted to it and a handler on the marker would never fire; asked of
+   the point instead, which is what the marker is under. */
+function anAt(e){
+  const el=document.elementFromPoint(e.clientX,e.clientY), g=el&&el.closest&&el.closest('#an .note');
+  return g ? NOTES.find(x=>x.id===g.dataset.id) : null;
+}
+/* the form sits by the point, like the tip does */
+function anOpen(n){
+  anEdit=n; const f=$('anf'); f.hidden=false;
+  $('ant').value=n.t||''; $('andel').hidden=!NOTES.includes(n);
+  const [sx,sy]=f2s(n.x*NW,n.y*NH), b=iwRect();
+  f.style.left=Math.max(2,Math.min(b.width-f.offsetWidth-2,sx+12)).toFixed(1)+'px';
+  f.style.top=Math.max(2,Math.min(b.height-f.offsetHeight-2,sy+12)).toFixed(1)+'px';
+  $('ant').focus();
+}
+function anClose(){ anEdit=null; $('anf').hidden=true; }
+function anChanged(){ anSave(); anDraw(); anList(); queueHash(); }
+$('anf').onsubmit=e=>{ e.preventDefault(); if(!anEdit) return;
+  anEdit.t=$('ant').value.trim().slice(0,200);
+  if(!NOTES.includes(anEdit)) NOTES.push(anEdit);
+  anClose(); anChanged(); };
+$('andel').onclick=()=>{ NOTES=NOTES.filter(n=>n!==anEdit); anClose(); anChanged(); };
+$('ancan').onclick=anClose;
+function anArmSet(on){
+  anArm=!!on; $('anadd').classList.toggle('armed',anArm); IW.classList.toggle('pick',anArm);
+  $('anadd').setAttribute('aria-pressed',anArm?'true':'false');
+  if(anArm){ setPick(false); if(measMode){ $('ckm').checked=false; setMeas(false); } }
+  hideTip(); mark();
+}
+function anPlace(f){ anArmSet(false); anOpen(anMake(cur,f[0]/NW,f[1]/NH,'')); }
+function anShowSet(on){
+  anShow=!!on; $('ckan').checked=anShow; $('anadd').hidden=!anShow;
+  if(!anShow){ anArmSet(false); anClose(); }
+  anDraw(); queueHash();
+}
+$('ckan').onchange=e=>anShowSet(e.target.checked);
+$('anadd').onclick=()=>anArmSet(!anArm);
+/* the same notes on the projections, and listed in their pane */
+function anPJ(){
+  const g=$('pjan'); if(!g) return;
+  if(!anShow||!NOTES.length){ g.innerHTML=''; return; }
+  const V=VIEWS[pview];
+  g.innerHTML=NOTES.map(n=>`<circle cx="${pjx(n.ap).toFixed(1)}" cy="${pjy(V,n[V.k]).toFixed(1)}" r="4.5"><title>${esc(n.t)} (plate ${n.p})</title></circle>`).join('');
+}
+function anList(){
+  const el=$('anlist'); if(!el) return;
+  $('ancnt').textContent=NOTES.length?`${NOTES.length} note${NOTES.length>1?'s':''}, kept in this browser`:'';
+  if(!NOTES.length){ el.innerHTML='<p class="empty">No notes yet. Tick <b>Notes</b> over the plate, press <b>Add</b>, and click where the note belongs.</p>'; return; }
+  const F=FRAME.on?1:0;
+  el.innerHTML=[...NOTES].sort((a,b)=>a.p-b.p).map(n=>{ const q=toFrame(n.ap,n.ml,n.dv);
+    return `<div class="rrow anrow" data-id="${esc(n.id)}" role="button" tabindex="0">`+
+      `<span class="pl">plate ${n.p}</span><span class="nm">${n.t?esc(n.t):'<i>untitled</i>'}</span><span></span>`+
+      `<span class="rd2">${apLab(F)} ${sgn(q.ap)} · ML ${sgn(q.ml)} · DV ${sgn(q.dv)} mm</span></div>`; }).join('');
+  [...el.querySelectorAll('.anrow')].forEach(r=>{
+    const act=()=>{ const n=NOTES.find(x=>x.id===r.dataset.id); if(!n) return;
+      if(!anShow) anShowSet(true); setTab('plate'); go(n.p); anOpen(n); };
+    r.onclick=act; r.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); act(); } };
+  });
+}
+$('anexp').onclick=()=>{
+  const j={app:'Gerbil Atlas Explorer', build:BUILD||null, generated:new Date().toISOString(),
+    coordinates:'atlas: ap = bregma of the plate, ml and dv in mm; x, y are fractions of the 1100 x 703 plate frame',
+    notes:NOTES};
+  const u=URL.createObjectURL(new Blob([JSON.stringify(j,null,2)],{type:'application/json'}));
+  dl('gerbil_atlas_notes.json',u,u);
+};
+$('animp').onchange=e=>{
+  const f=e.target.files&&e.target.files[0]; if(!f) return;
+  f.text().then(t=>{
+    let j; try{ j=JSON.parse(t); }catch(_){ hintWarn('That file is not JSON.'); return; }
+    const arr=Array.isArray(j)?j:(j&&Array.isArray(j.notes)?j.notes:[]);
+    const have=new Set(NOTES.map(n=>n.id)); let k=0;
+    for(const n of arr) if(anOK(n)&&!have.has(n.id)){ NOTES.push(anMake(n.p,n.x,n.y,n.t,n.id)); k++; }
+    anChanged(); hintWarn(k?`${k} note${k>1?'s':''} imported.`:'Nothing new in that file.');
+  });
+  e.target.value='';
+};
+$('anclr').onclick=()=>{
+  const b=$('anclr');
+  if(anClrT){ clearTimeout(anClrT); anClrT=null; NOTES=[]; anClose(); anChanged(); b.textContent='Clear all'; return; }
+  b.textContent='Click again to clear'; anClrT=setTimeout(()=>{ anClrT=null; b.textContent='Clear all'; },3000);
+};
+/* a link carries the notes while they fit: plate, the two fractions and the text */
+function anHash(){
+  if(!anShow||!NOTES.length||NOTES.length>8) return '';
+  return '&an='+NOTES.map(n=>`${n.p}~${n.x}~${n.y}~${encodeURIComponent(n.t)}`).join('~~');
+}
+function anFromHash(v){
+  if(!v) return;
+  const have=new Set(NOTES.map(n=>`${n.p}|${n.x}|${n.y}|${n.t}`)); let k=0;
+  for(const part of v.split('~~')){
+    const f=part.split('~'); if(f.length<4) continue;
+    const p=+f[0], x=+f[1], y=+f[2]; let t=''; try{ t=decodeURIComponent(f.slice(3).join('~')); }catch(_){}
+    if(!plateOf[p]||!(x>=0&&x<=1&&y>=0&&y<=1)) continue;
+    if(!have.has(`${p}|${x}|${y}|${t}`)){ NOTES.push(anMake(p,x,y,t)); k++; }
+  }
+  if(k) anSave();
+  anShowSet(true);
+}
+
 /* ---------- coordinate readout, grid, scale bar ---------- */
-function drawXH(f){
-  if(!showXY){ $('xh').innerHTML=''; return; }
+function drawXH(f,pl){
+  if(!showXY){ $('xh').innerHTML=''; $('xh2').innerHTML=''; return; }
   const x=f[0].toFixed(1), y=f[1].toFixed(1);
   $('xh').innerHTML=`<line x1="${BX0}" y1="${y}" x2="${BX1}" y2="${y}"/>`+
                     `<line x1="${x}" y1="${BY0}" x2="${x}" y2="${BY1}"/>`;
-  const p=plateOf[cur];
+  $('xh2').innerHTML=cmpOn?$('xh').innerHTML:'';
+  const p=plateOf[pl||cur];
   const ml=toML(f[0]), dv=toDV(f[1]);
   if(FRAME.on){
     /* AP is no longer a property of the plate: tilt the frame and it drifts down the
@@ -2248,7 +2445,7 @@ function pjLM(){
 /* everything a change of view or of the skull toggle has to rebuild, in one place:
    the dot cloud caches per-view path strings, so those survive; the axes, the
    silhouette and the plate guide are position-dependent and do not */
-function pjRefresh(){ pjAxes(); pjSk(); pjLM(); pj(); tgPJ(); }
+function pjRefresh(){ pjAxes(); pjSk(); pjLM(); pj(); tgPJ(); anPJ(); }
 
 function pj(){
   const V=VIEWS[pview];
@@ -2265,7 +2462,7 @@ function pj(){
   const q=(sel&&ptsOf[sel])||[];
   $('pjl').innerHTML=q.map(t=>
     `<circle cx="${pjx(t.ap).toFixed(1)}" cy="${pjy(V,t[V.k]).toFixed(1)}" r="5"></circle>`).join('');
-  pjNote(q); pjGuide(); pjHide();
+  pjNote(q); pjGuide(); pjHide(); anPJ();
 }
 /* where the plate viewer is sitting, on the AP axis the two share */
 function pjGuide(){
@@ -2644,7 +2841,7 @@ function v3colours(){
     return [(n>>16&255)/255,(n>>8&255)/255,(n&255)/255]; };
   v3col={ ce:hex('--accent'), ti:hex('--cloud2'),
           c0:hex('--cloud'), c1:hex('--cloud2'), c2:hex('--mark'),
-          bg:hex('--panel'), bone:hex('--bone'), tg:hex('--targ') };
+          bg:hex('--panel'), bone:hex('--bone'), tg:hex('--targ'), an:hex('--note') };
 }
 
 function v3init(){
@@ -3033,6 +3230,22 @@ function v3render(){
     gl.deleteBuffer(vb); gl.deleteVertexArray(va);
   }
 
+  if(anShow && NOTES.length){                  /* the notes, each as a small cross */
+    const r=.3, lv=[];
+    for(const n of NOTES){ const c=[n.ml,w3y(n.dv),w3z(n.ap)];
+      lv.push(c[0]-r,c[1],c[2], c[0]+r,c[1],c[2], c[0],c[1]-r,c[2], c[0],c[1]+r,c[2], c[0],c[1],c[2]-r, c[0],c[1],c[2]+r); }
+    gl.useProgram(pLine);
+    const vb=gl.createBuffer(), va=gl.createVertexArray();
+    gl.bindVertexArray(va); gl.bindBuffer(gl.ARRAY_BUFFER,vb);
+    gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(lv),gl.STREAM_DRAW);
+    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0,3,gl.FLOAT,false,0,0);
+    gl.uniformMatrix4fv(U(pLine,'u_mvp'),false,M);
+    gl.uniform3fv(U(pLine,'u_c'),v3col.an);
+    gl.uniform1f(U(pLine,'u_a'),.95);
+    gl.drawArrays(gl.LINES,0,lv.length/3);
+    gl.deleteBuffer(vb); gl.deleteVertexArray(va);
+  }
+
   skull(true);
 
   /* the labels ride along in every mode; alone, they are the mode */
@@ -3282,6 +3495,8 @@ function writeHash(){
   if(psrc!=='drawing') h+='&ps='+psrc;
   if(pctr!==100) h+='&ct='+pctr;
   if(pview!=='dv') h+='&pj='+pview;
+  if(cmpOn) h+='&cmp='+cmpWhat;
+  h+=anHash();
   if(tab!=='plate') h+='&t='+tab;
   /* the plan: target, side and the three angles, written only while the planner is the
      pane in front. A link without it is a link that was never planning anything, so no
@@ -3351,6 +3566,7 @@ function readHash(){
     if(c.length===2&&c.every(Number.isFinite)) centreOn(c[0]*NW,c[1]*NH); else applyView();
   } else { zoom=1; tx=ty=0; applyView(); }
   setPView(par.pj==='ml'?'ml':'dv');
+  if(CMPWHAT.includes(par.cmp)!==cmpOn || (par.cmp&&par.cmp!==cmpWhat)) setCmp(CMPWHAT.includes(par.cmp), par.cmp);
 
   const r=par.r==='volume'||par.r==='points'?par.r:'contour';
   v3mode=r;
@@ -3415,6 +3631,7 @@ function readHash(){
     setMode('targ');
   }
   tgSync();
+  if(par.an) anFromHash(par.an);
   setTab(par.t==='proj'?'proj':(par.t==='v3d'?'v3d':'plate'));
   return true;
 }
@@ -3594,6 +3811,8 @@ function setMode(m){
   $('paneFind').classList.toggle('on',m==='find');
   $('paneCoord').classList.toggle('on',m==='coord');
   $('paneTarg').classList.toggle('on',m==='targ');
+  $('paneNotes').classList.toggle('on',m==='notes');
+  if(m==='notes'){ anList(); if(!anShow) anShowSet(true); }
   /* the planner picks its target out of the same list, so the list stays with it */
   $('list').classList.toggle('on',m==='find'||m==='targ');
   $('revout').classList.toggle('on',m==='coord');
@@ -3641,6 +3860,7 @@ function srcShow(){
   /* the drawing is the only source with colour in it. The histology was published in grey
      and is stored that way, so the box reads as already checked there and goes dead rather
      than offering a filter that would do nothing. */
+  if(cmpOn) cmpShow();
   const grey = psrc!=='drawing';
   $('ckgy').checked = pgrey || grey;
   $('ckgy').disabled = grey;
@@ -3698,16 +3918,17 @@ function fit(){
   /* stacked, the page scrolls and the plate is bound by its width, which CSS already
      knows; an inline width left over from a wider window would only fight it */
   if(!SHELL.matches){
-    if(IW.style.width){ IW.style.width=''; fitW=0; applyView(); }
+    if(IW.style.width){ IW.style.width=''; IW2.style.width=''; fitW=0; applyView(); }
     return;
   }
   const cs=getComputedStyle(IMGBOX);
   const w=IMGBOX.clientWidth -parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight);
   const h=IMGBOX.clientHeight-parseFloat(cs.paddingTop) -parseFloat(cs.paddingBottom);
   if(!(w>0&&h>0)) return;                       /* laid out to nothing, or not showing */
-  const nw=Math.max(160,Math.min(w,h*NW/NH));
+  const per = cmpOn ? (w-8)/2 : w;              /* two panes share the width */
+  const nw=Math.max(160,Math.min(per,h*NW/NH));
   if(Math.abs(nw-fitW)<0.5) return;
-  fitW=nw; IW.style.width=nw.toFixed(1)+'px';
+  fitW=nw; IW.style.width=nw.toFixed(1)+'px'; IW2.style.width=nw.toFixed(1)+'px';
   applyView();
 }
 new ResizeObserver(fit).observe(IMGBOX);
@@ -3755,6 +3976,7 @@ function framePreview(){
     : `<b>${esc(FPREV)}</b> ${ctrTxt(a)}<span class="fpa">the frame is off, so this is the atlas reading</span>`;
 }
 function frameApply(){
+  if(smode==='notes') anList();
   frmBuild();
   const b=$('frameb');
   b.classList.toggle('on',FRAME.on);

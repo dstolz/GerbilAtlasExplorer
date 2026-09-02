@@ -10,6 +10,8 @@
   --cloud:#d5d0c4; --cloud2:#736c5e;
   /* the CT skull surface in the 3-D view, and its outline as a line on the panels */
   --bone:#b0a68f; --boneln:#8f8264; --lmk:#0f766e;
+  /* your own notes on the plates: warm, and unlike any mark the atlas or the app makes */
+  --note:#d9700b;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#15140f; --panel:#1e1c17; --panel2:#242119; --ink:#ece7dc; --muted:#9d968a;
@@ -324,6 +326,35 @@ input[type=range]{accent-color:var(--accent)}
 /* the footprint sphere, cut by this plane; on the projections, the sphere's silhouette */
 #tk ellipse.fp{fill:var(--targ);fill-opacity:.08;stroke:var(--targ);stroke-width:1.6;stroke-dasharray:3 3;
   vector-effect:non-scaling-stroke}
+/* notes: a ring and a word, clickable through the overlay that otherwise ignores the pointer */
+#an .note{pointer-events:auto;cursor:pointer}
+#an circle{fill:#fff;fill-opacity:.7;stroke:var(--note);stroke-width:2.2;vector-effect:non-scaling-stroke}
+#an text{fill:var(--note);font-size:14px;font-weight:600;paint-order:stroke;stroke:#fff;stroke-width:3.5px;
+  stroke-linejoin:round}
+#pjan circle{fill:var(--note);stroke:#fff;stroke-width:1.2}
+.anf{position:absolute;z-index:6;display:flex;gap:5px;align-items:center;padding:6px 8px;
+  background:var(--panel);border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow)}
+.anf[hidden]{display:none}
+.anf input{width:200px;padding:5px 8px;border:1px solid var(--line);border-radius:7px;
+  background:var(--panel2);color:var(--ink);font:inherit;font-size:13px}
+.anlist{overflow:auto;max-height:min(40dvh,420px)}
+.anrow .nm{overflow-wrap:anywhere}
+label.z.anlab{display:inline-block;cursor:pointer}
+/* compare: the second stack beside the first */
+#imgbox.cmp{display:flex;gap:8px;align-items:center;justify-content:center}
+#imgbox.cmp .imgwrap{flex:none}
+.imgwrap.cmp[hidden]{display:none}
+.cmplab{position:absolute;left:8px;top:6px;z-index:4;font-size:11px;line-height:1.4;padding:1px 6px;
+  border-radius:4px;background:rgba(255,255,255,.88);color:#1b1a17;pointer-events:none;
+  font-variant-numeric:tabular-nums}
+#om2 path{fill:var(--mark);fill-opacity:.10;stroke:var(--mark);stroke-width:1.5;fill-rule:evenodd;
+  vector-effect:non-scaling-stroke}
+#om2 path.est{stroke-dasharray:6 4}
+#xh2 line{stroke:var(--mark);stroke-opacity:.55;stroke-width:1;vector-effect:non-scaling-stroke}
+.csel{font-family:inherit;font-size:12px;color:var(--ink);background:var(--panel2);
+  border:1px solid var(--line);border-radius:7px;padding:3px 5px;cursor:pointer}
+.csel[hidden]{display:none}
+@media (max-width:899px){ #imgbox.cmp{flex-direction:column} }
 #pjtk circle.fp{fill:var(--targ);fill-opacity:.08;stroke-width:1.6;stroke-dasharray:3 3}
 #tk text{fill:var(--targ);font-size:14px;font-weight:600;paint-order:stroke;
   stroke:#fff;stroke-width:3.5px;stroke-linejoin:round}

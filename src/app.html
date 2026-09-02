@@ -35,6 +35,7 @@
       <button type="button" class="on" data-m="find">Find a structure</button>
       <button type="button" data-m="coord">At a coordinate</button>
       <button type="button" data-m="targ" title="Experimental — plan a track to a structure">Plan a track</button>
+      <button type="button" data-m="notes" title="Your own markers on the plates, kept in this browser">Notes</button>
     </div>
 
     <div class="pane on" id="paneFind">
@@ -115,6 +116,16 @@
       </div>
     </div>
 
+    <div class="pane" id="paneNotes">
+      <p class="hint">A note is a point on a plate with a line of text: an electrode tip found in the histology, a lesion, somewhere to come back to. Tick <b>Notes</b> over the plate, press <b>Add</b> and click where it belongs; click a marker to edit it. Notes stay in this browser unless you export them.</p>
+      <div class="count"><span id="ancnt"></span>
+        <span class="cr">
+          <button class="z" id="anexp" type="button" title="Download every note as JSON">Export</button>
+          <label class="z anlab" title="Add notes from a JSON file exported here">Import<input type="file" id="animp" accept="application/json,.json" hidden></label>
+          <button class="z" id="anclr" type="button" title="Remove every note from this browser">Clear all</button>
+        </span></div>
+      <div class="anlist" id="anlist"></div>
+    </div>
     <div class="list on" id="list" role="listbox" aria-label="Structures"></div>
     <div class="list" id="revout"></div>
     <div class="det" id="det" hidden></div>
@@ -152,6 +163,14 @@
         <label class="tg" title="Click two points on the plate to measure between them"><input type="checkbox" id="ckm">Measure</label>
         <span class="tgw"><label class="tg" title="Trace the skull's cut through this coronal plane"><input type="checkbox" id="cksk">Skull</label><button type="button" class="ast" title="Skull alignment is approximate — read the note" aria-label="Note on skull alignment">*</button></span>
         <label class="tg" title="Bregma, lambda and the occipital crest where they fall, and the interaural line"><input type="checkbox" id="cklm">Landmarks</label>
+        <span class="tsep"></span>
+        <label class="tg" title="A second plate beside this one, sharing zoom, pan and crosshair: the other histology of this level, the drawing, or the plate before or after"><input type="checkbox" id="ckcmp">Compare</label>
+        <select class="csel" id="cmpsel" hidden aria-label="What the second pane shows">
+          <option value="nissl">Nissl</option><option value="myelin">Myelin</option><option value="drawing">Labelled</option>
+          <option value="prev">Plate before</option><option value="next">Plate after</option>
+        </select>
+        <label class="tg" title="Your own markers on the plates"><input type="checkbox" id="ckan">Notes</label>
+        <button class="z" id="anadd" type="button" hidden title="Click, then click the plate where the note belongs" aria-pressed="false">Add</button>
         <span class="tsep"></span>
         <button class="z" id="epng" type="button" title="Download this plate as a PNG with the current overlays and coordinates">PNG</button>
         <button class="z" id="esvg" type="button" title="Download this plate as an editable SVG: the regional outlines as vector paths, with the current overlays and coordinates">SVG</button>
@@ -224,10 +243,27 @@
                 <g id="ms"></g>
                 <g id="tk"></g>
                 <g id="pk"></g>
+                <g id="an"></g>
               </svg>
             </div>
             <div class="sbar" id="sb" hidden><div class="bar" id="sbb"></div><div class="lab" id="sbl"></div></div>
             <div class="tip" id="tip" hidden></div>
+            <form class="anf" id="anf" hidden autocomplete="off">
+              <input type="text" id="ant" maxlength="200" placeholder="What is here?" aria-label="Note text">
+              <button type="submit" class="z">Save</button>
+              <button type="button" class="z" id="andel">Delete</button>
+              <button type="button" class="z" id="ancan">Cancel</button>
+            </form>
+          </div>
+          <div class="imgwrap cmp" id="iw2" hidden>
+            <div class="pan" id="pan2">
+              <img id="pi2" alt="">
+              <svg id="ov2" viewBox="0 0 1100 703" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+                <g id="om2"></g>
+                <g id="xh2"></g>
+              </svg>
+            </div>
+            <div class="cmplab" id="cmplab"></div>
           </div>
         </div>
         <div class="rdout" id="rd" hidden aria-live="polite"></div>
@@ -246,6 +282,7 @@
             <g id="pjl"></g>
             <g id="pjg"></g>
             <g id="pjtk"></g>
+            <g id="pjan"></g>
             <circle id="pjhi" r="9" style="display:none"></circle>
           </svg>
           <div class="tip" id="pjt" hidden></div>
@@ -481,6 +518,8 @@
       <dt><kbd>Home</kbd> <kbd>End</kbd></dt><dd>the first and the last plate</dd>
       <dt><kbd>/</kbd></dt><dd>jump to the search box</dd>
       <dt><kbd>?</kbd></dt><dd>open this panel</dd>
+      <dt>Compare</dt><dd>a second plate beside the first, sharing zoom, pan and crosshair</dd>
+      <dt>Notes</dt><dd>your own markers, kept in this browser; export them as JSON to keep them</dd>
       <dt><kbd>Esc</kbd></dt><dd>drop the selection, or clear a measurement</dd>
       <dt>double-click</dt><dd>zoom into the plate at that point; drag to pan</dd>
       <dt>hover a label</dt><dd>read its full name; click it to select that structure</dd>
