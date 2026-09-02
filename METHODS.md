@@ -647,7 +647,12 @@ you open. The 3-D view fetches `data/gerbil_atlas_volumes.json` on demand instea
 **Meshes** in its controls — when the page is served over HTTP, and offers the file picker
 when it was opened from disk; it draws the selected structure, or a filtered list of up to
 forty, as closed surfaces, says which grade each is and that six planes in seven are
-interpolated, and writes the selected one as STL. The meshes were regenerated with the
+interpolated, and writes the selected one as STL. The label volume the meshes are cut
+from is also written out, by `build_volumes.py --nifti`, as `data/gerbil_atlas_labels.nii.gz`:
+one uint16 id per 50 µm voxel, the file's axes in RAS order (x to the animal's right, y
+anterior, z dorsal) with the atlas millimetres in its sform, and `data/gerbil_atlas_labels_lut.csv`
+naming each id; 0 is outside the brain and 65000 a face the atlas seals and does not name.
+Its per-structure voxel counts agree with the mesh volumes to within 0.3%. The meshes were regenerated with the
 library versions `tools/requirements.txt` pins: the vertices are those of the first build
 to the 0.01 mm the file stores, and the triangle order differs, which is what a different
 scikit-image does with a tie.

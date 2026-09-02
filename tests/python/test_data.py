@@ -194,3 +194,39 @@ def test_volumes_consistent(db):
         assert e['bounding'] == (e['grade'] == 'slab')
         m = e['mesh']
         assert m['fw'] in (2, 4) and m['nv'] > 0 and m['nf'] > 0
+
+
+def test_nifti_labels_match_the_meshes():
+    """The committed label volume names the same structures as the meshes, at the same
+    voxel size and origin the meshes file records, and 0 / 65000 mean what the table says."""
+    import csv
+    import gzip
+    import struct
+
+    import numpy as np
+
+    with open(A.VOLUMES, encoding='utf8') as f:
+        V = json.load(f)
+    raw = gzip.open(os.path.join(A.DATA, 'gerbil_atlas_labels.nii.gz'), 'rb').read()
+    assert struct.unpack_from('<i', raw, 0)[0] == 348 and raw[344:348] == b'n+1\0'
+    dim = struct.unpack_from('<8h', raw, 40)
+    nx, ny, nz = dim[1:4]
+    assert (nx, ny, nz) == (V['grid']['shape_zyx'][2], V['grid']['shape_zyx'][0], V['grid']['shape_zyx'][1])
+    assert struct.unpack_from('<hh', raw, 70) == (512, 16)
+    res = V['grid']['res_mm']
+    assert struct.unpack_from('<8f', raw, 76)[1:4] == pytest.approx((res, res, res), abs=1e-6)
+    sx, sy, sz = (struct.unpack_from('<4f', raw, o) for o in (280, 296, 312))
+    assert (sx[3], sy[3], sz[3]) == pytest.approx((V['grid']['ml_mm'][0], V['grid']['ap_mm'][0], V['grid']['dv_mm'][0]), abs=1e-4)
+    a = np.frombuffer(raw, dtype='<u2', offset=352, count=nx * ny * nz)
+    with open(os.path.join(A.DATA, 'gerbil_atlas_labels_lut.csv'), encoding='utf8', newline='') as f:
+        lut = {int(r['id']): r['abbr'] for r in csv.DictReader(f)}
+    ids, counts = np.unique(a, return_counts=True)
+    assert lut[0] == '' and lut[65000] == ''
+    named = {lut[int(i)] for i in ids if 0 < int(i) < 65000}
+    assert named == set(V['data'])
+    brain = float((a > 0).sum()) * res ** 3
+    assert brain == pytest.approx(V['summary']['brain_volume_mm3'], rel=0.001)
+    for i, c in zip(ids, counts):
+        ab = lut[int(i)]
+        if ab:
+            assert c * res ** 3 == pytest.approx(V['data'][ab]['volume_mm3'], rel=0.01, abs=1e-3), ab

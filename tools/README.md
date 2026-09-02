@@ -18,7 +18,7 @@ anyone check any of them, so they are here as code, in the order they run.
 | `label_leaders.py` | Follows the line the atlas draws from a label it could not fit inside the region it names, and writes where that line ends into `label_leaders`. For those 215 labels the box is where the word is; this is where the structure is, and it is what everything downstream seeds and aims at. Needs the source PDF. |
 | `build_region_extents.py` | Cuts `region_extents` out of the tracings in `svg/` and the located abbreviations in `label_positions`, and writes it into `data/gerbil_atlas.json`. |
 | `regiongeom.py` | The boundary geometry: crack-lattice tracing, junction detection, arc-wise Douglas-Peucker. Kept apart because it is the part that has to be right for the regions to tile. |
-| `build_volumes.py` | Stacks the 62 plates, interpolates between them, and writes the brain surface and one mesh per structure to `data/gerbil_atlas_volumes.json`; `--stl DIR` writes the same meshes as STL. |
+| `build_volumes.py` | Stacks the 62 plates, interpolates between them, and writes the brain surface and one mesh per structure to `data/gerbil_atlas_volumes.json`; `--stl DIR` writes the same meshes as STL, `--nifti PATH` the label volume they were cut from as a gzipped NIfTI-1 file with a lookup table beside it. |
 | `volume.py` | The voxel geometry: the even-odd fill, the distance fields, marching cubes, hulls. Kept apart for the same reason `regiongeom.py` is — it holds the part that decides whether the regions still partition the volume. |
 | `inline_region_extents.py` | Retired; a shim that runs `build_app.py` (or its `--check`), so an old command still does the right thing. |
 
@@ -34,6 +34,7 @@ python3 tools/build_region_extents.py --plates 30 --dry-run --qc
 python3 tools/build_volumes.py                         # all 62 plates, ~3 min, 21 MB of meshes
 python3 tools/build_volumes.py --plates 28-33 --dry-run --qc
 python3 tools/build_volumes.py --stl out/              # the same meshes as STL
+python3 tools/build_volumes.py --nifti data/gerbil_atlas_labels.nii.gz   # the label volume as NIfTI
 python3 tools/export_tables.py --refresh-db            # the CSVs, the tables, the GeoJSON
 python3 tools/build_app.py --lean                      # then rebuild both pages
 python3 tools/build_app.py --check                     # are the committed pages a fresh build

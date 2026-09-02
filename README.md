@@ -220,6 +220,7 @@ plate range is malformed, and which are printed on one plate more than it gives 
 | `data/gerbil_atlas_labels.csv` | One row per printed label — 6,266 stereotaxic triplets, read at the end of the label's leader line where the atlas draws one. |
 | `data/gerbil_atlas_plates.csv` | One row per plate: bregma / lambda / interaural / occipital-crest AP. |
 | `data/geojson/plate_NN.geojson` | The regional outlines of one plate in millimetres, one feature per structure, with the unnamed faces and the section outline. |
+| `data/gerbil_atlas_labels.nii.gz`, `data/gerbil_atlas_labels_lut.csv` | The label volume the meshes were cut from, as a NIfTI file at 50 µm: one id per voxel in RAS (x right, y anterior, z dorsal) with the atlas millimetres in its sform, and the table that names each id. Interpolated between sections 350 µm apart, like the meshes. |
 | `data/plates/{drawing,nissl,myelin}/NN.jpg` | The 186 plate images, cropped to the atlas's printed coordinate box. |
 | `data/vec.json`, `data/skull.json` | The traced outlines with their per-plate registration, and the CT skull surface: the two assets no script here regenerates. |
 | `data/index_raw.txt` | The authors' Index of abbreviations as extracted. Source of truth for the rest. |

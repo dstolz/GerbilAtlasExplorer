@@ -40,6 +40,8 @@ carries a `version` block naming the release its derived fields were built for.
   JSON, carried in a link while there are few.
 - Meshes in the 3-D view, fetched on demand from `data/gerbil_atlas_volumes.json`, with
   the brain surface as a shell and an STL download of the selected structure.
+- `data/gerbil_atlas_labels.nii.gz`: the label volume as a NIfTI file at 50 µm with a
+  lookup table, written by `build_volumes.py --nifti`.
 - A strip of thumbnails showing the selected structure on each of its plates.
 - Search: 26 more aliases across nomenclatures (70 in all), the alias a result came in by
   shown beside it, close matches offered when nothing matches exactly, recent structures.

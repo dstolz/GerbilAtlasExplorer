@@ -547,6 +547,9 @@ def main():
     ap.add_argument('--dry-run', action='store_true', help='report and write no JSON')
     ap.add_argument('--qc', action='store_true', help='write qc/chk_vol_*.png')
     ap.add_argument('--stl', metavar='DIR', help='also write meshes as STL')
+    ap.add_argument('--nifti', metavar='PATH',
+                    help='also write the label volume as a gzipped NIfTI-1 file (uint16 ids), '
+                         'with a lookup table beside it')
     ap.add_argument('--res', type=float, default=V.RES, help='voxel mm (default 0.05)')
     ap.add_argument('--samples', type=int, default=REGION_SAMPLES,
                     help='samples across a structure; lower is coarser (default %d)'
@@ -676,6 +679,18 @@ def main():
         os.makedirs(A.QCDIR, exist_ok=True)
         qc_planes(db, frame, grid, labels, ids, plates)
         qc_projections(grid, brain, labels, ids)
+
+    if a.nifti:
+        names = {s['abbr']: s['name'] for s in db['structures']}
+        V.write_nifti(a.nifti, np.where(brain, labels, 0), grid,
+                      descrip='Radtke-Schuller et al. 2016; not a segmentation')
+        lut = os.path.splitext(os.path.splitext(a.nifti)[0])[0] + '_lut.csv'
+        with open(lut, 'w', encoding='utf8', newline='') as fh:
+            fh.write('id,abbr,name\r\n0,,outside the brain\r\n')
+            for ab, key in sorted(ids.items(), key=lambda kv: kv[1]):
+                fh.write('%d,%s,"%s"\r\n' % (key, ab, names.get(ab, '').replace('"', '""')))
+            fh.write('65000,,a sealed face the atlas does not name\r\n')
+        print('wrote %s (%.1f MB) and %s' % (a.nifti, os.path.getsize(a.nifti) / 1e6, lut))
 
     if a.dry_run:
         print('\n--dry-run: nothing written')
