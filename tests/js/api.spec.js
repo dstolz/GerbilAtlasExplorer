@@ -91,3 +91,77 @@ test('the labels CSV has one row per located label of the list', async ({ page }
   const text = require('fs').readFileSync(await dl.path(), 'utf8');
   expect(text.trim().split('\n').length).toBe(8);   // header + the seven MSO labels
 });
+
+// ---------- the gross divisions ----------
+// A division has no geometry of its own: its outline is its members' outlines with the
+// walls between them dropped. The test that matters is that what gets drawn covers the
+// same ground as the members do, since a bug in the edge cancellation would show up as a
+// missing lobe or a filled ventricle rather than as an error.
+
+test('a division outlines exactly the ground its members cover', async ({ page }) => {
+  await page.goto(BUNDLE + '#p30');
+  await page.waitForTimeout(400);
+  const out = await page.evaluate(() => {
+    const G = window.__gae;
+    let seed = 20240101;
+    const rnd = () => ((seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
+    let checked = 0, worst = 0, worstAt = '', empty = [];
+    for (const g of G.GRP) {
+      let drawn = 0;
+      for (const pl of g.plates) {
+        const rg = G.regBuild(pl).by[g.key];
+        if (!rg) continue;
+        drawn++;
+        let bad = 0;
+        for (let i = 0; i < 400; i++) {
+          const x = rg.x0 + rnd() * (rg.x1 - rg.x0), y = rg.y0 + rnd() * (rg.y1 - rg.y0);
+          if (G.regIn(rg, x, y) !== rg.parts.some(p => G.regIn(p, x, y))) bad++;
+        }
+        checked++;
+        if (bad / 400 > worst) { worst = bad / 400; worstAt = g.id + '/p' + pl; }
+      }
+      if (!drawn) empty.push(g.id);
+    }
+    return { checked, worst, worstAt, empty };
+  });
+  expect(out.empty).toEqual([]);
+  expect(out.checked).toBeGreaterThan(400);
+  // the residue is points landing on a shared boundary, where "inside one region" is a
+  // coin toss; anything structural would be orders of magnitude worse than this
+  expect(out.worst).toBeLessThan(0.02);
+});
+
+test('a division behaves like a structure: card, link, projection, meshes', async ({ page }) => {
+  await page.goto(BUNDLE + '#p30/%40hipp');
+  await page.waitForTimeout(500);
+  const o = await page.evaluate(() => {
+    const G = window.__gae, s = G.state();
+    G.writeHash();
+    return { sel: s.sel, hash: location.hash, name: document.querySelector('.det .dn').textContent,
+             label: document.querySelector('.det .da').textContent,
+             members: document.querySelectorAll('#gmem .pbtn').length,
+             outlined: document.querySelectorAll('#om path.grp').length,
+             dots: document.querySelectorAll('#pjl circle').length,
+             inCA1: G.grpsOf['CA1'].map(g => g.id) };
+  });
+  expect(o.sel).toBe('@hipp');
+  expect(o.hash).toBe('#p30/%40hipp');
+  expect(o.name).toBe('hippocampal formation');
+  expect(o.label).toBe('HIPP');
+  expect(o.members).toBe(36);
+  expect(o.outlined).toBe(1);
+  expect(o.dots).toBeGreaterThan(100);
+  expect(o.inCA1).toEqual(['hipp']);
+});
+
+test('listing a division filters the structure list to its members', async ({ page }) => {
+  await page.goto(BUNDLE + '#p30/%40tcx');
+  await page.waitForTimeout(400);
+  await page.click('#glist');
+  await expect(page.locator('#cnt')).toContainText('temporal cortex');
+  const [dl] = await Promise.all([page.waitForEvent('download'), page.click('#ecsv')]);
+  const text = require('fs').readFileSync(await dl.path(), 'utf8');
+  expect(text.trim().split('\n').length).toBe(9);   // header + the eight temporal fields
+  await page.click('#gunf');
+  await expect(page.locator('#cnt')).toContainText('723 of 723');
+});

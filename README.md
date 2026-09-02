@@ -46,6 +46,20 @@ the whole atlas (all 186 plate images) lives inside it, 22 MB, most of that the 
   seventy other names from other nomenclatures resolve, and the result says which alias
   brought it in; a query that matches nothing exactly offers its close matches. Filter by
   system chips (`auditory`, `hippocampal`, `thalamus`, …) to see a whole pathway at once.
+- **Whole divisions** — the atlas names 723 structures and no containers for them: there is
+  no "hippocampus" in the index, only CA1, CA2, CA3, DG and their layers. Twenty gross
+  divisions are added here — cortex and its four lobes, the hippocampal formation, the
+  olfactory areas and the bulb, amygdala, striatum and pallidum, septum and basal forebrain,
+  thalamus, hypothalamus, midbrain, pons, medulla, brainstem, cerebellum, fibre tracts,
+  ventricles — and each behaves like a structure: pick one and it is outlined on the plate
+  in its own colour, listed on every plate it is on, plotted in the projection, and drawn in
+  3D as its members' meshes. A division has no geometry of its own. Its outline is its
+  members' outlines with the walls between them dropped, its area the sum of theirs, its
+  coordinate the median of their printed labels — so nothing it shows is a boundary the atlas
+  does not draw. **List them** narrows the structure list to one division's members, which is
+  what the CSV and the label table then write. Divisions overlap on purpose: the brainstem is
+  the midbrain, pons and medulla together, the bulb sits inside the olfactory areas, and a
+  structure's own card says which divisions it is in.
 - **At a coordinate** — go the other way: type bregma / ML / DV and get the structures
   nearest that point. Or hit **Pick on the plate** and just click where you're aiming.
 - Step through the 62 plates, zoom and pan, **Fit** to reset.
@@ -168,6 +182,14 @@ know before relying on them.
   necessarily printed** on every plate of that range. Of the 3,510 the index lists, 3,298
   carry a located label; the shortfall is mostly structures the plate does not name.
 - The **system tags** are a convenience layer added here, not part of the published atlas.
+- The **gross divisions** are the same kind of addition, and a larger one: the atlas publishes
+  no hierarchy, so which structures make up "the pons" is a judgement made here. It is written
+  out in full — `data/gerbil_atlas_groups.csv` names every member of every division, and
+  `tools/build_groups.py` is the rules that produced them — so it can be read and argued with.
+  The one boundary the atlas's own geometry settles is the pons against the medulla, drawn at
+  the last plate that prints the facial nucleus (plate 49, bregma −9.35 mm); a structure
+  spanning it is in both. Six structures are in no division: two arteries, a blood vessel and
+  three surface fissures, which are landmarks on the section rather than parts of the brain.
 - The **region outlines** are cut from the atlas's own drawn lines, not from a published
   segmentation — the atlas has none. 3,131 structure–plate entries have one, and each says
   how much of its own boundary the atlas prints: the median is 98%, but **6% of regions are
@@ -216,6 +238,7 @@ plate range is malformed, and which are printed on one plate more than it gives 
 | `TARGETING_PLAN.md` | The design behind the track planner. |
 | `data/gerbil_atlas.json` | Full database: structures, coordinates, label positions, brain outlines, region extents, the page-to-plate registration, calibration, a version stamp. |
 | `data/gerbil_atlas_structures.csv` | One row per structure: abbreviation, name, plate and bregma range, tags. |
+| `data/gerbil_atlas_groups.csv` | One row per gross division: its members spelled out, the plates it is on, its other names, and a note saying what it holds and what it deliberately does not. Written by `tools/build_groups.py`; added here, not published with the atlas. |
 | `data/gerbil_atlas_structure_table.csv` | One row per structure with its label centre, areas per plate, and the volume and centre of its mesh. |
 | `data/gerbil_atlas_labels.csv` | One row per printed label — 6,266 stereotaxic triplets, read at the end of the label's leader line where the atlas draws one. |
 | `data/gerbil_atlas_plates.csv` | One row per plate: bregma / lambda / interaural / occipital-crest AP. |

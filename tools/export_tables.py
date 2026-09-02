@@ -12,6 +12,7 @@ again: CI runs `--check` and fails if a committed table is not what the JSON say
     data/gerbil_atlas_labels.csv         one row per printed label: 6,266 stereotaxic triplets
     data/gerbil_atlas_structure_table.csv  one row per structure with its label centre,
                                          areas, and the volume and centre from the meshes
+    data/gerbil_atlas_groups.csv         one row per gross division, with its members
     data/geojson/plate_NN.geojson        the region extents of one plate, in millimetres
 
 `--refresh-db` also recomputes the per-plate counts the database carries
@@ -37,6 +38,7 @@ FILES = {
     'plates': os.path.join(A.DATA, 'gerbil_atlas_plates.csv'),
     'labels': os.path.join(A.DATA, 'gerbil_atlas_labels.csv'),
     'table': os.path.join(A.DATA, 'gerbil_atlas_structure_table.csv'),
+    'groups': os.path.join(A.DATA, 'gerbil_atlas_groups.csv'),
 }
 VERSION = '0.9.0'
 SCHEMA = '1.0'
@@ -112,6 +114,25 @@ def structures_csv(db):
         rows.append([s['abbr'], s['name'], s['first_plate'], s['last_plate'], s['n_plates'],
                      str(float(s['bregma_anterior'])), str(float(s['bregma_posterior'])),
                      ';'.join(s['systems']), ' '.join(map(str, s['plates']))])
+    return csv_text(rows, header)
+
+
+def groups_csv(db):
+    """The gross divisions, one row each, with every member spelled out.
+
+    Flat and readable so the taxonomy can be argued with without opening the JSON or the
+    Python: it is the one block of this database that is a judgement rather than a
+    transcription of what the atlas prints.
+    """
+    header = ['id', 'label', 'division', 'n_structures', 'first_plate', 'last_plate',
+              'n_plates', 'bregma_anterior_mm', 'bregma_posterior_mm', 'aliases',
+              'structures', 'plates', 'note']
+    rows = []
+    for g in db.get('groups', {}).get('data', []):
+        rows.append([g['id'], g['abbr'], g['name'], g['n_members'], g['first_plate'],
+                     g['last_plate'], g['n_plates'], str(float(g['bregma_anterior'])),
+                     str(float(g['bregma_posterior'])), ';'.join(g.get('alias', [])),
+                     ' '.join(g['members']), ' '.join(map(str, g['plates'])), g['note']])
     return csv_text(rows, header)
 
 
@@ -255,6 +276,7 @@ def outputs(db):
         'plates': (FILES['plates'], plates_csv(db)),
         'labels': (FILES['labels'], labels_csv(db)),
         'table': (FILES['table'], table_csv(db)),
+        'groups': (FILES['groups'], groups_csv(db)),
     }
     for p in range(1, A.N_PLATES + 1):
         out['geojson %02d' % p] = (os.path.join(GEO, 'plate_%02d.geojson' % p), geojson_text(db, p))

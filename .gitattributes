@@ -1,0 +1,14 @@
+# Several files here are checked byte-for-byte against a fresh build -- the exported
+# tables by `tools/export_tables.py --check`, the two pages by `tools/build_app.py
+# --check` -- and the pages are the source files inlined verbatim. Left to
+# core.autocrlf, git rewrites their line endings on checkout and those checks then fail
+# on whichever machine did not write them: the tables are written with an explicit CRLF
+# terminator, everything else with LF. So git converts none of them.
+data/*.csv          -text
+data/geojson/*.geojson -text
+data/gerbil_atlas.json -text
+data/skull.json     -text
+data/vec.json       -text
+*.html              -text
+src/app.js          -text
+src/app.css         -text

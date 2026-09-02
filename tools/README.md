@@ -12,6 +12,7 @@ anyone check any of them, so they are here as code, in the order they run.
 | `atlaslib.py` | What every script shares: the paths, the plate frame in millimetres, the page-to-plate transform, the traced-outline readers, one `--plates` grammar (`30`, `28-33`, `5,30,45`), and the renderer that writes `data/gerbil_atlas.json` byte for byte as the repository keeps it. A script loads the database, changes its block and saves; nothing splices text. |
 | `build_app.py` | Builds `gerbil_atlas_explorer.html` and the lean `index.html` from `src/` and `data/`, stamps the commit and date into the page, and with `--check` exits non-zero when a committed page is not a fresh build. `--site DIR` writes everything GitHub Pages serves; `--dev` writes `build/dev.html`, which links `src/app.css` and `src/app.js` so code edits need no rebuild. |
 | `export_tables.py` | The flat files, all from the JSON: the two CSVs that used to be kept by hand, a per-label coordinate table, a per-structure table with areas, volumes and centres, and GeoJSON extents per plate. `--refresh-db` also recomputes the per-plate counts the database carries and the `plate_registration` block; `--check` exits non-zero if any committed table is stale. |
+| `build_groups.py` | The twenty gross divisions — cortex, hippocampal formation, thalamus, pons, brainstem and the rest — as named lists of the atlas's own abbreviations, written into the `groups` block. Declarative rules rather than a hand list, so the taxonomy can be read and argued with; `--report` prints every division with its members and the residue, `--check` exits non-zero if the committed block is stale. It adds no geometry: a division's outline, area, coordinate and mesh are all derived in the app from its members'. Stdlib only. |
 | `check_indexes.py` | Reads the atlas's two published indexes against each other and against the database. No inputs beyond the repository. It is what says the 723 transcribed entries are intact, and it is where the seven malformed plate ranges are enumerated. |
 | `find_missing_labels.py` | Finds printed labels the label pass missed, by cutting the word from a plate that carries it and matching it back on one that does not. Extends `label_positions`. Needs the source PDF. |
 | `label_blocks.py` | Reads which abbreviations the atlas typeset into one printed label — `S1Tr/ LPtA`, `Au1 (A1)` — off the source PDF, and writes `label_blocks`. Those name one region between them, so `build_region_extents.py` seeds them as one. |
@@ -35,10 +36,13 @@ python3 tools/build_volumes.py                         # all 62 plates, ~3 min, 
 python3 tools/build_volumes.py --plates 28-33 --dry-run --qc
 python3 tools/build_volumes.py --stl out/              # the same meshes as STL
 python3 tools/build_volumes.py --nifti data/gerbil_atlas_labels.nii.gz   # the label volume as NIfTI
+python3 tools/build_groups.py --report                 # the divisions and their members
+python3 tools/build_groups.py                          # writes the `groups` block
 python3 tools/export_tables.py --refresh-db            # the CSVs, the tables, the GeoJSON
 python3 tools/build_app.py --lean                      # then rebuild both pages
 python3 tools/build_app.py --check                     # are the committed pages a fresh build
 python3 tools/export_tables.py --check                 # are the committed tables current
+python3 tools/build_groups.py --check                  # are the committed divisions current
 python3 -m pytest tests/python                         # the data's own promises, as tests
 ```
 

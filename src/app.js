@@ -39,6 +39,38 @@ const NW=1100, NH=703;
 const byAb = Object.fromEntries(S.map(r=>[r.abbr,r]));
 const plateOf = {}; P.forEach(p=>plateOf[p.plate]=p);
 const SYSLIST = [...new Set(S.flatMap(r=>r.systems))].sort();
+
+/* ---------- superstructures ----------
+   The published atlas names structures and no containers for them: there is no
+   "hippocampus" in the index, only CA1, CA2, CA3, DG and their layers. A superstructure
+   is a named list of the atlas's own abbreviations and nothing else -- no geometry of its
+   own. Its outline is the union of its members' outlines, its area the sum of their areas,
+   its coordinates the median of their printed labels, its mesh their meshes. So anything
+   it says can be traced back to something the atlas drew, and it cannot claim a boundary
+   the atlas does not print. They are an addition here, not part of the atlas; groups
+   overlap on purpose, so the brainstem holds everything the midbrain, pons and medulla do.
+
+   A group is keyed `@id` so nothing can collide with an abbreviation, and its record is
+   filed in byAb beside the structures': every reader of byAb[sel] -- the card, the plate
+   strip, the deep link, the exports -- then works on one without knowing it is one. */
+const GRP = DB.groups || [];
+GRP.forEach(g=>{ g.grp=true; g.key='@'+g.id; byAb[g.key]=g; });
+const GOK = GRP.length>0;
+const isGrp = a => !!(a&&byAb[a]&&byAb[a].grp);
+/* what to call the selection in a sentence, and what colour it is drawn in. `@ctx` is a
+   key and not a name anybody would read, so a division is called by its name. */
+const selName = () => !sel ? '' : isGrp(sel) ? byAb[sel].name : sel;
+const selHue  = () => isGrp(sel) ? 'teal' : 'blue';
+/* the same two colours the stylesheet gives --mark and --markg, spelled out for the
+   canvas and the SVG, which are written to a file and cannot read a custom property */
+const MARKC='#0a5cff', MARKG='#0097a7';
+const markC = a => (a===undefined?isGrp(sel):isGrp(a)) ? MARKG : MARKC;
+const markF = (a,o) => (markC(a)===MARKG?'rgba(0,151,167,':'rgba(10,92,255,')+o+')';
+/* and the other way about: the divisions a structure is in, which is how its own card
+   offers them. A structure can be in several -- the pons and the brainstem, the
+   olfactory areas and the bulb -- so this is a list and not a parent. */
+const grpsOf={};
+GRP.forEach(g=>g.members.forEach(a=>(grpsOf[a]||(grpsOf[a]=[])).push(g)));
 const norm = s => s.toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
 const $ = i => document.getElementById(i);
 
@@ -230,6 +262,15 @@ for(const p in LB){ const ap=plateOf[+p].bregma;
 const BUILD=((document.querySelector('meta[name="gae-build"]')||{}).content||'').trim();
 const ptsOf={};
 PTS.forEach(q=>(ptsOf[q.ab]||(ptsOf[q.ab]=[])).push(q));
+/* A superstructure's labels are its members', pooled -- and only on the plates the group
+   is on, which for the pons and the medulla is narrower than where their members reach.
+   Filed under the group's own key, so the card's centre and spread, the projection, the
+   reverse lookup and the planner all read a group the way they read a structure. Not
+   pushed into PTS: the background cloud plots each printed label once. */
+GRP.forEach(g=>{ const pl=new Set(g.plates), v=[];
+  for(const a of g.members) for(const q of (ptsOf[a]||[])) if(pl.has(q.p)) v.push(q);
+  if(v.length) ptsOf[g.key]=v;
+});
 
 let active = new Set(), cur = 30, sel = null, results = S;
 let zoom=1, tx=0, ty=0;                        /* view transform, applied to #pan */
@@ -309,15 +350,37 @@ function fuzzyHits(n){
   }
   return out.sort((a,b)=>a.sc-b.sc||a.r.name.localeCompare(b.r.name)).map(x=>x.r);
 }
-let fuzzy=false, via={};
+let fuzzy=false, via={}, gresults=GRP, gopen=true;
+/* the list narrowed to one division's structures, which is what makes the CSV, the
+   label table and the 3-D filter work on a division without any of them learning what
+   one is. Set from the division's card and dropped the moment the box or a chip is
+   used, since either of those is a new question. */
+let gfilter=null;
+try{ gopen=localStorage.getItem('gae-divs')!=='0'; }catch(_){}
 /* refine() only re-filters; run() also reads the box for a plate or a bregma to jump
    to. Keeping the two apart lets go() refresh a plate-scoped list without the pair of
    them calling each other in a circle. */
 function refine(){
   const raw=$('q').value.trim(), n=norm(raw), al=aliasHits(raw);
   fuzzy=false; via={};
+  const gf=gfilter&&byAb[gfilter] ? new Set(byAb[gfilter].members) : null;
   const inScope=r=>!(scope==='plate' && !r.plates.includes(cur)) && !(active.size && !r.systems.some(t=>active.has(t)));
+  /* the divisions answer the same box and the same chips, on their own names and the
+     other names people call them by -- "hippocampus" for the hippocampal formation,
+     "basal ganglia" for the striatum and pallidum. Not on their members' names: typing
+     CA1 is a question about CA1, and answering it with the whole hippocampus as well
+     would bury the row that was asked for. */
+  gresults = GRP.filter(g=>{
+    /* narrowed to one division's structures, the other nineteen are not the question */
+    if(gf) return g.key===gfilter;
+    if(!inScope(g)) return false;
+    if(!n) return true;
+    const flat=n.replace(/ /g,'');
+    return norm(g.name).includes(n) || g.id===flat || g.abbr.toLowerCase().includes(flat) ||
+      (g.alias||[]).some(t=>norm(t).includes(n));
+  });
   results = S.filter(r=>{
+    if(gf && !gf.has(r.abbr)) return false;
     if(!inScope(r)) return false;
     if(!n) return true;
     const direct = r.abbr.toLowerCase()===n.replace(/ /g,'') || norm(r.name).includes(n) ||
@@ -331,6 +394,7 @@ function refine(){
   draw();
 }
 function run(){
+  gfilter=null;
   const raw=$('q').value.trim();
   // "plate 30" / "p30"
   const mp = raw.match(/^(?:plate\s*|p)(\d{1,2})$/i);
@@ -344,20 +408,58 @@ function run(){
 function draw(){
   pj(); v3flags();
   const L=$('list');
-  $('cnt').textContent = scope==='plate'
-    ? results.length+' of '+nHere+' on plate '+cur
-    : results.length+' of '+S.length+' structures';
+  const gf=gfilter&&byAb[gfilter];
+  $('cnt').innerHTML = gf
+    ? `${results.length} structure${results.length===1?'':'s'} of <b>${esc(gf.name)}</b>`+
+      (scope==='plate'?' on plate '+cur:'')+
+      ` <button type="button" class="unf" id="gunf" title="Back to every structure">clear</button>`
+    : esc((scope==='plate'
+        ? results.length+' of '+nHere+' on plate '+cur
+        : results.length+' of '+S.length+' structures')
+      + (GOK&&gresults.length ? ' · '+gresults.length+' division'+(gresults.length>1?'s':'') : ''));
+  if($('gunf')) $('gunf').onclick=()=>{ gfilter=null; refine(); };
   $('sortl').textContent = results.length? 'plates '+Math.min(...results.map(r=>r.first_plate))+'–'+Math.max(...results.map(r=>r.last_plate)) : '';
   $('ecsv').disabled = !results.length; $('elab').disabled = !results.length;
   recentDraw();
-  if(!results.length){ L.innerHTML='<p class="empty">Nothing matched. Try an abbreviation (MGV), a name (medial geniculate), a system chip, or “plate 42”.</p>'; return; }
-  L.innerHTML = (fuzzy?'<p class="empty fz">Nothing matched exactly. Close matches:</p>':'') + results.slice(0,400).map(r=>
-    `<div class="row${sel===r.abbr?' sel':''}" data-a="${esc(r.abbr)}" role="option" tabindex="0" aria-selected="${sel===r.abbr?'true':'false'}">
+  /* one row shape for both, so a division reads as a thing you can pick and not as a
+     control: the same three columns, with the label where an abbreviation goes and the
+     count of what it is made of where the plate range goes for a structure. */
+  const row=(r,k)=>
+    `<div class="row${r.grp?' grp':''}${sel===k?' sel':''}" data-a="${esc(k)}" role="option" tabindex="0" aria-selected="${sel===k?'true':'false'}">
        <span class="ab">${esc(r.abbr)}</span>
-       <span class="nm">${esc(r.name)}${via[r.abbr]?` <span class="via">via ${esc(via[r.abbr])}</span>`:''}</span>
-       <span class="pl">${r.first_plate===r.last_plate?r.first_plate:r.first_plate+'–'+r.last_plate}</span>
-     </div>`).join('') + (results.length>400?'<p class="empty">…and '+(results.length-400)+' more. Narrow the search.</p>':'');
-  [...L.querySelectorAll('.row')].forEach(el=>el.onclick=()=>{select(el.dataset.a);go(byAb[el.dataset.a].first_plate);});
+       <span class="nm">${esc(r.name)}${via[k]?` <span class="via">via ${esc(via[k])}</span>`:''}</span>
+       <span class="pl">${r.grp?r.n_members+' str':
+          (r.first_plate===r.last_plate?r.first_plate:r.first_plate+'–'+r.last_plate)}</span>
+     </div>`;
+  /* The divisions sit above the structures under a header that folds them away, because
+     they are twenty rows in front of seven hundred and somebody who never wants them
+     should be able to say so once. Folded, the header still says how many matched. */
+  const gh = gresults.length
+    ? `<div class="ghead${gopen?' open':''}" id="ghead" role="button" tabindex="0" aria-expanded="${gopen?'true':'false'}"
+         title="Gross divisions of the brain — added here, not part of the published atlas">
+         <span class="gcar">▸</span>Divisions<b>${gresults.length}</b></div>`
+    : '';
+  const gl = gh + (gopen?gresults.map(g=>row(g,g.key)).join(''):'');
+  if(!results.length){
+    L.innerHTML = gl + '<p class="empty">Nothing matched. Try an abbreviation (MGV), a name '+
+      '(medial geniculate), a division (hippocampus), a system chip, or “plate 42”.</p>';
+  } else {
+    L.innerHTML = gl + (fuzzy?'<p class="empty fz">Nothing matched exactly. Close matches:</p>':'')
+      + results.slice(0,400).map(r=>row(r,r.abbr)).join('')
+      + (results.length>400?'<p class="empty">…and '+(results.length-400)+' more. Narrow the search.</p>':'');
+  }
+  const hd=$('ghead');
+  if(hd){ const flip=()=>{ gopen=!gopen;
+      try{ localStorage.setItem('gae-divs',gopen?'1':'0'); }catch(_){}
+      draw(); reveal(); };
+    hd.onclick=flip;
+    hd.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); flip(); } }; }
+  [...L.querySelectorAll('.row')].forEach(el=>el.onclick=()=>{
+    const a=el.dataset.a; select(a);
+    /* a structure opens on the first plate that carries it; a division spans dozens and
+       is drawn on all of them, so picking one where you already are stays where you are */
+    if(!isGrp(a) || !byAb[a].plates.includes(cur)) go(byAb[a].first_plate);
+  });
 }
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 /* the last few structures looked at, kept in this browser, offered while the box is empty */
@@ -371,8 +473,9 @@ function recentDraw(){
   const el=$('recent'); if(!el) return;
   const show=RECENT.length && !$('q').value.trim() && !active.size && scope==='all';
   el.hidden=!show; if(!show) return;
-  el.innerHTML='<span>Recent</span>'+RECENT.map(a=>`<button type="button" class="pbtn" data-a="${esc(a)}" title="${esc(byAb[a].name)}">${esc(a)}</button>`).join('');
-  [...el.querySelectorAll('.pbtn')].forEach(b=>b.onclick=()=>{ select(b.dataset.a); go(byAb[b.dataset.a].first_plate); });
+  el.innerHTML='<span>Recent</span>'+RECENT.map(a=>`<button type="button" class="pbtn${isGrp(a)?' pg':''}" data-a="${esc(a)}" title="${esc(byAb[a].name)}">${esc(byAb[a].abbr)}</button>`).join('');
+  [...el.querySelectorAll('.pbtn')].forEach(b=>b.onclick=()=>{ const a=b.dataset.a; select(a);
+    if(!isGrp(a) || !byAb[a].plates.includes(cur)) go(byAb[a].first_plate); });
 }
 
 /* ---------- detail ---------- */
@@ -420,25 +523,45 @@ function extTxt(x){
 }
 function select(a){
   sel=a; const r=byAb[a]; const D=$('det'); D.hidden=false;
+  const g=r.grp?r:null;
   const c=coordsOf(a), x=extentOf(a);
   const fc=FRAME.on?coordsOf(a,1):null, fx=FRAME.on?extentOf(a,1):null;
-  D.innerHTML=`<p class="dn">${esc(r.name)}</p><span class="da">${esc(r.abbr)}</span>
+  D.innerHTML=`<p class="dn">${esc(r.name)}</p><span class="da${g?' dg':''}">${esc(r.abbr)}</span>
+   ${g?`<p class="gnote">${esc(g.note)}</p>`:''}
    <dl class="kv">
      <dt>Plates</dt><dd>${r.first_plate}–${r.last_plate} <span style="color:var(--muted)">(${r.n_plates})</span></dd>
      <dt>Bregma</dt><dd>${r.bregma_anterior.toFixed(2)} to ${r.bregma_posterior.toFixed(2)} mm</dd>
      <dt>Lambda</dt><dd>${(r.bregma_anterior+LMof('Lambda')).toFixed(2)} to ${(r.bregma_posterior+LMof('Lambda')).toFixed(2)} mm</dd>
      <dt>Interaural</dt><dd>${(r.bregma_anterior+LMof('Interaural')).toFixed(2)} to ${(r.bregma_posterior+LMof('Interaural')).toFixed(2)} mm</dd>
-     ${c?`<dt title="Median position of this structure's printed labels — near, but not identical to, its centroid">Label centre</dt>
+     ${c?`<dt title="${g?'Median position of the printed labels of every structure in this division — a centre of the division, not its centroid':"Median position of this structure's printed labels — near, but not identical to, its centroid"}">Label centre</dt>
         <dd>${ctrTxt(fc||c,fc)}${fc?`<span class="atl">atlas ${ctrTxt(c)}</span>`:''}</dd>`:''}
-     ${x?`<dt title="The full spread of those labels — what the projection below plots. Not the structure's extent: for that, hover or select it on a plate">Label spread</dt>
+     ${x?`<dt title="The full spread of those labels — what the projection below plots. Not the ${g?'division':'structure'}'s extent: for that, ${g?'select it on a plate':'hover or select it on a plate'}">Label spread</dt>
         <dd>${extTxt(fx||x)}${fx?`<span class="atl">atlas ${extTxt(x)}</span>`:''}</dd>`:''}
-     <dt>Systems</dt><dd>${r.systems.map(t=>esc(t.replace(/_/g,' '))).join(', ')}</dd>
+     ${g?`<dt title="Every atlas structure this division is made of. Divisions may overlap: a structure can be in more than one.">Structures</dt>
+        <dd>${g.n_members} <span style="color:var(--muted)">(${c?c.n:0} located labels)</span>
+          <button type="button" class="glist" id="glist">${gfilter===g.key?'listed below':'List them'}</button></dd>`:
+        `<dt>Systems</dt><dd>${r.systems.map(t=>esc(t.replace(/_/g,' '))).join(', ')}</dd>`}
+     ${!g&&(grpsOf[a]||[]).length?`<dt title="The gross divisions this structure is part of. They overlap, so it can be in several.">Divisions</dt>
+        <dd class="gin">${grpsOf[a].map(q=>
+          `<button type="button" class="pbtn pg" data-g="${esc(q.key)}" title="${esc(q.note)}">${esc(q.name)}</button>`).join('')}</dd>`:''}
    </dl>
    <div class="plines">${r.plates.map(p=>`<span class="pbtn" data-p="${p}" role="button" tabindex="0">${p}</span>`).join('')}</div>
-   <div class="gal" id="gal" aria-label="The structure on each of its plates"></div>
+   ${g?`<div class="gmem" id="gmem"><span>Made of</span>${g.members.map(m=>
+        `<button type="button" class="pbtn" data-a="${esc(m)}" title="${esc((byAb[m]||{}).name||m)}">${esc(m)}</button>`).join('')}</div>`:''}
+   <div class="gal" id="gal" aria-label="The ${g?'division':'structure'} on each of its plates"></div>
    <button class="detx" id="detx" type="button" title="Drop the selection" aria-label="Drop the selection">&times;</button>`;
-  [...D.querySelectorAll('.pbtn')].forEach(el=>{ el.onclick=()=>go(+el.dataset.p);
+  [...D.querySelectorAll('.plines .pbtn')].forEach(el=>{ el.onclick=()=>go(+el.dataset.p);
     el.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); el.click(); } }; });
+  [...D.querySelectorAll('.gmem .pbtn')].forEach(el=>el.onclick=()=>{
+    select(el.dataset.a); if(!byAb[el.dataset.a].plates.includes(cur)) go(byAb[el.dataset.a].first_plate); });
+  [...D.querySelectorAll('.gin .pbtn')].forEach(el=>el.onclick=()=>{
+    const k=el.dataset.g; select(k); if(!byAb[k].plates.includes(cur)) go(byAb[k].first_plate); });
+  if($('glist')) $('glist').onclick=()=>{
+    gfilter = gfilter===g.key ? null : g.key;
+    $('q').value=''; active.clear();
+    [...sysEl.children].forEach(c=>{ c.classList.remove('on'); c.setAttribute('aria-pressed','false'); c.style.order=0; });
+    refine(); select(g.key);
+  };
   $('detx').onclick=clear;
   D.scrollTop=0;
   recentAdd(a);
@@ -483,11 +606,11 @@ async function galBuild(a){
     g.fillStyle='#fff'; g.fillRect(0,0,GW,GH);
     g.drawImage(im, sx,sy,w,h, 0,0,GW,GH);
     const X=x=>(x-sx)/w*GW, Y=y=>(y-sy)/h*GH;
-    g.strokeStyle='#0a5cff'; g.lineWidth=1.4;
+    g.strokeStyle=markC(a); g.lineWidth=1.4;
     if(R){
       g.beginPath();
       R.gs.forEach(gg=>{ gg.forEach(([x,y],i)=>i?g.lineTo(X(x),Y(y)):g.moveTo(X(x),Y(y))); g.closePath(); });
-      g.fillStyle='rgba(10,92,255,.12)'; g.fill('evenodd');
+      g.fillStyle=markF(a,'.12'); g.fill('evenodd');
       if(regEst(R)) g.setLineDash([4,3]);
       g.stroke(); g.setLineDash([]);
     } else bs.forEach((b,i)=>{ const [qx,qy]=ptAt(p,a,i,b), Rr=Math.max(b[2]*NW,b[3]*NH);
@@ -499,7 +622,7 @@ async function galBuild(a){
 function galMark(){ const el=$('gal'); if(el) [...el.children].forEach(d=>d.classList.toggle('cur',+d.dataset.p===cur)); }
 function clear(){
   if(!sel) return;
-  sel=null; $('det').hidden=true; draw();
+  sel=null; gfilter=null; $('det').hidden=true; refine();
   mark(); fit(); tgSync(); queueHash();
 }
 /* draw() rebuilds the list, so the selected row lands wherever it lands; bring it
@@ -583,6 +706,9 @@ function markSel(){
   cmpMark();
   if(!sel){ vh.innerHTML=hintTxt(); return; }
   const r=byAb[sel];
+  /* a superstructure is outlined in its own colour and never circled: it has no printed
+     name to circle, and where its members are drawn it always has an outline */
+  if(isGrp(sel)){ markGrp(r); return; }
   const bs=(LB[cur]||{})[sel]||[];
   /* An outline and a circle are two different claims. The circle says where the name
      falls; the outline says what the name covers. The outline is the better answer
@@ -624,6 +750,33 @@ function markSel(){
   const d=Math.abs(near-cur), dir=near<cur?'anterior':'posterior';
   vh.innerHTML=`<b>${esc(sel)}</b> is not on plate ${cur} \u2014 ${d} plate${d===1?'':'s'} ${dir},`+
     ` ${(d*0.35).toFixed(2)} mm away; it spans plates ${r.first_plate}\u2013${r.last_plate}.`+
+    `<button type="button" id="oobgo">Go to plate ${near}</button>`;
+  $('oobgo').onclick=()=>go(near);
+}
+/* the same job for a superstructure, which answers differently in every branch: it is
+   never circled, its area is a sum over the members drawn here, and being off the plate
+   means the division is not at this level rather than that a name was not printed. */
+function markGrp(g){
+  const ov=$('om'), vh=$('vhint'), rg=regBy[g.key];
+  if(rg){
+    ov.innerHTML=`<path class="grp${regEst(rg)?' est':''}" d="${regD(rg)}"></path>`;
+    vh.innerHTML=`<b>${esc(g.name)}</b> outlined · ${grpTxt(rg,g)}`;
+    ensureVisible([[(rg.x0+rg.x1)/2/NW,(rg.y0+rg.y1)/2/NH,
+                    (rg.x1-rg.x0)/NW,(rg.y1-rg.y0)/NH]]);
+    return;
+  }
+  vh.className='vhint warn';
+  if(!ROK){ vh.innerHTML=`<b>${esc(g.name)}</b> selected. This build carries no regional `+
+    `outlines, so there is nothing to draw it from.`; return; }
+  if(g.plates.includes(cur)){
+    vh.innerHTML=`<b>${esc(g.name)}</b> is at this level, but none of its structures `+
+      `has an outline on plate ${cur}.`;
+    return;
+  }
+  const near=g.plates.reduce((a,b)=>Math.abs(b-cur)<Math.abs(a-cur)?b:a);
+  const d=Math.abs(near-cur), dir=near<cur?'anterior':'posterior';
+  vh.innerHTML=`<b>${esc(g.name)}</b> is not on plate ${cur} — ${d} plate${d===1?'':'s'} `+
+    `${dir}, ${(d*PSTEP).toFixed(2)} mm away; it spans plates ${g.first_plate}–${g.last_plate}.`+
     `<button type="button" id="oobgo">Go to plate ${near}</button>`;
   $('oobgo').onclick=()=>go(near);
 }
@@ -724,7 +877,7 @@ function cmpShow(){
 function cmpMark(){
   const g=$('om2'); if(!cmpOn||!sel){ g.innerHTML=''; return; }
   const rg=regBuild(cmpPlate()).by[sel];
-  g.innerHTML = rg ? `<path d="${regD(rg)}"${regEst(rg)?' class="est"':''}></path>` : '';
+  g.innerHTML = rg ? `<path class="${isGrp(sel)?'grp':''}${regEst(rg)?' est':''}" d="${regD(rg)}"></path>` : '';
 }
 function setCmp(on,what){
   cmpOn=!!on; if(what&&CMPWHAT.includes(what)) cmpWhat=what;
@@ -859,7 +1012,74 @@ function regBuild(pl){
   /* smallest first: a structure drawn inside another has to stay reachable, which is the
      tie-break pick() already makes between two printed labels */
   out.regs.sort((p,q)=>p.mm2-q.mm2);
+  /* the superstructures of this plate, unioned out of the members drawn on it. Into
+     out.by, so selecting one finds it; never into out.regs, which answers "what is under
+     the pointer" -- a click has to land on the structure the atlas named, not on the
+     division containing it. */
+  for(const g of GRP){ const o=grpRegion(g,pl,out.by); if(o) out.by[g.key]=o; }
   return REGC[pl]=out;
+}
+/* ---- a superstructure's outline: the union of its members', with the walls between
+   them taken out ----
+   The extents tile the section, so every boundary between two regions is stored twice --
+   once in each -- and every boundary with the outside is stored once. Count the edges of
+   the members and drop the ones that came up twice, and what is left is exactly the
+   outer boundary of the union, holes included: a wall between two members cancels, a wall
+   between a member and something outside the group does not. No geometry is invented and
+   nothing is smoothed; every surviving edge is an edge the atlas drew.
+
+   The survivors are then walked into closed rings. Every vertex of a region boundary has
+   even degree, so the walk always closes, and where the union pinches to a point it
+   simply comes back to that vertex twice. */
+function grpRing(parts){
+  const cnt=new Map(), pt=new Map();
+  const key=p=>{ const k=p[0]+','+p[1]; if(!pt.has(k)) pt.set(k,p); return k; };
+  for(const o of parts) for(const g of o.gs){
+    const n=(g.length>1 && g[0][0]===g[g.length-1][0] && g[0][1]===g[g.length-1][1])
+      ? g.length-1 : g.length;
+    for(let i=0;i<n;i++){
+      const a=key(g[i]), b=key(g[(i+1)%n]);
+      if(a===b) continue;                       /* a repeated vertex is not an edge */
+      const e=a<b?a+'|'+b:b+'|'+a;
+      cnt.set(e,(cnt.get(e)||0)+1);
+    }
+  }
+  const ends=[], adj=new Map();
+  for(const [e,n] of cnt) if(n&1){
+    const i=ends.length, k=e.split('|'); ends.push(k);
+    for(const v of k){ const l=adj.get(v); l?l.push(i):adj.set(v,[i]); }
+  }
+  const used=new Uint8Array(ends.length), out=[];
+  for(let i=0;i<ends.length;i++){
+    if(used[i]) continue;
+    used[i]=1; const a=ends[i][0]; let cur=ends[i][1];
+    const ring=[pt.get(a),pt.get(cur)];
+    while(cur!==a){
+      let nx=null;
+      for(const j of (adj.get(cur)||[])) if(!used[j]){
+        used[j]=1; nx=ends[j][0]===cur?ends[j][1]:ends[j][0]; break;
+      }
+      if(nx===null) break;                      /* cannot happen on a closed boundary */
+      ring.push(pt.get(nx)); cur=nx;
+    }
+    if(ring.length>2) out.push(ring);
+  }
+  return out;
+}
+function grpRegion(g,pl,by){
+  if(!ROK || !g.plates.includes(pl)) return null;
+  const parts=[], seen=new Set();
+  for(const a of g.members){ const o=by[a];
+    if(o && !seen.has(o.ab)){ seen.add(o.ab); parts.push(o); } }
+  if(!parts.length) return null;
+  const gs=grpRing(parts);
+  if(!gs.length) return null;
+  let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9, wt=0, tf=0, mm2=0;
+  for(const p of parts){
+    if(p.x0<x0)x0=p.x0; if(p.x1>x1)x1=p.x1; if(p.y0<y0)y0=p.y0; if(p.y1>y1)y1=p.y1;
+    mm2+=p.mm2; wt+=p.mm2; tf+=p.tf*p.mm2;      /* area-weighted, as within one region */
+  }
+  return {ab:g.key,grp:g,gs,x0,y0,x1,y1,mm2,n:gs.length,tf:wt?tf/wt:0,parts};
 }
 /* rebuilt per plate beside labels(), and for the same reason: only one plate is on screen */
 function regIndex(){ const r=regBuild(cur); regs=r.regs; regBy=r.by; }
@@ -899,6 +1119,18 @@ function regTxt(o){
   return `${o.mm2.toFixed(o.mm2<1?3:2)} mm² on this plate · ${q}`;
 }
 const regEst = o => o.tf < RGRD.estimated;
+/* the same sentence for a union, which cannot borrow regTxt(): most of what the members
+   draw is interior wall that the union throws away, so a share of *their* boundary is not
+   a share of the outline on screen. What can be said exactly is the area -- the atlas's
+   own numbers, added up -- and how many of the members are drawn from a boundary the
+   atlas mostly does not print, which is where an edge of this outline could be invented. */
+function grpTxt(o,g){
+  const n=o.parts.length, est=o.parts.filter(regEst).length;
+  return `${o.mm2.toFixed(o.mm2<1?3:2)} mm² on this plate, over ${n} of its ${g.n_members} `+
+    `structure${g.n_members>1?'s':''}`+
+    (est?` · ${est} of them ${est>1?'have boundaries':'has a boundary'} the atlas mostly `+
+         `does not print, so parts of this edge are inferred`:'');
+}
 
 /* ---------- hover a printed label to read it, click it to select ---------- */
 const TOL=6;                       /* viewBox units of slop around a printed label */
@@ -1354,6 +1586,9 @@ function tgTarget(){
   return T;
 }
 const tgBack = q => FRAME.on ? fromFrame(q.ap,q.ml,q.dv) : q;
+/* what to print the target as: an abbreviation, or a division's label rather than the
+   `@id` it is keyed by */
+const tgName = o => (byAb[o.abbr]||{}).abbr || o.abbr;
 
 /* ---- where the track leaves the brain ----
    Marched from well outside back toward the target, taking the outermost point that is
@@ -1576,7 +1811,12 @@ function tgOffTxt(){
 /* where the target came from, in one line: how many labels, off which plates, on which
    side. It is the sentence the plan is only as good as. */
 function tgFrom(o){
-  return `median of ${o.T.n} label${o.T.n===1?'':'s'} on `+
+  /* For a division this is the median of every label its members carry -- a centre of the
+     division, and nothing the atlas prints a name at. Said in as many words, because the
+     one thing that must not happen is somebody reading it as a nucleus. */
+  const g=byAb[o.abbr]&&byAb[o.abbr].grp?byAb[o.abbr]:null;
+  return `median of ${o.T.n} label${o.T.n===1?'':'s'}`+
+         (g?` over its ${g.n_members} structures`:'')+' on '+
          (o.pick ? 'plate '+o.pick : tgPlates(o.abbr).length>1 ? 'all its plates' : 'its plate')+
          `, folded onto the ${o.side>0?'right':'left'}`;
 }
@@ -1609,7 +1849,7 @@ function tgPanel(){
     return;
   }
   if(!o){ D.innerHTML=''; N.hidden=true; $('tpath').hidden=true; tgFootHTML(null); return; }
-  $('ttgt').innerHTML=`<b style="color:var(--targ)">${esc(o.abbr)}</b> · `+
+  $('ttgt').innerHTML=`<b style="color:var(--targ)">${esc(tgName(o))}</b> · `+
     `${o.side>0?'right':'left'} · ${o.plate?'plate '+o.plate:'off the series'}`+
     ` · ${o.T.n} label${o.T.n===1?'':'s'}${o.pick?' on it':''}`;
   const F=FRAME.on?1:0, rows=[], off=tgOffOn();
@@ -1646,13 +1886,13 @@ function tgPanel(){
     : `This label lies beyond either end of the plate series, so there is no section to `+
       `measure it against.`);
   else if(!o.inside) warn.push(tgOffOn()
-    ? `The target — ${esc(o.abbr)}’s label plus the offset — falls outside the traced `+
+    ? `The target — ${esc(tgName(o))}’s label plus the offset — falls outside the traced `+
       `outline of its plate. Either the offset reaches past the surface, or the atlas prints `+
       `this abbreviation beside the section and points at it. `+
       (o.len===undefined
         ? `Nothing of the brain lies along this approach to it, so there is no depth to give.`
         : `The track is measured to it anyway; read the entry with that in mind.`)
-    : `The label for ${esc(o.abbr)} sits outside the traced outline of its `+
+    : `The label for ${esc(tgName(o))} sits outside the traced outline of its `+
       `plate — the drawing prints some abbreviations beside the section and points at them. `+
       (o.len===undefined
         ? `Nothing of the brain lies along this approach to it, so there is no depth to give.`
@@ -1782,7 +2022,7 @@ function tgNotes(){
   const ln=[];
   ln.push('Gerbil Atlas Explorer — track plan');
   ln.push('');
-  ln.push(`target        ${o.abbr}  (${r?r.name:''})`);
+  ln.push(`target        ${tgName(o)}  (${r?r.name:''})`);
   ln.push(`hemisphere    ${o.side>0?'right':'left'}`);
   ln.push(`plate         ${o.plate||'off the series'}`);
   ln.push(`labels read   ${o.pick ? `plate ${o.pick} only, ${o.T.n} label${o.T.n===1?'':'s'}`
@@ -1907,7 +2147,8 @@ function tgJSON(){
   return {
     app:'Gerbil Atlas Explorer', build:BUILD||null, generated:new Date().toISOString(),
     experimental:true, link:location.href,
-    target:{abbr:o.abbr, name:r?r.name:null, hemisphere:o.side>0?'right':'left',
+    target:{abbr:tgName(o), name:r?r.name:null, hemisphere:o.side>0?'right':'left',
+      division:r&&r.grp?{structures:r.n_members, members:r.members}:null,
       plate:o.plate, labels_read_from_plate:o.pick||null, n_labels:o.T.n,
       label:pt(o.T.L), offset_atlas_mm:{...tgOff}, position:pt(o.T), inside_outline:o.inside},
     approach:{tilt_deg:tgTilt, roll_deg:tgRoll, yaw_deg:tgYaw, order:'roll, then tilt, then yaw',
@@ -1937,7 +2178,7 @@ $('tjson').onclick=()=>{
   const j=tgJSON(); if(!j) return;
   const b=new Blob([JSON.stringify(j,null,2)],{type:'application/json'});
   const u=URL.createObjectURL(b);
-  dl(`track_${tgPlan.abbr.replace(/[^A-Za-z0-9]/g,'')}_${tgPlan.side>0?'R':'L'}.json`,u,u);
+  dl(`track_${tgName(tgPlan).replace(/[^A-Za-z0-9]/g,'')}_${tgPlan.side>0?'R':'L'}.json`,u,u);
 };
 $('tozero').onclick=()=>{
   tgPlate=0; tgOff={ap:0,ml:0,dv:0};
@@ -2030,11 +2271,11 @@ function exportPNG(){
   /* the selection, marked the way the screen marks it: the extent where there is one,
      the circle round where the name falls where there is not */
   const bs=(LB[cur]||{})[sel]||[], rgS=regBy[sel];
-  g.strokeStyle='#0a5cff'; g.lineWidth=1.8;
+  g.strokeStyle=markC(); g.lineWidth=1.8;
   if(rgS){
     g.beginPath();
     rgS.gs.forEach(gg=>{ gg.forEach(([x,y],i)=>i?g.lineTo(x,y):g.moveTo(x,y)); g.closePath(); });
-    g.fillStyle='rgba(10,92,255,.10)'; g.fill('evenodd');
+    g.fillStyle=markF(undefined,'.10'); g.fill('evenodd');
     g.lineWidth=1.5; if(regEst(rgS)) g.setLineDash([6,4]);
     g.stroke(); g.setLineDash([]);
   } else bs.forEach((b,i)=>{
@@ -2092,7 +2333,7 @@ function exportPNG(){
   g.beginPath(); g.moveTo(0,NH+9); g.lineTo(NW,NH+9); g.stroke();
   g.textBaseline='top'; g.fillStyle='#1b1a17';
   g.font='600 19px ui-sans-serif,Segoe UI,Helvetica,Arial,sans-serif';
-  g.fillText(`Plate ${cur}`+(sel&&byAb[sel]?`   ·   ${sel} — ${byAb[sel].name}`:''),0,NH+24);
+  g.fillText(`Plate ${cur}`+(sel&&byAb[sel]?`   ·   ${byAb[sel].abbr} — ${byAb[sel].name}`:''),0,NH+24);
   g.font='15px ui-sans-serif,Segoe UI,Helvetica,Arial,sans-serif'; g.fillStyle='#5a554c';
   g.fillText(`AP   bregma ${p.bregma.toFixed(2)}  ·  lambda ${p.lambda_.toFixed(2)}  ·  interaural ${p.interaural.toFixed(2)}  ·  occipital crest ${p.occipital_crest.toFixed(2)} mm`,0,NH+50);
   /* whatever else was drawn on the plate gets a word, so the mark is never unexplained */
@@ -2204,10 +2445,10 @@ function exportSVG(){
   }
   /* as on the screen and the PNG: the extent where there is one, otherwise the circle */
   const bs=(LB[cur]||{})[sel]||[], rgS=regBy[sel];
-  if(rgS) o.push('<g id="highlight" fill="#0a5cff" fill-opacity=".10" fill-rule="evenodd"'+
-    ` stroke="#0a5cff" stroke-width="1.5"${regEst(rgS)?' stroke-dasharray="6 4"':''}>`+
+  if(rgS) o.push(`<g id="highlight" fill="${markC()}" fill-opacity=".10" fill-rule="evenodd"`+
+    ` stroke="${markC()}" stroke-width="1.5"${regEst(rgS)?' stroke-dasharray="6 4"':''}>`+
     `<path d="${regD(rgS)}"/></g>`);
-  else if(bs.length) o.push('<g id="highlight" fill="none" stroke="#0a5cff" stroke-width="1.8">'+
+  else if(bs.length) o.push(`<g id="highlight" fill="none" stroke="${markC()}" stroke-width="1.8">`+
     bs.map(([cx,cy,w,h])=>{ const R=Math.max(w*NW,h*NH);
       return `<ellipse cx="${n2(cx*NW)}" cy="${n2(cy*NH)}" `+
              `rx="${n2(R*0.85+7)}" ry="${n2(R*0.55+6)}"/>`; }).join('')+'</g>');
@@ -2251,7 +2492,7 @@ function exportSVG(){
   const p=plateOf[cur], cap=[];
   cap.push(`<line x1="0" y1="${NH+9}" x2="${NW}" y2="${NH+9}" stroke="#dddad3" stroke-width="1"/>`);
   cap.push(svgText(0,NH+24,19,'#1b1a17',
-    `Plate ${cur}`+(sel&&byAb[sel]?`   ·   ${sel} — ${byAb[sel].name}`:''),600));
+    `Plate ${cur}`+(sel&&byAb[sel]?`   ·   ${byAb[sel].abbr} — ${byAb[sel].name}`:''),600));
   cap.push(svgText(0,NH+50,15,'#5a554c',
     `AP   bregma ${p.bregma.toFixed(2)}  ·  lambda ${p.lambda_.toFixed(2)}  ·  `+
     `interaural ${p.interaural.toFixed(2)}  ·  occipital crest ${p.occipital_crest.toFixed(2)} mm`));
@@ -2471,6 +2712,7 @@ function pj(){
   if(!(key in fld)){ fld={}; fld[key]=fs?pjd(PTS.filter(q=>fs.has(q.ab)&&q.ab!==sel),V):''; }
   $('pjf').setAttribute('d',fld[key]);
   const q=(sel&&ptsOf[sel])||[];
+  $('pjl').classList.toggle('grp',isGrp(sel));
   $('pjl').innerHTML=q.map(t=>
     `<circle cx="${pjx(t.ap).toFixed(1)}" cy="${pjy(V,t[V.k]).toFixed(1)}" r="5"></circle>`).join('');
   pjNote(q); pjGuide(); pjHide(); anPJ();
@@ -2488,10 +2730,10 @@ function pjNote(q){
   const dot='A dot is where an abbreviation is <em>printed</em> \u2014 close to its structure, not its centre.';
   if(!sel){ N.innerHTML=`Every located label in the atlas. ${dot} Hover one to read it, click it to open its plate.`; return; }
   const r=byAb[sel];
-  if(!q.length){ N.innerHTML=`<b>${esc(sel)}</b> is indexed for plates ${r.first_plate}\u2013${r.last_plate}, but none of its labels were located, so there is nothing to plot.`; return; }
+  if(!q.length){ N.innerHTML=`<b>${esc(selName())}</b> is indexed for plates ${r.first_plate}\u2013${r.last_plate}, but none of its labels were located, so there is nothing to plot.`; return; }
   const pl=[...new Set(q.map(t=>t.p))].sort((a,b)=>a-b);
   const out=q.filter(t=>t[V.k]>V.hi||t[V.k]<V.lo).length;
-  N.innerHTML=`<b>${esc(sel)}</b> in blue: ${q.length} label${q.length>1?'s':''} on ${pl.length} plate${pl.length>1?'s':''}`+
+  N.innerHTML=`<b>${esc(selName())}</b> in ${selHue()}: ${q.length} label${q.length>1?'s':''} on ${pl.length} plate${pl.length>1?'s':''}`+
     ` (${pl[0]}${pl.length>1?'\u2013'+pl[pl.length-1]:''}), against every other label in the atlas. ${dot}`+
     (out?` ${out} label${out>1?'s fall':' falls'} outside the plotted range.`:'');
 }
@@ -2857,7 +3099,7 @@ function v3colours(){
     const n=parseInt(m[1],16);
     return [(n>>16&255)/255,(n>>8&255)/255,(n&255)/255]; };
   v3col={ ce:hex('--accent'), ti:hex('--cloud2'),
-          c0:hex('--cloud'), c1:hex('--cloud2'), c2:hex('--mark'),
+          c0:hex('--cloud'), c1:hex('--cloud2'), c2:hex('--mark'), cg:hex('--markg'),
           bg:hex('--panel'), bone:hex('--bone'), tg:hex('--targ'), an:hex('--note') };
   for(const k in MESHC) if(MESHC[k].col) MESHC[k].col=null;   /* recoloured on next draw */
 }
@@ -3101,9 +3343,14 @@ function v3flags(){
   if(!v3ready) return;
   const f=new Float32Array(nPT);
   const fs = results.length<S.length ? new Set(results.map(r=>r.abbr)) : null;
+  /* a division has no printed label of its own, so what stands for it in the cloud is
+     every label its members carry, on the plates the division is on -- the same points
+     the projection draws for it */
+  const G = isGrp(sel) ? byAb[sel] : null;
+  const gm = G ? new Set(G.members) : null, gp = G ? new Set(G.plates) : null;
   for(let i=0;i<nPT;i++){
-    const ab=PTS[i].ab;
-    f[i] = ab===sel ? 2 : (fs&&fs.has(ab) ? 1 : 0);
+    const q=PTS[i], ab=q.ab;
+    f[i] = (G ? (gm.has(ab)&&gp.has(q.p)) : ab===sel) ? 2 : (fs&&fs.has(ab) ? 1 : 0);
   }
   gl.bindBuffer(gl.ARRAY_BUFFER,bufF);
   gl.bufferData(gl.ARRAY_BUFFER,f,gl.DYNAMIC_DRAW);
@@ -3278,7 +3525,7 @@ function v3render(){
   gl.uniform1f(U(pPts,'u_ow'), v3ortho ? v3dist : 0);
   gl.uniform3fv(U(pPts,'u_c0'),v3col.c0);
   gl.uniform3fv(U(pPts,'u_c1'),v3col.c1);
-  gl.uniform3fv(U(pPts,'u_c2'),v3col.c2);
+  gl.uniform3fv(U(pPts,'u_c2'),isGrp(sel)?v3col.cg:v3col.c2);
   gl.drawArrays(gl.POINTS,0,nPT);
   gl.bindVertexArray(null);
 }
@@ -3493,6 +3740,9 @@ function hslRGB(h,sat,l){
   return [f(0),f(8),f(4)];
 }
 function meshColor(ab){
+  /* every mesh of a superstructure in the one colour the plate outlines it in: they are
+     parts of a thing, and twenty hues would read as twenty things */
+  if(isGrp(sel)) return v3col.cg;
   if(ab===sel||(sel&&ab===meshKey(sel))) return v3col.c2;
   let h=0; for(let i=0;i<ab.length;i++) h=(h*31+ab.charCodeAt(i))>>>0;
   return hslRGB(h%360,.55,.55);
@@ -3517,9 +3767,21 @@ function meshKey(ab){
   const g=meshBlk(ab);
   return g&&MESH.data[g[0]] ? g[0] : null;
 }
+/* Every mesh a superstructure is made of, capped. There is no mesh of a division as
+   such -- it is its members' meshes drawn together, which is what the outline on the
+   plate is too -- and the biggest of them holds nearly three hundred, enough to drop the
+   frame rate on a laptop, so past the cap it draws the largest and says how many it left. */
+const MESHMAX=140;
+function meshGroup(g){
+  const out=[];
+  for(const a of g.members){ const k=meshKey(a); if(k&&!out.includes(k)) out.push(k); }
+  if(out.length<=MESHMAX) return out;
+  return out.sort((a,b)=>(MESH.data[b].volume_mm3||0)-(MESH.data[a].volume_mm3||0)).slice(0,MESHMAX);
+}
 /* which meshes to show: the selection, or the current filter when it is a short list */
 function meshList(){
   if(!MESH) return [];
+  if(isGrp(sel)) return meshGroup(byAb[sel]);
   const out=[], add=ab=>{ const k=meshKey(ab); if(k&&!out.includes(k)) out.push(k); };
   if(sel&&meshKey(sel)) add(sel);
   else if(results.length<S.length && results.length<=40)
@@ -3541,28 +3803,38 @@ function meshDraw(M){
   if($('v3ms').checked){ gl.depthMask(false); draw('surface', MESH.surface.mesh, v3col.ti, .16); gl.depthMask(true); }
   gl.disable(gl.DEPTH_TEST); gl.bindVertexArray(null);
 }
-/* the selected structure's mesh as a binary STL, in atlas millimetres (ML, DV, AP) */
+/* the selection's mesh as a binary STL, in atlas millimetres (ML, DV, AP). A
+   superstructure writes every mesh it is drawn from into the one file, as separate shells
+   in one solid -- which is what it is: there is no surface of a division that the atlas
+   drew, only its members' surfaces standing together. */
 function meshSTL(){
-  const key=meshKey(sel); if(!key) return;
-  const m=MESH.data[key].mesh, d=meshDecode(m);
-  const P=d.P, F=d.F, nf=d.nf, buf=new ArrayBuffer(84+nf*50), v=new DataView(buf);
+  const keys = isGrp(sel) ? meshList() : (meshKey(sel)?[meshKey(sel)]:[]);
+  if(!keys.length) return;
+  const parts=keys.map(k=>meshDecode(MESH.data[k].mesh));
+  const nf=parts.reduce((n,d)=>n+d.nf,0);
+  const buf=new ArrayBuffer(84+nf*50), v=new DataView(buf);
   /* named for the region, not for the name it was reached by: a file called A1 that holds
      Au1's boundary would be the one thing about this the reader could not check */
-  const head='Gerbil Atlas Explorer '+key+' (ML,DV,AP mm; interpolated between 350 um sections)';
+  const name = isGrp(sel) ? byAb[sel].abbr : keys[0];
+  const head='Gerbil Atlas Explorer '+name+(isGrp(sel)?' ('+keys.length+' structures)':'')+
+    ' (ML,DV,AP mm; interpolated between 350 um sections)';
   for(let i=0;i<80;i++) v.setUint8(i, i<head.length?head.charCodeAt(i):32);
   v.setUint32(80,nf,true);
-  /* back from world to atlas: x = ML, y = DV = w3y^-1, z = AP = w3z^-1 */
-  const at=i=>[P[i*3], P[i*3+1]+V3YC, V3Z0-(P[i*3+2]+V3ZS/2)];
   let o=84;
-  for(let t=0;t<nf;t++){
-    const a=at(F[t*3]), b=at(F[t*3+1]), c=at(F[t*3+2]);
-    const ux=b[0]-a[0],uy=b[1]-a[1],uz=b[2]-a[2], vx=c[0]-a[0],vy=c[1]-a[1],vz=c[2]-a[2];
-    let nx=uy*vz-uz*vy, ny=uz*vx-ux*vz, nz=ux*vy-uy*vx; const L=Math.hypot(nx,ny,nz)||1;
-    for(const val of [nx/L,ny/L,nz/L,...a,...b,...c]){ v.setFloat32(o,val,true); o+=4; }
-    v.setUint16(o,0,true); o+=2;
+  for(const d of parts){
+    const P=d.P, F=d.F;
+    /* back from world to atlas: x = ML, y = DV = w3y^-1, z = AP = w3z^-1 */
+    const at=i=>[P[i*3], P[i*3+1]+V3YC, V3Z0-(P[i*3+2]+V3ZS/2)];
+    for(let t=0;t<d.nf;t++){
+      const a=at(F[t*3]), b=at(F[t*3+1]), c=at(F[t*3+2]);
+      const ux=b[0]-a[0],uy=b[1]-a[1],uz=b[2]-a[2], vx=c[0]-a[0],vy=c[1]-a[1],vz=c[2]-a[2];
+      let nx=uy*vz-uz*vy, ny=uz*vx-ux*vz, nz=ux*vy-uy*vx; const L=Math.hypot(nx,ny,nz)||1;
+      for(const val of [nx/L,ny/L,nz/L,...a,...b,...c]){ v.setFloat32(o,val,true); o+=4; }
+      v.setUint16(o,0,true); o+=2;
+    }
   }
   const u=URL.createObjectURL(new Blob([buf],{type:'model/stl'}));
-  dl(`mesh_${key.replace(/[^A-Za-z0-9]/g,'')}.stl`,u,u);
+  dl(`mesh_${name.replace(/[^A-Za-z0-9]/g,'')}.stl`,u,u);
 }
 $('v3m').onchange=e=>{ v3m=e.target.checked; if(v3m) meshLoad(); $('v3msw').hidden=!v3m; v3flags(); v3note(); v3frame(); queueHash(); };
 $('v3ms').onchange=()=>v3frame();
@@ -3572,7 +3844,7 @@ $('v3mfb').onclick=()=>$('v3mfile').click();
 function v3note(){
   const N=$('v3n');
   if(v3fail){ N.textContent=''; return; }
-  $('v3stl').hidden=!(v3m&&MESH&&meshKey(sel));
+  $('v3stl').hidden=!(v3m&&MESH&&(isGrp(sel)?meshList().length:meshKey(sel)));
   /* the slab's own AP bounds, quoted from wherever zero is -- a re-zero does not move the
      plates, only what their APs are called, and this line is the only place the 3-D view
      names one */
@@ -3597,7 +3869,20 @@ function v3note(){
       const how = e && (e.grade==='slab'
         ? 'a hull, not a shape — the structure is on one or two plates only'
         : 'interpolated between its plates');
-      mesh = (blk ? ` <b>${esc(sel)}</b> is printed <b>${esc(blk.join('/'))}</b>, one region, so its mesh is the one filed under <b>${esc(key)}</b>: ${how}, ${e.volume_mm3.toFixed(2)} mm³.`
+      /* A division has no mesh of its own and never will: it is its members' meshes drawn
+         together, the way its outline on the plate is their outlines unioned. What can go
+         unsaid and should not is how many of them are actually there -- the members the
+         atlas draws no region for have no mesh either, and past the cap the rest are the
+         largest ones, so the shape on screen is short of the division by a stated amount. */
+      const G = isGrp(sel) ? byAb[sel] : null;
+      const vol = G && list.reduce((t,k)=>t+(MESH.data[k].volume_mm3||0),0);
+      const cut = G && list.length<G.members.filter(m=>meshKey(m)).length;
+      mesh = (G ? ` <b>${esc(G.name)}</b> as ${list.length} mesh${list.length===1?'':'es'}`+
+               `, one per structure — there is no mesh of a division, only its members'`+
+               ` standing together: ${vol.toFixed(2)} mm³ in all, of its ${G.n_members} structures`+
+               (cut ? `, the ${list.length} largest of them` :
+                list.length<G.n_members ? ` (the rest the atlas draws no region for)` : '')+'.'
+             : blk ? ` <b>${esc(sel)}</b> is printed <b>${esc(blk.join('/'))}</b>, one region, so its mesh is the one filed under <b>${esc(key)}</b>: ${how}, ${e.volume_mm3.toFixed(2)} mm³.`
              : e ? ` <b>${esc(sel)}</b> as a mesh: ${how}, ${e.volume_mm3.toFixed(2)} mm³.`
              : sel ? ` <b>${esc(sel)}</b> has no mesh: the atlas names it but draws it no region of its own on any plate, so there is nothing to build one from — as for ${S.length-Object.keys(MESH.data).length} of the ${S.length} structures.`
              : list.length ? ` ${list.length} structures of the filter as meshes.` : ' Select a structure, or filter to a few, to see its mesh.')+
@@ -3607,7 +3892,7 @@ function v3note(){
   if(v3mode==='points'){
     const q=(sel&&ptsOf[sel])||[];
     N.innerHTML = (sel&&q.length
-      ? `<b>${esc(sel)}</b> in blue: ${q.length} label${q.length>1?'s':''} on `+
+      ? `<b>${esc(selName())}</b> in ${selHue()}: ${q.length} label${q.length>1?'s':''} on `+
         `${new Set(q.map(t=>t.p)).size} plate${new Set(q.map(t=>t.p)).size>1?'s':''}, against all 6,220. `
       : `All 6,220 printed labels at their stereotaxic positions. `)+
       `A dot is where an abbreviation is <em>printed</em> — close to its structure, not its centre. `+
@@ -3615,7 +3900,7 @@ function v3note(){
     return;
   }
   const q=(sel&&ptsOf[sel])||[];
-  const on = sel&&q.length ? ` <b>${esc(sel)}</b> is picked out in blue.`
+  const on = sel&&q.length ? ` <b>${esc(selName())}</b> is picked out in ${selHue()}.`
            : (results.length<S.length ? ` The current filter is picked out in it.` : '');
   const what = psrc==='drawing' ? `The atlas's own drawn contours` : `The 62 ${SRCN[psrc]}s`;
   N.innerHTML = (v3mode==='contour'
@@ -4421,4 +4706,5 @@ fit(); applyView(); revRun();
 window.__gae={toFrame,fromFrame,writeHash,readHash,tgSolve,tgPath,tgFootprint,plan:()=>tgPlan,
   select,go,clear,frameSet,frameApply,FRAME,frmBuild,BUILD,S,P,byAb,ptsOf,regBuild,plateAt,inBrain,
   coordsOf,tgJSON,tgNotes,meshList,setCmp,anMake,notes:()=>NOTES,mesh:()=>MESH,
+  GRP,isGrp,regIn,grpsOf,
   state:()=>({cur,sel,zoom,tab,smode,psrc,tgProbe,tgFoot,cmpOn,anShow,targSide,tgTilt,tgRoll,tgYaw,tgPlate,tgOff})};
