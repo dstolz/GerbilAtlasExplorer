@@ -13,9 +13,10 @@ Markers, each on a line of its own in `src/app.html`:
     <!-- @blob NAME -->          one data global: <script>window.__NAME__=...;</script>
     <!-- @lean-extras -->        the service worker and manifest; only in the lean page
 
-and two tokens that can appear anywhere: {{BUILD_HASH}} and {{BUILD_DATE}}, the commit
-the page was built from. A commit cannot know its own hash, so the stamp in a committed
-bundle is the commit it was built *on*; CI passes the exact one with --commit.
+and three tokens that can appear anywhere: {{BUILD_HASH}}, {{BUILD_DATE}} and
+{{BUILD_TIME}}, the commit the page was built from and when. A commit cannot know its own
+hash, so the stamp in a committed bundle is the commit it was built *on*; CI passes the
+exact one with --commit.
 
 Outputs:
 
@@ -60,8 +61,8 @@ SITE_FILES = ['gerbil_atlas_explorer.html', 'index.html', 'sw.js', 'manifest.web
               '.nojekyll', 'LICENSE', 'LICENSE-DATA.md']
 
 
-def stamp(commit=None, date=None):
-    """The commit and date to write into the page. Git's, unless overridden."""
+def stamp(commit=None, date=None, time=None):
+    """The commit, date and time to write into the page. Git's, unless overridden."""
     def git(*args):
         try:
             return subprocess.run(['git'] + list(args), cwd=A.ROOT, capture_output=True,
@@ -70,15 +71,21 @@ def stamp(commit=None, date=None):
             return ''
     # A committed bundle is always built on a tree that was about to be committed, so
     # the stamp is the commit it was built on (one behind the commit that carries it)
-    # and the date is the day it was built when the tree was dirty, the commit's
-    # otherwise. CI builds the deployed copy with --commit, and the check masks both.
+    # and the moment is when it was built while the tree was dirty, the commit's own
+    # otherwise. CI builds the deployed copy with --commit, and the check masks all three.
     dirty = bool(git('status', '--porcelain', '--untracked-files=no'))
     if commit is None:
         commit = git('rev-parse', '--short', 'HEAD') or 'unknown'
+    # Date and time read off that one moment, so they cannot disagree, and both are UTC,
+    # so the page says the same thing wherever it was built.
+    secs = '' if dirty else git('log', '-1', '--format=%ct')
+    when = (datetime.datetime.fromtimestamp(int(secs), datetime.timezone.utc) if secs.isdigit()
+            else datetime.datetime.now(datetime.timezone.utc) if dirty else None)
     if date is None:
-        date = (datetime.date.today().isoformat() if dirty
-                else git('log', '-1', '--format=%cs') or 'undated')
-    return commit[:47], date[:10]
+        date = when.strftime('%Y-%m-%d') if when else 'undated'
+    if time is None:
+        time = when.strftime('%H:%M UTC') if when else ''
+    return commit[:47], date[:10], time[:16]
 
 
 def read(name):
@@ -102,7 +109,8 @@ def blobs(db, lean=False):
     }
 
 
-def render(db=None, lean=False, dev=False, commit='{{BUILD_HASH}}', date='{{BUILD_DATE}}'):
+def render(db=None, lean=False, dev=False, commit='{{BUILD_HASH}}', date='{{BUILD_DATE}}',
+           time='{{BUILD_TIME}}'):
     """The page, as text. Tokens are left in place unless a stamp is given."""
     db = db or A.load_db()
     data = blobs(db, lean)
@@ -129,7 +137,8 @@ def render(db=None, lean=False, dev=False, commit='{{BUILD_HASH}}', date='{{BUIL
     if data:
         sys.exit('build_app: blobs never placed: %s' % ', '.join(sorted(data)))
     text = '\n'.join(out)
-    return text.replace('{{BUILD_HASH}}', commit).replace('{{BUILD_DATE}}', date)
+    return (text.replace('{{BUILD_HASH}}', commit).replace('{{BUILD_DATE}}', date)
+                .replace('{{BUILD_TIME}}', time))
 
 
 def write(path, text):
@@ -146,6 +155,7 @@ def unstamp(text):
     text = re.sub(r'(/commit/)[0-9a-zA-Z-]+(")', r'\1{{BUILD_HASH}}\2', text)
     text = re.sub(r'(<code>)[0-9a-zA-Z-]+(</code></a>), [^.<]*\.', r'\1{{BUILD_HASH}}\2, {{BUILD_DATE}}.', text)
     text = re.sub(r'(/commit/\{\{BUILD_HASH\}\}"[^>]*><code>)[0-9a-zA-Z-]+(</code>)', r'\1{{BUILD_HASH}}\2', text)
+    text = re.sub(r'(class="fstamp">Updated )[^<]*(</span>)', r'\1{{BUILD_DATE}} {{BUILD_TIME}}\2', text)
     return text
 
 
@@ -206,11 +216,13 @@ def compare(old, db):
     return 1 if bad else 0
 
 
-def site(out, db, commit, date):
+def site(out, db, commit, date, time):
     """The folder GitHub Pages serves: both pages, the worker, the plates, the meshes."""
     os.makedirs(out, exist_ok=True)
-    write(os.path.join(out, 'gerbil_atlas_explorer.html'), render(db, commit=commit, date=date))
-    write(os.path.join(out, 'index.html'), render(db, lean=True, commit=commit, date=date))
+    write(os.path.join(out, 'gerbil_atlas_explorer.html'),
+          render(db, commit=commit, date=date, time=time))
+    write(os.path.join(out, 'index.html'),
+          render(db, lean=True, commit=commit, date=date, time=time))
     for name in SITE_FILES:
         src = os.path.join(A.ROOT, name)
         if os.path.exists(src) and name not in ('gerbil_atlas_explorer.html', 'index.html'):
@@ -238,23 +250,25 @@ def main():
     ap.add_argument('--compare', metavar='OLD', help='deep-compare OLD\'s data globals with a fresh render')
     ap.add_argument('--commit', help='stamp this commit instead of git\'s HEAD')
     ap.add_argument('--date', help='stamp this date (YYYY-MM-DD) instead of the commit\'s')
+    ap.add_argument('--time', help='stamp this time (HH:MM UTC) instead of the commit\'s')
     a = ap.parse_args()
     db = A.load_db()
     if a.check:
         return check(db)
     if a.compare:
         return compare(a.compare, db)
-    commit, date = stamp(a.commit, a.date)
+    commit, date, time = stamp(a.commit, a.date, a.time)
     if a.site:
-        site(a.site, db, commit, date)
+        site(a.site, db, commit, date, time)
         return 0
-    write(a.out or BUNDLE, render(db, commit=commit, date=date))
-    print('wrote %s (build %s, %s)' % (os.path.relpath(a.out or BUNDLE, A.ROOT), commit, date))
+    write(a.out or BUNDLE, render(db, commit=commit, date=date, time=time))
+    print('wrote %s (build %s, %s %s)'
+          % (os.path.relpath(a.out or BUNDLE, A.ROOT), commit, date, time))
     if a.lean:
-        write(LEAN, render(db, lean=True, commit=commit, date=date))
+        write(LEAN, render(db, lean=True, commit=commit, date=date, time=time))
         print('wrote index.html')
     if a.dev:
-        write(DEV, render(db, dev=True, commit=commit, date=date))
+        write(DEV, render(db, dev=True, commit=commit, date=date, time=time))
         print('wrote build/dev.html')
     return 0
 

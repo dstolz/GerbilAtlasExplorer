@@ -25,6 +25,9 @@ carries a `version` block naming the release its derived fields were built for.
 - `data/gerbil_atlas_groups.csv`: one row per division with every member spelled out, so the
   taxonomy — the one block of this database that is a judgement rather than a transcription
   — can be read and argued with without opening the JSON.
+- The footer says when the page was last updated, beside the build it was made from. The
+  stamp is UTC and reads off one instant — the commit's own, or the moment of the build
+  when it was built from a dirty tree — so its date and its time cannot disagree.
 
 ## [0.9.0] — 2026-09-02
 
