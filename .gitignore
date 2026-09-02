@@ -1,2 +1,8 @@
 .claude/
 __pycache__/
+build/
+node_modules/
+.pytest_cache/
+test-results/
+playwright-report/
+*.tmp

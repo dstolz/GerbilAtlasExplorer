@@ -1,0 +1,77 @@
+# Changelog
+
+All notable changes to this repository are recorded here. `data/gerbil_atlas.json`
+carries a `version` block naming the release its derived fields were built for.
+
+## [0.9.0] — 2026-09-02
+
+### Added
+- LICENSE (MIT, code), LICENSE-DATA.md (CC BY 4.0, derived data; the plate images under
+  the atlas's own licence), CITATION.cff, and this changelog.
+- The app is now built: `src/app.html`, `src/app.css` and `src/app.js` are the source,
+  `tools/build_app.py` writes `gerbil_atlas_explorer.html` and a lean `index.html`, and
+  stamps the commit and date into both. `--check` says whether a committed page is a fresh
+  build; `--dev` writes a page that links the source files for editing without rebuilds.
+- `index.html`: the same app at 5 MB, loading each plate as it is shown, with a service
+  worker and a web manifest so it keeps working offline after a visit and can be installed.
+- `data/plates/`: the 186 plate images as files; `data/vec.json` and `data/skull.json`:
+  the traced outlines with their registration, and the skull, as committed assets.
+- `tools/atlaslib.py`: the pipeline's shared paths, frame formulae, page-to-plate
+  transform, outline readers, `--plates` grammar and the renderer that writes the
+  database byte for byte as it is kept.
+- `tools/export_tables.py`: the CSVs that used to be kept by hand, a per-label coordinate
+  table (6,266 rows), a per-structure table with areas, volumes and mesh centres, and
+  GeoJSON extents per plate; `--refresh-db` recomputes the per-plate counts the database
+  carries and the `plate_registration` block; `--check` for CI.
+- Tests: `tests/python` (the data's invariants, the shared library, the committed pages
+  and tables against fresh renders) and `tests/js` (the built pages in a browser: search,
+  deep links, sources, the projection and 3-D views, the frame transform's inverse, the
+  deep link round trip, every structure's plan bounded). `.github/workflows/ci.yml` runs
+  them on every push; `pages.yml` builds the site for GitHub Pages and attaches the bundle
+  to a release on a version tag.
+- Track planner: the structures along the track with the depth each spans from the
+  surface, a probe length that reads the whole shank and names what the tip ends in, and
+  a footprint sphere that lists the share of its volume in each structure — drawn on the
+  plate, the projections and in 3-D, carried in the link, the notes and a new JSON export
+  of the plan.
+- Compare: a second plate beside the first under the same zoom, pan and crosshair.
+- Notes: your own markers on the plates with a line of text, kept in the browser, listed
+  in their own pane in the working frame, drawn on every view, exported and imported as
+  JSON, carried in a link while there are few.
+- Meshes in the 3-D view, fetched on demand from `data/gerbil_atlas_volumes.json`, with
+  the brain surface as a shell and an STL download of the selected structure.
+- `data/gerbil_atlas_labels.nii.gz`: the label volume as a NIfTI file at 50 µm with a
+  lookup table, written by `build_volumes.py --nifti`.
+- A strip of thumbnails showing the selected structure on each of its plates.
+- Search: 26 more aliases across nomenclatures (70 in all), the alias a result came in by
+  shown beside it, close matches offered when nothing matches exactly, recent structures.
+- Exports: a per-label CSV from the app, one named group per region in the SVG export.
+- Accessibility: tab roles and selected state on every segmented control, live regions
+  for the readouts, focus rings, keyboard access to results, chips and thumbnails,
+  `Home`/`End` and `?` shortcuts, hints in place of modal alerts, a `<noscript>` line.
+- The neighbouring plates are decoded before the arrow key asks for them.
+
+### Changed
+- `region_extents.validation` and the volumes' `validation` compute their numbers rather
+  than carrying literals; the volumes' `note` states the mesh encoding is little-endian.
+- The tiling check's worst-plate area residual is 2.1%, not 4.5%: the earlier figure
+  omitted the closing edge of the outline rings, which `brain_outline` stores unclosed.
+- `data/gerbil_atlas_volumes.json` regenerated with the versions `tools/requirements.txt`
+  now pins: identical vertices, a different triangle order for 182 structures.
+- `requirements.txt` pins the versions that reproduce the committed extents byte for byte.
+- `--plates` reads `30`, `28-33` and `5,30,45` alike in every script.
+
+### Fixed
+- The app's structure table (`window.__ATLAS__`) and `data/gerbil_atlas_structures.csv`
+  carried the pre-correction plate ranges for AngT, RLi, Su3C and ZIC; both are now built
+  from the database.
+- `plates[].n_labels_located`, `plates[].ocr_confirmed` and `plates[].n_structures` were
+  stale; `plate_frame.validation` quoted a label count from an earlier pass; the
+  `thalamus` alias resolved to nothing.
+- The About dialog's build hash was hand-edited and 83 commits old.
+- `build_region_extents.py --plates` and `build_volumes.py --plates` wrote a partial block
+  over the committed data; they now refuse. `qc/` is created before the long compute.
+- `find_missing_labels.py --qc` promised a file it never wrote; it now writes one per plate.
+- `find_missing_labels.py` re-typed the page-to-plate frame constants it already imported.
+- `check_indexes.py` reported one section's disagreements under another's heading and
+  had no `--help`.

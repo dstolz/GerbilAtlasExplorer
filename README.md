@@ -5,12 +5,13 @@ brain atlas: 723 structures across 62 coronal plates, each with stereotaxic coor
 and each plate in all three of the ways the atlas prints it — labelled drawing, Nissl,
 myelin.
 
-## ▶ [Open the Explorer](https://dstolz.github.io/GerbilAtlasExplorer/gerbil_atlas_explorer.html)
+## ▶ [Open the Explorer](https://dstolz.github.io/GerbilAtlasExplorer/)
 
-Runs in any modern browser — nothing to install, no account, no server. The whole
-atlas (all 186 plate images) lives inside the single `gerbil_atlas_explorer.html` file,
-so you can also download it and open it offline, on a rig computer with no internet.
-It is 20 MB, most of that the plates.
+Runs in any modern browser — nothing to install, no account, no server. That page loads
+the plates as it needs them and keeps working offline once it has been opened. For a
+rig computer that never sees the internet, download the single-file build,
+[`gerbil_atlas_explorer.html`](https://dstolz.github.io/GerbilAtlasExplorer/gerbil_atlas_explorer.html):
+the whole atlas (all 186 plate images) lives inside it, 22 MB, most of that the plates.
 
 ## Quick start
 
@@ -41,8 +42,10 @@ It is 20 MB, most of that the plates.
   draws. Either way it is the whole region that highlights, not the word. Click to select it
   and the region is outlined on both hemispheres. The few names the atlas prints *outside*
   the section, `rf` among them, have no region to give and highlight as the label itself.
-- Search by abbreviation, name, or alias; filter by system chips (`auditory`,
-  `hippocampal`, `thalamus`, …) to see a whole pathway at once.
+- Search by abbreviation, name, or alias — `NAc`, `MGB`, `nucleus accumbens`, `SOC` and
+  seventy other names from other nomenclatures resolve, and the result says which alias
+  brought it in; a query that matches nothing exactly offers its close matches. Filter by
+  system chips (`auditory`, `hippocampal`, `thalamus`, …) to see a whole pathway at once.
 - **At a coordinate** — go the other way: type bregma / ML / DV and get the structures
   nearest that point. Or hit **Pick on the plate** and just click where you're aiming.
 - Step through the 62 plates, zoom and pan, **Fit** to reset.
@@ -59,6 +62,14 @@ It is 20 MB, most of that the plates.
 **Plan a track** (experimental) — pick a structure and a hemisphere, set the approach
 angles, and get the entry point, the angles to dial into the manipulator, and how far to
 drive from the brain surface.
+- **Along the track** lists what the track passes through, with the depth each structure
+  spans from the surface, read off the regional outlines of the nearest plate every 20 µm
+  and drawn as a bar beside the plan and as ticks on the plate. Give it a **probe length**
+  — 3.84 mm for a Neuropixels 1.0 shank — and it reads the whole shank and says what the
+  tip ends in.
+- **Footprint** places a sphere of a given radius about the target and lists the share of
+  its volume in each structure — where an injection of that volume would sit, if it
+  spread evenly. It places a volume; it does not model spread.
 - The track draws live on the plate, both projections and the 3D view, dashed on the plate
   where it passes in front of or behind that section. **Right-triangle sides** adds the
   vertical drop and horizontal offset it is the hypotenuse of — what you set on the arm
@@ -76,12 +87,24 @@ drive from the brain surface.
   in *atlas* millimetres, not the frame's, because naming a target is anatomy; lateral is
   taken toward whichever hemisphere is chosen, so the two sides stay mirror images.
 - **Copy notes** or **Download** writes the plan as plain text with the frame it was planned
-  in, and **Copy link** restores the whole thing — target, side, angles, plate and offset.
+  in, **JSON** writes every number of it typed, and **Copy link** restores the whole thing —
+  target, side, angles, plate, offset, probe and footprint.
 - The surface is the outline of the section, traced off the atlas's own drawings. It is a
   *fixed, sectioned* brain, not the surface under intact dura, and the sections are 350 µm
   apart, so an entry AP is only resolved to the nearest plate.
 
+**Compare** puts a second plate beside the first under the same zoom, pan and crosshair —
+the other histology of this level, the drawing, or the plate before or after — so what is
+under the pointer on one is under it on the other.
+
+**Notes** are your own markers: click the plate where an electrode tip, a lesion or a
+place to come back to is, give it a line of text, and it draws on the plate, the
+projections and the 3D view, with its coordinates in whatever frame is set. They stay in
+your browser; export them as JSON to keep or share them, and a link carries a handful.
+
 **See a structure whole** — the printed atlas gives you one coronal plane at a time.
+- Selecting a structure shows it on **every plate it is on**, as a strip of thumbnails
+  cropped around it; click one to go there.
 - **Projection** plots every printed label in side view (AP × DV) or top-down (AP × ML),
   with your selected structure highlighted, so you can see how it runs through the brain.
 - **3D** stacks the 62 plates where they actually sit: as contours — or as the Nissl or
@@ -91,12 +114,19 @@ drive from the brain surface.
   surface at any transparency from a faint shell to solid bone. **Ortho** switches to a
   parallel projection, so nothing is foreshortened. **View** puts the camera on an
   anatomical axis — left, right, rostral, caudal, dorsal or ventral — and the link you
-  copy carries it. (Needs WebGL 2.)
+  copy carries it. **Meshes** fetches the closed surfaces built offline from the outlines
+  (20 MB, once) and shows the selected structure — or a short filtered list — as a mesh,
+  with **STL** to download it. Six planes in seven of a mesh are interpolated between
+  sections 350 µm apart; see [METHODS](METHODS.md#the-third-dimension). (Needs WebGL 2.)
 
 **Take it with you**
 - **PNG** of the current plate with overlays, **SVG** of the same sheet with the regional
-  outlines as editable vector paths, **CSV** of the structures you've listed, and
-  **Copy link** for a URL back to exactly this plate, structure and view.
+  outlines as editable vector paths and one named group per region, **CSV** of the
+  structures you've listed, **Labels** for one row per printed label of them with its
+  stereotaxic triplet, and **Copy link** for a URL back to exactly this plate, structure
+  and view.
+- The same tables, for every structure and every label, are committed under
+  [`data/`](data/) with GeoJSON of the outlines per plate — see the file list below.
 - The SVG carries no section image — it is the outlines, traced off the printed plate,
   plus whatever overlays were on: grid, skull, landmarks, the circled structure, the
   measurement, the planned track and the query point, each in its own named group so you
@@ -157,6 +187,10 @@ know before relying on them.
   driven. Its brain surface is the outline of the atlas's own drawn section — it reaches
   DV 0 and never crosses it, and 98% of printed labels fall inside it, but it is a fixed,
   sectioned brain and knows nothing about vessels, the sinus or the ventricles.
+- **Along the track** and the **footprint** read the regional outlines of the nearest
+  plate at each sample: a boundary that runs obliquely between two plates lands on
+  whichever plate is nearer, and where the atlas prints no boundary the outline is an
+  estimate and the row says so.
 
 ## Source
 
@@ -175,18 +209,44 @@ plate range is malformed, and which are printed on one plate more than it gives 
 
 | File | What it is |
 | --- | --- |
-| `gerbil_atlas_explorer.html` | The app. Self-contained (~20 MB: 186 plate images, the vectorized outlines and the skull mesh), works offline. Stays at the repository root — it is the published address. |
+| `index.html` | The app, built: 5 MB, loads the plates as it needs them, works offline after a visit. What the link above opens. |
+| `gerbil_atlas_explorer.html` | The same app as one self-contained file (22 MB: 186 plate images, the vectorized outlines and the skull mesh) for a computer with no internet. Both pages are built by `tools/build_app.py` from `src/` and `data/`; a commit and date are stamped into each. |
+| `src/` | The app's source: `app.html`, `app.css`, `app.js`. `python3 tools/build_app.py --dev` writes `build/dev.html`, which links these directly, so code edits need no rebuild. |
 | `METHODS.md` | How everything here was derived, and what its accuracy is. |
 | `TARGETING_PLAN.md` | The design behind the track planner. |
-| `data/gerbil_atlas.json` | Full database: structures, coordinates, label positions, brain outlines, region extents, calibration. |
+| `data/gerbil_atlas.json` | Full database: structures, coordinates, label positions, brain outlines, region extents, the page-to-plate registration, calibration, a version stamp. |
 | `data/gerbil_atlas_structures.csv` | One row per structure: abbreviation, name, plate and bregma range, tags. |
+| `data/gerbil_atlas_structure_table.csv` | One row per structure with its label centre, areas per plate, and the volume and centre of its mesh. |
+| `data/gerbil_atlas_labels.csv` | One row per printed label — 6,266 stereotaxic triplets, read at the end of the label's leader line where the atlas draws one. |
 | `data/gerbil_atlas_plates.csv` | One row per plate: bregma / lambda / interaural / occipital-crest AP. |
+| `data/geojson/plate_NN.geojson` | The regional outlines of one plate in millimetres, one feature per structure, with the unnamed faces and the section outline. |
+| `data/gerbil_atlas_labels.nii.gz`, `data/gerbil_atlas_labels_lut.csv` | The label volume the meshes were cut from, as a NIfTI file at 50 µm: one id per voxel in RAS (x right, y anterior, z dorsal) with the atlas millimetres in its sform, and the table that names each id. Interpolated between sections 350 µm apart, like the meshes. |
+| `data/plates/{drawing,nissl,myelin}/NN.jpg` | The 186 plate images, cropped to the atlas's printed coordinate box. |
+| `data/vec.json`, `data/skull.json` | The traced outlines with their per-plate registration, and the CT skull surface: the two assets no script here regenerates. |
 | `data/index_raw.txt` | The authors' Index of abbreviations as extracted. Source of truth for the rest. |
 | `data/index_structures_raw.txt` | The authors' Index of structures, the second of the two the atlas prints. Read against the first by `tools/check_indexes.py`, which is what says the 723 entries arrived intact. |
-| `data/gerbil_atlas_volumes.json` | The brain surface and one mesh per structure, built by stacking the 62 plates and interpolating between them. Offline only — not in the app. See [METHODS](METHODS.md#the-third-dimension) before trusting the third axis. |
-| `svg/` | The traced regional outlines, one SVG per plate, in the published page frame. What the app's SVG export is built from. |
-| `qc/` | Verification renders kept from the build — label boxes, coordinate-box detection, plate previews, region overlays. Not used by the app. |
-| `tools/` | The derivations that read something off the page rather than fitting a number to it — the index cross-check, the label recovery, the region extraction, the volume build. Prose alone would not let anyone check these, so they are here as code, in the order they run. |
+| `data/gerbil_atlas_volumes.json` | The brain surface and one mesh per structure, built by stacking the 62 plates and interpolating between them. Fetched by the 3D view on demand; `tools/build_volumes.py --stl` writes the same meshes as STL. See [METHODS](METHODS.md#the-third-dimension) before trusting the third axis. |
+| `svg/` | The traced regional outlines, one SVG per plate, in the published page frame. |
+| `qc/` | Verification renders kept from the build; [`qc/README.md`](qc/README.md) says which script writes each. Not used by the app. |
+| `tools/` | The derivations that read something off the page rather than fitting a number to it, the shared library they use, the build, and the table exports. See [`tools/README.md`](tools/README.md). |
+| `tests/` | The data's own promises as `pytest` tests, and the built pages in a browser under Playwright. GitHub Actions runs both on every push. |
+| `sw.js`, `manifest.webmanifest` | What makes the lean page work offline and installable. |
+
+## Building and testing
+
+```
+python3 tools/build_app.py --lean       # rebuild both pages from src/ and data/
+python3 tools/build_app.py --check      # are the committed pages a fresh build
+python3 -m pytest tests/python          # the data's invariants
+npm ci && npx playwright install chromium && npm run build && npm test   # the pages in a browser
+```
+
+## Licence
+
+The code is MIT; the derived data — the database, the tables, the outlines, the meshes —
+is CC BY 4.0, with the plate images reproduced from the open-access atlas under its own
+licence. See [LICENSE](LICENSE), [LICENSE-DATA.md](LICENSE-DATA.md) and
+[CITATION.cff](CITATION.cff) for how to cite both the atlas and this tool.
 
 ## Website development
 This website is developed and maintained by Daniel Stolzberg and the [Caras Lab](https://www.caraslab.org) in the department of Biology at the University of Maryland.

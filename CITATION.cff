@@ -1,0 +1,52 @@
+cff-version: 1.2.0
+message: >-
+  If you use the Gerbil Atlas Explorer or its derived data, please cite the atlas
+  itself (preferred-citation below) and this software.
+title: Gerbil Atlas Explorer
+type: software
+version: 0.9.0
+date-released: "2026-09-02"
+repository-code: https://github.com/dstolz/GerbilAtlasExplorer
+url: https://dstolz.github.io/GerbilAtlasExplorer/
+license: MIT
+abstract: >-
+  A searchable, clickable version of the Radtke-Schuller et al. (2016) Mongolian
+  gerbil brain atlas: 723 structures across 62 coronal plates with stereotaxic
+  coordinates, printed-label positions, regional outlines cut from the atlas's
+  own drawings, a brain outline, an experimental track planner, and 3-D views.
+  Derived data are released under CC BY 4.0 (see LICENSE-DATA.md).
+authors:
+  - family-names: Stolzberg
+    given-names: Daniel
+    affiliation: Caras Lab, Department of Biology, University of Maryland
+keywords:
+  - brain atlas
+  - Mongolian gerbil
+  - Meriones unguiculatus
+  - stereotaxic coordinates
+  - neuroscience
+preferred-citation:
+  type: article
+  title: >-
+    Brain atlas of the Mongolian gerbil (Meriones unguiculatus) in CT/MRI-aided
+    stereotaxic coordinates
+  authors:
+    - family-names: Radtke-Schuller
+      given-names: Susanne
+    - family-names: Schuller
+      given-names: Gerd
+    - family-names: Angenstein
+      given-names: Frank
+    - family-names: Grosser
+      given-names: Oliver S.
+    - family-names: Goldschmidt
+      given-names: Jürgen
+    - family-names: Budinger
+      given-names: Eike
+  journal: Brain Structure and Function
+  volume: 221
+  issue: Suppl 1
+  start: 1
+  end: 272
+  year: 2016
+  doi: 10.1007/s00429-016-1259-0

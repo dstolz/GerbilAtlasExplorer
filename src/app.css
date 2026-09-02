@@ -1,0 +1,592 @@
+:root{
+  --bg:#f6f5f2; --panel:#ffffff; --panel2:#faf9f7; --ink:#1b1a17; --muted:#6f6a61;
+  --line:#e0ddd6; --accent:#b03a2e; --accent-soft:#f6e5e2; --chip:#efece6; --chip-on:#1b1a17;
+  --chip-on-ink:#ffffff; --shadow:0 1px 2px rgba(0,0,0,.05),0 8px 24px rgba(0,0,0,.05);
+  --maxw:1560px; --pad:clamp(10px,1.5vw,20px); --gap:clamp(10px,1.1vw,15px);
+  /* the marker sits on the plate image, which is white with red contours in either
+     theme, so it is deliberately not themed and deliberately not the red accent */
+  --mark:#0a5cff; --grid:#5b7085; --meas:#00875a; --pick:#7b23c9; --targ:#c4008f;
+  /* the projection's two background layers: every label, and the current filter */
+  --cloud:#d5d0c4; --cloud2:#736c5e;
+  /* the CT skull surface in the 3-D view, and its outline as a line on the panels */
+  --bone:#b0a68f; --boneln:#8f8264; --lmk:#0f766e;
+  /* your own notes on the plates: warm, and unlike any mark the atlas or the app makes */
+  --note:#d9700b;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#15140f; --panel:#1e1c17; --panel2:#242119; --ink:#ece7dc; --muted:#9d968a;
+  --line:#332f26; --accent:#e0705f; --accent-soft:#3a231f; --chip:#2a2720; --chip-on:#ece7dc;
+  --chip-on-ink:#15140f; --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
+  --cloud:#3f392c; --cloud2:#a49a80;
+  --bone:#8d8674; --boneln:#a99e85; --lmk:#5eada6;
+}}
+:root[data-theme="dark"]{
+  --bg:#15140f; --panel:#1e1c17; --panel2:#242119; --ink:#ece7dc; --muted:#9d968a;
+  --line:#332f26; --accent:#e0705f; --accent-soft:#3a231f; --chip:#2a2720; --chip-on:#ece7dc;
+  --chip-on-ink:#15140f; --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
+  --cloud:#3f392c; --cloud2:#a49a80;
+  --bone:#8d8674; --boneln:#a99e85; --lmk:#5eada6;
+}
+*{box-sizing:border-box}
+/* the keyboard can see where it is: every control gets the accent ring on focus-visible,
+   and nothing keeps outline:none for that state */
+button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible,
+.chip:focus-visible,.row:focus-visible,.rrow:focus-visible,.pbtn:focus-visible,[tabindex]:focus-visible{
+  outline:2px solid var(--accent);outline-offset:1px}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:15px/1.5 ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;overflow-x:hidden}
+
+/* ---------- header ---------- */
+header{display:flex;align-items:center;gap:8px 14px;flex-wrap:wrap;
+  padding:7px var(--pad);border-bottom:1px solid var(--line);background:var(--panel);
+  position:sticky;top:0;z-index:20}
+.brand{display:flex;align-items:baseline;gap:10px;min-width:0;margin-right:auto}
+h1{margin:0;font-size:clamp(15.5px,.3vw + 14px,18px);font-weight:650;letter-spacing:-.01em}
+.sub{margin:0;font-size:11.5px;color:var(--muted);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hbtns{display:flex;gap:6px;flex:none}
+
+/* ---------- the two panes ---------- */
+.wrap{display:grid;grid-template-columns:minmax(0,1fr);gap:var(--gap);
+  padding:var(--gap) var(--pad);max-width:var(--maxw);margin:0 auto;width:100%}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+  box-shadow:var(--shadow);min-width:0}
+.side,.viewer{display:flex;flex-direction:column;min-height:0;overflow:hidden}
+
+/* ---------- segmented controls: sidebar mode, main view, list scope ---------- */
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;
+  background:var(--panel2);flex:none}
+.seg button{border:0;border-left:1px solid var(--line);background:transparent;color:var(--muted);
+  font:inherit;font-size:12px;padding:5px 11px;cursor:pointer;white-space:nowrap}
+.seg button:first-child{border-left:0}
+.seg button:hover{color:var(--accent)}
+.seg button.on{background:var(--chip-on);color:var(--chip-on-ink)}
+.seg button b{font-weight:600;font-variant-numeric:tabular-nums}
+.seg.full{display:flex;width:100%}
+.seg.full button{flex:1;min-width:0;text-align:center;padding:6px 8px;
+  overflow:hidden;text-overflow:ellipsis}
+/* the mode switch reads as tabs on the card, not as a pill sitting inside it */
+#mseg{border:0;border-radius:0;border-bottom:1px solid var(--line);background:var(--panel2)}
+#mseg button{padding:9px 10px;font-size:12.5px}
+#mseg button.on{background:var(--panel);color:var(--ink);font-weight:600;
+  box-shadow:inset 0 -2px 0 var(--accent)}
+
+.pane{display:none;flex-direction:column;gap:9px;padding:11px 14px;
+  border-bottom:1px solid var(--line);flex:none}
+.pane.on{display:flex}
+input[type=search]{width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:9px;
+  background:var(--panel2);color:var(--ink);font-size:14px;outline:none}
+input[type=search]:focus{border-color:var(--accent)}
+/* 21 system chips would eat a third of the sidebar, so two rows show until asked for */
+.chipwrap{display:flex;flex-direction:column;gap:5px;align-items:flex-start}
+.chips{display:flex;flex-wrap:wrap;gap:5px;max-height:55px;overflow:hidden}
+.chips.open{max-height:none}
+.chip{font-size:11.5px;padding:3px 8px;border-radius:999px;background:var(--chip);color:var(--muted);
+  border:1px solid transparent;cursor:pointer;user-select:none;white-space:nowrap}
+.chip:hover{border-color:var(--line)}
+.chip.on{background:var(--chip-on);color:var(--chip-on-ink)}
+.more{border:0;background:none;color:var(--accent);font-family:inherit;font-size:11.5px;
+  padding:0;cursor:pointer}
+.more:hover{text-decoration:underline}
+.count{font-size:11.5px;color:var(--muted);display:flex;justify-content:space-between;
+  align-items:center;gap:8px}
+.count .cr{display:flex;align-items:center;gap:8px}
+.hint{font-size:11.5px;color:var(--muted);margin:0;line-height:1.5}
+
+/* ---------- results, and the coordinate lookup that shares their space ---------- */
+.list{display:none;overflow:auto;overscroll-behavior:contain;max-height:min(46dvh,520px)}
+.list.on{display:block}
+.row{display:grid;grid-template-columns:70px 1fr auto;gap:10px;align-items:baseline;
+  padding:8px 14px;border-bottom:1px solid var(--line);cursor:pointer}
+.row:hover{background:var(--panel2)}
+.row.sel{background:var(--accent-soft)}
+.ab{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;font-weight:600;
+  color:var(--accent);word-break:break-all}
+.nm{font-size:13.5px;min-width:0;overflow-wrap:anywhere}
+.pl{font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.empty{padding:24px 14px;color:var(--muted);font-size:13.5px}
+.revin{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.rvf{display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--muted);min-width:0}
+.rvf input,.rvf select{width:100%;padding:7px 8px;border:1px solid var(--line);border-radius:8px;
+  background:var(--panel2);color:var(--ink);font-size:14px;font-family:inherit;
+  font-variant-numeric:tabular-nums;outline:none}
+.rvf input:focus,.rvf select:focus{border-color:var(--accent)}
+.rrow{display:grid;grid-template-columns:62px minmax(0,1fr) auto;gap:2px 10px;
+  align-items:baseline;padding:8px 14px;border-bottom:1px solid var(--line);cursor:pointer}
+.rrow:hover{background:var(--panel2)}
+.rrow .rd2{grid-column:1 / -1;font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+.rrow .rdist{font-size:12px;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.rrow.near .rdist{color:var(--accent)}
+
+/* ---------- planning a track ---------- */
+/* The plan is a tall pane, and the list beneath it is how a target gets picked, so the
+   pane scrolls inside a cap rather than pushing the list out of the card. The structure
+   card steps aside while it is up: the plan above already gives the target a coordinate,
+   and a second copy of it would be the only thing the card added. */
+#paneTarg.on{overflow:auto;overscroll-behavior:contain;max-height:min(60dvh,540px)}
+#paneTarg.on ~ .list{flex:1 1 auto;min-height:96px}
+#paneTarg.on ~ .det{display:none}
+/* The experimental banner is the frame dialog's, at the width of the side panel. */
+.texp{border:1px solid var(--accent);border-radius:9px;background:var(--accent-soft);
+  padding:8px 10px;margin:0;font-size:11.5px;line-height:1.5}
+.texp b{font-weight:650}
+.tgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.tgrid .rvf input:disabled{opacity:.45}
+.rvf select:disabled{opacity:.45}
+/* the caption over a group of boxes, saying what the three of them are between them --
+   the angles alone needed none, but two grids of three numbers in a row do */
+.tlbl{margin:-3px 0 -4px;font-size:11px;color:var(--muted)}
+.tlbl b{color:var(--ink);font-weight:600}
+/* the plan itself: a definition list that reads like the note it writes out */
+.tplan{margin:0;font-size:12px;font-variant-numeric:tabular-nums;
+  display:grid;grid-template-columns:auto minmax(0,1fr);gap:3px 10px;align-items:baseline}
+.tplan dt{color:var(--muted);font-size:11px;white-space:nowrap}
+.tplan dd{margin:0;color:var(--ink)}
+.tplan dd b{color:var(--targ);font-weight:650}
+.tplan .sub{display:block;color:var(--muted);font-size:11px}
+.tnote{margin:0;font-size:11.5px;color:var(--accent);line-height:1.5}
+.tbtns{display:flex;gap:8px;flex-wrap:wrap}
+/* what the track passes through: a bar the length of the track, and a row per structure */
+.tpath{display:flex;flex-direction:column;gap:5px}
+.tpath[hidden]{display:none}
+.tpbar{display:flex;height:11px;border-radius:4px;border:1px solid var(--line);
+  background:var(--panel2);position:relative;margin:4px 0 2px}
+.tpm{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--targ);margin-left:-1px}
+.tpm.tip{background:var(--ink)}
+.tfv{font-size:12px;color:var(--ink);font-variant-numeric:tabular-nums;padding:7px 0;font-weight:600}
+.tpbar i{display:block;height:100%;flex:none;min-width:1px}
+.tpbar i.x{background:repeating-linear-gradient(45deg,transparent 0 3px,var(--line) 3px 4px)}
+.tpbar i.est{opacity:.72}
+.tprow{display:grid;grid-template-columns:auto 64px minmax(0,1fr);gap:0 8px;font-size:11.5px;
+  align-items:baseline;cursor:pointer;padding:1px 0;border-radius:4px}
+.tprow:hover .tpa,.tprow:focus-visible .tpa{text-decoration:underline}
+.tprow.x{cursor:default;color:var(--muted)}
+.tpd{font-variant-numeric:tabular-nums;color:var(--muted);white-space:nowrap}
+.tpa{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-weight:600;color:var(--accent);
+  word-break:break-all}
+.tpn{color:var(--muted);overflow-wrap:anywhere}
+.sw{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+.tpc{font-size:11px;color:var(--muted);margin:0;line-height:1.5}
+.tpc b{color:var(--ink);font-weight:600}
+
+/* ---------- the selected structure, pinned under the list ---------- */
+.det{padding:12px 14px;border-top:1px solid var(--line);background:var(--panel2);
+  position:relative;flex:none;overflow:auto;overscroll-behavior:contain;
+  max-height:min(34dvh,270px)}
+.detx{position:absolute;top:10px;right:12px;width:22px;height:22px;line-height:1;
+  border:1px solid var(--line);background:var(--panel);color:var(--muted);
+  border-radius:6px;cursor:pointer;font-size:13px;font-family:inherit;padding:0}
+.detx:hover{color:var(--accent);border-color:var(--accent)}
+.det .dn{font-size:14.5px;font-weight:600;margin:0 0 2px;padding-right:30px}
+.det .da{font-family:ui-monospace,Menlo,monospace;color:var(--accent);font-size:12.5px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;margin-top:8px;font-size:12px}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0;font-variant-numeric:tabular-nums}
+/* one scrolling strip, rather than a block that wraps to five rows */
+.plines{display:flex;gap:4px;margin-top:9px;overflow-x:auto;padding-bottom:3px}
+.pbtn{font-size:11.5px;padding:2px 6px;border-radius:5px;background:var(--chip);cursor:pointer;
+  font-variant-numeric:tabular-nums;flex:none}
+.pbtn:hover{background:var(--accent);color:#fff}
+/* the structure on each of its plates, cropped around it */
+.gal{display:flex;gap:6px;margin-top:8px;overflow-x:auto;padding-bottom:4px}
+.gal:empty{display:none}
+.gitem{position:relative;flex:none;cursor:pointer;border-radius:6px}
+.gth{display:block;width:132px;height:84px;border:1px solid var(--line);border-radius:6px;background:#fff}
+.gitem.cur .gth{outline:2px solid var(--accent);outline-offset:-1px}
+.gcap{position:absolute;left:4px;top:3px;font-size:10.5px;line-height:1.3;padding:0 4px;
+  border-radius:3px;background:rgba(255,255,255,.88);color:#1b1a17;font-variant-numeric:tabular-nums}
+/* the last few structures looked at, and the alias a result came in by */
+.recent{display:flex;gap:5px;align-items:center;flex-wrap:wrap;font-size:11px;color:var(--muted)}
+.recent[hidden]{display:none}
+.recent .pbtn{border:0;font-family:inherit;font-size:11.5px;color:var(--ink)}
+.recent .pbtn:hover{color:#fff}
+.via{font-size:10.5px;color:var(--muted);white-space:nowrap}
+.empty.fz{padding:8px 14px 4px;font-size:12px}
+
+/* ---------- viewer chrome ---------- */
+.vbar{display:flex;flex-wrap:wrap;align-items:center;gap:7px 9px;
+  padding:8px 14px;border-bottom:1px solid var(--line);flex:none}
+.vctl{display:flex;flex-wrap:wrap;align-items:center;gap:7px 9px;min-width:0}
+.vctl[hidden]{display:none}
+#elink{margin-left:auto;display:inline-flex;align-items:center;justify-content:center;
+  padding:5px;line-height:0}
+#elink svg{width:14px;height:14px;display:block}
+.tsep{width:1px;align-self:stretch;min-height:17px;background:var(--line)}
+.tg{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;color:var(--muted);
+  cursor:pointer;user-select:none;white-space:nowrap}
+.tg input{accent-color:var(--accent);margin:0;cursor:pointer}
+.tg:hover{color:var(--ink)}
+.tg:has(input:checked){color:var(--accent)}
+/* a toggle and its footnote marker travel together, inside the control bar's own gap */
+.tgw{display:inline-flex;align-items:center;gap:2px;white-space:nowrap}
+/* the marker itself: a real button, because it opens the note rather than just sitting there */
+.ast{border:0;background:none;padding:0 1px;margin:0;font:inherit;font-size:14px;line-height:1;
+  color:var(--accent);cursor:pointer;align-self:flex-start}
+.ast:hover{text-decoration:underline}
+.ast:focus-visible{outline:2px solid var(--accent);outline-offset:1px;border-radius:3px}
+button.b,a.b{border:1px solid var(--line);background:var(--panel2);color:var(--ink);border-radius:8px;
+  padding:5px 10px;font-size:13px;cursor:pointer;font-family:inherit;white-space:nowrap}
+a.b{display:inline-block;text-decoration:none;box-sizing:border-box}
+button.b:hover,a.b:hover{border-color:var(--accent);color:var(--accent)}
+button.z{border:1px solid var(--line);background:var(--panel2);color:var(--ink);
+  border-radius:7px;padding:3px 9px;font-size:12.5px;cursor:pointer;line-height:1.45;
+  font-variant-numeric:tabular-nums;font-family:inherit;white-space:nowrap}
+button.z:hover:not([disabled]){border-color:var(--accent);color:var(--accent)}
+button.z[disabled]{opacity:.38;cursor:default}
+/* a button that is waiting for a click somewhere else has to look like it is waiting */
+button.z.armed,button.z.armed:hover{background:var(--accent);border-color:var(--accent);
+  color:var(--chip-on-ink)}
+.zg{display:inline-flex;align-items:center;gap:4px}
+.zlv{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;
+  min-width:3.4em;text-align:center}
+.vctx{display:flex;align-items:baseline;gap:10px;padding:5px 14px;
+  border-bottom:1px solid var(--line);min-width:0;flex:none}
+.pnum{font-size:14px;font-weight:650;font-variant-numeric:tabular-nums;flex:none}
+.coord{font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums;
+  min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vbot{display:flex;align-items:center;gap:10px;padding:7px 14px 9px;
+  border-top:1px solid var(--line);flex:none}
+input[type=range]{accent-color:var(--accent)}
+.vbot input[type=range]{flex:1;min-width:0}
+
+/* ---------- the two main views share the room left over ---------- */
+.stage{display:flex;flex-direction:column;min-height:0;flex:1}
+.view{display:none;flex-direction:column;min-height:0;flex:1}
+.view.on{display:flex}
+.img{display:flex;align-items:center;justify-content:center;
+  padding:7px clamp(8px,1vw,14px)}
+
+/* ---------- zoom / pan viewport ----------
+   the width is set from the measured free space once the script runs; this is the
+   value the first paint uses, and what print falls back to */
+.viewer{--plate-max-h:clamp(220px,calc(100dvh - 12rem),760px)}
+.imgwrap{position:relative;display:block;margin-inline:auto;overflow:hidden;
+  width:min(100%,calc(var(--plate-max-h) * 1100 / 703));max-width:100%;aspect-ratio:1100 / 703;
+  border-radius:8px;background:#fff;touch-action:pan-y}
+.imgwrap.zoomed{touch-action:none;cursor:grab}
+.imgwrap.zoomed.grab{cursor:grabbing}
+.imgwrap.meas,.imgwrap.pick{cursor:crosshair}
+.imgwrap.hot{cursor:pointer}
+.pan{position:absolute;inset:0;transform-origin:0 0}
+.imgwrap img{width:100%;height:100%;display:block;object-fit:contain;background:#fff}
+.imgwrap svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.imgwrap ellipse{fill:none;stroke:var(--mark);stroke-width:1.8;vector-effect:non-scaling-stroke;
+  filter:drop-shadow(0 0 2px rgba(255,255,255,.9))}
+#hl{fill:var(--accent);fill-opacity:.12;stroke:var(--accent);stroke-width:1.3;stroke-opacity:.9;
+  vector-effect:non-scaling-stroke}
+#hr{fill:var(--accent);fill-opacity:.13;stroke:var(--accent);stroke-width:1;stroke-opacity:.85;
+  vector-effect:non-scaling-stroke;fill-rule:evenodd}
+#om path{fill:var(--mark);fill-opacity:.10;stroke:var(--mark);stroke-width:1.5;fill-rule:evenodd;
+  vector-effect:non-scaling-stroke;filter:drop-shadow(0 0 2px rgba(255,255,255,.9))}
+/* dashed where the atlas does not print the boundary and the extraction inferred it */
+#hr.est,#om path.est{stroke-dasharray:6 4}
+.tip{position:absolute;z-index:5;pointer-events:none;max-width:min(320px,90%);
+  background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:8px;
+  box-shadow:var(--shadow);padding:6px 9px;text-align:left;line-height:1.35}
+.tip .ta{display:block;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-size:11.5px;font-weight:600;color:var(--accent)}
+.tip .tn{display:block;font-size:12.5px;margin-top:1px}
+.tip .tx{display:block;font-size:11px;color:var(--muted);margin-top:3px;font-variant-numeric:tabular-nums}
+
+/* ---------- overlays drawn on the plate ---------- */
+#grid line{stroke:var(--grid);stroke-opacity:.34;stroke-width:1;vector-effect:non-scaling-stroke}
+#grid line.ax{stroke-opacity:.72;stroke-width:1.6}
+#xh line{stroke:var(--mark);stroke-opacity:.55;stroke-width:1;vector-effect:non-scaling-stroke}
+#ms line{stroke:var(--meas);stroke-width:2.2;vector-effect:non-scaling-stroke}
+#ms line.gh{stroke-dasharray:5 4;stroke-opacity:.75}
+#ms circle{fill:none;stroke:var(--meas);stroke-width:2.2;vector-effect:non-scaling-stroke}
+/* the point the coordinate lookup is actually asking about */
+#pk circle{fill:none;stroke:var(--pick);stroke-width:2.4;vector-effect:non-scaling-stroke}
+#pk line{stroke:var(--pick);stroke-width:1.6;vector-effect:non-scaling-stroke}
+/* the same ML/DV seen from a plate the AP does not resolve to: shown, not asserted */
+#pk.off{opacity:.4}
+/* the skull's cut through this plate. The plate image is white in either theme, so like
+   the markers this is a fixed colour, not the themed line the projections use */
+#sk path{fill:none;stroke:#8f8264;stroke-opacity:.8;stroke-width:2;vector-effect:non-scaling-stroke}
+/* stereotaxic landmarks. The plate image is white in either theme, so like the other
+   plate marks these are a fixed colour rather than a themed one. */
+#lm line{stroke:#0f766e;stroke-width:1.8;vector-effect:non-scaling-stroke}
+#lm line.ref{stroke-dasharray:7 5;stroke-opacity:.7}
+#lm circle{fill:none;stroke:#0f766e;stroke-width:2.4;vector-effect:non-scaling-stroke}
+#lm text{fill:#0f766e;font-size:15px;font-weight:600;paint-order:stroke;
+  stroke:#fff;stroke-width:3.5px;stroke-linejoin:round}
+#pk.off circle{stroke-dasharray:4 4}
+/* the planned track. Solid where it is actually on this plate -- within half a section of
+   its AP -- and ghosted where it is only the projection of a track passing in front of or
+   behind the plane. Same fixed-colour reasoning as the marks above. */
+#tk line,#tk path{fill:none;stroke:var(--targ);stroke-width:2.4;vector-effect:non-scaling-stroke}
+#tk .gh{stroke-width:1.6;stroke-dasharray:5 4;stroke-opacity:.6}
+#tk .leg{stroke-width:1.4;stroke-dasharray:2 4;stroke-opacity:.75}
+#tk circle{fill:none;stroke:var(--targ);stroke-width:2.4;vector-effect:non-scaling-stroke}
+#tk circle.here{stroke-width:1.6;stroke-dasharray:3 3}
+/* a tick where the track crosses into the next structure, and the shank past the target */
+#tk line.bd{stroke-width:1.6;stroke-opacity:.9}
+#tk path.ext{stroke-width:1.4;stroke-dasharray:1 3;stroke-opacity:.85}
+/* the footprint sphere, cut by this plane; on the projections, the sphere's silhouette */
+#tk ellipse.fp{fill:var(--targ);fill-opacity:.08;stroke:var(--targ);stroke-width:1.6;stroke-dasharray:3 3;
+  vector-effect:non-scaling-stroke}
+/* notes: a ring and a word, clickable through the overlay that otherwise ignores the pointer */
+#an .note{pointer-events:auto;cursor:pointer}
+#an circle{fill:#fff;fill-opacity:.7;stroke:var(--note);stroke-width:2.2;vector-effect:non-scaling-stroke}
+#an text{fill:var(--note);font-size:14px;font-weight:600;paint-order:stroke;stroke:#fff;stroke-width:3.5px;
+  stroke-linejoin:round}
+#pjan circle{fill:var(--note);stroke:#fff;stroke-width:1.2}
+.anf{position:absolute;z-index:6;display:flex;gap:5px;align-items:center;padding:6px 8px;
+  background:var(--panel);border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow)}
+.anf[hidden]{display:none}
+.anf input{width:200px;padding:5px 8px;border:1px solid var(--line);border-radius:7px;
+  background:var(--panel2);color:var(--ink);font:inherit;font-size:13px}
+.anlist{overflow:auto;max-height:min(40dvh,420px)}
+.anrow .nm{overflow-wrap:anywhere}
+label.z.anlab{display:inline-block;cursor:pointer}
+/* compare: the second stack beside the first */
+#imgbox.cmp{display:flex;gap:8px;align-items:center;justify-content:center}
+#imgbox.cmp .imgwrap{flex:none}
+.imgwrap.cmp[hidden]{display:none}
+.cmplab{position:absolute;left:8px;top:6px;z-index:4;font-size:11px;line-height:1.4;padding:1px 6px;
+  border-radius:4px;background:rgba(255,255,255,.88);color:#1b1a17;pointer-events:none;
+  font-variant-numeric:tabular-nums}
+#om2 path{fill:var(--mark);fill-opacity:.10;stroke:var(--mark);stroke-width:1.5;fill-rule:evenodd;
+  vector-effect:non-scaling-stroke}
+#om2 path.est{stroke-dasharray:6 4}
+#xh2 line{stroke:var(--mark);stroke-opacity:.55;stroke-width:1;vector-effect:non-scaling-stroke}
+.csel{font-family:inherit;font-size:12px;color:var(--ink);background:var(--panel2);
+  border:1px solid var(--line);border-radius:7px;padding:3px 5px;cursor:pointer}
+.csel[hidden]{display:none}
+@media (max-width:899px){ #imgbox.cmp{flex-direction:column} }
+#pjtk circle.fp{fill:var(--targ);fill-opacity:.08;stroke-width:1.6;stroke-dasharray:3 3}
+#tk text{fill:var(--targ);font-size:14px;font-weight:600;paint-order:stroke;
+  stroke:#fff;stroke-width:3.5px;stroke-linejoin:round}
+.sbar{position:absolute;left:12px;bottom:11px;z-index:4;pointer-events:none;
+  background:rgba(255,255,255,.86);border-radius:5px;padding:4px 7px 3px;
+  display:flex;flex-direction:column;align-items:center;gap:3px}
+.sbar .bar{height:5px;border:2px solid #1b1a17;border-top:0}
+.sbar .lab{font-size:10.5px;color:#1b1a17;line-height:1;font-variant-numeric:tabular-nums;
+  font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+
+/* ---------- readouts under the plate ---------- */
+.rdout{padding:1px 14px 6px;font-size:12px;color:var(--muted);text-align:center;
+  font-variant-numeric:tabular-nums;min-height:1.5em;flex:none}
+.rdout b{color:var(--ink);font-weight:600}
+.rdout.ms b{color:var(--meas)}
+/* one line, always the same height, so the plate does not resize under a selection */
+.vhint{margin:0 14px;padding:3px 0 8px;font-size:11.5px;color:var(--muted);
+  text-align:center;flex:none;line-height:1.5}
+.vhint b{color:var(--ink);font-weight:600}
+.vhint.warn{background:var(--accent-soft);color:var(--accent);border-radius:7px;
+  padding:4px 10px;margin-bottom:7px}
+.vhint.warn b{color:inherit}
+.vhint button{border:1px solid currentColor;background:transparent;color:inherit;
+  border-radius:6px;padding:1px 7px;font-size:11.5px;cursor:pointer;font-family:inherit;
+  margin-left:5px;white-space:nowrap}
+.vhint button:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
+/* a class that sets display outranks the UA rule for [hidden], and the scale bar
+   would otherwise sit on the plate as an empty chip */
+.sbar[hidden],.vctl[hidden]{display:none}
+
+/* ---------- sagittal / top-down projection ---------- */
+.pjw{position:relative;flex:1;min-height:0;padding:9px 14px 0}
+.pjw svg{display:block;width:100%;height:100%}
+.pjw.hot{cursor:pointer}
+#pjb{fill:none;stroke:var(--cloud);stroke-width:3.4;stroke-linecap:round}
+#pjf{fill:none;stroke:var(--cloud2);stroke-width:4.6;stroke-linecap:round}
+#pjl circle{fill:var(--mark)}
+#pjhi{fill:none;stroke:var(--accent);stroke-width:2.6}
+#pja line{stroke:var(--line)}
+#pja line.zero{stroke:var(--muted);stroke-opacity:.5}
+#pja text{fill:var(--muted);font-size:13px;font-variant-numeric:tabular-nums}
+#pjk path{fill:none;stroke:var(--boneln);stroke-opacity:.75;stroke-width:2.2;pointer-events:none}
+#pjlm{pointer-events:none}
+#pjlm line{stroke:var(--lmk);stroke-width:1.6}
+#pjlm line.ref{stroke-dasharray:6 5;stroke-opacity:.65}
+#pjlm circle{fill:var(--lmk)}
+#pjlm text{fill:var(--lmk);font-size:12px;font-weight:600}
+#pjg line{stroke:var(--accent);stroke-opacity:.6;stroke-dasharray:7 5}
+#pjg rect{fill:var(--accent)}
+#pjg text{fill:#fff;font-size:12px;font-weight:600;font-variant-numeric:tabular-nums}
+/* the planned track. This view carries no foreshortening on either of its axes, so unlike
+   the plate the whole line is drawn solid: it is the projection of the track and says so. */
+#pjtk line{stroke:var(--targ);stroke-width:2.4;stroke-linecap:round}
+#pjtk line.leg{stroke-width:1.4;stroke-dasharray:2 4;stroke-opacity:.75}
+#pjtk circle{fill:none;stroke:var(--targ);stroke-width:2.4}
+#pjtk text{fill:var(--targ);font-size:12px;font-weight:600}
+.pjn{font-size:11.5px;color:var(--muted);margin:7px 0 0;padding:0 14px 10px;
+  text-align:center;line-height:1.5;flex:none}
+.pjn b{color:var(--ink);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px}
+
+/* ---------- 3-D view ---------- */
+.v3w{position:relative;flex:1;min-height:0;overflow:hidden}
+.v3w canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+.v3w.drag canvas{cursor:grabbing}
+.v3w.hot canvas{cursor:pointer}
+.v3msg{position:absolute;inset:0;display:grid;place-content:center;justify-items:center;
+  text-align:center;gap:8px;padding:22px;color:var(--muted);font-size:12.5px;line-height:1.55}
+.v3msg b{color:var(--ink);font-size:14px;font-weight:600}
+.v3msg[hidden]{display:none}
+.v3bar{width:150px;height:3px;border-radius:2px;background:var(--line);overflow:hidden}
+.v3bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .1s linear}
+.v3n{font-size:11.5px;color:var(--muted);margin:7px 0 0;padding:0 14px 10px;
+  text-align:center;line-height:1.5;flex:none}
+.v3n b{color:var(--ink);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px}
+.lb3[hidden]{display:none}
+.lb3{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;color:var(--muted);
+  white-space:nowrap;user-select:none}
+.lb3 input{width:74px;accent-color:var(--accent);margin:0;cursor:pointer}
+.lb3 select{font-family:inherit;font-size:12.5px;color:var(--ink);background:var(--panel2);
+  border:1px solid var(--line);border-radius:7px;padding:2px 5px;cursor:pointer}
+.lb3 select:hover{border-color:var(--accent)}
+.lb3 b{color:var(--ink);font-variant-numeric:tabular-nums;font-size:11px;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;min-width:1.6em;text-align:right}
+@media (max-width:1100px){ .lb3 input{width:56px} }
+
+/* ---------- footer, one line; the long version lives in About ---------- */
+footer{max-width:var(--maxw);margin:0 auto;width:100%;padding:8px var(--pad) 14px;
+  font-size:11.5px;color:var(--muted);line-height:1.6}
+footer p{margin:0}
+footer a{color:var(--accent)}
+.fattr{opacity:.85}
+.fsep{opacity:.45;padding:0 5px}
+.flink{border:0;background:none;padding:0;font:inherit;color:var(--accent);cursor:pointer}
+.flink:hover{text-decoration:underline}
+
+/* ---------- about ---------- */
+dialog{width:min(700px,92vw);max-height:min(84dvh,780px);padding:0;overflow:auto;
+  border:1px solid var(--line);border-radius:14px;
+  background:var(--panel);color:var(--ink);box-shadow:var(--shadow)}
+dialog::backdrop{background:rgba(0,0,0,.5)}
+.dh{position:sticky;top:0;z-index:1;display:flex;align-items:center;gap:10px;
+  padding:13px 18px;border-bottom:1px solid var(--line);background:var(--panel)}
+.dh h2{margin:0;font-size:15px;font-weight:650}
+.dh button{margin-left:auto}
+.db{padding:15px 18px 22px;font-size:12.5px;line-height:1.65;color:var(--muted)}
+.db h3{color:var(--ink);font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;
+  margin:17px 0 6px;font-weight:600}
+.db h3:first-child{margin-top:0}
+/* the paragraph the asterisks point at: marked briefly on arrival so the eye lands on it
+   rather than on the top of a long dialog. Padding is cancelled by the negative margins,
+   so the highlight can breathe without shifting the text out of the column. */
+#skullnote{border-radius:6px;padding:3px 6px;margin:0 -6px 9px}
+#skullnote.lit{animation:sklit 2.2s ease-out}
+@keyframes sklit{0%,40%{background:var(--accent-soft)} 100%{background:transparent}}
+.db p{margin:0 0 9px}
+.db a{color:var(--accent)}
+.keys{display:grid;grid-template-columns:auto 1fr;gap:5px 14px;margin:0;font-size:12.5px}
+.keys dt{white-space:nowrap}
+.keys dd{margin:0}
+kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chip);
+  padding:1px 5px;border-radius:4px;color:var(--ink)}
+
+/* ---------- the working stereotaxic frame ---------- */
+#frameb.on{border-color:var(--accent);color:var(--accent)}
+/* frame adjustment is still being tested, so the dialog and About both lead with a note
+   that reads as a caution rather than as one more paragraph of body copy */
+.fexp{border:1px solid var(--accent);border-radius:9px;background:var(--accent-soft);
+  color:var(--accent);padding:9px 12px;margin:0 0 13px;font-size:12px;line-height:1.55}
+.fexp b{font-weight:650}
+.fgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 10px}
+.ffld{display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--muted);min-width:0}
+.ffld input,.ffld select{width:100%;padding:7px 8px;border:1px solid var(--line);border-radius:8px;
+  background:var(--panel2);color:var(--ink);font-size:14px;font-family:inherit;
+  font-variant-numeric:tabular-nums;outline:none}
+.ffld input:focus,.ffld select:focus{border-color:var(--accent)}
+.ffld input:disabled{opacity:.45}
+/* the origin's select stands alone rather than in a .fgrid, so it carries the row gap itself */
+.ffld.solo{margin:0 0 10px}
+/* the pivot has no effect once an origin is named, so the controls say so by fading */
+.fdim{opacity:.45}
+.fnb{margin:0 0 9px;font-size:11.5px;color:var(--accent);line-height:1.5}
+.fprev{border:1px solid var(--line);border-radius:9px;background:var(--panel2);
+  padding:10px 12px;font-size:12px;color:var(--ink);font-variant-numeric:tabular-nums}
+.fprev b{color:var(--accent);font-weight:600}
+.fprev .fpa{display:block;color:var(--muted);margin-top:3px}
+.frow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 15px}
+/* the atlas value, kept beside every adjusted one so the two can never be confused */
+.atl{display:block;color:var(--muted);font-size:11px;margin-top:1px}
+/* a readout that stayed in atlas coordinates says so inline, with the why on hover,
+   rather than spending a whole row of the strip under the plate on the explanation */
+.fnote{color:var(--muted);border-bottom:1px dotted currentColor;cursor:help}
+/* three across is comfortable in the dialog's 700px; on a phone the labels carry more
+   words than the column can hold, so they pair up rather than wrapping to ribbons */
+@media (max-width:560px){ .fgrid{grid-template-columns:repeat(2,1fr)} }
+.fset{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:0 0 9px;
+  font-size:11px;color:var(--muted)}
+.fset button{font-size:11.5px;padding:3px 9px}
+.fset button.on{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+.fmb{border:1px solid var(--line);border-radius:9px;padding:11px 12px;margin:0 0 9px}
+.fmh{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin:0 0 8px;
+  font-size:11px;color:var(--muted)}
+.fmh b{color:var(--ink);font-size:12.5px;font-weight:650;margin-right:3px}
+.fmh button{font-size:11px;padding:2px 7px}
+.fmo{display:flex;align-items:center;gap:10px;margin-top:9px}
+.fmo .v{color:var(--ink);font-weight:650;font-size:14px;font-variant-numeric:tabular-nums}
+.fmo button{margin-left:auto;font-size:11.5px;padding:3px 9px}
+.fmo button[disabled]{opacity:.45;cursor:default}
+.fmn{margin:7px 0 0;font-size:11px;color:var(--muted);line-height:1.5}
+
+/* ---------- adapting to the window ---------- */
+/* two columns once both panes can be comfortable */
+@media (min-width:900px){
+  .wrap{grid-template-columns:minmax(300px,370px) minmax(0,1fr);align-items:start}
+}
+@media (min-width:1600px){
+  .wrap{grid-template-columns:minmax(330px,410px) minmax(0,1fr)}
+}
+@media (min-width:1800px){:root{--maxw:1720px}}
+/* stacked, the plate is the thing being read; the search is how you steer it */
+@media (max-width:899px){
+  .viewer{order:-1}
+  input[type=search]{font-size:16px}   /* <16px makes iOS zoom the page on focus */
+}
+/* given a window with room, the app fills it: every pane scrolls itself and the page
+   does not scroll at all, so the plate gets each pixel nothing else is using */
+@media (min-width:900px) and (min-height:600px){
+  html,body{height:100%}
+  body{height:100vh;height:100dvh;display:grid;
+    grid-template-rows:auto minmax(0,1fr) auto;overflow:hidden}
+  header{position:static}
+  .wrap{height:100%;min-height:0;align-items:stretch;padding-bottom:0}
+  .side,.viewer{height:100%}
+  .list{flex:1;min-height:0;max-height:none}
+  .img{height:auto;flex:1;min-height:0}
+  footer{padding-top:7px;padding-bottom:10px}
+}
+/* narrow phones: hand the structure name the room the columns were wasting */
+@media (max-width:560px){
+  .sub{display:none}
+  .vbar{gap:6px 8px}
+  .vbar .tsep{display:none}
+  .tg{font-size:12px;gap:4px}
+  .seg button{font-size:11.5px}
+  .zlv{min-width:3em;font-size:11.5px}
+  /* the control group fills a line on its own, so let Copy link share the tab row
+     rather than take a fifth one to itself */
+  .vbar>.seg{order:1}
+  #elink{order:2;margin-left:0;padding:7px}
+  .vctl{order:3;width:100%}
+}
+@media (max-width:420px){
+  .row,.rrow{grid-template-columns:56px minmax(0,1fr) auto;gap:2px 8px}
+  .row{gap:8px}
+  .nm{font-size:13px}
+  .pane,.row,.rrow,.det,.vbar,.vctx,.vbot,.rdout{padding-left:11px;padding-right:11px}
+  .vhint{margin-left:11px;margin-right:11px}
+  .pjw,.pjn{padding-left:10px;padding-right:10px}
+}
+/* touch pointers need larger targets than a mouse does */
+@media (pointer:coarse){
+  button.b,a.b{padding:8px 12px}
+  button.z{padding:6px 11px}
+  .chip,.pbtn{padding:5px 9px}
+  .seg button{padding:8px 12px}
+}
+@media print{
+  header,.vbar,.vbot,.side,.rdout,.vhint,.pjn,.fsep,.flink{display:none}
+  html,body{height:auto}
+  body{display:block;overflow:visible}
+  .wrap{grid-template-columns:minmax(0,1fr);padding:0;height:auto}
+  .card{border:0;box-shadow:none;overflow:visible}
+  .viewer,.stage,.view{height:auto}
+  .img{height:auto;flex:none;padding:0}
+  .imgwrap{width:100%!important}
+}

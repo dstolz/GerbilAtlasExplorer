@@ -1,0 +1,56 @@
+# Deploys the built site to GitHub Pages from a workflow, and attaches the offline
+# bundle to a release on a version tag.
+#
+# Today the site is served from the main branch's root, so this workflow runs only
+# when started by hand (workflow_dispatch) or on a v* tag. To switch the deployment
+# over: Settings -> Pages -> Source: "GitHub Actions", then add `push: branches:
+# [main]` to `on:` below. The URL does not change. Until then the committed pages
+# are what Pages serves, and CI checks that they are a fresh build.
+name: Pages
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Build the site, stamped with this commit
+        run: python tools/build_app.py --site build/site --commit "${GITHUB_SHA::7}"
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/site
+      - name: Attach the offline bundle to the release
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" --title "${GITHUB_REF_NAME}" --notes "See CHANGELOG.md" || true
+          gh release upload "${GITHUB_REF_NAME}" build/site/gerbil_atlas_explorer.html --clobber
+
+  deploy:
+    # only meaningful once the Pages source is "GitHub Actions"; see the note above
+    if: github.event_name == 'workflow_dispatch'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

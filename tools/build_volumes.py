@@ -25,7 +25,6 @@ either way; the prose and the numbers beside them are the part a reader can chec
 
 import argparse
 import base64
-import json
 import os
 import sys
 import time
@@ -35,12 +34,8 @@ import numpy as np
 from scipy import ndimage
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import atlaslib as A                                           # noqa: E402
 import volume as V                                             # noqa: E402
-
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DB = os.path.join(ROOT, 'data', 'gerbil_atlas.json')
-OUT = os.path.join(ROOT, 'data', 'gerbil_atlas_volumes.json')
-QCDIR = os.path.join(ROOT, 'qc')
 
 BBOX_PAD = 24            # voxels (1.2 mm) of room around a structure while it competes
 SPUR_LEN = 9             # voxels (0.45 mm) -- longer than one section step, see below
@@ -51,11 +46,6 @@ QC_PLATES = (5, 20, 30, 45, 56)
 
 
 # ---------- loading ----------
-
-def load():
-    with open(DB) as fh:
-        return json.load(fh)
-
 
 def published_plates(db):
     """Which plates the authors' index lists for each abbreviation.
@@ -327,24 +317,36 @@ def pad_box(mask, pad, shape):
 
 
 def encode(v, f):
-    """Mesh to base64, quantised to 0.01 mm as the skull mesh on the page is."""
+    """Mesh to base64, quantised to 0.01 mm as the skull mesh on the page is.
+
+    Little-endian whatever the machine, which is what the note promises and what
+    the page's typed arrays read."""
     if len(f) == 0:
         return None
     o, q = V.quantise(v)
-    idx = f.astype(np.uint32) if len(v) > 65535 else f.astype(np.uint16)
+    idx = f.astype('<u4') if len(v) > 65535 else f.astype('<u2')
     return {'o': [round(float(x), 4) for x in o],
             'nv': int(len(v)), 'nf': int(len(f)),
-            'v': base64.b64encode(q.tobytes()).decode(),
+            'v': base64.b64encode(q.astype('<u2').tobytes()).decode(),
             'f': base64.b64encode(idx.tobytes()).decode(),
             'fw': 4 if len(v) > 65535 else 2}
 
 
 # ---------- validation ----------
 
+def in_outline(polys, x, y):
+    """Even-odd over one plate's outline polygons, as the app's regIn() reads them."""
+    c = False
+    for g in polys:
+        c ^= A.pip(g, x, y)
+    return c
+
+
 def validate(db, frame, grid, labels, brain, raw, ids, present, meshes, plates,
              log=print):
     ext = db['region_extents']['data']
     lp = db['label_positions']['data']
+    outl = db['brain_outline']['data']
     idx = {p: k for k, p in enumerate(plates)}
     res2 = grid.res ** 2
     out = {}
@@ -383,7 +385,7 @@ def validate(db, frame, grid, labels, brain, raw, ids, present, meshes, plates,
     #     they name one region between them and only one of them carries the extent, so
     #     either name counts as a hit on the one outline they share
     blocks = db.get('label_blocks', {}).get('data', {})
-    hit = tot = inside = before = 0
+    hit = tot = inside = before = plane = 0
     for p in plates:
         z = grid.plane(idx[p])
         sl = labels[z]
@@ -409,12 +411,19 @@ def validate(db, frame, grid, labels, brain, raw, ids, present, meshes, plates,
                 tot += 1
                 inside += bool(br[y, x])
                 before += bool(raw_br[y, x])
+                plane += in_outline(outl[str(p)], cx, cy)
                 if sl[y, x] in want:
                     hit += 1
     out['labels_in_their_own_region'] = round(hit / max(tot, 1), 4)
     out['labels_inside_the_surface'] = round(inside / max(tot, 1), 4)
     if not np.array_equal(brain, raw):
         out['labels_inside_before_opening'] = round(before / max(tot, 1), 4)
+    # the same two checks in the plane, which is what the prose sets the 3-D figures
+    # against: the outline read here on the same points, the region as
+    # region_extents already reports it over every plate
+    out['labels_inside_the_outline_in_plane'] = round(plane / max(tot, 1), 4)
+    out['labels_in_their_own_region_in_plane'] = \
+        db['region_extents']['summary']['label_inside_its_own_region']
 
     # (5) what the meshing costs, split into its two causes so neither hides the other:
     #     reading the distance field coarsely, which is chosen, and the half-voxel by
@@ -480,7 +489,7 @@ def qc_planes(db, frame, grid, labels, ids, plates, log=print):
                 img[sl == key] = c
             cols.append(img)
         strip = np.concatenate([np.pad(c, ((0, 0), (0, 6), (0, 0))) for c in cols], 1)
-        Image.fromarray(strip[::-1]).save(os.path.join(QCDIR, 'chk_vol_%02d.png' % p))
+        Image.fromarray(strip[::-1]).save(os.path.join(A.QCDIR, 'chk_vol_%02d.png' % p))
         log('  qc/chk_vol_%02d.png' % p)
 
 
@@ -525,7 +534,7 @@ def qc_projections(grid, brain, labels, ids, log=print):
         for p in ps:
             sheet[:p.shape[0], x:x + p.shape[1]] = p
             x += p.shape[1] + 6
-        Image.fromarray(sheet).save(os.path.join(QCDIR, 'chk_vol_%s.png' % name))
+        Image.fromarray(sheet).save(os.path.join(A.QCDIR, 'chk_vol_%s.png' % name))
         log('  qc/chk_vol_%s.png' % name)
 
 
@@ -534,10 +543,13 @@ def qc_projections(grid, brain, labels, ids, log=print):
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument('--plates', help='e.g. 30 or 27-33; default all')
+    A.add_plates_arg(ap)
     ap.add_argument('--dry-run', action='store_true', help='report and write no JSON')
     ap.add_argument('--qc', action='store_true', help='write qc/chk_vol_*.png')
     ap.add_argument('--stl', metavar='DIR', help='also write meshes as STL')
+    ap.add_argument('--nifti', metavar='PATH',
+                    help='also write the label volume as a gzipped NIfTI-1 file (uint16 ids), '
+                         'with a lookup table beside it')
     ap.add_argument('--res', type=float, default=V.RES, help='voxel mm (default 0.05)')
     ap.add_argument('--samples', type=int, default=REGION_SAMPLES,
                     help='samples across a structure; lower is coarser (default %d)'
@@ -548,15 +560,11 @@ def main():
     a = ap.parse_args()
 
     t0 = time.time()
-    db = load()
+    db = A.load_db()
     frame = V.Frame(db['plate_frame'])
     allp = sorted(int(p) for p in db['brain_outline']['data'])
-    if a.plates:
-        lo, _, hi = a.plates.partition('-')
-        lo = int(lo); hi = int(hi) if hi else lo
-        plates = [p for p in allp if lo <= p <= hi]
-    else:
-        plates = allp
+    want = set(a.plates or allp)
+    plates = [p for p in allp if p in want]
     if len(plates) < 2:
         sys.exit('need at least two plates; the third dimension comes from the gap')
 
@@ -668,12 +676,26 @@ def main():
     print('\n  %.0f s' % (time.time() - t0))
 
     if a.qc:
-        os.makedirs(QCDIR, exist_ok=True)
+        os.makedirs(A.QCDIR, exist_ok=True)
         qc_planes(db, frame, grid, labels, ids, plates)
         qc_projections(grid, brain, labels, ids)
 
+    if a.nifti:
+        names = {s['abbr']: s['name'] for s in db['structures']}
+        V.write_nifti(a.nifti, np.where(brain, labels, 0), grid,
+                      descrip='Radtke-Schuller et al. 2016; not a segmentation')
+        lut = os.path.splitext(os.path.splitext(a.nifti)[0])[0] + '_lut.csv'
+        with open(lut, 'w', encoding='utf8', newline='') as fh:
+            fh.write('id,abbr,name\r\n0,,outside the brain\r\n')
+            for ab, key in sorted(ids.items(), key=lambda kv: kv[1]):
+                fh.write('%d,%s,"%s"\r\n' % (key, ab, names.get(ab, '').replace('"', '""')))
+            fh.write('65000,,a sealed face the atlas does not name\r\n')
+        print('wrote %s (%.1f MB) and %s' % (a.nifti, os.path.getsize(a.nifti) / 1e6, lut))
+
     if a.dry_run:
         print('\n--dry-run: nothing written')
+        return
+    if A.refuse_partial_write(a, 'the volumes'):
         return
 
     payload = {
@@ -686,11 +708,8 @@ def main():
         'surface': {'note': SURFACE_NOTE, 'mesh': encode(bv, bf)},
         'data': meshes,
     }
-    tmp = OUT + '.tmp'
-    with open(tmp, 'w') as fh:
-        json.dump(payload, fh, separators=(',', ':'))
-    os.replace(tmp, OUT)
-    print('\nwrote %s (%.1f MB)' % (OUT, os.path.getsize(OUT) / 1e6))
+    A.save_json(payload, A.VOLUMES)
+    print('\nwrote %s (%.1f MB)' % (A.VOLUMES, os.path.getsize(A.VOLUMES) / 1e6))
 
 
 GRADES = {
@@ -707,7 +726,10 @@ NOTE = ('Three-dimensional extent of the brain and of each structure, built by s
         'the 62 coronal plates and interpolating between them. Meshes are quantised to '
         '0.01 mm and base64-encoded as the skull mesh on the page is; `o` is the corner '
         'the offsets are measured from, `v` the uint16 vertex offsets, `f` the triangle '
-        'indices at `fw` bytes each. Coordinates are stereotaxic millimetres, '
+        'indices at `fw` bytes each. Both are little-endian: `v` decodes to nv*3 uint16, '
+        'each vertex an (ML, DV, AP) offset from `o` in steps of 0.01 mm, and `f` to nf*3 '
+        'unsigned indices of `fw` bytes each (2, or 4 where a mesh has more than 65535 '
+        'vertices). Coordinates are stereotaxic millimetres, '
         '(ML, DV, AP), the same frame the rest of the database uses. `grade` says whether '
         'a mesh follows the drawn boundary or merely encloses the structure; see `grades`.')
 
@@ -752,8 +774,8 @@ def validation_text(s, v):
         'faces the atlas does not name, which is %.1f%% of the brain. The two checks the '
         '2-D outline already passes hold in 3-D: the surface reaches DV %.2f and does not '
         'cross it, and its lowest point is DV %.2f. Of the printed abbreviations, %.1f%% '
-        'fall inside the surface and %.1f%% inside the region they name, against 97.8%% '
-        'and 97%% for the same checks in the plane. Reading the distance field coarsely for '
+        'fall inside the surface and %.1f%% inside the region they name, against %.1f%% '
+        'and %.0f%% for the same checks in the plane. Reading the distance field coarsely for '
         'the larger structures, rather than decimating their meshes, costs a median '
         '%.1f%% of a mesh volume. '
         '%d structures are graded surface and %d slab, and %.0f%% arrive as the one or two '
@@ -762,6 +784,8 @@ def validation_text(s, v):
             100 * v['section_area_median_rel_error'], 100 * v['section_area_p90_rel_error'],
             100 * v['unnamed_fraction'], v['dv_highest_mm'], v['dv_lowest_mm'],
             100 * v['labels_inside_the_surface'], 100 * v['labels_in_their_own_region'],
+            100 * v['labels_inside_the_outline_in_plane'],
+            100 * v['labels_in_their_own_region_in_plane'],
             100 * v.get('coarsening_median_rel_error', 0),
             s['graded_surface'], s['graded_slab'],
             100 * v['structures_in_one_or_two_pieces'],

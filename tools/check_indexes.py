@@ -26,18 +26,19 @@ Of the four `N-N`, all four have the abbreviation printed on plate N+1 as well;
 the database takes their range as N to N+1. Of the three `N-`, none does, and
 the database leaves them at the single plate. See METHODS.
 
-Usage:  python3 tools/check_indexes.py
+Usage:  python3 tools/check_indexes.py [--json data/gerbil_atlas.json]
 """
 
-import io
-import json
+import argparse
 import os
+import re
 import sys
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-ABBR = os.path.join(ROOT, 'data', 'index_raw.txt')
-STRUC = os.path.join(ROOT, 'data', 'index_structures_raw.txt')
-JSON = os.path.join(ROOT, 'data', 'gerbil_atlas.json')
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import atlaslib as A  # noqa: E402
+
+ABBR = os.path.join(A.DATA, 'index_raw.txt')
+STRUC = os.path.join(A.DATA, 'index_structures_raw.txt')
 
 # The four the database extends by one plate, and the word read on that plate.
 EXTENDED = {'AngT': 29, 'ZIC': 35, 'Su3C': 37, 'RLi': 36}
@@ -55,17 +56,31 @@ EXPECTED_RANGE = {
     'MnM': 'the Index of structures leaves the range open as "34-"',
 }
 
+# a plate field: one plate, or a plate, an en dash, and a plate or nothing
+PLATES = re.compile(r'\d+(?:–\d*)?')
+
 
 def read(path, order):
-    """`order` is the field order of the file: 'an' abbr-first, 'na' name-first."""
+    """`order` is the field order of the file: 'an' abbr-first, 'na' name-first.
+
+    A line that is not three fields, or whose plate field is not a plate or a
+    range, stops the run and says which line: a transcription file with a
+    slipped delimiter would otherwise be read as a disagreement about the atlas.
+    """
     out = {}
-    for line in io.open(path, encoding='utf-8'):
-        line = line.rstrip('\n')
-        if not line:
-            continue
-        a, b, plates = line.split('|')
-        ab, name = (a, b) if order == 'an' else (b, a)
-        out[ab] = (name, plates)
+    with open(path, encoding='utf-8') as f:
+        for n, line in enumerate(f, 1):
+            line = line.rstrip('\n')
+            if not line:
+                continue
+            fields = line.split('|')
+            if len(fields) != 3 or not all(fields) or not PLATES.fullmatch(fields[2]):
+                raise SystemExit('%s, line %d: expected three fields, '
+                                 'abbreviation|name|plates, got %r'
+                                 % (os.path.relpath(path, A.ROOT), n, line))
+            a, b, plates = fields
+            ab, name = (a, b) if order == 'an' else (b, a)
+            out[ab] = (name, plates)
     return out
 
 
@@ -80,24 +95,33 @@ def spread(plates):
 
 
 def main():
-    A, S = read(ABBR, 'an'), read(STRUC, 'na')
-    bad = 0
+    ap = argparse.ArgumentParser(description=__doc__.split('\n')[0])
+    ap.add_argument('--json', default=A.JSON, metavar='PATH',
+                    help='the database to read the indexes against '
+                         '(default: data/gerbil_atlas.json)')
+    args = ap.parse_args()
 
-    only = (set(S) - set(A)) | (set(A) - set(S))
+    AB, S = read(ABBR, 'an'), read(STRUC, 'na')
+    bad = 0                                  # over every section
+
+    only = (set(S) - set(AB)) | (set(AB) - set(S))
     if only:
         print('abbreviations in one index only: %s' % sorted(only))
-        bad += 1
+        bad += len(only)
     else:
-        print('both indexes list the same %d abbreviations' % len(A))
+        print('both indexes list the same %d abbreviations' % len(AB))
 
     for what, i, expect in (('name', 0, EXPECTED_NAME),
                             ('range', 1, EXPECTED_RANGE)):
-        diff = sorted(ab for ab in A if ab in S and A[ab][i] != S[ab][i])
+        diff = sorted(ab for ab in AB if ab in S and AB[ab][i] != S[ab][i])
         print()
         print('%ss that differ between the indexes: %d' % (what, len(diff)))
+        n = 0
         for ab in diff:
             print('  %-6s %s' % (ab, expect.get(ab, 'UNEXPECTED')))
-            bad += ab not in expect
+            n += ab not in expect
+        print('  %s' % ('all of them expected' if not n else '%d unexpected' % n))
+        bad += n
 
     print('\nranges the atlas writes with a dash and no second plate:')
     odd = {ab: p for ab, (_n, p) in S.items() if spread(p) is None}
@@ -108,19 +132,28 @@ def main():
                 % odd[ab].split('–')[0])
         print('  %-5s index %-7s %s' % (ab, odd[ab], note))
 
-    DB = json.load(open(JSON))
+    DB = A.load_db(args.json)
     by = {r['abbr']: r for r in DB['structures']}
     print('\nagainst the database:')
+    n = 0
     for ab, (_name, p) in sorted(S.items()):
         want = spread(p)
         if want is None:
             lo = int(p.split('–')[0])
             want = (lo, EXTENDED.get(ab, lo))
+        if ab not in by:
+            print('  %-6s index %-8s not in the database' % (ab, p))
+            n += 1
+            continue
         got = (by[ab]['first_plate'], by[ab]['last_plate'])
         if got != want:
             print('  %-6s index %-8s database %s' % (ab, p, got))
-            bad += 1
-    print('  every range matches' if not bad else '  %d disagree' % bad)
+            n += 1
+    print('  every range matches' if not n else '  %d disagree' % n)
+    bad += n
+
+    print('\n%s' % ('every check passes' if not bad
+                    else '%d problem%s' % (bad, '' if bad == 1 else 's')))
     return 1 if bad else 0
 
 

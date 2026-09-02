@@ -1,6 +1,15 @@
-numpy>=1.24
-scipy>=1.10
-scikit-image>=0.21
-pillow>=10.0
-pymupdf>=1.24.3      # label_blocks.py and find_missing_labels.py only; 1.24.3 is
-                     # where "import pymupdf" arrives, before it only answers to fitz
+# Pinned to the versions the committed data was regenerated with: on these,
+# tools/build_region_extents.py reproduces region_extents byte for byte (plate 30 was
+# checked against the committed block after the atlaslib migration). Watershed
+# tie-breaking, distance transforms and marching cubes can move a pixel between
+# versions, and the README's "re-run it and diff" promise only holds when they match.
+numpy==2.4.6
+scipy==1.17.1
+scikit-image==0.26.0
+pillow==12.3.0
+# label_blocks.py, find_missing_labels.py and label_leaders.py only: 1.24.3 is where
+# "import pymupdf" arrives (before it only answers to fitz). Not pinned: the page
+# render is a rasterisation and the version it was read with is not recorded.
+pymupdf>=1.24.3
+# the tests
+pytest>=8

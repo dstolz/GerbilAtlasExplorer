@@ -73,7 +73,7 @@ AmbC,"ambiguus nucleus, compact part",52,52,1,-10.05,-10.05,brainstem,52
 AmbL,"ambiguus nucleus, loose part",55,55,1,-11.1,-11.1,brainstem,55
 AmbSC,"ambiguus nucleus, subcompact part",53,54,2,-10.4,-10.75,brainstem,53 54
 AMV,"anteromedial thalamic nucleus, ventral part",27,27,1,-1.3,-1.3,thalamus,27
-AngT,angular thalamic nucleus,28,28,1,-1.65,-1.65,thalamus,28
+AngT,angular thalamic nucleus,28,29,2,-1.65,-2.0,thalamus,28 29
 ANS,accessory neurosecretory nuclei,27,28,2,-1.3,-1.65,hypothalamus,27 28
 AOD,"anterior olfactory nucleus, dorsal part",8,12,5,5.35,3.95,olfactory,8 9 10 11 12
 AOE,"anterior olfactory nucleus, external part",6,10,5,6.05,4.65,olfactory,6 7 8 9 10
@@ -546,7 +546,7 @@ Rh,rhomboid thalamic nucleus,27,30,4,-1.3,-2.35,thalamus,27 28 29 30
 ri,rhinal incisure,7,12,6,5.7,3.95,landmark,7 8 9 10 11 12
 RI,rostral interstitial nucleus of medial longitudinal fasciculus,32,33,2,-3.05,-3.4,fiber_tract,32 33
 RIP,raphe interpositus nucleus,46,48,3,-7.95,-8.65,brainstem;monoaminergic,46 47 48
-RLi,rostral linear nucleus of the raphe,35,35,1,-4.1,-4.1,brainstem;monoaminergic,35
+RLi,rostral linear nucleus of the raphe,35,36,2,-4.1,-4.45,brainstem;monoaminergic,35 36
 RMC,"red nucleus, magnocellular part",35,38,4,-4.1,-5.15,midbrain;motor,35 36 37 38
 RMg,raphe magnus nucleus,44,51,8,-7.25,-9.7,brainstem;monoaminergic,44 45 46 47 48 49 50 51
 Ro,nucleus of Roller,52,56,5,-10.05,-11.45,brainstem,52 53 54 55 56
@@ -636,7 +636,7 @@ STMV,"bed nucleus of the stria terminalis, medial division, ventral part",23,24,
 STr,"subiculum, transition area",37,38,2,-4.8,-5.15,hippocampal,37 38
 str,superior thalamic radiation,31,32,2,-2.7,-3.05,fiber_tract;thalamus,31 32
 Su3,supraoculomotor periaqueductal gray,36,39,4,-4.45,-5.5,midbrain;motor;ventricular,36 37 38 39
-Su3C,supraoculomotor cap,36,36,1,-4.45,-4.45,midbrain;motor,36
+Su3C,supraoculomotor cap,36,37,2,-4.45,-4.8,midbrain;motor,36 37
 Su5,supratrigeminal nucleus,43,45,3,-6.9,-7.6,somatosensory,43 44 45
 Sub,submedius thalamic nucleus,30,30,1,-2.35,-2.35,thalamus,30
 SubB,subbrachial nucleus,36,38,3,-4.45,-5.15,midbrain,36 37 38
@@ -717,7 +717,7 @@ Xi,xiphoid thalamic nucleus,27,28,2,-1.3,-1.65,thalamus,27 28
 xscp,decussation of the superior cerebellar peduncle,39,41,3,-5.5,-6.2,cerebellum;fiber_tract,39 40 41
 Y,nucleus Y,48,48,1,-8.65,-8.65,vestibular,48
 ZI,zona incerta,28,29,2,-1.65,-2.0,thalamus,28 29
-ZIC,"zona incerta, caudal part",34,34,1,-3.75,-3.75,thalamus,34
+ZIC,"zona incerta, caudal part",34,35,2,-3.75,-4.1,thalamus,34 35
 ZID,"zona incerta, dorsal part",30,33,4,-2.35,-3.4,thalamus,30 31 32 33
 ZIR,"zona incerta, rostral part",26,27,2,-0.95,-1.3,thalamus,26 27
 ZIV,"zona incerta, ventral part",30,33,4,-2.35,-3.4,thalamus,30 31 32 33

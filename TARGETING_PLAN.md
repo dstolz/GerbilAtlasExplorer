@@ -276,3 +276,11 @@ Worth writing down now so it does not have to be argued later.
 It ships behind the same *experimental* wording the frame adjustment carries — in the
 panel, in About, in the README and in the exported notes — until somebody has driven a
 track by it and looked at the section afterwards.
+
+## Since this plan
+
+The planner now also reads the structures a track passes through, takes a probe length
+and a footprint radius, and writes the plan as JSON; the method and its limits are in
+[METHODS](METHODS.md#what-the-track-passes-through). The questions this plan settled —
+which frame the angles are in, the order of the three, where the entry is found — are
+unchanged by any of it.

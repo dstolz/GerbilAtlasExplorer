@@ -1,73 +1,29 @@
 #!/usr/bin/env python3
-"""Splice `window.__REGION__` into the single-file app.
+"""Retired: the app is built from src/ and data/ by tools/build_app.py.
 
-The app carries its own copy of every data block so that it stays one file you
-can open, and `data/gerbil_atlas.json` stays the readable source. This keeps
-the two in step for the region extents.
-
-Read line by line rather than with a regex over the whole file: the HTML is
-20 MB and one of its lines is a 6 MB base64 blob.
+This name is kept so that an old command still does the right thing. Run bare it
+builds the app; with --check it runs the build's staleness check instead. Either
+way the exit code is build_app's.
 
 Usage:  python3 tools/inline_region_extents.py [--check]
 """
 
-import argparse
-import json
 import os
+import sys
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-JSON = os.path.join(ROOT, 'data', 'gerbil_atlas.json')
-HTML = os.path.join(ROOT, 'gerbil_atlas_explorer.html')
-
-TAG = '<script>window.__REGION__='
-AFTER = '<script>window.__VEC__='
-
-
-def payload():
-    DB = json.load(open(JSON))
-    R = DB['region_extents']
-    return TAG + json.dumps(
-        {'r': R['data'], 'u': R['unassigned'], 'k': R['grades'],
-         'b': DB.get('label_blocks', {}).get('data', {})},
-        separators=(',', ':')) + '</script>\n'
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import build_app  # noqa: E402
 
 
 def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument('--check', action='store_true',
-                    help='report whether the inlined copy is current')
-    a = ap.parse_args()
-
-    want = payload()
-    out, seen, vec = [], False, -1
-    with open(HTML) as f:
-        for i, line in enumerate(f):
-            if line.startswith(TAG):
-                seen = True
-                if a.check:
-                    print('__REGION__ line %d: %s'
-                          % (i + 1, 'current' if line == want else 'STALE'))
-                    return
-                out.append(want)
-                continue
-            if line.startswith(AFTER):
-                vec = len(out)
-            out.append(line)
-    if a.check:
-        print('__REGION__ absent from the app')
-        return
-    if not seen:
-        if vec < 0:
-            raise SystemExit('%s not found in %s' % (AFTER, HTML))
-        out.insert(vec + 1, want)
-    tmp = HTML + '.tmp'
-    with open(tmp, 'w') as f:
-        f.writelines(out)
-    os.replace(tmp, HTML)
-    print('%s %s (%.1f MB, +%.2f MB)'
-          % ('replaced' if seen else 'inserted', TAG.strip('<script>window.='),
-             os.path.getsize(HTML) / 1e6, len(want) / 1e6))
+    print('inline_region_extents.py is retired: the app is built by tools/build_app.py')
+    extra = [x for x in sys.argv[1:] if x != '--check']
+    if extra:
+        raise SystemExit('inline_region_extents.py takes only --check; run '
+                         'tools/build_app.py for anything else (%s)' % ' '.join(extra))
+    sys.argv = [build_app.__file__] + (['--check'] if '--check' in sys.argv[1:] else [])
+    return build_app.main()
 
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())

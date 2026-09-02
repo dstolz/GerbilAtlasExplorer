@@ -40,9 +40,9 @@ UNASSIGNED = -1             # the label for a sealed face the atlas does not nam
 class Frame:
     """Fractions of the 1100 x 703 plate frame into stereotaxic millimetres.
 
-    The same two formulae the app applies at gerbil_atlas_explorer.html:1110 and to the
-    outlines at :1910, taken from `plate_frame` rather than copied, so a recalibration
-    moves both together."""
+    The same two formulae the app applies -- `toML()` / `toDV()` in src/app.js, which
+    is also how it reads the outlines -- taken from `plate_frame` rather than copied,
+    so a recalibration moves both together."""
 
     def __init__(self, pf):
         self.x0 = pf['ml_zero_px']
@@ -120,11 +120,10 @@ def grid_for(frame, outline, aps, res=RES, sub=SUB, cap=CAP, margin=0.3):
 def fill(rings, grid):
     """Even-odd fill of a set of closed rings onto the ML x DV lattice.
 
-    Even-odd across the whole set, which is `regIn()` at
-    gerbil_atlas_explorer.html:1683: the two hemispheres of a bilateral structure union,
-    a hole subtracts, and no winding order has to be kept right for either. The crossings
-    of every ring are counted on one scanline together, so that holds without any
-    per-ring bookkeeping."""
+    Even-odd across the whole set, which is `regIn()` in src/app.js: the two hemispheres
+    of a bilateral structure union, a hole subtracts, and no winding order has to be
+    kept right for either. The crossings of every ring are counted on one scanline
+    together, so that holds without any per-ring bookkeeping."""
     m = np.zeros((grid.ny, grid.nx), bool)
     segs = []
     for r in rings:
@@ -315,8 +314,45 @@ def quantise(v, step=0.01):
     return o, q.astype(np.uint16)
 
 
+def write_nifti(path, labels, grid, descrip='', unnamed=65000):
+    """The label volume as a gzipped NIfTI-1 file, one uint16 id per voxel.
+
+    Voxels are written x fastest, in (ML, AP, DV) order so that the file reads as RAS --
+    x to the animal's right, y anterior, z dorsal -- with an sform that puts each voxel
+    centre at its atlas millimetres. 0 is outside the brain, `unnamed` is a sealed face
+    the atlas does not name, and every other id is a structure named in the lookup table
+    written beside it. Nothing here needs nibabel: the header is 348 bytes of struct."""
+    import gzip
+    import struct
+    zyx = np.where(labels == UNASSIGNED, unnamed, labels).astype(np.uint16)   # (AP, DV, ML)
+    arr = np.ascontiguousarray(zyx.transpose(2, 0, 1)[:, ::-1, :])        # (ML, AP asc, DV)
+    nx, ny, nz = arr.shape
+    res = float(grid.res)
+    x0, y0, z0 = float(grid.x[0]), float(grid.z[-1]), float(grid.y[0])   # AP flipped to ascend
+    h = bytearray(348)
+    struct.pack_into('<i', h, 0, 348)                                  # sizeof_hdr
+    struct.pack_into('<8h', h, 40, 3, nx, ny, nz, 1, 1, 1, 1)           # dim
+    struct.pack_into('<h', h, 68, 1002)                                # intent_code: labels
+    struct.pack_into('<hh', h, 70, 512, 16)                            # datatype uint16, bitpix
+    struct.pack_into('<8f', h, 76, 1.0, res, res, res, 1.0, 1.0, 1.0, 1.0)   # pixdim
+    struct.pack_into('<f', h, 108, 352.0)                              # vox_offset
+    struct.pack_into('<ff', h, 112, 1.0, 0.0)                          # scl_slope, scl_inter
+    struct.pack_into('<B', h, 123, 2)                                  # xyzt_units: mm
+    d = ('Gerbil atlas label volume; ids in the lookup table beside it. ' + descrip)[:79]
+    struct.pack_into('<80s', h, 148, d.encode('ascii', 'replace'))
+    struct.pack_into('<hh', h, 252, 0, 1)                              # qform_code, sform_code
+    struct.pack_into('<4f', h, 280, res, 0, 0, x0)                     # srow_x
+    struct.pack_into('<4f', h, 296, 0, res, 0, y0)                     # srow_y
+    struct.pack_into('<4f', h, 312, 0, 0, res, z0)                     # srow_z
+    struct.pack_into('<4s', h, 344, b'n+1\0')                          # magic
+    with gzip.open(path, 'wb', compresslevel=6) as fh:
+        fh.write(bytes(h))
+        fh.write(b'\0\0\0\0')                                          # no extensions
+        fh.write(arr.tobytes(order='F'))
+
+
 def write_stl(path, v, f, name='mesh'):
-    with open(path, 'w') as fh:
+    with open(path, 'w', encoding='utf8', newline='') as fh:
         fh.write('solid %s\n' % name)
         for t in f:
             a, b, c = v[t[0]], v[t[1]], v[t[2]]
