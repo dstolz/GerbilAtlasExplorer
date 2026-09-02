@@ -1,0 +1,12 @@
+{
+  "name": "gerbil-atlas-explorer",
+  "private": true,
+  "description": "Build and test the Gerbil Atlas Explorer. The app itself has no dependencies.",
+  "scripts": {
+    "build": "python3 tools/build_app.py --lean && python3 tools/build_app.py --site build/site",
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.1"
+  }
+}
