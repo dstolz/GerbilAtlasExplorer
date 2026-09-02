@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Gerbil Atlas Explorer</title>
+<!-- favicon: a coronal section, traced from the plates, on the accent red so it
+     reads on a light or a dark bookmarks bar. Inline, so the file stays standalone.
+     Safari ignores SVG icons, hence the PNG; anything that groks SVG takes the SVG. -->
+<link rel="icon" type="image/png" sizes="32x32" href="data:image/png;base64,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">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23b03a2e'/%3E%3Cpath fill='%23f6f5f2' d='M16 12.2L17.8 6.7C20.5 6.6 24 8 25.6 10.5 27.3 11.8 28.8 14.6 28.8 17.4 28.6 20 26.9 22.9 25.5 24.3 24.7 25 23.6 25.2 22.6 25.2 20.4 25.2 17.6 23.7 16 23.7 14.4 23.7 11.6 25.2 9.4 25.2 8.4 25.2 7.3 25 6.5 24.3 5.1 22.9 3.4 20 3.2 17.4 3.2 14.6 4.7 11.8 6.4 10.5 8 8 11.5 6.6 14.2 6.7Z'/%3E%3C/svg%3E">
+<meta name="gae-build" content="{{BUILD_HASH}} {{BUILD_DATE}}">
+<!-- @lean-extras -->
+<!-- @css app.css -->
+</head>
+<body>
+<header>
+  <div class="brand">
+    <h1>Gerbil Atlas Explorer</h1>
+    <p class="sub">723 structures across 62 coronal plates &middot; <em>Meriones unguiculatus</em></p>
+  </div>
+  <div class="hbtns">
+    <button class="b" id="frameb" type="button" title="Experimental — work in your own stereotaxic frame rather than the atlas's">Frame</button>
+    <button class="b" id="themeb" type="button">Auto</button>
+    <a class="b" id="resetb" href="gerbil_atlas_explorer.html" title="Leave this plate, selection and view behind and open the site fresh">Reset</a>
+    <button class="b" id="aboutb" type="button">About</button>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="card side">
+    <div class="seg full" id="mseg">
+      <button type="button" class="on" data-m="find">Find a structure</button>
+      <button type="button" data-m="coord">At a coordinate</button>
+      <button type="button" data-m="targ" title="Experimental — plan a track to a structure">Plan a track</button>
+    </div>
+
+    <div class="pane on" id="paneFind">
+      <input type="search" id="q" placeholder="Name, abbreviation, system &mdash; or &ldquo;plate 30&rdquo;, &ldquo;bregma -2.3&rdquo;" autocomplete="off">
+      <div class="chipwrap">
+        <div class="chips" id="sys"></div>
+        <button type="button" class="more" id="moresys" hidden>More systems</button>
+      </div>
+      <div class="seg full" id="scopeseg">
+        <button type="button" class="on" data-s="all" id="scA">All <b>723</b></button>
+        <button type="button" data-s="plate" id="scP">On plate 30</button>
+      </div>
+      <div class="count"><span id="cnt"></span>
+        <span class="cr"><span id="sortl"></span>
+        <button class="z" id="ecsv" type="button" title="Download the structures listed below as CSV, with their stereotaxic coordinates">CSV</button></span></div>
+    </div>
+
+    <div class="pane" id="paneCoord">
+      <p class="hint" title="AP resolves only to the nearest plate (350 µm), and ML is matched to whichever hemisphere is closer.">The nearest printed labels, ranked by 3-D distance.</p>
+      <div class="revin">
+        <label class="rvf"><span>AP (mm)</span><input type="number" id="rap" step="0.05" value="-6.00"></label>
+        <label class="rvf"><span id="rrefl">relative to</span><select id="rref">
+          <option value="0">bregma</option>
+          <option value="4.45">lambda</option>
+          <option value="7.25">interaural</option>
+          <option value="9.95">occipital crest</option>
+        </select></label>
+        <label class="rvf"><span>ML (mm)</span><input type="number" id="rml" step="0.05" value="2.00"></label>
+        <label class="rvf"><span>DV (mm)</span><input type="number" id="rdv" step="0.05" value="-3.60"></label>
+      </div>
+      <div class="count"><span id="rplate"></span>
+        <button class="z" id="rpick" type="button" title="Arm the plate, then click a point on it: ML and DV come from that point and AP from the plate it is on">Pick on the plate</button></div>
+    </div>
+
+    <div class="pane" id="paneTarg">
+      <p class="texp"><b>Experimental.</b> A straight track to where a structure&rsquo;s
+        abbreviation is <em>printed</em>, measured against a brain surface traced off the
+        drawings. Check it against anatomy you know before you drive by it.</p>
+      <input type="search" id="tq" placeholder="Target &mdash; name or abbreviation" autocomplete="off">
+      <div class="count"><span id="ttgt">No target yet.</span></div>
+      <div class="seg full" id="tside">
+        <button type="button" data-h="-1">Left</button>
+        <button type="button" class="on" data-h="1">Right</button>
+      </div>
+      <label class="rvf" id="tplatew" hidden title="An abbreviation printed on several plates has a label on each, and the target is the median of all of them. Name one plate to read that section's labels alone. Picking a plate also turns the viewer to it."><span>Take the label from</span><select id="tplate"></select></label>
+      <p class="tlbl"><b>Approach</b> &mdash; the angles to set on the arm</p>
+      <div class="tgrid">
+        <label class="rvf" title="Tilt about the mediolateral axis. Positive drives the tip anterior, so the entry is behind the target."><span>Tilt &deg; &middot; tip fwd +</span><input type="number" id="ttilt" step="1" value="0"></label>
+        <label class="rvf" title="Roll about the anteroposterior axis. Positive drives the tip to the right, so the entry is left of the target."><span>Roll &deg; &middot; tip right +</span><input type="number" id="troll" step="1" value="0"></label>
+        <label class="rvf" id="tyaww" title="Turns the heading the tilt and roll point in. With both of those at 0 the track is vertical and there is nothing for a yaw to turn."><span>Yaw &deg; &middot; heading</span><input type="number" id="tyaw" step="1" value="0"></label>
+      </div>
+      <p class="tnote" id="tyawn" hidden>The track is vertical, so yaw has nothing to turn.</p>
+      <p class="tlbl"><b>Offset</b> &mdash; where to aim relative to the label</p>
+      <div class="tgrid" id="toffg">
+        <label class="rvf" title="Moves the target anterior of the label, in millimetres. The offset says where to aim relative to the printed abbreviation, so it is measured along the atlas's own axes and stays anatomical whatever frame the plan is read in."><span>AP mm &middot; ant +</span><input type="number" id="toap" step="0.05" value="0"></label>
+        <label class="rvf" title="Moves the target away from the midline on whichever hemisphere is chosen, so left and right stay mirror images of each other."><span>ML mm &middot; lat +</span><input type="number" id="toml" step="0.05" value="0"></label>
+        <label class="rvf" title="Moves the target dorsal of the label. Positive is up, toward the surface."><span>DV mm &middot; dors +</span><input type="number" id="todv" step="0.05" value="0"></label>
+      </div>
+      <dl class="tplan" id="tplan"></dl>
+      <p class="tnote" id="twarn" hidden></p>
+      <label class="tg" title="Draw the vertical drop and the horizontal offset that the track is the hypotenuse of — what you set on the arm before you lower it"><input type="checkbox" id="tlegs">Right-triangle sides</label>
+      <div class="tbtns">
+        <button class="b" id="tcopy" type="button" title="Copy the plan as plain text">Copy notes</button>
+        <button class="b" id="tdl" type="button" title="Download the plan as a text file">Download</button>
+        <button class="b" id="tzero" type="button" title="Back to a vertical dorsal approach">Straight down</button>
+        <button class="b" id="tozero" type="button" hidden title="Back to the label itself: clears the offset and the plate it was taken from">On the label</button>
+      </div>
+    </div>
+
+    <div class="list on" id="list"></div>
+    <div class="list" id="revout"></div>
+    <div class="det" id="det" hidden></div>
+  </section>
+
+  <section class="card viewer">
+    <div class="vbar">
+      <span class="seg" id="vseg">
+        <button type="button" class="on" data-t="plate">Plate</button>
+        <button type="button" data-t="proj">Projection</button>
+        <button type="button" data-t="v3d">3D</button>
+      </span>
+      <span class="vctl" id="ctlSrc">
+        <span class="tsep"></span>
+        <span class="seg" id="srcseg">
+          <button type="button" class="on" data-s="drawing" title="The atlas's own drawing: contours and printed abbreviations">Labelled</button>
+          <button type="button" data-s="nissl" title="The unlabelled Nissl-stained section at this level, printed in the same coordinate box">Nissl</button>
+          <button type="button" data-s="myelin" title="The unlabelled Gallyas myelin-stained section at this level, printed in the same coordinate box">Myelin</button>
+        </span>
+        <label class="tg" title="Read every source the same way: the drawing loses its colour"><input type="checkbox" id="ckgy">Grey</label>
+        <label class="lb3" id="ctrw" title="Stretch the contrast of whichever plate is showing. The 3-D view has Density for the same job, so this is left off it."
+          >Contrast <input type="range" id="ctrs" min="60" max="260" step="5" value="100"><b id="ctrl">1.0&times;</b></label>
+      </span>
+      <span class="vctl" id="ctlPlate">
+        <span class="zg">
+          <button class="z" id="zo" type="button" title="Zoom out">&minus;</button>
+          <span class="zlv" id="zl">100%</span>
+          <button class="z" id="zi" type="button" title="Zoom in">+</button>
+          <button class="z" id="zf" type="button" title="Fit the whole plate">Fit</button>
+        </span>
+        <span class="tsep"></span>
+        <label class="tg" title="Read bregma / ML / DV under the pointer"><input type="checkbox" id="ckc">Coords</label>
+        <label class="tg" title="1 mm stereotaxic grid"><input type="checkbox" id="ckg">Grid</label>
+        <label class="tg" title="Scale bar"><input type="checkbox" id="cks">Scale</label>
+        <label class="tg" title="Click two points on the plate to measure between them"><input type="checkbox" id="ckm">Measure</label>
+        <span class="tgw"><label class="tg" title="Trace the skull's cut through this coronal plane"><input type="checkbox" id="cksk">Skull</label><button type="button" class="ast" title="Skull alignment is approximate — read the note" aria-label="Note on skull alignment">*</button></span>
+        <label class="tg" title="Bregma, lambda and the occipital crest where they fall, and the interaural line"><input type="checkbox" id="cklm">Landmarks</label>
+        <span class="tsep"></span>
+        <button class="z" id="epng" type="button" title="Download this plate as a PNG with the current overlays and coordinates">PNG</button>
+        <button class="z" id="esvg" type="button" title="Download this plate as an editable SVG: the regional outlines as vector paths, with the current overlays and coordinates">SVG</button>
+      </span>
+      <span class="vctl" id="ctlProj" hidden>
+        <span class="seg" id="pjseg">
+          <button type="button" class="on" data-v="dv">sagittal &middot; AP &times; DV</button>
+          <button type="button" data-v="ml">top-down &middot; AP &times; ML</button>
+        </span>
+        <span class="tsep"></span>
+        <span class="tgw"><label class="tg" title="Outline the skull around the cloud, widening the axes to fit it"><input type="checkbox" id="ckpk">Skull</label><button type="button" class="ast" title="Skull alignment is approximate — read the note" aria-label="Note on skull alignment">*</button></span>
+        <label class="tg" title="Bregma, lambda, interaural and the occipital crest as reference lines"><input type="checkbox" id="ckplm">Landmarks</label>
+      </span>
+      <span class="vctl" id="ctl3d" hidden>
+        <span class="seg" id="m3seg">
+          <button type="button" class="on" data-r="contour">Contours</button>
+          <button type="button" data-r="volume">Volume</button>
+          <button type="button" data-r="points">Labels</button>
+        </span>
+        <span class="tsep"></span>
+        <label class="lb3" title="How strongly each slice contributes"
+          >Density <input type="range" id="v3op" min="4" max="100" value="42"></label>
+        <label class="lb3" title="Anterior edge of the slab that is drawn"
+          >Plates <input type="range" id="v3a" min="1" max="62" value="1"><b id="v3al">1</b></label>
+        <label class="lb3" title="Posterior edge of the slab that is drawn"
+          >&ndash; <input type="range" id="v3b" min="1" max="62" value="62"><b id="v3bl">62</b></label>
+        <span class="tsep"></span>
+        <span class="tgw"><label class="tg" title="Show the skull surface around the atlas"><input type="checkbox" id="v3s">Skull</label><button type="button" class="ast" title="Skull alignment is approximate — read the note" aria-label="Note on skull alignment">*</button></span>
+        <label class="lb3" id="v3sol" hidden title="How opaque the skull is drawn"
+          >Bone <input type="range" id="v3so" min="6" max="100" value="32"></label>
+        <label class="tg" title="Cut at the midline to see inside"><input type="checkbox" id="v3h">Half</label>
+        <label class="tg" title="Parallel projection — no perspective foreshortening, so equal lengths read equally wherever they sit"><input type="checkbox" id="v3o">Ortho</label>
+        <label class="lb3" title="Look at the brain from a named direction"
+          >View <select id="v3v">
+            <option value="obl">Oblique</option>
+            <option value="left">Left</option>
+            <option value="right">Right</option>
+            <option value="rost">Rostral &middot; front</option>
+            <option value="caud">Caudal &middot; back</option>
+            <option value="dors">Dorsal &middot; top</option>
+            <option value="vent">Ventral &middot; bottom</option>
+            <option value="" disabled>Custom</option>
+          </select></label>
+        <button class="z" id="v3r" type="button" title="Back to the default viewpoint">Reset view</button>
+      </span>
+      <button class="z" id="elink" type="button" title="Copy a link back to this plate, structure and view"
+        aria-label="Copy a link back to this plate, structure and view"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+          stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></button>
+    </div>
+
+    <div class="vctx">
+      <span class="pnum" id="pn">Plate 30</span>
+      <span class="coord" id="pc"></span>
+    </div>
+
+    <div class="stage">
+      <div class="view on" id="plateview">
+        <div class="img" id="imgbox">
+          <div class="imgwrap" id="iw">
+            <div class="pan" id="pan">
+              <img id="pi" alt="">
+              <svg id="ov" viewBox="0 0 1100 703" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+                <g id="grid"></g>
+                <g id="sk"></g>
+                <g id="lm"></g>
+                <rect id="hl" rx="2" style="display:none"></rect>
+                <path id="hr" style="display:none"></path>
+                <g id="om"></g>
+                <g id="xh"></g>
+                <g id="ms"></g>
+                <g id="tk"></g>
+                <g id="pk"></g>
+              </svg>
+            </div>
+            <div class="sbar" id="sb" hidden><div class="bar" id="sbb"></div><div class="lab" id="sbl"></div></div>
+            <div class="tip" id="tip" hidden></div>
+          </div>
+        </div>
+        <div class="rdout" id="rd" hidden></div>
+        <div class="rdout ms" id="rm" hidden></div>
+        <p class="vhint" id="vhint"></p>
+      </div>
+
+      <div class="view" id="projview">
+        <div class="pjw" id="pjw">
+          <svg id="pjs" preserveAspectRatio="xMidYMid meet" role="img"><title id="pjttl"></title>
+            <g id="pja"></g>
+            <g id="pjk" clip-path="url(#pjclip)"></g>
+            <g id="pjlm" clip-path="url(#pjclip)"></g>
+            <path id="pjb"></path>
+            <path id="pjf"></path>
+            <g id="pjl"></g>
+            <g id="pjg"></g>
+            <g id="pjtk"></g>
+            <circle id="pjhi" r="9" style="display:none"></circle>
+          </svg>
+          <div class="tip" id="pjt" hidden></div>
+        </div>
+        <p class="pjn" id="pjn"></p>
+      </div>
+
+      <div class="view" id="v3dview">
+        <div class="v3w" id="v3w">
+          <canvas id="v3c"></canvas>
+          <div class="tip" id="v3t" hidden></div>
+          <div class="v3msg" id="v3msg" hidden></div>
+        </div>
+        <p class="v3n" id="v3n"></p>
+      </div>
+    </div>
+
+    <div class="vbot">
+      <button class="b" id="prev" type="button">&larr; anterior</button>
+      <input type="range" id="rng" min="1" max="62" value="30" aria-label="Plate">
+      <button class="b" id="next" type="button">posterior &rarr;</button>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <p>Radtke-Schuller et al. (2016), <em>Brain Struct Funct</em> 221(Suppl 1):1&ndash;272
+    <a href="https://doi.org/10.1007/s00429-016-1259-0" target="_blank" rel="noopener">doi:10.1007/s00429-016-1259-0</a><span class="fsep">&middot;</span><button type="button" class="flink" id="aboutb2">About the data</button><span class="fsep">&middot;</span><a href="https://github.com/dstolz/GerbilAtlasExplorer/blob/main/METHODS.md" target="_blank" rel="noopener">Methods</a><span class="fsep">&middot;</span><a href="https://github.com/dstolz/GerbilAtlasExplorer" target="_blank" rel="noopener">Source</a><span class="fsep">&middot;</span><a href="https://github.com/dstolz/GerbilAtlasExplorer/issues" target="_blank" rel="noopener">Report an issue</a><span class="fsep">&middot;</span>Build <a href="https://github.com/dstolz/GerbilAtlasExplorer/commit/{{BUILD_HASH}}" target="_blank" rel="noopener"><code>{{BUILD_HASH}}</code></a></p>
+  <p class="fattr">Developed and maintained by Daniel Stolzberg and the
+    <a href="https://www.caraslab.org" target="_blank" rel="noopener">Caras Lab</a>,
+    <a href="https://biology.umd.edu" target="_blank" rel="noopener">Department of Biology</a>,
+    <a href="https://umd.edu" target="_blank" rel="noopener">University of Maryland</a>.</p>
+</footer>
+
+<dialog id="about">
+  <div class="dh">
+    <h2>About the data</h2>
+    <button class="b" id="aboutx" type="button">Close</button>
+  </div>
+  <div class="db">
+    <h3>Source</h3>
+    <p>Structure&ndash;plate assignments are taken verbatim from the authors&rsquo; published
+      <em>Index of structures</em> (structure, abbreviation, plate range), not from OCR of the plates:
+      Radtke-Schuller S, Schuller G, Angenstein F, Grosser OS, Goldschmidt J, Budinger E (2016).
+      Brain atlas of the Mongolian gerbil (<em>Meriones unguiculatus</em>) in CT/MRI-aided stereotaxic
+      coordinates. <em>Brain Struct Funct</em> 221(Suppl 1):1&ndash;272.
+      <a href="https://doi.org/10.1007/s00429-016-1259-0" target="_blank" rel="noopener">doi:10.1007/s00429-016-1259-0</a> &middot; open access.</p>
+
+    <h3>The three plates of a level</h3>
+    <p>The atlas prints every level three times: the <b>Nissl</b>-stained section, the
+      <b>Gallyas</b> myelin-stained section from an adjacent section beside it, and the
+      <b>labelled drawing</b> traced over them. All three are here, and <em>Labelled /
+      Nissl / Myelin</em> above the plate switches between them.</p>
+    <p>They are registered to each other by construction, not by fitting. Every one of the
+      186 pages carries the atlas&rsquo;s own printed ML/DV coordinate box, and each was
+      cropped to its own box, so all three land in the same coordinate space &mdash; the same
+      space the 6,220 label positions are recorded in. That is what makes the switch worth
+      having rather than decorative: the grid, the scale bar, the measure tool, the
+      coordinate lookup and the outlined structure are all still in the right place on a
+      section with no labels printed on it, and hovering where the drawing prints an
+      abbreviation still names it. Checked by re-deriving the labelled plates the same way
+      and landing on the ones already in this file, pixel for pixel, on 61 of 62 (the
+      remaining one is out by a single pixel).</p>
+    <p><b>Grey</b> takes the colour out of the drawing so the three read alike; the histology
+      was published in grey already. <b>Contrast</b> stretches whatever is showing, and both
+      carry into the PNG export. The 3-D view is built from whichever source is selected, and
+      has Density for the same job as contrast.</p>
+    <p>The myelin section is an <em>adjacent</em> section, not the same one: the two stains
+      cannot be applied to a single slice. It is aligned as the authors published it.</p>
+
+    <h3>Coordinates</h3>
+    <p>Plate AP coordinates were read from all 62 plates and match the printed series exactly
+      (bregma +7.80&nbsp;mm at plate 1, &minus;0.35&nbsp;mm per plate; lambda = bregma + 4.45;
+      interaural = bregma + 7.25; occipital crest = bregma + 9.95). Sections are coronal, at
+      350&nbsp;µm intervals.</p>
+    <p>ML and DV are read off each plate&rsquo;s own printed coordinate box (ML ±8&nbsp;mm, DV +1 to
+      &minus;10&nbsp;mm), which the frame-relative cropping makes common to all 62 plates; midline
+      structures land within 0.2&nbsp;mm of ML&nbsp;0 and bilateral pairs come out symmetric. A
+      coordinate given for a structure is the median of its printed <em>labels</em>, which sit near &mdash;
+      but not exactly at &mdash; its centroid.</p>
+
+    <h3>Your own frame</h3>
+    <p class="fexp"><b>Rotation is experimental.</b> Pitch, roll and yaw are new and not yet fully
+      tested. Check any coordinate they adjust against anatomy you already know before relying on
+      it. Moving the origin is not in that category: it is an exact subtraction.</p>
+    <p>The atlas is cut perpendicular to the brainstem axis, which is not how a head sits in any
+      particular stereotaxic frame. <em>Frame</em> in the header takes a pitch, a roll and a yaw
+      about a pivot you choose, and restates the structure card, the pointer readout, the
+      coordinate lookup and the CSV export in that frame, keeping the atlas figure beside each
+      one.</p>
+    <p>It can also be told where <em>zero</em> is, and that part stands on its own. Name bregma,
+      lambda, the interaural line or the occipital crest and give an offset from it &mdash; the
+      offset is how a zero that is not quite on a landmark gets said, such as half a millimetre
+      behind lambda &mdash; and every coordinate is measured from that point, with the readouts
+      labelling AP by the landmark it now comes from. Moving zero moves no point, so the
+      projections read their axes from it too and the measure tool needs no caveat; leave every
+      angle at 0 and that is all the frame does.</p>
+    <p>The landmark carries an AP and nothing else, because that is all the atlas prints for
+      it &mdash; but a <em>Height</em> button beside the offset will fill DV in from the fitted
+      skull. That is what the <b>interaural line</b> needs to be usable as a zero: it is the
+      ear-bar axis rather than a point on the brain, about 9&nbsp;mm ventral to the dorsal
+      plane the atlas measures DV from, so with the height set the readout becomes ordinary
+      interaural coordinates &mdash; AP behind the ear bars, DV up from them. The same row
+      under the <em>Pivot</em> puts a rotation on that axis instead of on a parallel one
+      several millimetres too high. The APs stay the atlas&rsquo;s own and exact; the heights
+      inherit the skull fit&rsquo;s approximation, and say so.</p>
+    <p>A rotation is the part that has to be hedged. While one is set, the grid, the measure
+      tool, the projections and the 3-D view stay in atlas coordinates and say so. Note too that
+      a plate then stops being a single AP: at 17&deg; of
+      pitch the AP of a point drifts about 2.5&nbsp;mm between the top and the bottom of the
+      brain, which is why the readout gives an AP per point. It is a rigid rotation of the
+      published numbers and <em>not</em> a resectioning &mdash; no oblique plate is drawn, or
+      could honestly be drawn, from a series sampled 350&nbsp;µm apart.</p>
+
+    <h3>Planning a track</h3>
+    <p class="fexp"><b>Experimental.</b> New, and not yet checked against a track anybody has
+      actually driven. Read a plan against anatomy you know before you rely on it.</p>
+    <p><em>Plan a track</em> in the side panel takes a structure, a hemisphere and three
+      approach angles, and gives the entry point, the angles to set on the manipulator and the
+      distance from the brain surface to the target &mdash; drawn live on the plate, the
+      projections and the 3-D view, and carried in the link so a plan can be sent to someone
+      or reopened later.</p>
+    <p><b>The angles are in your working frame</b>, not the atlas&rsquo;s. That is the point of
+      them: the atlas is cut perpendicular to the brainstem axis, and an angle quoted in atlas
+      coordinates is one nobody can dial into a manipulator. Set a frame above and the plan
+      moves with it. Because the track is put back onto the plates to be drawn, the picture
+      stays exact in any frame &mdash; this is the one tool here that a rotation does not force
+      into atlas coordinates.</p>
+    <p><b>Tilt</b> drives the tip anterior, <b>roll</b> drives it to the right, and <b>yaw</b>
+      turns the heading those two aim in &mdash; applied in that order. A straight probe spun
+      about its own axis points where it pointed before, so with tilt and roll both at 0 the
+      yaw has nothing to turn and the app says so rather than leaving a control that will not
+      move.</p>
+    <p><b>The brain surface</b> is the outline of the section on the nearest plate, traced off
+      the atlas&rsquo;s own drawings by the same flood fill the 3-D view runs. It reaches
+      DV&nbsp;0 and does not cross it, which is where the atlas defines that plane, and 97.8% of
+      the printed labels fall inside it. But it is the outline of a <em>fixed, sectioned</em>
+      brain, not the surface under intact dura, and the sections are 350&nbsp;µm apart, so an
+      entry AP is quantised at that spacing however smooth the line looks. Nothing is
+      interpolated between plates.</p>
+    <p>And the target is the <b>median position of the printed abbreviation</b>, not the
+      structure&rsquo;s centroid &mdash; the caveat that runs through everything here, and that
+      matters most in a tool that invites this much trust. The plan knows nothing about
+      vasculature, the sinus or the ventricles, and does not check the entry against the skull.</p>
+    <p><b>Which plate, and how far off the label.</b> A structure that spans a dozen sections is
+      labelled on each of them, and the median of all those labels is a point somewhere in the
+      middle of the structure rather than a point on the section anybody is aiming at.
+      <em>Take the label from</em> names one plate and reads that section&rsquo;s labels alone;
+      picking a plate also turns the viewer to it. Below the angles, the three <em>offset</em>
+      boxes move the aim off the label &mdash; 0.2&nbsp;mm dorsal to VO on plate 13, say &mdash;
+      and the plan then prints the label and the target as separate rows, so the point the
+      numbers were measured from stays readable beside the point they are about.</p>
+    <p>The offset is in <b>atlas millimetres</b>, not the working frame&rsquo;s, and this is the
+      one place in the planner where that is true. Naming a target is anatomy: <em>dorsal</em>
+      has to mean dorsal in the brain rather than up the manipulator&rsquo;s own axis, or an
+      offset would mean something different at every pitch. Lateral is taken toward whichever
+      hemisphere is chosen, so the two sides stay mirror images. Everything downstream &mdash;
+      the entry, the angles, the drive &mdash; is still in your frame; the boundary between the
+      two is exactly the point where the target is named.</p>
+
+    <h3>Caveats</h3>
+    <p>System tags (auditory, hippocampal, &hellip;) are a convenience layer added on top of the
+      published nomenclature, not part of the original atlas. A structure listed for a plate range is
+      present at those levels; it is not necessarily labelled on every plate. Label positions come from
+      OCR &mdash; where one was not located, the app says so rather than showing nothing.</p>
+
+    <h3>The 3-D view</h3>
+    <p>The plates are already in one common coordinate frame, so they can simply be stacked
+      where they belong: each section is drawn at its own bregma. <em>Contours</em> shows the
+      atlas&rsquo;s own drawn boundaries as a stack, <em>Volume</em> ray-marches the same field, and
+      <em>Labels</em> plots all 6,220 printed abbreviations as a stereotaxic point cloud &mdash; the
+      projection views with the third axis put back. Nothing extra is downloaded; it is built
+      from the plate images already on the page, once, the first time you open it.
+      <em>Ortho</em> swaps the perspective camera for a parallel one: nothing is
+      foreshortened, so equal lengths read equally wherever they sit in depth, which is
+      what you want when comparing positions rather than looking at the brain.
+      <em>View</em> puts the camera on an anatomical axis &mdash; left, right, rostral,
+      caudal, dorsal or ventral &mdash; and a link copied from a named view opens on it.
+      Caudal is the one that reads the same way round as the printed plates, which are
+      drawn as seen from behind.</p>
+    <p>Two things to keep in mind. Sections are 350&nbsp;µm apart but a plate pixel is about
+      17.5&nbsp;µm, so sampling <em>along</em> the brain is 20&times; coarser than across it: the
+      stack really is discrete, and the streaking in the volume view is interpolation between
+      slices, not anatomy. And a label point marks where an abbreviation is <em>printed</em>,
+      which for thin layered structures is often just outside the structure itself. Most
+      structures carry only a handful of points &mdash; six is the median &mdash; so a single
+      structure reads as a sparse arc rather than a shape. Nothing here is a segmentation.</p>
+    <p id="skullnote"><em>Skull</em> draws a CT skull around the atlas: a translucent shell in
+      3-D, a trace on the current plate, an outline around either projection.
+      <b>Experimental &mdash; the alignment is approximate.</b></p>
+    <p>The atlas prints no skull, so the fit is computed rather than published. The scan is a
+      different animal, aligned first on the paper&rsquo;s own landmarks (the coronal suture
+      for bregma, the ear canals for the interaural line); the tilt, height and the three
+      axis scales are then set by the drawn sections of all 62 plates, which get the last
+      word. Because the two animals are not the same shape, the scales differ a little by
+      axis &mdash; the skull is stretched about 3% along AP and 4% across, and shortened 4%
+      in depth, to seat the vault on the cortex. Good to a few tenths of a millimetre.
+      Context around the sections, not a surface to measure against.</p>
+    <p><em>Landmarks</em> marks bregma, lambda and the occipital crest on the plate whose
+      plane they fall in, and draws the interaural line &mdash; solid where it lies in the
+      plane, dashed elsewhere as the ear-bar height. On the projections all four become
+      reference rules. The <b>AP of each is the atlas&rsquo;s own printed figure and exact</b>;
+      only the heights, and the ear canals the interaural line runs between, come off the
+      skull fit, so they inherit its approximation.
+      <a href="https://github.com/dstolz/GerbilAtlasExplorer/blob/main/METHODS.md" target="_blank" rel="noopener">Full method</a>.</p>
+
+    <h3>The SVG export</h3>
+    <p><b>SVG</b> saves the same sheet <b>PNG</b> does, but with the plate as vector paths
+      instead of a photograph: the regional outlines, traced off the printed plate, with
+      whatever overlays were showing and the same caption. Every part is a named group
+      &mdash; <code>outlines-solid</code>, <code>outlines-dashed</code>, <code>grid</code>,
+      <code>skull</code>, <code>landmarks</code>, <code>highlight</code>,
+      <code>measure</code>, <code>track</code>, <code>query</code>,
+      <code>caption</code> &mdash; so a figure can
+      be restyled or cut down without redrawing anything. About 10&ndash;80&nbsp;kB.</p>
+    <p>The tracing was done on the published pages at 3296&nbsp;&times;&nbsp;2481&nbsp;px and
+      is kept in that frame; each plate carries the matrix that puts it on the
+      1100&nbsp;&times;&nbsp;703 crop everything else here measures in. That matrix is not
+      assumed from the page layout &mdash; it is fitted to each plate&rsquo;s own printed ink,
+      which is what catches the pages the journal set sideways or off-centre &mdash; plate 20
+      is printed at a quarter turn, and plate 31 comes out 47&nbsp;px low in the plate frame,
+      the same displaced figure the plate crops already correct for. Every plate lands within
+      1.8&nbsp;px of its own drawn lines, about 0.03&nbsp;mm, so the outlines sit where the
+      grid and the measure tool say they do. <b>The section image is not in the file</b>:
+      this is the drawing, not the histology.</p>
+
+    <h3>Getting around</h3>
+    <dl class="keys">
+      <dt><kbd>&larr;</kbd> <kbd>&rarr;</kbd></dt><dd>step through plates</dd>
+      <dt><kbd>+</kbd> <kbd>&minus;</kbd> <kbd>0</kbd></dt><dd>zoom in, out, and back to fit</dd>
+      <dt>drag in 3-D</dt><dd>orbit &mdash; which leaves any named view; shift-drag or
+        right-drag to pan, wheel to zoom</dd>
+      <dt><kbd>/</kbd></dt><dd>jump to the search box</dd>
+      <dt><kbd>Esc</kbd></dt><dd>drop the selection, or clear a measurement</dd>
+      <dt>double-click</dt><dd>zoom into the plate at that point; drag to pan</dd>
+      <dt>hover a label</dt><dd>read its full name; click it to select that structure</dd>
+    </dl>
+
+    <h3>This build</h3>
+    <p>Spotted an error in the atlas data, hit a bug, or want a new feature?
+      <a href="https://github.com/dstolz/GerbilAtlasExplorer/issues" target="_blank" rel="noopener">Raise an issue on GitHub</a>.
+      Build <a href="https://github.com/dstolz/GerbilAtlasExplorer/commit/{{BUILD_HASH}}" target="_blank" rel="noopener"><code>{{BUILD_HASH}}</code></a>, {{BUILD_DATE}}.</p>
+  </div>
+</dialog>
+
+<dialog id="frame">
+  <div class="dh">
+    <h2>Working coordinate frame</h2>
+    <button class="b" id="framex" type="button">Close</button>
+  </div>
+  <div class="db">
+    <p class="fexp"><b>Rotation is experimental.</b> Pitch, roll and yaw are new and not yet
+      fully tested &mdash; check any coordinate they adjust against anatomy you already know
+      before you rely on it. <b>Origin</b> below is not in that category: moving zero is an
+      exact subtraction, and with every angle left at 0 that is all this dialog does.</p>
+
+    <p>The atlas is cut perpendicular to the brainstem axis. If your stereotaxic frame holds the
+      head at any other angle, describe that angle here and coordinates will be read in
+      <em>your</em> frame rather than the atlas&rsquo;s. If all you want is to read from
+      <b>lambda</b> instead of bregma, skip to <em>Origin</em> and turn the frame on.</p>
+
+    <div class="frow">
+      <button class="b" id="fon" type="button">Turn on</button>
+      <button class="b" id="fzero" type="button">Reset to atlas</button>
+    </div>
+
+    <h3>Orientation</h3>
+    <div class="fgrid">
+      <label class="ffld"><span>Pitch &deg; &middot; nose down +</span><input type="number" id="fpitch" step="0.5" value="0"></label>
+      <label class="ffld"><span>Roll &deg; &middot; right ear down +</span><input type="number" id="froll" step="0.5" value="0"></label>
+      <label class="ffld"><span>Yaw &deg; &middot; nose right +</span><input type="number" id="fyaw" step="0.5" value="0"></label>
+    </div>
+    <p>Applied about the pivot, in the order <b>yaw, pitch, roll</b>. Rotations do not commute,
+      so the order is part of the definition &mdash; though at a few degrees of roll and yaw it
+      makes no difference you could measure.</p>
+
+    <h3>From measurements</h3>
+    <p>Take two readings off the skull with the electrode; the angle is
+      <code>atan(difference &divide; separation)</code>. Use the widest span the skull gives you
+      &mdash; a 0.1&nbsp;mm depth error is 1.3&deg; over the 4.45&nbsp;mm from bregma to lambda,
+      but only 0.58&deg; over the 9.95&nbsp;mm to the occipital crest.</p>
+    <div id="fmeas"></div>
+
+    <h3>Origin</h3>
+    <label class="ffld solo"><span>Zero the readout on</span><select id="forg"></select></label>
+    <div class="fgrid" id="forgf">
+      <label class="ffld"><span>AP offset (mm)</span><input type="number" id="foap" step="0.05" value="0"></label>
+      <label class="ffld"><span>ML offset (mm)</span><input type="number" id="foml" step="0.05" value="0"></label>
+      <label class="ffld"><span>DV offset (mm)</span><input type="number" id="fodv" step="0.05" value="0"></label>
+    </div>
+    <div class="fset" id="fohgt" hidden></div>
+    <p class="fnb" id="forgn" hidden></p>
+    <p>Where your zero is. Drive to a landmark with the head already in the frame, zero the
+      manipulator there, and name it here: that point then reads 0&nbsp;/&nbsp;0&nbsp;/&nbsp;0
+      and every coordinate is measured from it. <b>Lambda in place of bregma</b> is the common
+      case, and needs nothing but the dropdown.</p>
+    <p><b>The three numbers are an offset from the landmark</b>, not an absolute coordinate, so
+      a zero that is not on a landmark can still be named by the nearest one: lambda with an
+      AP offset of &minus;0.50 is half a millimetre behind lambda. Anterior, right and dorsal
+      are positive, as everywhere else here. Leave them at 0 and zero is the landmark itself.</p>
+    <p>Left on <em>the atlas origin</em> nothing changes: zero stays wherever the rotation
+      carries bregma, which is what the pivot below decides. Name a landmark instead and the
+      pivot stops mattering &mdash; rotating about any point and then re-zeroing on the origin
+      is the same as rotating about the origin.</p>
+    <p><b>The landmark itself sets AP only</b>, for the reason a pivot preset does: the atlas
+      prints an AP for each of these and neither an ML nor a height. On those two axes the
+      offset is the whole story &mdash; leave DV at 0 to zero on the brain&rsquo;s dorsal
+      surface, or enter the depth you actually zeroed at.</p>
+    <p>The <em>Height</em> buttons fill that DV in for you, and they matter most at the
+      <b>interaural line</b>. That landmark is not a point on the brain or on the skull: it is
+      the ear-bar axis, and it runs <b>about 9&nbsp;mm ventral</b> to the dorsal surface the
+      atlas measures DV from. Zero on it with DV left at 0 and every depth is out by that much.
+      Put the height on the ear-bar plane instead and the readout becomes ordinary interaural
+      coordinates &mdash; AP behind the ear bars, DV up from them, which is what an atlas that
+      prints interaural AP alongside bregma is inviting you to work in. For the other three
+      landmarks the button offers the skull surface at that point, for a zero taken on bone
+      rather than on dura.</p>
+    <p><b>The AP is the atlas&rsquo;s own and exact; the height is not.</b> No height for any of
+      these landmarks is published, so it is read off the same approximate skull registration
+      the <em>Skull</em> overlays use &mdash; good to a few tenths of a millimetre, before
+      animal-to-animal variation. The field stays yours: measure your own ear-bar depth and type
+      it in preference to the button.</p>
+
+    <h3>Pivot</h3>
+    <p class="fnb" id="fpivn" hidden>An origin is set, so the pivot no longer changes anything.</p>
+    <div id="fpivs">
+      <div class="fset" id="fset"></div>
+      <div class="fgrid">
+        <label class="ffld"><span>AP (mm)</span><input type="number" id="fpap" step="0.05" value="0"></label>
+        <label class="ffld"><span>ML (mm)</span><input type="number" id="fpml" step="0.05" value="0"></label>
+        <label class="ffld"><span>DV (mm)</span><input type="number" id="fpdv" step="0.05" value="0"></label>
+      </div>
+      <div class="fset" id="fphgt" hidden></div>
+    </div>
+    <p>The point the rotation turns about &mdash; in practice, wherever you zero the manipulator.
+      It matters more than the angles do, because a coordinate moves further the further it sits
+      from the pivot.</p>
+    <p>The default 0&nbsp;/&nbsp;0&nbsp;/&nbsp;0 is the atlas origin: bregma in AP, the midline in
+      ML, and in DV the <b>plane through the most dorsal points of cerebrum and cerebellum</b>
+      &mdash; the brain&rsquo;s surface, not skull bregma. The two differ by roughly the skull
+      thickness, so move the DV pivot if you zero on bone.</p>
+    <p><b>A preset sets AP and ML</b>, because the atlas prints an AP for every landmark and a
+      height for none; the <em>Height</em> row under the fields sets DV separately, and appears
+      once the pivot's AP is on a landmark. It matters most for the interaural preset. Pitch
+      turns about a mediolateral axis, so that preset is the ear-bar axis only once DV says how
+      far below the dorsal surface the axis sits. Left at 0 the rotation happens at the
+      brain&rsquo;s dorsal surface instead &mdash; a parallel axis some 9&nbsp;mm too high, which
+      at 17&deg; of pitch moves <code>MSO</code> by 2.6&nbsp;mm in AP. As in <em>Origin</em>, the
+      AP is the atlas&rsquo;s own and the height comes off the approximate skull fit.</p>
+    <p>Pitch alone ignores the pivot&rsquo;s ML, so a preset puts it on the midline. Roll and yaw
+      do use it.</p>
+
+    <h3>Offset</h3>
+    <div class="fgrid">
+      <label class="ffld"><span>AP (mm)</span><input type="number" id="fdap" step="0.05" value="0"></label>
+      <label class="ffld"><span>ML (mm)</span><input type="number" id="fdml" step="0.05" value="0"></label>
+      <label class="ffld"><span>DV (mm)</span><input type="number" id="fddv" step="0.05" value="0"></label>
+    </div>
+    <p>A pure translation, added after the rotation. A dura-versus-skull DV zero belongs here.</p>
+
+    <h3>Check the signs</h3>
+    <div class="fprev" id="fprev"></div>
+    <p>Nothing in the atlas records which way your frame is tilted, so the app cannot check a
+      sign for you. Read this line against a structure you already know &mdash; if a coordinate
+      moved the wrong way, negate the angle.</p>
+
+    <h3>What it changes</h3>
+    <p><b>Adjusted:</b> the structure card, the pointer readout on the plate, the coordinate
+      lookup and the CSV export. <b>Left in atlas coordinates while the frame is rotated:</b>
+      the 1&nbsp;mm grid, the measure tool, the projections and the 3-D view &mdash; each says
+      so while it is on.</p>
+    <p>An origin on its own is the exception, and deliberately so. Moving zero moves no point:
+      every distance and every angle is the one the atlas printed, so the projections and the
+      3-D view read their axes from your origin too, and the measure tool needs no caveat.
+      Set an angle as well and all of them fall back to atlas coordinates.</p>
+    <p>Readouts name what AP is measured from &mdash; <em>lambda</em> rather than <em>AP</em>
+      &mdash; whenever an origin is set, and the atlas figure stays beside them as always.</p>
+    <p>A plate is no longer a single AP once the frame is tilted: at 17&deg; of pitch the AP of a
+      point drifts about 0.29&nbsp;mm per millimetre down the plate, some 2.5&nbsp;mm across the
+      depth of the brain. That is why the readout gives an AP for the point under the pointer
+      rather than one figure for the whole plate.</p>
+    <p>This is a rigid rotation of the published coordinates, <b>not</b> a resectioning: no oblique
+      plate is drawn, because plates are 350&nbsp;µm apart against about 17.5&nbsp;µm within a
+      plate, so a cut at an angle would be interpolation rather than anatomy. Treat an adjusted
+      coordinate as a targeting aid carrying the atlas&rsquo;s own error &mdash; a label marks
+      where an abbreviation is <em>printed</em> &mdash; plus your alignment error and
+      animal-to-animal skull variation.</p>
+  </div>
+</dialog>
+<!-- The atlas data. Each marker becomes one <script> line carrying window.__NAME__;
+     tools/build_app.py fills them from data/. Keep them after the markup so the shell
+     paints before the browser parses twenty megabytes of plates. -->
+<!-- @blob ATLAS -->
+<!-- @blob IMG -->
+<!-- @blob BOX -->
+<!-- @blob LEAD -->
+<!-- @blob OUTLINE -->
+<!-- @blob SKULL -->
+<!-- @blob NISSL -->
+<!-- @blob MYELIN -->
+<!-- @blob VEC -->
+<!-- @blob REGION -->
+<!-- @js app.js -->
+</body>
+</html>
