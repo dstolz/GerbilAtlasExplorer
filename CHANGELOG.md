@@ -6,6 +6,21 @@ carries a `version` block naming the release its derived fields were built for.
 ## [Unreleased]
 
 ### Added
+- **The projection and the 3-D view can be drawn in your working frame.** Set a pitch, roll
+  or yaw and an **In frame** checkbox appears in the toolbar of each; tick it and the label
+  cloud and the section stack are turned into your frame, so up on the screen is your
+  frame's DV and the axes are the ones the manipulator drives. One setting serves both —
+  they are two pictures of one brain. Off by default, and carried in a deep link as `fv=1`
+  only beside a rotation, so no link written before this changes meaning. What is applied is
+  the rotation and nothing else: `toFrame` is `R(p−C)+A`, which is `Rp + (A−RC)`, so moving
+  zero stays a relabelling of the axes and cannot slide the cloud off the plot. The
+  projection widens its axes in whole millimetres per end to hold what the rotation pushed
+  past the atlas's extents, and the plate guide becomes the line where that section's plane
+  cuts the middle of the brain — still clickable, read back through the rotation at the
+  depth it is drawn at. The skull silhouette and the landmark rules are flattened at the
+  atlas's own angle and cannot be re-flattened at another, so their checkboxes go dead while
+  a turned view is on. A turned view is not a resectioning: the same 62 coronal sections,
+  stood up at an angle. See [METHODS](METHODS.md#views-in-the-working-frame).
 - **Compare mode hovers both panes.** Hovering a structure on either plate now outlines it
   on both, by abbreviation, where the other plate has that structure too — not just the
   selection, which already carried across.
