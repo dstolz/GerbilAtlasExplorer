@@ -119,6 +119,12 @@ carries a `version` block naming the release its derived fields were built for.
   rather than leaving an empty view and asking for a selection already made.
 - The 3-D view's Surface toggle, STL button and mesh Load-file fallback were offered
   before the meshes were switched on: `.tgw` sets `display`, which beat `[hidden]`.
+- Tapping a region on a phone flashed the whole plate blue: the plate carries the click
+  handler, so Chrome painted its default translucent-blue tap highlight over the entire
+  section, and the new thumbnail strip held the tap open long enough to see it by decoding
+  every plate the structure is printed on. The surfaces that draw their own feedback now
+  suppress the platform highlight, and the strip draws a thumbnail only once it is on
+  screen — a tap costs no image decodes and is back to its pre-update duration.
 - The app's structure table (`window.__ATLAS__`) and `data/gerbil_atlas_structures.csv`
   carried the pre-correction plate ranges for AngT, RLi, Su3C and ZIC; both are now built
   from the database.

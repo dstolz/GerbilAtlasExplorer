@@ -594,52 +594,71 @@ function select(a){
 
 /* ---- the structure on every plate it is on, as a strip of thumbnails ----
    The card's plate buttons say which plates; this shows them. Each thumbnail is the plate
-   cropped around the structure, with its extent outlined or its label circled, drawn from
-   the plate images already loaded -- built after the card paints, one plate at a time,
-   and abandoned the moment the selection changes. */
-let galTok=0; const GALC={}; const GW=132, GH=84;
-async function galBuild(a){
+   cropped around the structure, with its extent outlined or its label circled.
+   Drawn only once a thumbnail is actually on screen. A structure can be printed on fifty
+   plates, and decoding fifty full-resolution plates to fill a strip that shows three of
+   them at a time costs a phone hundreds of milliseconds of its main thread -- inside the
+   tap that selected the structure, which is exactly where a delay is felt. */
+let galTok=0, galIO=null; const GALC=new Map(), GALMAX=120, GW=132, GH=84;
+function galBuild(a){
   const el=$('gal'), r=byAb[a]; if(!el||!r) return;
-  const tok=++galTok, pls=r.plates.slice(0,48);
-  el.innerHTML=pls.map(p=>`<div class="gitem${p===cur?' cur':''}" data-p="${p}" title="Plate ${p} · bregma ${sgn(plateOf[p].bregma)}" role="button" tabindex="0">`+
+  const tok=++galTok;
+  if(galIO){ galIO.disconnect(); galIO=null; }
+  el.innerHTML=r.plates.map(p=>`<div class="gitem${p===cur?' cur':''}" data-p="${p}" title="Plate ${p} · bregma ${sgn(plateOf[p].bregma)}" role="button" tabindex="0">`+
     `<canvas class="gth" width="${GW}" height="${GH}"></canvas><span class="gcap">${p}</span></div>`).join('');
   [...el.children].forEach(d=>{ d.onclick=()=>go(+d.dataset.p);
     d.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); d.click(); } }; });
-  for(const d of [...el.children]){
-    if(tok!==galTok) return;
-    const p=+d.dataset.p, key=a+'|'+p+'|'+psrc, cv=d.firstElementChild;
-    if(GALC[key]){ cv.getContext('2d').drawImage(GALC[key],0,0); continue; }
-    const im=new Image(); im.src=plateImg(p);
-    try{ await im.decode(); }catch(_){ continue; }
-    if(tok!==galTok) return;
-    const R=regBuild(p).by[a], bs=(LB[p]||{})[a]||[];
-    let x0,y0,x1,y1;
-    if(R){ x0=R.x0; y0=R.y0; x1=R.x1; y1=R.y1; }
-    else if(bs.length){
-      const at=bs.map((b,i)=>ptAt(p,a,i,b));
-      x0=Math.min(...at.map(q=>q[0]))*NW-24; x1=Math.max(...at.map(q=>q[0]))*NW+24;
-      y0=Math.min(...at.map(q=>q[1]))*NH-24; y1=Math.max(...at.map(q=>q[1]))*NH+24;
-    } else { x0=0; y0=0; x1=NW; y1=NH; }
-    /* the crop keeps the thumbnail's aspect and never zooms past about 8x */
-    let w=Math.max(x1-x0,GW/8)*1.5, h=Math.max(y1-y0,GH/8)*1.5;
-    if(w/h<GW/GH) w=h*GW/GH; else h=w*GH/GW;
-    const cx=(x0+x1)/2, cy=(y0+y1)/2, sx=cx-w/2, sy=cy-h/2;
-    const g=cv.getContext('2d');
-    g.fillStyle='#fff'; g.fillRect(0,0,GW,GH);
-    g.drawImage(im, sx,sy,w,h, 0,0,GW,GH);
-    const X=x=>(x-sx)/w*GW, Y=y=>(y-sy)/h*GH;
-    g.strokeStyle=markC(a); g.lineWidth=1.4;
-    if(R){
-      g.beginPath();
-      R.gs.forEach(gg=>{ gg.forEach(([x,y],i)=>i?g.lineTo(X(x),Y(y)):g.moveTo(X(x),Y(y))); g.closePath(); });
-      g.fillStyle=markF(a,'.12'); g.fill('evenodd');
-      if(regEst(R)) g.setLineDash([4,3]);
-      g.stroke(); g.setLineDash([]);
-    } else bs.forEach((b,i)=>{ const [qx,qy]=ptAt(p,a,i,b), Rr=Math.max(b[2]*NW,b[3]*NH);
-      g.beginPath(); g.ellipse(X(qx*NW),Y(qy*NH),(Rr*0.85+7)*GW/w,(Rr*0.55+6)*GH/h,0,0,6.2832); g.stroke(); });
-    const c2=document.createElement('canvas'); c2.width=GW; c2.height=GH;
-    c2.getContext('2d').drawImage(cv,0,0); GALC[key]=c2;
+  /* against the viewport rather than the strip, so a card scrolled out of sight draws
+     nothing either; the margin fills the neighbours in before they are scrolled to */
+  if(typeof IntersectionObserver==='function'){
+    galIO=new IntersectionObserver((es,io)=>{
+      for(const e of es) if(e.isIntersecting){ io.unobserve(e.target); galThumb(e.target,a,tok); }
+    },{rootMargin:'150px'});
+    [...el.children].forEach(d=>galIO.observe(d));
+  } else [...el.children].forEach(d=>galThumb(d,a,tok));
+}
+async function galThumb(d,a,tok){
+  if(tok!==galTok||!d.isConnected) return;
+  const p=+d.dataset.p, key=a+'|'+p+'|'+psrc, cv=d.firstElementChild;
+  const hit=GALC.get(key);
+  if(hit){ cv.getContext('2d').drawImage(hit,0,0); return; }
+  /* the plate on screen is decoded already; anything else has to be read in */
+  let im=$('pi');
+  if(p!==cur||!im.complete||!im.naturalWidth){
+    im=new Image(); im.decoding='async'; im.src=plateImg(p);
+    try{ await im.decode(); }catch(_){ return; }
   }
+  if(tok!==galTok||!d.isConnected) return;
+  const R=regBuild(p).by[a], bs=(LB[p]||{})[a]||[];
+  let x0,y0,x1,y1;
+  if(R){ x0=R.x0; y0=R.y0; x1=R.x1; y1=R.y1; }
+  else if(bs.length){
+    const at=bs.map((b,i)=>ptAt(p,a,i,b));
+    x0=Math.min(...at.map(q=>q[0]))*NW-24; x1=Math.max(...at.map(q=>q[0]))*NW+24;
+    y0=Math.min(...at.map(q=>q[1]))*NH-24; y1=Math.max(...at.map(q=>q[1]))*NH+24;
+  } else { x0=0; y0=0; x1=NW; y1=NH; }
+  /* the crop keeps the thumbnail's aspect and never zooms past about 8x */
+  let w=Math.max(x1-x0,GW/8)*1.5, h=Math.max(y1-y0,GH/8)*1.5;
+  if(w/h<GW/GH) w=h*GW/GH; else h=w*GH/GW;
+  const cx=(x0+x1)/2, cy=(y0+y1)/2, sx=cx-w/2, sy=cy-h/2;
+  const g=cv.getContext('2d');
+  g.fillStyle='#fff'; g.fillRect(0,0,GW,GH);
+  g.drawImage(im, sx,sy,w,h, 0,0,GW,GH);
+  const X=x=>(x-sx)/w*GW, Y=y=>(y-sy)/h*GH;
+  g.strokeStyle=markC(a); g.lineWidth=1.4;
+  if(R){
+    g.beginPath();
+    R.gs.forEach(gg=>{ gg.forEach(([x,y],i)=>i?g.lineTo(X(x),Y(y)):g.moveTo(X(x),Y(y))); g.closePath(); });
+    g.fillStyle=markF(a,'.12'); g.fill('evenodd');
+    if(regEst(R)) g.setLineDash([4,3]);
+    g.stroke(); g.setLineDash([]);
+  } else bs.forEach((b,i)=>{ const [qx,qy]=ptAt(p,a,i,b), Rr=Math.max(b[2]*NW,b[3]*NH);
+    g.beginPath(); g.ellipse(X(qx*NW),Y(qy*NH),(Rr*0.85+7)*GW/w,(Rr*0.55+6)*GH/h,0,0,6.2832); g.stroke(); });
+  const c2=document.createElement('canvas'); c2.width=GW; c2.height=GH;
+  c2.getContext('2d').drawImage(cv,0,0);
+  GALC.set(key,c2);
+  /* oldest out first, so a long session does not keep every thumbnail it ever drew */
+  while(GALC.size>GALMAX) GALC.delete(GALC.keys().next().value);
 }
 function galMark(){ const el=$('gal'); if(el) [...el.children].forEach(d=>d.classList.toggle('cur',+d.dataset.p===cur)); }
 function clear(){
