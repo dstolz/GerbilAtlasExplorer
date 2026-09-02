@@ -487,6 +487,7 @@ footer p{margin:0}
 footer a{color:var(--accent)}
 .fattr{opacity:.85}
 .fsep{opacity:.45;padding:0 5px}
+.fstamp{white-space:nowrap}
 .flink{border:0;background:none;padding:0;font:inherit;color:var(--accent);cursor:pointer}
 .flink:hover{text-decoration:underline}
 
