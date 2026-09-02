@@ -245,9 +245,14 @@ input[type=search]:focus{border-color:var(--accent)}
 .vctl{display:flex;flex-wrap:wrap;align-items:center;gap:7px 9px;min-width:0}
 .vctl[hidden]{display:none}
 .elinkgrp{margin-left:auto;display:inline-flex;align-items:center;gap:6px}
-#elink,#ewiki{display:inline-flex;align-items:center;justify-content:center;
+#elink,#ewiki,#emax{display:inline-flex;align-items:center;justify-content:center;
   padding:5px;line-height:0}
-#elink svg,#ewiki svg{width:14px;height:14px;display:block}
+#elink svg,#ewiki svg,#emax svg{width:14px;height:14px;display:block}
+/* one button, two icons: arrows out to the corners, arrows back in. Which one shows is
+   the layout's business, so the state lives in the class on <body> and not in script. */
+#emax .i2,body.maxed #emax .i1{display:none}
+body.maxed #emax .i2{display:block}
+body.maxed #emax{border-color:var(--accent);color:var(--accent)}
 .tsep{width:1px;align-self:stretch;min-height:17px;background:var(--line)}
 /* the display here outranks the UA rule for [hidden], the same way .lb3 does below */
 .tg[hidden]{display:none}
@@ -591,6 +596,32 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
   .wrap{grid-template-columns:minmax(330px,410px) minmax(0,1fr)}
 }
 @media (min-width:1800px){:root{--maxw:1720px}}
+/* ---------- maximised: the view takes the whole window ----------
+   Everything that is not the plate, the projection or the stack steps out: the search
+   column, the header, the footer, the page's own margins and the card's frame. What the
+   view is driven by stays, because it is still being driven -- the tabs, the toolbar,
+   the readouts and the plate slider. Held in @media screen so print, which takes the
+   page apart its own way, never meets these rules; and written without a width query,
+   so a laptop at 1200 px, a phone and a projector all get it. */
+@media screen{
+  body.maxed>header,body.maxed>footer,body.maxed .side{display:none}
+  body.maxed .wrap{grid-template-columns:minmax(0,1fr);gap:0;padding:0;max-width:none}
+  body.maxed .viewer{border:0;border-radius:0;box-shadow:none;
+    /* the first paint's fallback height, before fit() measures the room for real */
+    --plate-max-h:clamp(220px,calc(100dvh - 7rem),1600px)}
+}
+/* and, given the height to make it a gain, the window is filled rather than scrolled, so
+   the view is bound by the room rather than by its width. Under 600 px of window there is
+   no room to win: the toolbar alone would take most of it and the view would come out
+   smaller than the scrolling page gives it, so short windows keep the scroll and take the
+   width the sidebar and the margins were using. Same threshold the whole-app layout uses. */
+@media screen and (min-height:600px){
+  body.maxed{height:100vh;height:100dvh;display:grid;grid-template-rows:minmax(0,1fr);
+    overflow:hidden}
+  body.maxed .wrap{height:100%;min-height:0;align-items:stretch}
+  body.maxed .viewer{height:100%}
+  body.maxed .img{height:auto;flex:1;min-height:0}
+}
 /* stacked, the plate is the thing being read; the search is how you steer it */
 @media (max-width:899px){
   .viewer{order:-1}
@@ -621,7 +652,7 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
      rather than take a fifth one to itself */
   .vbar>.seg{order:1}
   .elinkgrp{order:2;margin-left:0}
-  #elink,#ewiki{padding:7px}
+  #elink,#ewiki,#emax{padding:7px}
   .vctl{order:3;width:100%}
 }
 @media (max-width:420px){

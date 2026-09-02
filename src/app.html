@@ -223,6 +223,12 @@
         <button class="z" id="v3r" type="button" title="Back to the default viewpoint">Reset view</button>
       </span>
       <span class="elinkgrp">
+        <button class="z" id="emax" type="button" aria-pressed="false"
+          title="Give the view the whole window: the search column, the header and the browser's own chrome step out of the way. F, or Esc to come back."
+          aria-label="Maximise the view"><svg class="ic i1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3H5a2 2 0 0 0-2 2v4"/><path d="M15 3h4a2 2 0 0 1 2 2v4"/><path d="M9 21H5a2 2 0 0 1-2-2v-4"/><path d="M15 21h4a2 2 0 0 0 2-2v-4"/></svg><svg
+            class="ic i2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9h4a2 2 0 0 0 2-2V3"/><path d="M21 9h-4a2 2 0 0 1-2-2V3"/><path d="M3 15h4a2 2 0 0 1 2 2v4"/><path d="M21 15h-4a2 2 0 0 0-2 2v4"/></svg></button>
         <button class="z" id="elink" type="button" title="Copy a link back to this plate, structure and view"
           aria-label="Copy a link back to this plate, structure and view"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></button>
@@ -572,10 +578,13 @@
       <dt><kbd>Home</kbd> <kbd>End</kbd></dt><dd>the first and the last plate</dd>
       <dt><kbd>/</kbd></dt><dd>jump to the search box</dd>
       <dt><kbd>?</kbd></dt><dd>open this panel</dd>
+      <dt><kbd>F</kbd></dt><dd>give the view the whole window &mdash; the search column, the
+        header and the browser&rsquo;s own chrome go, and the plate, the projection or the
+        stack takes the room. <kbd>Esc</kbd> comes back.</dd>
       <dt>Compare</dt><dd>a second plate beside the first, sharing zoom, pan and crosshair</dd>
       <dt>Notes</dt><dd>your own markers, kept in this browser; export them as JSON to keep them</dd>
       <dt>Meshes</dt><dd>in 3D, the structure as a closed surface interpolated between its plates; STL to download it</dd>
-      <dt><kbd>Esc</kbd></dt><dd>drop the selection, or clear a measurement</dd>
+      <dt><kbd>Esc</kbd></dt><dd>come back from the maximised view, drop the selection, or clear a measurement</dd>
       <dt>double-click</dt><dd>zoom into the plate at that point; drag to pan</dd>
       <dt>hover a label</dt><dd>read its full name; click it to select that structure</dd>
     </dl>

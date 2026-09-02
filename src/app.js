@@ -4509,12 +4509,20 @@ addEventListener('keydown',e=>{
                                 else zoomCentre(zoom/1.6); }
   if(e.key==='0'){ if(tab==='v3d') $('v3r').click();
                    else { zoom=1; tx=ty=0; hideTip(); applyView(); } }
-  if(e.key==='/'){ e.preventDefault(); setMode('find'); $('q').focus(); $('q').select(); }
+  /* the search box is one of the things a maximised view has put away, so reaching for
+     it is also a way of asking for it back */
+  if(e.key==='/'){ e.preventDefault(); setMax(false); setMode('find'); $('q').focus(); $('q').select(); }
   if(e.key==='?'){ e.preventDefault(); openAbout(); }
+  /* bare F only: Ctrl-F and Cmd-F belong to the browser's own find */
+  if((e.key==='f'||e.key==='F')&&!e.ctrlKey&&!e.metaKey&&!e.altKey){ e.preventDefault(); MAXB.click(); }
   if(e.key==='Home'){ e.preventDefault(); go(1); }
   if(e.key==='End'){ e.preventDefault(); go(62); }
+  /* what Escape drops is whatever is most recently in the way: a click the plate is
+     waiting for, then a half-made measurement, then the maximised view, then the selection */
   if(e.key==='Escape'){ if(pickArm) setPick(false);
-                        else if(measMode&&mA){ mA=mB=mHover=null; drawMeas(); } else clear(); }
+                        else if(measMode&&mA){ mA=mB=mHover=null; drawMeas(); }
+                        else if(maxed) MAXB.click();
+                        else clear(); }
 });
 
 /* ---------- layout: two modes in the sidebar, two views in the main pane ----------
@@ -4523,7 +4531,10 @@ addEventListener('keydown',e=>{
    switches between the plate and the projection, and each pane keeps its own scroll.
    Given a window with room, the whole app then sits inside it, plate included. */
 const SHELL = matchMedia('(min-width:900px) and (min-height:600px)');
-let smode='find', tab='plate', scope='all', nHere=0;
+/* maximised, the window is filled rather than scrolled -- but only where there is the
+   height for that to be a gain; the stylesheet draws the line in the same place */
+const TALL  = matchMedia('(min-height:600px)');
+let smode='find', tab='plate', scope='all', nHere=0, maxed=false;
 
 function setMode(m){
   if(m===smode) return;
@@ -4637,8 +4648,10 @@ let fitW=0;
 function fit(){
   if(tab!=='plate') return;
   /* stacked, the page scrolls and the plate is bound by its width, which CSS already
-     knows; an inline width left over from a wider window would only fight it */
-  if(!SHELL.matches){
+     knows; an inline width left over from a wider window would only fight it. Maximised
+     in a window with the height for it, the app fills the window instead, whatever its
+     width, so that is the other way in to the measuring path */
+  if(!SHELL.matches && !(maxed&&TALL.matches)){
     if(IW.style.width){ IW.style.width=''; IW2.style.width=''; fitW=0; applyView(); }
     return;
   }
@@ -4653,7 +4666,45 @@ function fit(){
   applyView();
 }
 new ResizeObserver(fit).observe(IMGBOX);
-SHELL.addEventListener('change',()=>{ fitW=0; fit(); });
+for(const q of [SHELL,TALL]) q.addEventListener('change',()=>{ fitW=0; fit(); });
+
+/* ---------- maximised: the window handed over to the view ----------
+   The plate, the projection and the stack are each bound by whatever room is left once
+   the search column, the header and the footer have taken theirs. This gives them the
+   lot, and asks the browser for its own chrome as well. That ask can be refused -- an
+   iframe without the permission, a policy, a pointer that never gestured -- and the
+   page-level half is worth having on its own, so a refusal is not an error here: the
+   layout goes either way. Leaving fullscreen by a route the page did not take, Esc or
+   F11 or the browser's own control, comes back as fullscreenchange and puts the rest
+   of the layout back with it, so the two never drift apart. */
+const MAXB=$('emax');
+const MAXT="Give the view the whole window: the search column, the header and the browser's own chrome step out of the way. F, or Esc to come back.";
+const fsOn=()=>!!(document.fullscreenElement||document.webkitFullscreenElement);
+function setMax(on){
+  on=!!on;
+  if(on===maxed) return;
+  maxed=on;
+  document.body.classList.toggle('maxed',on);
+  MAXB.setAttribute('aria-pressed',on?'true':'false');
+  MAXB.setAttribute('aria-label',on?'Restore the view':'Maximise the view');
+  MAXB.title = on ? 'Give the search column and the header their room back. Esc does the same.' : MAXT;
+  hideTip(); pjHide(); v3hide();
+  /* every view is measured off the box it sits in, and that box has just changed */
+  fitW=0; fit(); applyView();
+  if(tab==='v3d') v3frame();
+}
+/* both halves are optional on some browser or other, so each is called through a guard
+   rather than assumed; a rejected promise from either is the refusal, not a fault */
+function fsGo(on){
+  const el=document.documentElement;
+  const f = on ? (el.requestFullscreen||el.webkitRequestFullscreen)
+               : (document.exitFullscreen||document.webkitExitFullscreen);
+  if(!f) return;
+  try{ const r=f.call(on?el:document); if(r&&r.catch) r.catch(()=>{}); }catch(_){}
+}
+MAXB.onclick=()=>{ const on=!maxed; setMax(on); if(on||fsOn()) fsGo(on); };
+for(const ev of ['fullscreenchange','webkitfullscreenchange'])
+  document.addEventListener(ev,()=>{ if(maxed&&!fsOn()) setMax(false); });
 
 /* ---------- theme ----------
    The palette has had a dark half and a data-theme override all along; this is the
@@ -4974,4 +5025,5 @@ window.__gae={toFrame,fromFrame,writeHash,readHash,tgSolve,tgPath,tgFootprint,pl
   select,go,clear,frameSet,frameApply,FRAME,frmBuild,BUILD,S,P,byAb,ptsOf,regBuild,plateAt,inBrain,
   coordsOf,tgJSON,tgNotes,meshList,setCmp,anMake,notes:()=>NOTES,mesh:()=>MESH,
   GRP,isGrp,regIn,grpsOf,
-  state:()=>({cur,sel,zoom,tab,smode,psrc,tgProbe,tgFoot,cmpOn,anShow,targSide,tgTilt,tgRoll,tgYaw,tgPlate,tgOff,fview,fvOn:fvOn()})};
+  setMax,
+  state:()=>({cur,sel,zoom,tab,smode,psrc,tgProbe,tgFoot,cmpOn,anShow,maxed,targSide,tgTilt,tgRoll,tgYaw,tgPlate,tgOff,fview,fvOn:fvOn()})};

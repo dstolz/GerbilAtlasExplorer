@@ -156,6 +156,42 @@ test('the gallery draws only the thumbnails that are on screen', async ({ page }
   expect(await painted()).toBeGreaterThan(first); // scrolling fills the rest in
 });
 
+test('maximising hands the whole window to the view, and gives it back', async ({ page }) => {
+  // The browser's own fullscreen would resize the viewport under the assertions, and
+  // whether it is granted at all is the environment's business -- so it is refused here.
+  // That is the path worth pinning anyway: a refusal must still maximise the page itself.
+  await page.addInitScript(() => {
+    Element.prototype.requestFullscreen = () => Promise.reject(new Error('refused'));
+  });
+  await page.goto(BUNDLE + '#p30');
+  const plate = () => page.evaluate(() => {
+    const b = document.getElementById('iw').getBoundingClientRect();
+    return [Math.round(b.width), Math.round(b.height)];
+  });
+  const before = await plate();
+  await page.click('#emax');
+  await expect(page.locator('body')).toHaveClass(/maxed/);
+  await expect(page.locator('header')).toBeHidden();
+  await expect(page.locator('.side')).toBeHidden();
+  await expect(page.locator('#vseg')).toBeVisible();          // the view is still driven
+  const after = await plate();
+  expect(after[0]).toBeGreaterThan(before[0]);                // the room the sidebar had
+  // ... and the projection takes it too
+  await page.click('#vseg button[data-t="proj"]');
+  const wide = await page.evaluate(() => Math.round(document.getElementById('pjw').getBoundingClientRect().width));
+  await page.click('#emax');
+  await expect(page.locator('body')).not.toHaveClass(/maxed/);
+  expect(await page.evaluate(() => Math.round(document.getElementById('pjw').getBoundingClientRect().width)))
+    .toBeLessThan(wide);
+  // Esc comes back from it, and the plate is exactly the size it started
+  await page.click('#vseg button[data-t="plate"]');
+  await page.keyboard.press('f');
+  await expect(page.locator('body')).toHaveClass(/maxed/);
+  await page.keyboard.press('Escape');
+  await expect(page.locator('body')).not.toHaveClass(/maxed/);
+  expect(await plate()).toEqual(before);
+});
+
 test('the lean page registers its service worker', async ({ page }) => {
   await page.goto(LEAN + '#p30');
   const state = await page.evaluate(async () => {
