@@ -82,12 +82,16 @@ def test_region_extents(db):
     R = db['region_extents']
     S = {s['abbr'] for s in db['structures']}
     LP = db['label_positions']['data']
-    entries = polys = pts = 0
+    entries = polys = pts = nw = 0
     for p, d in R['data'].items():
         for ab, e in d.items():
             assert ab in S and ab in LP[p], (p, ab)
             assert len(e['g']) == len(e['s'])
             assert e['a'] > 0 and e['n'] >= 1
+            assert set(e) <= {'g', 's', 'a', 'n', 'w'}
+            if 'w' in e:
+                assert e['w'] == 1
+                nw += 1
             entries += 1
             polys += len(e['g'])
             pts += sum(len(g) for g in e['g'])
@@ -95,6 +99,10 @@ def test_region_extents(db):
                 assert g[0] == g[-1] and len(g) >= 4
     sm = R['summary']
     assert (entries, polys, pts) == (sm['structure_plate_entries'], sm['polygons'], sm['points'])
+    # `w` says the entry lies only inside boundaries the atlas draws round more than one
+    # name: no outline of its own, so the app circles the printed labels instead
+    assert nw == sm['entries_without_a_drawn_outline']
+    assert 0 < nw < entries / 2
     assert sm['boundary_edges_shared_exactly'] == 1.0
     assert sm['label_inside_its_own_region'] >= 0.97
     assert sm['section_area_residual_worst_plate'] <= 0.05
@@ -187,7 +195,7 @@ def test_volumes_consistent(db):
     R = db['region_extents']['data']
     have = {ab for d in R.values() for ab in d}
     assert set(V['data']) == have
-    assert V['summary']['structures'] == len(V['data']) == 697
+    assert V['summary']['structures'] == len(V['data']) == 698
     assert 'little-endian' in V['note']
     for ab, e in V['data'].items():
         assert e['grade'] in ('surface', 'slab')

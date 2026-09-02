@@ -40,8 +40,16 @@ the whole atlas (all 186 plate images) lives inside it, 22 MB, most of that the 
 - **Hover anywhere on a structure** — the printed abbreviation included — to read what it
   is, how much of the section it takes up, and how much of its outline the atlas actually
   draws. Either way it is the whole region that highlights, not the word. Click to select it
-  and the region is outlined on both hemispheres. The few names the atlas prints *outside*
-  the section, `rf` among them, have no region to give and highlight as the label itself.
+  and the region is outlined on both hemispheres, even where the atlas letters only one of
+  them. The few names the atlas prints *outside* the section, `rf` among them, have no
+  region to give and highlight as the label itself.
+- **Where the atlas draws no boundary, none is drawn here.** Its drawing sometimes puts
+  several names inside one boundary and prints nothing between them — the cerebellar
+  lobules and the white matter that runs through them, the mediodorsal thalamus, the
+  lateral hypothalamic zones. Those structures are still found, listed, measured and
+  modelled, but they get no outline: hover or select one and every place the plate prints
+  its name highlights instead, and the tip says why. An outline there would be a boundary
+  this atlas does not have.
 - Search by abbreviation, name, or alias — `NAc`, `MGB`, `nucleus accumbens`, `SOC` and
   seventy other names from other nomenclatures resolve, and the result says which alias
   brought it in; a query that matches nothing exactly offers its close matches. Filter by

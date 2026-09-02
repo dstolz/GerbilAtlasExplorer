@@ -322,6 +322,9 @@ input[type=range]{accent-color:var(--accent)}
 #om path.grp,#om2 path.grp{fill:var(--markg);fill-opacity:.07;stroke:var(--markg);stroke-width:2.2}
 /* dashed where the atlas does not print the boundary and the extraction inferred it */
 #hr.est,#hr2.est,#om path.est{stroke-dasharray:6 4}
+/* boxes round the printed names, for a structure the atlas draws no boundary round at
+   all: the same solid accent the label highlight uses, because that is what it is */
+#hr.lab,#hr2.lab{fill-opacity:.12;stroke-width:1.3;stroke-opacity:.9;stroke-dasharray:none}
 .tip{position:absolute;z-index:5;pointer-events:none;max-width:min(320px,90%);
   background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:8px;
   box-shadow:var(--shadow);padding:6px 9px;text-align:left;line-height:1.35}
