@@ -801,7 +801,7 @@ function centreOn(fx,fy){
    #pan carries the translate+scale; everything else maps through f2s / s2f, so the
    overlays, the label hit testing and the tooltip all stay registered to the image. */
 const IW=$('iw'), PAN=$('pan'), TIP=$('tip'), HL=$('hl'), HR=$('hr');
-const IW2=$('iw2'), PAN2=$('pan2');
+const IW2=$('iw2'), PAN2=$('pan2'), HR2=$('hr2');
 const ZMIN=1, ZMAX=10;
 function iwRect(){ return IW.getBoundingClientRect(); }
 function f2s(fx,fy){ const b=iwRect(); return [tx+zoom*fx/NW*b.width, ty+zoom*fy/NH*b.height]; }
@@ -862,6 +862,7 @@ function cmpPlate(){ return cmpWhat==='prev'?Math.max(1,cur-1):cmpWhat==='next'?
 function cmpSrc(){ return (cmpWhat==='prev'||cmpWhat==='next')?psrc:cmpWhat; }
 function cmpShow(){
   IW2.hidden=!cmpOn; IMGBOX.classList.toggle('cmp',cmpOn); $('cmpsel').hidden=!cmpOn;
+  hr2Hide();
   if(cmpOn){
     const p=cmpPlate(), k=cmpSrc(), el=$('pi2');
     el.src=((srcOK(k)?SRC[k]:IMG)[p])||'';
@@ -879,6 +880,42 @@ function cmpMark(){
   const rg=regBuild(cmpPlate()).by[sel];
   g.innerHTML = rg ? `<path class="${isGrp(sel)?'grp':''}${regEst(rg)?' est':''}" d="${regD(rg)}"></path>` : '';
 }
+/* ---------- compare: the region under the pointer, highlighted on both panes ----------
+   The two plates share a frame but not a region index -- each is cut on its own level --
+   so a hover on either side is answered by name: outline what the pointer is over on the
+   plate it is over, and outline that same abbreviation, if this other plate has it, on
+   the plate beside it. That is the only sense in which "the same structure" survives a
+   plate that may not be the one the section came from. */
+let hot2=null;
+function hr2Hide(){ HR2.style.display='none'; hot2=null; IW2.classList.remove('hot'); }
+/* the mirror onto pane one: driven by pane two, not by pane one's own pointer, so it
+   clears pane one's own hover bookkeeping too -- otherwise a hover that never moved
+   while the pointer was over pane two would be mistaken for one already shown */
+function cmpMirror1(ab){
+  hot=null; TIP.hidden=true; IW.classList.remove('hot'); HL.style.display='none';
+  const rg=ab?regBy[ab]:null;
+  if(!rg){ HR.style.display='none'; return; }
+  HR.setAttribute('d',regD(rg)); HR.setAttribute('class',regEst(rg)?'est':'');
+  HR.style.display='';
+}
+/* the mirror onto pane two: driven by pane one's own hover() */
+function cmpMirror2(ab){
+  if(!cmpOn) return;
+  const rg=ab?regBuild(cmpPlate()).by[ab]:null;
+  if(!rg){ HR2.style.display='none'; return; }
+  HR2.setAttribute('d',regD(rg)); HR2.setAttribute('class',regEst(rg)?'est':'');
+  HR2.style.display='';
+}
+function hover2(f){
+  if(pickArm||anArm||measMode){ if(hot2) hr2Hide(); return; }
+  const o=regAtOn(cmpPlate(),f[0],f[1]), ab=o?o.ab:null;
+  if(ab===hot2) return;
+  hot2=ab;
+  if(!o){ hr2Hide(); cmpMirror1(null); return; }
+  HR2.setAttribute('d',regD(o)); HR2.setAttribute('class',regEst(o)?'est':'');
+  HR2.style.display=''; IW2.classList.add('hot');
+  cmpMirror1(ab);
+}
 function setCmp(on,what){
   cmpOn=!!on; if(what&&CMPWHAT.includes(what)) cmpWhat=what;
   $('ckcmp').checked=cmpOn; $('cmpsel').value=cmpWhat;
@@ -894,6 +931,7 @@ IW2.addEventListener('pointermove',e=>{
   if(cmpDrag){ tx+=e.clientX-cmpDrag.x; ty+=e.clientY-cmpDrag.y; cmpDrag={x:e.clientX,y:e.clientY,moved:true}; applyView(); return; }
   const f=s2f2(e); if(!f) return;
   lastPt=f; if(showXY) drawXH(f,cmpPlate());
+  hover2(f);
 });
 let cmpDrag=null;
 IW2.addEventListener('pointerdown',e=>{ if(zoom>1.01){ cmpDrag={x:e.clientX,y:e.clientY,moved:false}; try{ IW2.setPointerCapture(e.pointerId); }catch(_){} } });
@@ -901,7 +939,7 @@ IW2.addEventListener('pointerup',e=>{ const d=cmpDrag; cmpDrag=null;
   if(d&&d.moved) return;
   if(cmpWhat==='prev'||cmpWhat==='next') go(cmpPlate()); });
 IW2.addEventListener('pointercancel',()=>{ cmpDrag=null; });
-IW2.addEventListener('pointerleave',()=>{ $('xh2').innerHTML=''; });
+IW2.addEventListener('pointerleave',()=>{ $('xh2').innerHTML=''; if(hot2) { hr2Hide(); cmpMirror1(null); } });
 IW2.addEventListener('wheel',e=>{
   if(!SHELL.matches && !e.ctrlKey && !e.metaKey && zoom<=1.01) return;
   e.preventDefault();
@@ -1178,6 +1216,7 @@ const hotKey = h => h ? h.k+'|'+h.ab+'|'+(h.o?h.o.ab:'') : '';
 function hideTip(){
   TIP.hidden=true; HL.style.display='none'; HR.style.display='none';
   IW.classList.remove('hot'); hot=null;
+  cmpMirror2(null);
 }
 function tipBody(ab,extra){
   const r=byAb[ab];
@@ -1227,6 +1266,7 @@ function hover(e){
   if(hotKey(h)===hotKey(hot)) return;
   hot=h;
   if(!h) hideTip(); else if(h.k==='r') showTipR(h.o,h.ab); else showTip(h.L);
+  if(h) cmpMirror2(h.ab);
 }
 IW.addEventListener('click',e=>{
   if(noClick){ noClick=false; return; }          /* the pointer was dragged, not tapped */
