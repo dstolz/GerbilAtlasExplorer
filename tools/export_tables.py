@@ -22,6 +22,7 @@ import argparse
 import csv
 import datetime
 import io
+import math
 import json
 import os
 import statistics
@@ -132,6 +133,8 @@ def table_csv(db, vols=None):
     """One row per structure: the label centre the app's card shows, the areas the
     extents give it, and the volume and centre the meshes give it."""
     vols = load_volumes() if vols is None else vols
+    # sums are math.fsum: exact, so the table is the same on every Python (3.12 changed
+    # what sum() does with floats, and a last-digit difference is a stale table in CI)
     header = ['abbr', 'name', 'systems', 'first_plate', 'last_plate', 'n_plates', 'plates',
               'n_labels', 'n_plates_labelled', 'label_ap_bregma_median_mm', 'label_ml_abs_median_mm',
               'label_dv_median_mm', 'n_plates_with_extent', 'area_mm2_sum', 'area_mm2_max',
@@ -161,7 +164,7 @@ def table_csv(db, vols=None):
                      s['n_plates'], ' '.join(map(str, s['plates'])), len(q),
                      len({x['plate'] for x in q}), med('ap'),
                      fmt(statistics.median(abs(x['ml']) for x in q)) if q else '', med('dv'),
-                     nx, fmt(sum(areas), 3) if areas else '', fmt(max(areas), 3) if areas else '',
+                     nx, fmt(math.fsum(areas), 3) if areas else '', fmt(max(areas), 3) if areas else '',
                      fmt(smin, 2) if smin is not None else '',
                      fmt(v.get('volume_mm3'), 4) if v else '', v.get('grade', ''),
                      len(comps) if v else '',
