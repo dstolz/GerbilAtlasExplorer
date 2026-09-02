@@ -71,6 +71,11 @@ the whole atlas (all 186 plate images) lives inside it, 22 MB, most of that the 
 - **At a coordinate** — go the other way: type bregma / ML / DV and get the structures
   nearest that point. Or hit **Pick on the plate** and just click where you're aiming.
 - Step through the 62 plates, zoom and pan, **Fit** to reset.
+- **Maximise** (the corners button, or <kbd>F</kbd>) gives the whole window to whichever
+  view is open — plate, projection or 3D. The search column, the header and the footer
+  step out, and the browser is asked for its own chrome as well, so a rig screen or a
+  projector shows nothing but the section and the controls that drive it. <kbd>Esc</kbd>
+  comes back.
 
 **Measure and check**
 - 1 mm grid and scale bar overlays.

@@ -6,6 +6,19 @@ carries a `version` block naming the release its derived fields were built for.
 ## [Unreleased]
 
 ### Added
+- **Maximise.** A corners button beside Copy link, and <kbd>F</kbd>, give the whole window to
+  whichever view is open — the plate, the projection or the 3-D stack. The search column, the
+  header, the footer and the card's own frame step out; what drives the view stays, because it
+  is still being driven. The browser is asked for its own chrome at the same time, so a rig
+  screen or a projector shows nothing but the section. That ask can be refused — an iframe
+  without the permission, a policy — and the page-level half is worth having alone, so a
+  refusal is not an error: the layout goes either way, and leaving fullscreen by any route the
+  page did not take puts the layout back with it. On a 1440 × 900 window the plate goes from
+  909 × 581 to 1094 × 699, and the projection from 1013 × 623 to 1440 × 741. <kbd>Esc</kbd>
+  comes back, and so does reaching for the search box with <kbd>/</kbd>. Under 600 px of window
+  height there is no room to win — the toolbar alone would take most of it — so short windows
+  keep their scroll and take only the width the sidebar and the margins were using. Not carried
+  in a deep link: it is how you are looking, not what you are looking at.
 - **The projection and the 3-D view can be drawn in your working frame.** Set a pitch, roll
   or yaw and an **In frame** checkbox appears in the toolbar of each; tick it and the label
   cloud and the section stack are turned into your frame, so up on the screen is your
