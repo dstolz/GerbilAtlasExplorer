@@ -29,6 +29,11 @@ carries a `version` block naming the release its derived fields were built for.
   stamp is UTC and reads off one instant — the commit's own, or the moment of the build
   when it was built from a dirty tree — so its date and its time cannot disagree.
 
+### Changed
+- The working frame no longer persists across visits by default: a new visit starts back
+  at the atlas. A **Remember across visits** checkbox in the Frame dialog opts back in;
+  that preference is what actually persists, and it is off until set.
+
 ## [0.9.0] — 2026-09-02
 
 ### Added
