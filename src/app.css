@@ -220,6 +220,9 @@ input[type=search]:focus{border-color:var(--accent)}
 .tg:has(input:checked){color:var(--accent)}
 /* a toggle and its footnote marker travel together, inside the control bar's own gap */
 .tgw{display:inline-flex;align-items:center;gap:2px;white-space:nowrap}
+/* ... and the display above would otherwise beat the UA rule for [hidden], so the mesh
+   sub-controls would be offered before the meshes they belong to are loaded */
+.tgw[hidden]{display:none}
 /* the marker itself: a real button, because it opens the note rather than just sitting there */
 .ast{border:0;background:none;padding:0 1px;margin:0;font:inherit;font-size:14px;line-height:1;
   color:var(--accent);cursor:pointer;align-self:flex-start}

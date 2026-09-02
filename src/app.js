@@ -3493,17 +3493,37 @@ function hslRGB(h,sat,l){
   return [f(0),f(8),f(4)];
 }
 function meshColor(ab){
-  if(ab===sel) return v3col.c2;
+  if(ab===sel||(sel&&ab===meshKey(sel))) return v3col.c2;
   let h=0; for(let i=0;i<ab.length;i++) h=(h*31+ab.charCodeAt(i))>>>0;
   return hslRGB(h%360,.55,.55);
+}
+/* Every name of a joined label -- "Au1 (A1/AAF)" -- resolves to the one the label leads
+   with, which is how regBuild() answers a selection in the plane: pick A1 and the plate
+   outlines the region the three of them share. The meshes are filed under the same leader,
+   because region_extents is what they were built from, so the 3-D view has to resolve the
+   same way. Looking A1 up directly finds nothing and draws nothing, which reads as a mesh
+   that failed rather than as a name the atlas prints inside somebody else's boundary. */
+let MBLK=null;
+function meshBlk(ab){
+  if(!MBLK){ MBLK={};
+    for(const p in RBLK) for(const g of RBLK[p]) for(let i=1;i<g.length;i++) MBLK[g[i]]=g; }
+  return MBLK[ab]||null;
+}
+/* the mesh that answers for a structure: its own, or the one the region it shares is filed
+   under. Null where the atlas names a structure and draws it no region anywhere. */
+function meshKey(ab){
+  if(!MESH||!ab) return null;
+  if(MESH.data[ab]) return ab;
+  const g=meshBlk(ab);
+  return g&&MESH.data[g[0]] ? g[0] : null;
 }
 /* which meshes to show: the selection, or the current filter when it is a short list */
 function meshList(){
   if(!MESH) return [];
-  const out=[];
-  if(sel&&MESH.data[sel]) out.push(sel);
+  const out=[], add=ab=>{ const k=meshKey(ab); if(k&&!out.includes(k)) out.push(k); };
+  if(sel&&meshKey(sel)) add(sel);
   else if(results.length<S.length && results.length<=40)
-    for(const r of results) if(MESH.data[r.abbr]) out.push(r.abbr);
+    for(const r of results) add(r.abbr);
   return out;
 }
 function meshDraw(M){
@@ -3523,10 +3543,12 @@ function meshDraw(M){
 }
 /* the selected structure's mesh as a binary STL, in atlas millimetres (ML, DV, AP) */
 function meshSTL(){
-  if(!MESH||!sel||!MESH.data[sel]) return;
-  const m=MESH.data[sel].mesh, d=meshDecode(m);
+  const key=meshKey(sel); if(!key) return;
+  const m=MESH.data[key].mesh, d=meshDecode(m);
   const P=d.P, F=d.F, nf=d.nf, buf=new ArrayBuffer(84+nf*50), v=new DataView(buf);
-  const head='Gerbil Atlas Explorer '+sel+' (ML,DV,AP mm; interpolated between 350 um sections)';
+  /* named for the region, not for the name it was reached by: a file called A1 that holds
+     Au1's boundary would be the one thing about this the reader could not check */
+  const head='Gerbil Atlas Explorer '+key+' (ML,DV,AP mm; interpolated between 350 um sections)';
   for(let i=0;i<80;i++) v.setUint8(i, i<head.length?head.charCodeAt(i):32);
   v.setUint32(80,nf,true);
   /* back from world to atlas: x = ML, y = DV = w3y^-1, z = AP = w3z^-1 */
@@ -3540,7 +3562,7 @@ function meshSTL(){
     v.setUint16(o,0,true); o+=2;
   }
   const u=URL.createObjectURL(new Blob([buf],{type:'model/stl'}));
-  dl(`mesh_${sel.replace(/[^A-Za-z0-9]/g,'')}.stl`,u,u);
+  dl(`mesh_${key.replace(/[^A-Za-z0-9]/g,'')}.stl`,u,u);
 }
 $('v3m').onchange=e=>{ v3m=e.target.checked; if(v3m) meshLoad(); $('v3msw').hidden=!v3m; v3flags(); v3note(); v3frame(); queueHash(); };
 $('v3ms').onchange=()=>v3frame();
@@ -3550,7 +3572,7 @@ $('v3mfb').onclick=()=>$('v3mfile').click();
 function v3note(){
   const N=$('v3n');
   if(v3fail){ N.textContent=''; return; }
-  $('v3stl').hidden=!(v3m&&MESH&&sel&&MESH.data[sel]);
+  $('v3stl').hidden=!(v3m&&MESH&&meshKey(sel));
   /* the slab's own AP bounds, quoted from wherever zero is -- a re-zero does not move the
      plates, only what their APs are called, and this line is the only place the 3-D view
      names one */
@@ -3565,8 +3587,19 @@ function v3note(){
     if(meshBusy) mesh=' Fetching the meshes (20 MB, once)…';
     else if(meshFail) mesh=' '+meshFail;
     else if(MESH){
-      const list=meshList(), e=sel&&MESH.data[sel];
-      mesh = (e ? ` <b>${esc(sel)}</b> as a mesh: ${e.grade==='slab'?'a hull, not a shape — the structure is on one or two plates only':'interpolated between its plates'}, ${e.volume_mm3.toFixed(2)} mm³.`
+      const list=meshList(), key=sel&&meshKey(sel), e=key&&MESH.data[key];
+      /* three things can be true of a selection here and the reader cannot tell them
+         apart from the picture: it has its own mesh; it shares a printed region and the
+         mesh is filed under the name that region is filed under; or the atlas names it
+         and draws it no region anywhere, so there is nothing to build one from and the
+         view is empty on purpose. The last one is what an unexplained blank looks like. */
+      const blk = key&&key!==sel ? meshBlk(sel) : null;
+      const how = e && (e.grade==='slab'
+        ? 'a hull, not a shape — the structure is on one or two plates only'
+        : 'interpolated between its plates');
+      mesh = (blk ? ` <b>${esc(sel)}</b> is printed <b>${esc(blk.join('/'))}</b>, one region, so its mesh is the one filed under <b>${esc(key)}</b>: ${how}, ${e.volume_mm3.toFixed(2)} mm³.`
+             : e ? ` <b>${esc(sel)}</b> as a mesh: ${how}, ${e.volume_mm3.toFixed(2)} mm³.`
+             : sel ? ` <b>${esc(sel)}</b> has no mesh: the atlas names it but draws it no region of its own on any plate, so there is nothing to build one from — as for ${S.length-Object.keys(MESH.data).length} of the ${S.length} structures.`
              : list.length ? ` ${list.length} structures of the filter as meshes.` : ' Select a structure, or filter to a few, to see its mesh.')+
         ' Six planes in seven are arithmetic between sections 350 µm apart; nothing here is a segmentation.';
     }

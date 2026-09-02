@@ -62,6 +62,14 @@ carries a `version` block naming the release its derived fields were built for.
 - `--plates` reads `30`, `28-33` and `5,30,45` alike in every script.
 
 ### Fixed
+- 3-D meshes: a structure printed inside somebody else's boundary -- A1 and AAF share one
+  region with Au1, RSG with RSD -- was looked up by its own name, found nothing and drew
+  nothing, though the plate outlines the shared region happily. It now resolves through
+  the label block the way `regBuild()` does, and the note names the region it landed on.
+  Where the atlas draws a structure no region anywhere (26 of the 723) the note says so
+  rather than leaving an empty view and asking for a selection already made.
+- The 3-D view's Surface toggle, STL button and mesh Load-file fallback were offered
+  before the meshes were switched on: `.tgw` sets `display`, which beat `[hidden]`.
 - The app's structure table (`window.__ATLAS__`) and `data/gerbil_atlas_structures.csv`
   carried the pre-correction plate ranges for AngT, RLi, Su3C and ZIC; both are now built
   from the database.
