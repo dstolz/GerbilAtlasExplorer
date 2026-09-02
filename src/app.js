@@ -4679,13 +4679,19 @@ function frameRead(){
   FKEYS.forEach(k=>{ const v=+$(FIN[k]).value; FRAME[k]=Number.isFinite(v)?v:0; });
   frameApply();
 }
+/* Off by default: a fresh visit starts at the atlas unless the reader has opted in.
+   The checkbox's own state is the one thing that always persists, so it stays checked
+   for a reader who asked for that; the frame data underneath only follows it. */
+let FREMEMBER=false;
+try{ FREMEMBER=localStorage.getItem('gae-frame-remember')==='1'; }catch(_){}
 function frameSave(){
   try{
-    if(FRAME.on) localStorage.setItem('gae-frame',JSON.stringify(FRAME));
+    if(FREMEMBER&&FRAME.on) localStorage.setItem('gae-frame',JSON.stringify(FRAME));
     else localStorage.removeItem('gae-frame');
   }catch(_){}
 }
 function frameLoad(){
+  if(!FREMEMBER) return;
   let o=null;
   try{ o=JSON.parse(localStorage.getItem('gae-frame')||'null'); }catch(_){}
   if(o&&typeof o==='object') frameSet(o);
@@ -4694,6 +4700,12 @@ const frameZero=()=>{ const z={on:false,org:false,oref:0}; FKEYS.forEach(k=>z[k]
 FKEYS.forEach(k=>{ $(FIN[k]).oninput=frameRead; });
 $('fon').onclick=()=>{ FRAME.on=!FRAME.on; frameApply(); };
 $('fzero').onclick=()=>{ frameSet(frameZero()); frameApply(); };
+$('fremember').checked=FREMEMBER;
+$('fremember').onchange=()=>{
+  FREMEMBER=$('fremember').checked;
+  try{ localStorage.setItem('gae-frame-remember',FREMEMBER?'1':'0'); }catch(_){}
+  frameSave();
+};
 $('frameb').onclick=()=>{
   framePreview();
   if(FDLG.showModal) FDLG.showModal(); else FDLG.setAttribute('open','');
