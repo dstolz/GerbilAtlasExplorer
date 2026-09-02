@@ -6,6 +6,11 @@
   /* the marker sits on the plate image, which is white with red contours in either
      theme, so it is deliberately not themed and deliberately not the red accent */
   --mark:#0a5cff; --grid:#5b7085; --meas:#00875a; --pick:#7b23c9; --targ:#c4008f;
+  /* a superstructure is the same kind of mark as a selected structure and a different
+     thing, so it is a different hue of the same weight -- and drawn with a heavier edge
+     and a thinner wash, because it covers a tenth of the section rather than a corner
+     of it and a fill at the structure's opacity would bleach the drawing underneath */
+  --markg:#0097a7;
   /* the projection's two background layers: every label, and the current filter */
   --cloud:#d5d0c4; --cloud2:#736c5e;
   /* the CT skull surface in the 3-D view, and its outline as a line on the panels */
@@ -105,6 +110,34 @@ input[type=search]:focus{border-color:var(--accent)}
   color:var(--accent);word-break:break-all}
 .nm{font-size:13.5px;min-width:0;overflow-wrap:anywhere}
 .pl{font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+/* ---------- the divisions, above the structures they are made of ---------- */
+.row.grp .ab{color:var(--markg)}
+.row.grp.sel{background:color-mix(in srgb,var(--markg) 12%,transparent)}
+.ghead{display:flex;align-items:center;gap:6px;padding:7px 14px;cursor:pointer;
+  border-bottom:1px solid var(--line);background:var(--panel2);
+  font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.ghead:hover{color:var(--ink)}
+.ghead b{font-weight:600;font-variant-numeric:tabular-nums}
+.gcar{display:inline-block;transition:transform .12s;font-size:9px}
+.ghead.open .gcar{transform:rotate(90deg)}
+.det .da.dg{color:var(--markg)}
+.gnote{margin:6px 0 0;font-size:11.5px;line-height:1.5;color:var(--muted)}
+/* the structures a division is made of: one wrapping block, not a scrolling strip --
+   there can be nearly three hundred of them and a strip that long is not readable */
+.gmem{display:flex;flex-wrap:wrap;gap:4px;margin-top:9px;max-height:104px;overflow-y:auto}
+.gmem>span{font-size:11px;color:var(--muted);align-self:center;margin-right:2px}
+.gmem .pbtn{border:0;font-family:ui-monospace,Menlo,monospace;font-size:11px;color:var(--ink)}
+.gmem .pbtn:hover{background:var(--markg);color:#fff}
+/* the divisions a structure is in, on its own card, and the button that narrows the
+   list to one division's structures -- which is what makes the CSV and the label table
+   answer for a division without either of them knowing what one is */
+.gin{display:flex;flex-wrap:wrap;gap:4px}
+.pbtn.pg{border:0;font-family:inherit;font-size:11px;color:var(--markg);background:var(--chip)}
+.pbtn.pg:hover{background:var(--markg);color:#fff}
+.glist{border:0;background:none;padding:0 0 0 6px;font:inherit;font-size:11px;
+  color:var(--markg);cursor:pointer;text-decoration:underline}
+.unf{border:0;background:none;padding:0 0 0 4px;font:inherit;font-size:11px;
+  color:var(--accent);cursor:pointer;text-decoration:underline}
 .empty{padding:24px 14px;color:var(--muted);font-size:13.5px}
 .revin{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .rvf{display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--muted);min-width:0}
@@ -201,6 +234,8 @@ input[type=search]:focus{border-color:var(--accent)}
 .recent[hidden]{display:none}
 .recent .pbtn{border:0;font-family:inherit;font-size:11.5px;color:var(--ink)}
 .recent .pbtn:hover{color:#fff}
+.recent .pbtn.pg{color:var(--markg)}
+.recent .pbtn.pg:hover{background:var(--markg);color:#fff}
 .via{font-size:10.5px;color:var(--muted);white-space:nowrap}
 .empty.fz{padding:8px 14px 4px;font-size:12px}
 
@@ -282,6 +317,7 @@ input[type=range]{accent-color:var(--accent)}
   vector-effect:non-scaling-stroke;fill-rule:evenodd}
 #om path{fill:var(--mark);fill-opacity:.10;stroke:var(--mark);stroke-width:1.5;fill-rule:evenodd;
   vector-effect:non-scaling-stroke;filter:drop-shadow(0 0 2px rgba(255,255,255,.9))}
+#om path.grp,#om2 path.grp{fill:var(--markg);fill-opacity:.07;stroke:var(--markg);stroke-width:2.2}
 /* dashed where the atlas does not print the boundary and the extraction inferred it */
 #hr.est,#om path.est{stroke-dasharray:6 4}
 .tip{position:absolute;z-index:5;pointer-events:none;max-width:min(320px,90%);
@@ -395,6 +431,7 @@ label.z.anlab{display:inline-block;cursor:pointer}
 #pjb{fill:none;stroke:var(--cloud);stroke-width:3.4;stroke-linecap:round}
 #pjf{fill:none;stroke:var(--cloud2);stroke-width:4.6;stroke-linecap:round}
 #pjl circle{fill:var(--mark)}
+#pjl.grp circle{fill:var(--markg)}
 #pjhi{fill:none;stroke:var(--accent);stroke-width:2.6}
 #pja line{stroke:var(--line)}
 #pja line.zero{stroke:var(--muted);stroke-opacity:.5}

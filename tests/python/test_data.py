@@ -230,3 +230,113 @@ def test_nifti_labels_match_the_meshes():
         ab = lut[int(i)]
         if ab:
             assert c * res ** 3 == pytest.approx(V['data'][ab]['volume_mm3'], rel=0.01, abs=1e-3), ab
+
+
+# ---------- the gross divisions ----------
+# A superstructure carries no geometry: it is a list of the atlas's own abbreviations, and
+# the app derives its outline, area and mesh from the members'. So what has to hold here is
+# that the lists are well formed, that they cover the atlas, and -- the one the outline
+# depends on -- that the members' boundaries still cancel into closed rings when the walls
+# between them are dropped. See tools/build_groups.py.
+
+FREE_OF_ANY_DIVISION = {'acer', 'mcer', 'BV', 'rf', 'ri', 'hif'}
+
+
+def test_groups_are_well_formed(db):
+    G = db['groups']['data']
+    S = {s['abbr'] for s in db['structures']}
+    breg = A.bregma_of(db)
+    assert len(G) == 20
+    assert len({g['id'] for g in G}) == len(G)
+    assert len({g['abbr'] for g in G}) == len(G)
+    assert len({g['name'] for g in G}) == len(G)
+    for g in G:
+        # a label that collides with an abbreviation would make the card ambiguous
+        assert g['abbr'] not in S, g['id']
+        assert g['members'] and g['n_members'] == len(g['members'])
+        assert len(set(g['members'])) == g['n_members'], g['id']
+        assert set(g['members']) <= S, g['id']
+        assert g['plates'] == sorted(set(g['plates'])) and g['plates']
+        assert (g['first_plate'], g['last_plate']) == (g['plates'][0], g['plates'][-1])
+        assert g['n_plates'] == len(g['plates'])
+        assert g['bregma_anterior'] == pytest.approx(max(breg[p] for p in g['plates']))
+        assert g['bregma_posterior'] == pytest.approx(min(breg[p] for p in g['plates']))
+        assert g['note'] and g['name'] and g['alias']
+
+
+def test_groups_cover_the_atlas(db):
+    """Every structure is in a division, bar the vessels and surface fissures that are
+    not part of one. Divisions overlap on purpose, so this is coverage, not a partition."""
+    G = db['groups']['data']
+    S = {s['abbr'] for s in db['structures']}
+    covered = set().union(*(set(g['members']) for g in G))
+    assert S - covered == FREE_OF_ANY_DIVISION
+    assert set(db['groups']['ungrouped']) == FREE_OF_ANY_DIVISION
+    by = {g['id']: set(g['members']) for g in G}
+    # the composite divisions are exactly what they claim to be
+    assert by['bstem'] == by['midb'] | by['pons'] | by['medu']
+    assert by['bulb'] <= by['olf']
+    for lobe in ('fcx', 'pcx', 'tcx', 'ocx'):
+        assert by[lobe] <= by['ctx'], lobe
+    # a division is only on plates its members reach
+    for g in G:
+        member_plates = {p for a in g['members']
+                         for p in next(s for s in db['structures'] if s['abbr'] == a)['plates']}
+        assert set(g['plates']) <= member_plates, g['id']
+
+
+def test_group_outlines_close(db):
+    """The one geometric promise a division makes: drop every boundary its members share
+    with each other and the survivors still stitch into closed rings, which is the outline
+    the app draws. Rests on the tiling checked by test_shared_edges_recomputed."""
+    import collections
+    R = db['region_extents']['data']
+    checked = rings = 0
+    for g in db['groups']['data']:
+        for pl in g['plates']:
+            here = R.get(str(pl), {})
+            parts = [here[a] for a in g['members'] if a in here]
+            if not parts:
+                continue
+            count = collections.Counter()
+            for e in parts:
+                for ring in e['g']:
+                    pts = ring[:-1] if ring[0] == ring[-1] else ring
+                    for i in range(len(pts)):
+                        a, b = tuple(pts[i]), tuple(pts[(i + 1) % len(pts)])
+                        if a != b:
+                            count[(a, b) if a < b else (b, a)] += 1
+            keep = [e for e, n in count.items() if n % 2]
+            assert keep, (g['id'], pl)
+            adj = collections.defaultdict(list)
+            for i, (a, b) in enumerate(keep):
+                adj[a].append(i)
+                adj[b].append(i)
+            # every vertex of a region boundary has even degree, so every walk closes
+            assert all(len(v) % 2 == 0 for v in adj.values()), (g['id'], pl)
+            used = [False] * len(keep)
+            for i in range(len(keep)):
+                if used[i]:
+                    continue
+                used[i] = True
+                start, cur = keep[i]
+                n = 1
+                while cur != start:
+                    nxt = None
+                    for j in adj[cur]:
+                        if not used[j]:
+                            used[j] = True
+                            x, y = keep[j]
+                            nxt = y if x == cur else x
+                            break
+                    assert nxt is not None, ('open ring', g['id'], pl)
+                    cur, n = nxt, n + 1
+                assert n >= 3, (g['id'], pl)
+                rings += 1
+            checked += 1
+    assert checked >= 400 and rings >= checked
+
+
+def test_groups_block_is_a_fresh_build(db):
+    import build_groups as B
+    assert db['groups'] == B.block(db)

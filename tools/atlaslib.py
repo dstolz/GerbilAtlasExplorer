@@ -372,6 +372,7 @@ def atlas_payload(db):
         'aliases': db['aliases'],
         'plates': [{k: p[k] for k in _ATLAS_PLATE} for p in db['plates']],
         'structures': [{k: s[k] for k in _ATLAS_STRUCT} for s in db['structures']],
+        'groups': db.get('groups', {}).get('data', []),
         'version': db.get('version', {}),
     }
 

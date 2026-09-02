@@ -368,6 +368,26 @@
       coordinate given for a structure is the median of its printed <em>labels</em>, which sit near &mdash;
       but not exactly at &mdash; its centroid.</p>
 
+    <h3>Gross divisions</h3>
+    <p>The atlas names 723 structures and no containers for them &mdash; there is no
+      &ldquo;hippocampus&rdquo; in its index, only CA1, CA2, CA3, DG and their layers.
+      Twenty <b>divisions</b> are added here and sit above the structures in the list.
+      Pick one and it behaves like a structure: outlined on the plate in <b>teal</b>
+      rather than blue, shown on every plate it is on, plotted in the projection, drawn
+      in 3&#8209;D as its members&rsquo; meshes, and carried by a link.</p>
+    <p>A division has <em>no geometry of its own</em>. Its outline is its members&rsquo;
+      outlines with the boundaries they share dropped, its area the sum of theirs, its
+      coordinate the median of their printed labels &mdash; so it can never show a line the
+      atlas does not draw. <b>List them</b> narrows the structure list to one division&rsquo;s
+      members, which is what the CSV and Labels exports then write; a structure&rsquo;s own
+      card says which divisions it is in.</p>
+    <p>Divisions <b>overlap on purpose</b>: the brainstem is the midbrain, pons and medulla
+      together, the olfactory bulb sits inside the olfactory areas, and the four cortical
+      lobes inside the cerebral cortex &mdash; so two divisions&rsquo; areas do not add.
+      Which structures make up a division is a judgement made here, not something the atlas
+      publishes; every member of every one of them is written out in
+      <code>data/gerbil_atlas_groups.csv</code>, and Methods says how each was drawn.</p>
+
     <h3>Your own frame</h3>
     <p class="fexp"><b>Rotation is experimental.</b> Pitch, roll and yaw are new and not yet fully
       tested. Check any coordinate they adjust against anatomy you already know before relying on
@@ -449,7 +469,7 @@
 
     <h3>Caveats</h3>
     <p>System tags (auditory, hippocampal, &hellip;) are a convenience layer added on top of the
-      published nomenclature, not part of the original atlas. A structure listed for a plate range is
+      published nomenclature, not part of the original atlas, and the gross divisions are the same kind of addition and a larger one &mdash; which structures make up &ldquo;the pons&rdquo; is a judgement made here. A structure listed for a plate range is
       present at those levels; it is not necessarily labelled on every plate. Label positions come from
       OCR &mdash; where one was not located, the app says so rather than showing nothing.</p>
 

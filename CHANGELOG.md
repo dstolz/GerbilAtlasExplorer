@@ -3,6 +3,29 @@
 All notable changes to this repository are recorded here. `data/gerbil_atlas.json`
 carries a `version` block naming the release its derived fields were built for.
 
+## [Unreleased]
+
+### Added
+- **Gross divisions.** The atlas names 723 structures and no containers for them; twenty
+  are added here — cerebral cortex and its four lobes, hippocampal formation, olfactory
+  areas, olfactory bulb, amygdala, striatum and pallidum, septum and basal forebrain,
+  thalamus, hypothalamus, midbrain, pons, medulla, brainstem, cerebellum, fibre tracts and
+  the ventricular system. A division behaves like a structure everywhere in the app: it is
+  outlined on the plate in its own colour, listed on every plate it is on with thumbnails,
+  plotted in the projection, drawn in 3-D as its members' meshes and downloadable as one
+  STL, carried by a deep link, and written into the PNG and the SVG. **List them** narrows
+  the structure list to a division's members, so the CSV and label exports answer for it
+  too; a structure's own card says which divisions it is in.
+- A division carries no geometry. Its outline is its members' outlines with the boundaries
+  they share dropped — exact, because the region extents tile the section and every shared
+  boundary is stored twice — its area the sum of theirs, its coordinate the median of their
+  printed labels. See [METHODS](METHODS.md#gross-divisions).
+- `tools/build_groups.py` writes the `groups` block from declarative rules; `--report`
+  prints every division and its members, `--check` runs in CI.
+- `data/gerbil_atlas_groups.csv`: one row per division with every member spelled out, so the
+  taxonomy — the one block of this database that is a judgement rather than a transcription
+  — can be read and argued with without opening the JSON.
+
 ## [0.9.0] — 2026-09-02
 
 ### Added

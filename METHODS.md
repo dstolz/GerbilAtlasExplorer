@@ -509,6 +509,92 @@ plate 49 the slash of `PM/ Cop` is drawn along the very boundary it names, and a
 threshold that keeps it, two of those five come back. Every one of the 31 occurrences was
 checked against the printed page by eye.
 
+## Gross divisions
+
+The atlas names 723 structures and no containers for them. Its Index of structures is flat:
+there is no "hippocampus" in it, only CA1, CA2, CA3, DG and their layers, and no "pons",
+only the pontine nuclei, the reticular nuclei, the parabrachial nuclei and the rest. Asking
+for a whole division is a thing people want to do and the published data cannot answer.
+
+`tools/build_groups.py` adds twenty of them. **A division is a list of the atlas's own
+abbreviations and nothing else.** It carries no geometry, no coordinate and no boundary of
+its own; everything it shows is derived, in the app, from its members:
+
+| what it shows | where it comes from |
+| --- | --- |
+| its outline on a plate | its members' outlines, with the boundaries they share with each other dropped |
+| its area on a plate | the sum of its members' own areas, the numbers `region_extents` already carries |
+| its label centre and spread | the median and range of its members' printed labels |
+| its mesh | its members' meshes, drawn together |
+| the plates it is on | where its members are, clipped to its own range where it has one |
+
+So a division can be wrong about *what belongs in it* — that is a judgement, and the point of
+writing the members out — but it cannot invent a line the atlas does not draw.
+
+The **outline** is exact rather than approximate, and for a reason particular to this data.
+The region extents tile the section: every boundary between two regions is one polyline
+stored twice, once in each, and every boundary with the outside is stored once
+(`region_extents.summary.boundary_edges_shared_exactly` is 1.0, and
+`tests/python/test_data.py::test_shared_edges_recomputed` recomputes it). Count the edges of
+a division's members and drop the ones that came up twice, and what is left is exactly the
+outer boundary of the union: a wall between two members cancels, a wall between a member and
+something outside the division does not. The survivors are then walked into closed rings —
+every vertex of a region boundary has even degree, so the walk always closes. Nothing is
+unioned numerically, nothing is smoothed, and every edge of the result is an edge the atlas
+drew. `test_group_outlines_close` runs the cancellation over all 451 division–plate pairs;
+the browser test samples points and checks that the ring encloses the same ground the members
+do.
+
+### What is in each, and why
+
+Divisions **overlap on purpose**. The brainstem is exactly the midbrain, pons and medulla
+together; the olfactory bulb sits inside the olfactory areas; frontal, parietal, temporal and
+occipital cortex sit inside the cerebral cortex; a structure that straddles the pons and the
+medulla is in both. So this is a covering, not a partition, and the areas of two divisions do
+not add.
+
+Most divisions start from the atlas's own system tags, which are already close to
+anatomical containers for some of them (`hippocampal`, `olfactory`, `amygdala`, `cerebellum`,
+`fiber_tract`) and not for others. The corrections are stated as rules rather than as a hand
+list, and each is in the tool beside the division it applies to. Three are worth naming here:
+
+- **The `thalamus` tag over-applies.** Thirty-three hypothalamic nuclei carry it as well as
+  `hypothalamus`; the thalamus division is the tag minus anything tagged hypothalamic.
+- **`cortex` is a false friend twice over.** The dorsal and external *cortices of the
+  inferior colliculus* carry it and are not cerebral cortex; they are filed under midbrain
+  alone. Conversely most cortical fields are tagged by function (`auditory`, `visual`) rather
+  than by place, which is why the four lobes are explicit lists.
+- **The `brainstem` tag is not the brainstem.** It is the pontine and medullary reticular
+  core; it holds no midbrain and not the cranial nerve nuclei. The brainstem division is
+  built from the three divisions under it instead.
+
+The **pons against the medulla** is the one boundary the atlas's own geometry can settle, so
+it is drawn off the plates rather than asserted: the pons runs from the first plate that
+prints the pontine nuclei to the last that prints the facial nucleus — plates 39 to 49,
+bregma −5.50 to −9.35 mm — and the medulla from there to the end of the series. A structure
+is swept into one of them if more than one plate of it falls inside, or at least half of it
+does. The first clause keeps a long forebrain tract out: the forceps major reaches plate 39
+and is no more pontine for it. The second keeps a straddler in both: the deep dorsal cochlear
+nucleus is on plates 49 and 50, so it is pontine and medullary at once, which is what it is.
+
+A division's **plate range** is where its grey matter is, not where its members reach. The
+medial lemniscus is part of the pons where it runs through it and part of nothing at plate 30,
+so tracts are still outlined with a division on its own plates but do not extend it. Divisions
+made only of tracts — the fibre tracts, which run the length of the series — are the exception
+and take their members' range.
+
+**Six structures are in no division**: `acer` and `mcer`, the anterior and middle cerebral
+arteries, `BV`, a blood vessel, and `rf`, `ri` and `hif`, the rhinal fissure, rhinal incisure
+and hippocampal fissure. Two of those fissures carry a `cerebellum` tag they should not; that
+is a mis-tag in the system layer, worked around here rather than silently propagated. Nothing
+else may fall out: the tool exits with an error if the set of ungrouped structures changes,
+so a rule that stops matching is a failure rather than a quiet hole.
+
+The divisions are **not part of the published atlas**, exactly as the system tags are not.
+`data/gerbil_atlas_groups.csv` writes every member of every division out flat so the
+taxonomy can be read and disagreed with without opening the JSON or the Python, and CI runs
+`tools/build_groups.py --check` so the committed block is always what the rules produce.
+
 ## The third dimension
 
 > **Experimental.** These volumes interpolate across the section gap, which every other
@@ -1106,3 +1192,8 @@ System tags (`auditory`, `hippocampal`, `thalamus`, …) are a convenience layer
 top of the published nomenclature and are not part of the original atlas. The `auditory`
 tag covers the full ascending pathway: cochlear nuclei → superior olivary complex →
 lemniscal nuclei → inferior colliculus → medial geniculate → cortex.
+
+The **gross divisions** are the same kind of addition and a larger one — see
+[Gross divisions](#gross-divisions). Where a system tag is a label on a structure, a division
+is a claim about which structures make a thing, which is why every member of every one of
+them is written out in `data/gerbil_atlas_groups.csv`.
