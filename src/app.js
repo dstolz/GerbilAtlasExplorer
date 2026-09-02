@@ -164,9 +164,17 @@ const oAbs = () => [FRAME.oap-LM[FRAME.oref][1], FRAME.oml, FRAME.odv];
 /* Whether any point actually moves. A re-zero does not: it renames where 0 is and leaves
    every distance and every angle exactly as the atlas printed them, which is why the
    views below can honour one by relabelling an axis rather than redrawing anything. A
-   rotation does move points, and none of those views can show that. */
+   rotation does move points -- so the plate, which is an image, can only say so, while
+   the two views that draw from coordinates can offer to be turned into it. */
 const rotated = () => !!(FRAME.pitch||FRAME.roll||FRAME.yaw);
 const shifted = () => FRAME.on && !rotated();
+/* A frame with a rotation actually in it. Those views cannot draw one in atlas
+   coordinates, but they can be turned into the frame instead -- which is what fview
+   asks for. Off by default: the atlas orientation is the one every published figure is
+   in, so a view only leaves it when told to, and only while there is a turn to make. */
+const turned = () => FRAME.on && rotated();
+let fview=false;
+const fvOn = () => fview && turned();
 const m3=(a,b)=>{ const o=new Array(9);
   for(let i=0;i<3;i++)for(let j=0;j<3;j++){ let t=0;
     for(let k=0;k<3;k++) t+=a[i*3+k]*b[k*3+j]; o[i*3+j]=t; } return o; };
@@ -201,6 +209,17 @@ function fromFrame(ap,ml,dv){                   /* and back, by the transpose */
           ml:M[1]*a+M[4]*m+M[7]*v+C[1],
           dv:M[2]*a+M[5]*m+M[8]*v+C[2]};
 }
+/* toFrame splits cleanly into a rotation about the atlas origin and a translation after
+   it: R(p-C)+A is Rp + (A-RC). That split is what lets a view be turned without being
+   moved -- the rotation goes into the picture, the translation stays a relabel of the
+   axes, which is exactly how a re-zero has always been drawn. */
+const fRot = (ap,ml,dv) => { const M=FRM;
+  return {ap:M[0]*ap+M[1]*ml+M[2]*dv, ml:M[3]*ap+M[4]*ml+M[5]*dv, dv:M[6]*ap+M[7]*ml+M[8]*dv}; };
+/* the same rotation undone, by the transpose the matrix's orthogonality allows */
+const fUnrot = (ap,ml,dv) => { const M=FRM;
+  return {ap:M[0]*ap+M[3]*ml+M[6]*dv, ml:M[1]*ap+M[4]*ml+M[7]*dv, dv:M[2]*ap+M[5]*ml+M[8]*dv}; };
+const fTr = () => { const C=fCen(), A=fAdd(), r=fRot(C[0],C[1],C[2]);
+  return {ap:A[0]-r.ap, ml:A[1]-r.ml, dv:A[2]-r.dv}; };
 /* Whether the transform still commutes with ML -> -ML, i.e. whether the two hemispheres
    can be folded onto one +/- ML figure. Pitch preserves the symmetry: it leaves ML alone
    whatever the pivot -- and whatever the origin's AP or DV. Roll mixes DV into ML and yaw
@@ -212,11 +231,14 @@ function fromFrame(ap,ml,dv){                   /* and back, by the transpose */
    side of the brain. */
 const bilat = () => !FRAME.on ||
   (!FRAME.roll && !FRAME.yaw && !FRAME.dml && !(FRAME.org&&FRAME.oml));
-/* One axis of the transform, for the views that plot atlas positions and only relabel
-   their axes. Meaningful precisely while shifted() holds: with no rotation the matrix is
-   the identity, so the three axes are independent and asking for one is honest. */
-const axTo   = (k,v) => shifted() ? toFrame(k==='ap'?v:0,k==='ml'?v:0,k==='dv'?v:0)[k] : v;
-const axFrom = (k,v) => shifted() ? fromFrame(k==='ap'?v:0,k==='ml'?v:0,k==='dv'?v:0)[k] : v;
+/* One axis of the transform, for the views that plot positions and only relabel their
+   axes. Honest in exactly two cases, and they are the same case twice: a re-zero is all
+   translation, so each axis stands on its own; and once a view is turned into the frame
+   the rotation is already in the dots, so a translation is again all that is left to
+   label. Either way it is fTr(), which with no rotation is the old toFrame() on one
+   axis to the last decimal place. */
+const axTo   = (k,v) => (shifted()||fvOn()) ? v+fTr()[k] : v;
+const axFrom = (k,v) => (shifted()||fvOn()) ? v-fTr()[k] : v;
 
 /* what the origin is called, for the readouts, the button, the CSV and the dialog. The
    landmark is matched on where zero ended up rather than on which one was picked, so an
@@ -1379,7 +1401,10 @@ function anPJ(){
   const g=$('pjan'); if(!g) return;
   if(!anShow||!NOTES.length){ g.innerHTML=''; return; }
   const V=VIEWS[pview];
-  g.innerHTML=NOTES.map(n=>`<circle cx="${pjx(n.ap).toFixed(1)}" cy="${pjy(V,n[V.k]).toFixed(1)}" r="4.5"><title>${esc(n.t)} (plate ${n.p})</title></circle>`).join('');
+  /* a note is a point like any other, so it turns with the cloud rather than staying
+     behind in atlas coordinates while the dots it was placed against move */
+  g.innerHTML=NOTES.map(n=>{ const c=pjq(n);
+    return `<circle cx="${pjx(c.ap).toFixed(1)}" cy="${pjy(V,c[V.k]).toFixed(1)}" r="4.5"><title>${esc(n.t)} (plate ${n.p})</title></circle>`; }).join('');
 }
 function anList(){
   const el=$('anlist'); if(!el) return;
@@ -2046,7 +2071,7 @@ function tgPJ(){
   const g=$('pjtk'), o=tgPlan;
   if(!g) return;
   if(!o||o.len===undefined||smode!=='targ'){ g.innerHTML=''; return; }
-  const V=VIEWS[pview], q=tgSample(o,2);
+  const V=VIEWS[pview], q=tgSample(o,2).map(pjq);
   const X=p=>pjx(p.ap).toFixed(1), Y=p=>pjy(V,p[V.k]).toFixed(1);
   const E=q[0], Tt=q[2], out=[];
   if(tgLegs){
@@ -2650,16 +2675,34 @@ $('elab').onclick=exportLabelsCSV;
    so all 6,220 of them can be scattered at once. That shows a structure's whole extent
    down the brain in one picture, which a stack of coronal plates cannot do. */
 const PM={l:56,r:14,t:24,b:44}, K=40, AP0=8.15, AP1=-13.90, PW=(AP0-AP1)*K;
+/* How far the turned cloud runs past the atlas's own extents, in whole millimetres per
+   end of each axis. A view that is turned but not widened would simply drop the dots the
+   rotation pushed out -- at 17 degrees of pitch that is most of the cortex -- so the plot
+   grows to hold them and the axis keeps its 1/40 mm to the unit either way. Every entry
+   is 0 while the view is not turned, which leaves all three axes exactly what they were. */
+let fvP={ap:[0,0],ml:[0,0],dv:[0,0]}, pA0=AP0, PWv=PW;
 const VIEWS={
   dv:{k:'dv',hi:.4,lo:-9.6,ax:'DV (mm)',z0:'dorsal surface',
       nm:'sagittal projection, anterior\u2013posterior against dorsal\u2013ventral'},
   ml:{k:'ml',hi:8,lo:-8,ax:'ML (mm)',z0:'midline',
       nm:'top-down projection, anterior\u2013posterior against mediolateral'}
 };
-/* This view plots atlas positions and always will, so a rotation leaves it alone and it
-   says so. A re-zero is different in kind: not one dot moves, only the numbering, so the
-   axes are ruled and labelled from wherever zero now is and the captions name it. */
-const dotTxt=q=>{ const F=shifted(), c=F?toFrame(q.ap,q.ml,q.dv):q;
+/* This view plots atlas positions until it is asked not to. A re-zero never moves a dot,
+   only the numbering, so the axes are ruled and labelled from wherever zero now is and
+   the captions name it. A rotation does move dots -- so with *In frame* ticked the cloud
+   is turned by it and the axes become the frame's own, and without it the view stays in
+   atlas coordinates and says so, which is all it could ever do before. */
+const pjq = q => fvOn() ? fRot(q.ap,q.ml,q.dv) : q;
+/* The skull silhouette and the landmark rules are the two things that cannot come along.
+   Both are flattened along the axis the view drops, and the flattening was done at the
+   atlas's angle: the outline of a turned skull is not the turned outline of a skull, and
+   a landmark whose AP is all the atlas prints stops being a line once the frame tilts.
+   So they sit out a turned view rather than being drawn wrong in it. */
+const pjSkOn = () => pjsk && !fvOn();
+const pjLmOn = () => pjlm && !fvOn();
+/* what the AP axis is counted from, once anything has moved zero */
+const pjZero = () => (shifted()||fvOn()) && FRAME.org ? esc(orgName()) : 'bregma';
+const dotTxt=q=>{ const F=shifted()||fvOn(), c=F?toFrame(q.ap,q.ml,q.dv):q;
   return `${FRAME.on&&!F?'atlas ':''}${apLab(F)} ${sgn(c.ap)}`+
          ` \u00b7 ML ${sgn(c.ml)} \u00b7 DV ${sgn(c.dv)} mm`; };
 /* whole millimetres of the axis as it is labelled, which is the atlas's own lattice until
@@ -2672,9 +2715,25 @@ const pjTicks=(k,hi,lo)=>{ const a=[];
 /* one viewBox unit is 1/40 mm on both axes, so neither view is distorted */
 /* with the skull outline on, each view opens out just far enough to hold the bone
    around the cloud; off, the axes are exactly what they always were */
-const pjHi=V=>V.hi+Math.max(pjsk?(V.k==='dv'?0.7:3.3):0, pjlm?(V.k==='dv'?0.8:3.0):0);
-const pjLo=V=>V.lo-Math.max(pjsk?(V.k==='dv'?3.5:3.3):0, pjlm?(V.k==='dv'?0:3.0):0);
-const pjx=ap=>PM.l+(AP0-ap)*K, pjy=(V,v)=>PM.t+(pjHi(V)-v)*K;
+const pjHi=V=>V.hi+Math.max(pjSkOn()?(V.k==='dv'?0.7:3.3):0, pjLmOn()?(V.k==='dv'?0.8:3.0):0)
+             +fvP[V.k][1];
+const pjLo=V=>V.lo-Math.max(pjSkOn()?(V.k==='dv'?3.5:3.3):0, pjLmOn()?(V.k==='dv'?0:3.0):0)
+             -fvP[V.k][0];
+const pjx=ap=>PM.l+(pA0-ap)*K, pjy=(V,v)=>PM.t+(pjHi(V)-v)*K;
+/* the whole cloud, turned, measured against what the plot already holds */
+function fvBounds(){
+  fvP={ap:[0,0],ml:[0,0],dv:[0,0]}; pA0=AP0; PWv=PW;
+  if(!fvOn()) return;
+  const b={ap:[1e9,-1e9],ml:[1e9,-1e9],dv:[1e9,-1e9]};
+  for(const q of PTS){ const c=fRot(q.ap,q.ml,q.dv);
+    for(const k in b){ if(c[k]<b[k][0]) b[k][0]=c[k]; if(c[k]>b[k][1]) b[k][1]=c[k]; } }
+  const lowPad=(v,lim)=>Math.max(0,Math.ceil(lim-v-1e-9));
+  const hiPad =(v,lim)=>Math.max(0,Math.ceil(v-lim-1e-9));
+  fvP.ap=[lowPad(b.ap[0],AP1), hiPad(b.ap[1],AP0)];
+  fvP.dv=[lowPad(b.dv[0],VIEWS.dv.lo), hiPad(b.dv[1],VIEWS.dv.hi)];
+  fvP.ml=[lowPad(b.ml[0],VIEWS.ml.lo), hiPad(b.ml[1],VIEWS.ml.hi)];
+  pA0=AP0+fvP.ap[1]; PWv=(pA0-(AP1-fvP.ap[0]))*K;
+}
 /* axis ticks are whole millimetres, and get a real minus rather than a hyphen */
 const tick=v=>v>0?'+'+v:(v<0?'\u2212'+(-v):'0');
 const PJS=$('pjs'), PJW=$('pjw'), PJT=$('pjt'), PJH=$('pjhi');
@@ -2685,35 +2744,37 @@ function pjAxes(){
   const V=VIEWS[pview], H=(pjHi(V)-pjLo(V))*K, y1=PM.t+H, g=[];
   /* the silhouette runs on past the axes -- the nose alone reaches AP +19 -- so it is
      clipped to the plot rectangle rather than allowed to stroke through the captions */
-  g.push(`<clipPath id="pjclip"><rect x="${PM.l}" y="${PM.t}" width="${PW}" height="${H.toFixed(1)}"></rect></clipPath>`);
-  PJS.setAttribute('viewBox',`0 0 ${PM.l+PW+PM.r} ${PM.t+H+PM.b}`);
-  $('pjttl').textContent='Every printed label in the atlas as a '+V.nm+'.';
-  for(const d of pjTicks('ap',8,-12)){
+  g.push(`<clipPath id="pjclip"><rect x="${PM.l}" y="${PM.t}" width="${PWv}" height="${H.toFixed(1)}"></rect></clipPath>`);
+  PJS.setAttribute('viewBox',`0 0 ${PM.l+PWv+PM.r} ${PM.t+H+PM.b}`);
+  $('pjttl').textContent='Every printed label in the atlas as a '+V.nm+
+    (fvOn()?', turned into the working frame.':'.');
+  for(const d of pjTicks('ap',8+fvP.ap[1],-12-fvP.ap[0])){
     const x=pjx(axFrom('ap',d)).toFixed(1);
     g.push(`<line class="${d?'':'zero'}" x1="${x}" y1="${PM.t}" x2="${x}" y2="${y1}"></line>`,
            `<text x="${x}" y="${y1+16}" text-anchor="middle">${tick(d)}</text>`);
   }
   for(const d of pjTicks(V.k,pjHi(V),pjLo(V))){
     const y=pjy(V,axFrom(V.k,d));
-    g.push(`<line class="${d?'':'zero'}" x1="${PM.l}" y1="${y.toFixed(1)}" x2="${PM.l+PW}" y2="${y.toFixed(1)}"></line>`,
+    g.push(`<line class="${d?'':'zero'}" x1="${PM.l}" y1="${y.toFixed(1)}" x2="${PM.l+PWv}" y2="${y.toFixed(1)}"></line>`,
            `<text x="${PM.l-8}" y="${(y+4.5).toFixed(1)}" text-anchor="end">${tick(d)}</text>`);
   }
   /* the captions name what zero is, and stop claiming the atlas's answer once it moves */
   const z0=axTo(V.k,0)?'your zero':V.z0;
   g.push(`<text transform="translate(13,${(PM.t+H/2).toFixed(1)}) rotate(-90)" text-anchor="middle">${V.ax} \u00b7 0 = ${z0}</text>`,
          `<text x="${PM.l}" y="${y1+36}" text-anchor="start">\u2190 anterior</text>`,
-         `<text x="${PM.l+PW/2}" y="${y1+36}" text-anchor="middle">AP from ${shifted()&&FRAME.org?esc(orgName()):'bregma'} (mm)</text>`,
-         `<text x="${PM.l+PW}" y="${y1+36}" text-anchor="end">posterior \u2192</text>`);
+         `<text x="${PM.l+PWv/2}" y="${y1+36}" text-anchor="middle">AP from ${pjZero()} (mm)</text>`,
+         `<text x="${PM.l+PWv}" y="${y1+36}" text-anchor="end">posterior \u2192</text>`);
   $('pja').innerHTML=g.join('');
 }
 /* thousands of points, one node: a zero-length subpath per dot, rounded by the cap */
-const pjd=(l,V)=>l.map(q=>'M'+pjx(q.ap).toFixed(1)+' '+pjy(V,q[V.k]).toFixed(1)+'h.01').join('');
+const pjd=(l,V)=>l.map(q=>{ const c=pjq(q);
+  return 'M'+pjx(c.ap).toFixed(1)+' '+pjy(V,c[V.k]).toFixed(1)+'h.01'; }).join('');
 
 /* the skull silhouette around the cloud: the same surface as the 3-D shell, flattened
    the same way the labels are -- everything collapsed along the axis not shown */
 function pjSk(){
   const g=$('pjk'), SK=window.__SKULL__;
-  if(!pjsk||!SK||!SK.sil){ g.innerHTML=''; return; }
+  if(!pjSkOn()||!SK||!SK.sil){ g.innerHTML=''; return; }
   const V=VIEWS[pview];
   g.innerHTML=(SK.sil[V.k]||[]).map(lp=>
     '<path d="M'+lp.map(p=>pjx(p[0]).toFixed(1)+' '+pjy(V,p[1]).toFixed(1)).join('L')+'Z"/>').join('');
@@ -2725,12 +2786,12 @@ function pjSk(){
    line across the top-down one, which is the only place it can honestly be drawn as one. */
 function pjLM(){
   const g=$('pjlm');
-  if(!pjlm){ g.innerHTML=''; return; }
+  if(!pjLmOn()){ g.innerHTML=''; return; }
   const V=VIEWS[pview], SK=window.__SKULL__, lm=SK&&SK.lm, o=[];
   const y0=PM.t, y1=PM.t+(pjHi(V)-pjLo(V))*K;
   LM.forEach(([nm,off])=>{
     const a=-off, x=pjx(a);
-    if(x<PM.l-1||x>PM.l+PW+1) return;
+    if(x<PM.l-1||x>PM.l+PWv+1) return;
     o.push(`<line class="ref" x1="${x.toFixed(1)}" y1="${y0}" x2="${x.toFixed(1)}" y2="${y1.toFixed(1)}"/>`,
            `<text x="${(x+4).toFixed(1)}" y="${(y1-6).toFixed(1)}">${esc(nm.toLowerCase())}</text>`);
     if(!lm) return;
@@ -2747,7 +2808,7 @@ function pjLM(){
         o.push(`<circle cx="${iaX.toFixed(1)}" cy="${pjy(V,m).toFixed(1)}" r="4"/>`));
     } else {                 /* seen end-on: a point, plus its height as a reference */
       const yy=pjy(V,lm.ear.dv);
-      o.push(`<line class="ref" x1="${PM.l}" y1="${yy.toFixed(1)}" x2="${PM.l+PW}" y2="${yy.toFixed(1)}"/>`,
+      o.push(`<line class="ref" x1="${PM.l}" y1="${yy.toFixed(1)}" x2="${PM.l+PWv}" y2="${yy.toFixed(1)}"/>`,
              `<circle cx="${iaX.toFixed(1)}" cy="${yy.toFixed(1)}" r="4"/>`);
     }
   }
@@ -2762,39 +2823,57 @@ function pj(){
   const V=VIEWS[pview];
   /* the cache key carries the axis state: extended and normal axes place every dot
      differently, so each keeps its own copy rather than fighting over one */
-  const ck=V.k+(pjsk?'+':'')+(pjlm?'L':'');
+  const ck=V.k+(pjSkOn()?'+':'')+(pjLmOn()?'L':'')+(fvOn()?'F':'');
   $('pjb').setAttribute('d', bgd[ck]||(bgd[ck]=pjd(PTS,V)));
   /* the current filter as a middle layer: pick the auditory chip and the whole
      ascending pathway lights up at once, which is the point of having this view */
   const fs=results.length<S.length?new Set(results.map(r=>r.abbr)):null;
-  const key=V.k+(pjsk?'+':'')+(pjlm?'L':'')+'\u0000'+(fs?results.map(r=>r.abbr).join(' '):'*')+'\u0000'+(sel||'');
+  const key=ck+'\u0000'+(fs?results.map(r=>r.abbr).join(' '):'*')+'\u0000'+(sel||'');
   if(!(key in fld)){ fld={}; fld[key]=fs?pjd(PTS.filter(q=>fs.has(q.ab)&&q.ab!==sel),V):''; }
   $('pjf').setAttribute('d',fld[key]);
   const q=(sel&&ptsOf[sel])||[];
   $('pjl').classList.toggle('grp',isGrp(sel));
-  $('pjl').innerHTML=q.map(t=>
-    `<circle cx="${pjx(t.ap).toFixed(1)}" cy="${pjy(V,t[V.k]).toFixed(1)}" r="5"></circle>`).join('');
+  $('pjl').innerHTML=q.map(t=>{ const c=pjq(t);
+    return `<circle cx="${pjx(c.ap).toFixed(1)}" cy="${pjy(V,c[V.k]).toFixed(1)}" r="5"></circle>`; }).join('');
   pjNote(q); pjGuide(); pjHide(); anPJ();
 }
-/* where the plate viewer is sitting, on the AP axis the two share */
+/* Where the plate viewer is sitting, on the AP axis the two share. Turned into the frame
+   a plate stops being a single AP -- the section is a plane, and the plane meets this
+   pair of axes in a line rather than in one place on the AP one. So the guide is drawn
+   as that line: the plate's own cut through the middle of the brain, tilted by exactly
+   the part of the rotation these two axes can see. */
+const PJMID = () => (VIEWS.dv.hi+VIEWS.dv.lo)/2;   /* mid-brain on the axis a view drops */
 function pjGuide(){
-  const V=VIEWS[pview], x=pjx(plateOf[cur].bregma).toFixed(1);
+  const V=VIEWS[pview], H=(pjHi(V)-pjLo(V))*K, ap=plateOf[cur].bregma;
+  let x1,y1,x2,y2;
+  if(fvOn()){
+    const [a,b]=[V.hi,V.lo].map(t=>pjq(V.k==='dv'?{ap,ml:0,dv:t}:{ap,ml:t,dv:PJMID()}));
+    x1=pjx(a.ap); y1=pjy(V,a[V.k]); x2=pjx(b.ap); y2=pjy(V,b[V.k]);
+  } else { x1=x2=pjx(ap); y1=PM.t; y2=PM.t+H; }
+  const cx=Math.max(PM.l+17,Math.min(PM.l+PWv-17,x1));
   $('pjg').innerHTML=
-    `<line x1="${x}" y1="${PM.t}" x2="${x}" y2="${PM.t+(pjHi(V)-pjLo(V))*K}"></line>`+
-    `<rect x="${(x-17).toFixed(1)}" y="2" width="34" height="18" rx="5"></rect>`+
-    `<text x="${x}" y="15.5" text-anchor="middle">${cur}</text>`;
+    `<g clip-path="url(#pjclip)"><line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}"`+
+    ` x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}"></line></g>`+
+    `<rect x="${(cx-17).toFixed(1)}" y="2" width="34" height="18" rx="5"></rect>`+
+    `<text x="${cx.toFixed(1)}" y="15.5" text-anchor="middle">${cur}</text>`;
 }
+/* the one sentence a turned view owes the reader: what has moved, and what had to go */
+const pjTurn = () => !fvOn() ? '' :
+  ` Turned into your frame (${frameTxt()}), so the axes are the ones your manipulator`+
+  ` drives \u2014 the dots are a rigid rotation of the published coordinates, not a`+
+  ` resectioning. The skull outline and the landmark rules are flattened at the atlas's`+
+  ` own angle and cannot follow, so they are unavailable while this is on.`;
 function pjNote(q){
   const V=VIEWS[pview], N=$('pjn');
   const dot='A dot is where an abbreviation is <em>printed</em> \u2014 close to its structure, not its centre.';
-  if(!sel){ N.innerHTML=`Every located label in the atlas. ${dot} Hover one to read it, click it to open its plate.`; return; }
+  if(!sel){ N.innerHTML=`Every located label in the atlas. ${dot} Hover one to read it, click it to open its plate.`+pjTurn(); return; }
   const r=byAb[sel];
   if(!q.length){ N.innerHTML=`<b>${esc(selName())}</b> is indexed for plates ${r.first_plate}\u2013${r.last_plate}, but none of its labels were located, so there is nothing to plot.`; return; }
   const pl=[...new Set(q.map(t=>t.p))].sort((a,b)=>a-b);
-  const out=q.filter(t=>t[V.k]>V.hi||t[V.k]<V.lo).length;
+  const out=q.filter(t=>{ const c=pjq(t); return c[V.k]>pjHi(V)||c[V.k]<pjLo(V); }).length;
   N.innerHTML=`<b>${esc(selName())}</b> in ${selHue()}: ${q.length} label${q.length>1?'s':''} on ${pl.length} plate${pl.length>1?'s':''}`+
     ` (${pl[0]}${pl.length>1?'\u2013'+pl[pl.length-1]:''}), against every other label in the atlas. ${dot}`+
-    (out?` ${out} label${out>1?'s fall':' falls'} outside the plotted range.`:'');
+    (out?` ${out} label${out>1?'s fall':' falls'} outside the plotted range.`:'')+pjTurn();
 }
 
 /* hover to read a dot, click to go to it: the same bargain as the plate above */
@@ -2806,7 +2885,8 @@ function pjLoc(e){
 function pjPick(p){
   const V=VIEWS[pview]; let best=null, bs=Infinity;
   for(const q of PTS){
-    const dx=pjx(q.ap)-p.x, dy=pjy(V,q[V.k])-p.y, d=dx*dx+dy*dy;
+    const c=pjq(q);
+    const dx=pjx(c.ap)-p.x, dy=pjy(V,c[V.k])-p.y, d=dx*dx+dy*dy;
     if(d>PJTOL) continue;
     const b=q.ab===sel?d-64:d;                 /* a dot already picked out wins a tie */
     if(b<bs){ bs=b; best=q; }
@@ -2815,7 +2895,7 @@ function pjPick(p){
 }
 function pjHide(){ PJT.hidden=true; PJH.style.display='none'; PJW.classList.remove('hot'); phot=null; }
 function pjShow(q){
-  const V=VIEWS[pview], r=byAb[q.ab], cx=pjx(q.ap), cy=pjy(V,q[V.k]);
+  const V=VIEWS[pview], r=byAb[q.ab], c=pjq(q), cx=pjx(c.ap), cy=pjy(V,c[V.k]);
   PJT.innerHTML=`<span class="ta">${esc(q.ab)}</span>`+
     `<span class="tn">${esc(r?r.name:'not in the published index')}</span>`+
     `<span class="tx">plate ${q.p} · ${dotTxt(q)}</span>`;
@@ -2840,8 +2920,13 @@ PJW.addEventListener('click', e=>{
   const p=pjLoc(e); if(!p) return;
   const q=pjPick(p);
   if(q){ if(byAb[q.ab]) select(q.ab); go(q.p); return; }
-  if(p.x<PM.l-10||p.x>PM.l+PW+10) return;      /* the axis gutter is not a plate */
-  const ap=AP0-(p.x-PM.l)/K;                   /* bare plot: scrub the plate viewer */
+  if(p.x<PM.l-10||p.x>PM.l+PWv+10) return;     /* the axis gutter is not a plate */
+  /* bare plot: scrub the plate viewer. Turned into the frame the x of a click is no
+     longer an atlas AP, so the point is read back through the rotation at the same
+     mid-brain depth the guide is drawn at -- clicking the guide then lands on its plate. */
+  const V=VIEWS[pview], u=pA0-(p.x-PM.l)/K, w=pjHi(V)-(p.y-PM.t)/K;
+  const ap = !fvOn() ? u
+    : (V.k==='dv' ? fUnrot(u,0,w) : fUnrot(u,w,PJMID())).ap;
   let best=P[0]; P.forEach(t=>{ if(Math.abs(t.bregma-ap)<Math.abs(best.bregma-ap)) best=t; });
   go(best.plate);
 });
@@ -2854,6 +2939,31 @@ function setPView(v){
 [...$('pjseg').children].forEach(el=>el.onclick=()=>setPView(el.dataset.v));
 $('ckpk').onchange=e=>{ pjsk=e.target.checked; pjRefresh(); queueHash(); };
 $('ckplm').onchange=e=>{ pjlm=e.target.checked; pjRefresh(); queueHash(); };
+
+/* ---------- one switch, in front of both views that can honour it ----------
+   The projection and the 3-D view share the setting rather than each keeping its own:
+   they are two pictures of one brain, and a reader who has turned one into their frame
+   has said which orientation they are working in, not which panel they are looking at.
+   The checkbox is hidden until there is a rotation to show, because with no angle set
+   there is nothing for it to do and it would only invite the question. */
+let fvLast=false;
+function fvApply(force){
+  $('v3f').checked=$('ckpf').checked=fview;
+  $('v3fw').hidden=$('pjfw').hidden=!turned();
+  /* neither overlay can be re-flattened at the frame's angle, so while the projection is
+     turned they go dead rather than staying tickable and quietly drawing nothing */
+  $('ckpk').disabled=$('ckplm').disabled=fvOn();
+  /* the dot paths are cached per axis state, and turning the view is an axis state:
+     rebuild them when the orientation has changed and leave them alone when it has not,
+     so typing an angle into the frame dialog does not re-lay 6,220 points each keystroke */
+  if(force||fvOn()||fvLast){ bgd={}; fld={}; fvBounds(); pjRefresh(); v3frame(); }
+  else { pjAxes(); pjGuide(); }
+  fvLast=fvOn();
+  v3note();
+}
+const fvSet=on=>{ fview=!!on; fvApply(1); queueHash(); };
+$('ckpf').onchange=e=>fvSet(e.target.checked);
+$('v3f').onchange=e=>fvSet(e.target.checked);
 
 /* ---------- 3-D view ----------
    The projection plots flatten the atlas onto two axes at a time; this puts the third
@@ -2923,20 +3033,47 @@ function v3cam(){
   return [v3dist*ce*Math.sin(v3az), v3dist*Math.sin(v3el), v3dist*ce*Math.cos(v3az)];
 }
 /* the pan is applied after the view matrix, so dragging always tracks the screen */
+
+/* ---------- turning the scene into the working frame ----------
+   Everything here -- the section stack, the 6,220 labels, the skull shell, the plate ring
+   and the planned track -- is held in one world built affinely out of atlas millimetres
+   (x = ML, y = DV about the centre, z = bregma minus AP). So a frame rotation is a model
+   matrix in front of the camera rather than a rebuild of any of it, and three transformed
+   basis vectors are the whole of that matrix. Only the rotation goes in: the translation
+   half of the frame moves zero, not the brain, and the view already reads its axes from
+   wherever zero is. Taken about the world's own centre, so the brain turns in place
+   instead of swinging out of shot. The result is S R S-inverse for an S of determinant
+   -1, so it is still a rotation and its inverse is still its transpose. */
+let v3mo=null, v3camM=null;
+function v3mod(){
+  if(!fvOn()) return null;
+  /* a world direction is (ml, dv, -ap) of an atlas one, and back the same way */
+  const f=(x,y,z)=>{ const c=fRot(-z,x,y); return [c.ml,c.dv,-c.ap]; };
+  const u=f(1,0,0), v=f(0,1,0), w=f(0,0,1);
+  return new Float32Array([u[0],u[1],u[2],0, v[0],v[1],v[2],0, w[0],w[1],w[2],0, 0,0,0,1]);
+}
+/* a world vector read back in model space, by the transpose */
+const v3unmod=(M,p)=> M ? [M[0]*p[0]+M[1]*p[1]+M[2]*p[2],
+                           M[4]*p[0]+M[5]*p[1]+M[6]*p[2],
+                           M[8]*p[0]+M[9]*p[1]+M[10]*p[2]] : p.slice();
 /* the unit vector from the brain toward the eye, kept for the picker: with no w to
-   divide by, an orthographic projection has to measure depth along the view axis */
+   divide by, an orthographic projection has to measure depth along the view axis. It is
+   in model space, because that is where every point the shaders and the picker see is. */
 let v3dep=null;
 function v3mvp(){
   const w=V3CV.width||1, h=V3CV.height||1;
   const c=v3cam(), L=Math.hypot(c[0],c[1],c[2])||1;
-  v3dep=[c[0]/L,c[1]/L,c[2]/L];
+  v3mo=v3mod();
+  v3camM=v3unmod(v3mo,c);
+  v3dep=v3unmod(v3mo,[c[0]/L,c[1]/L,c[2]/L]);
   const V=m3look(c,[0,0,0],[0,1,0]);
   V[12]+=v3tx; V[13]+=v3ty;
   /* the parallel view is framed to match the perspective one at the pivot plane, so
      switching between them neither jumps nor rescales and the wheel still zooms */
   const P = v3ortho ? m3ortho(v3dist*Math.tan(.36), w/h, -400, 400)
                     : m3persp(.72, w/h, .4, 400);
-  return m3mul(P, V);
+  const M=m3mul(P, V);
+  return v3mo ? m3mul(M, v3mo) : M;
 }
 
 /* ---------- shaders ---------- */
@@ -3428,7 +3565,9 @@ function v3render(){
   gl.disable(gl.DEPTH_TEST);
   gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);
 
-  const M=v3mvp(), cam=v3cam();
+  /* v3mvp() is what puts the model matrix in, so it also leaves the camera restated in
+     model space -- which is the space the box, the shell and the slice order live in */
+  const M=v3mvp(), cam=v3camM;
   const z0=v3a/(V3D-1), z1=v3b/(V3D-1);
   const U=(p,n)=>gl.getUniformLocation(p,n);
 
@@ -3481,8 +3620,9 @@ function v3render(){
     gl.enable(gl.CULL_FACE); gl.cullFace(gl.FRONT);
     gl.uniformMatrix4fv(U(pVol,'u_mvp'),false,M);
     gl.uniform3fv(U(pVol,'u_cam'),new Float32Array(cam));
-    const cl=Math.hypot(cam[0],cam[1],cam[2])||1;
-    gl.uniform3f(U(pVol,'u_vdir'),-cam[0]/cl,-cam[1]/cl,-cam[2]/cl);
+    /* a parallel view has one ray direction for the whole box: the way the eye looks,
+       which is the depth axis the picker already keeps, reversed */
+    gl.uniform3f(U(pVol,'u_vdir'),-v3dep[0],-v3dep[1],-v3dep[2]);
     gl.uniform1f(U(pVol,'u_ortho'),v3ortho?1:0);
     gl.uniform3f(U(pVol,'u_lo'),V3X0,w3y(V3Y0),w3z(V3Z0));
     gl.uniform3f(U(pVol,'u_hi'),V3X1,w3y(V3Y1),w3z(V3Z1));
@@ -3849,7 +3989,10 @@ function meshList(){
 }
 function meshDraw(M){
   if(!v3m||!MESH||!gl) return;
-  const list=meshList(), cam=v3cam(), U=(p,n)=>gl.getUniformLocation(p,n);
+  /* pSkull shades from dot(N, cam - p) with p a model-space vertex, so the camera has to
+     be the one v3mvp() restated in model space -- the same one the shell is given. The
+     mesh geometry itself needs nothing: the model matrix is already folded into u_mvp. */
+  const list=meshList(), cam=v3camM||v3cam(), U=(p,n)=>gl.getUniformLocation(p,n);
   gl.useProgram(pSkull);
   gl.enable(gl.DEPTH_TEST); gl.depthMask(true); gl.clear(gl.DEPTH_BUFFER_BIT);
   gl.uniformMatrix4fv(U(pSkull,'u_mvp'),false,M);
@@ -3913,6 +4056,10 @@ function v3note(){
   const half = v3half ? ' Cut at the midline.' : '';
   const bone = v3sk ? ' Skull fit is experimental and approximate.' : '';
   const proj = v3ortho ? ' Parallel projection: equal lengths read equally at any depth.' : '';
+  /* the rotation is on the picture rather than on the numbers, so the caveat is about
+     what a turned stack is not: still 62 coronal sections, just stood up in your frame */
+  const turn = fvOn() ? ` Standing in your frame (${frameTxt()}): up is your frame's DV.`+
+    ` The stack is turned, not recut \u2014 these are the same 62 coronal sections.` : '';
   let mesh='';
   if(v3m){
     if(meshBusy) mesh=' Fetching the meshes (20 MB, once)…';
@@ -3955,7 +4102,7 @@ function v3note(){
         `${new Set(q.map(t=>t.p)).size} plate${new Set(q.map(t=>t.p)).size>1?'s':''}, against all 6,220. `
       : `All 6,220 printed labels at their stereotaxic positions. `)+
       `A dot is where an abbreviation is <em>printed</em> — close to its structure, not its centre. `+
-      `Hover to read one, click to open its plate.`+slab+half+proj+bone+mesh;
+      `Hover to read one, click to open its plate.`+slab+half+proj+turn+bone+mesh;
     return;
   }
   const q=(sel&&ptsOf[sel])||[];
@@ -3965,7 +4112,7 @@ function v3note(){
   N.innerHTML = (v3mode==='contour'
     ? `${what}, each at its true bregma. It reads as a stack because that is what it is — 62 sections, 350 µm apart.`
     : `The same field ray-marched. Sampling along the brain is 20× coarser than across it, so the streaks are interpolation, not anatomy.`)+
-    on+` The ring marks plate ${cur}.`+slab+half+proj+bone+mesh;
+    on+` The ring marks plate ${cur}.`+slab+half+proj+turn+bone+mesh;
 }
 
 /* changing the plate source changes what the stack is made of, so it is read again from
@@ -4046,6 +4193,8 @@ function writeHash(){
   /* fo used to be a bare 1 for "an origin is set". It now carries the landmark as 1 + its
      index, so bregma is still 1 and every link ever written still reads correctly. */
   if(FRAME.on){ h+='&fr='+FKEYS.map(k=>FRAME[k]).join(','); if(FRAME.org) h+='&fo='+(1+FRAME.oref); }
+  /* only worth writing where it changes a picture, which is only beside a rotation */
+  if(fvOn()) h+='&fv=1';
   lastWritten='#'+h;
   /* replaceState can be refused on a file:// origin, which is how the README says to
      open this; falling back to the hash keeps deep links working there too */
@@ -4121,6 +4270,9 @@ function readHash(){
      #p30 link would be a nasty way to lose it. */
   /* links written before the origin existed carry the first nine values only, so a short
      list is read positionally and the origin left at zero rather than thrown away */
+  /* the turned views ride with the frame: fv is read before it so that the frameApply()
+     below draws them turned first time rather than straight and then again turned */
+  fview = par.fv==='1';
   const fr=(par.fr||'').split(',').map(Number);
   if(par.fr && (fr.length===9||fr.length===FKEYS.length) && fr.every(Number.isFinite)){
     const fo=+par.fo;
@@ -4129,7 +4281,7 @@ function readHash(){
     /* frameApply() is the only thing that rebuilds the matrix, so a frame arriving by
        hashchange rather than on load has to go through it too */
     frameSet(o); frameApply();
-  }
+  } else if(fview||fvLast) fvApply(1);
 
   /* read positionally and forgive a short list, the way fr does: a plan link that
      loses its angles is still a plan for a vertical approach to that structure. */
@@ -4522,10 +4674,11 @@ function frameApply(){
   framePreview(); frameMarks(); orgSync();
   if(sel) select(sel);
   if(showXY&&lastPt) drawXH(lastPt);
-  /* the projection's axes are ruled from the origin, and the 3-D note quotes its slab from
-     it, so both are rewritten with everything else. The dots and the stack are atlas
-     positions and have not moved, so neither is redrawn. */
-  pjAxes(); pjGuide(); v3note();
+  /* the projection's axes are ruled from the origin, and the 3-D note quotes its slab
+     from it, so both are rewritten with everything else. Whether the dots and the stack
+     are redrawn as well is fvApply's call: they have not moved unless the views are being
+     drawn in the frame, in which case a changed angle has moved every one of them. */
+  fvApply();
   drawMeas(); revRun(); tgSync(); frameSave(); queueHash();
 }
 /* ---------- the origin: which point reads zero ----------
@@ -4778,4 +4931,4 @@ window.__gae={toFrame,fromFrame,writeHash,readHash,tgSolve,tgPath,tgFootprint,pl
   select,go,clear,frameSet,frameApply,FRAME,frmBuild,BUILD,S,P,byAb,ptsOf,regBuild,plateAt,inBrain,
   coordsOf,tgJSON,tgNotes,meshList,setCmp,anMake,notes:()=>NOTES,mesh:()=>MESH,
   GRP,isGrp,regIn,grpsOf,
-  state:()=>({cur,sel,zoom,tab,smode,psrc,tgProbe,tgFoot,cmpOn,anShow,targSide,tgTilt,tgRoll,tgYaw,tgPlate,tgOff})};
+  state:()=>({cur,sel,zoom,tab,smode,psrc,tgProbe,tgFoot,cmpOn,anShow,targSide,tgTilt,tgRoll,tgYaw,tgPlate,tgOff,fview,fvOn:fvOn()})};
