@@ -26,6 +26,11 @@
   --bone:#8d8674; --boneln:#a99e85; --lmk:#5eada6;
 }
 *{box-sizing:border-box}
+/* the keyboard can see where it is: every control gets the accent ring on focus-visible,
+   and nothing keeps outline:none for that state */
+button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible,
+.chip:focus-visible,.row:focus-visible,.rrow:focus-visible,.pbtn:focus-visible,[tabindex]:focus-visible{
+  outline:2px solid var(--accent);outline-offset:1px}
 body{margin:0;background:var(--bg);color:var(--ink);
   font:15px/1.5 ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   -webkit-font-smoothing:antialiased;overflow-x:hidden}
@@ -140,6 +145,28 @@ input[type=search]:focus{border-color:var(--accent)}
 .tplan .sub{display:block;color:var(--muted);font-size:11px}
 .tnote{margin:0;font-size:11.5px;color:var(--accent);line-height:1.5}
 .tbtns{display:flex;gap:8px;flex-wrap:wrap}
+/* what the track passes through: a bar the length of the track, and a row per structure */
+.tpath{display:flex;flex-direction:column;gap:5px}
+.tpath[hidden]{display:none}
+.tpbar{display:flex;height:11px;border-radius:4px;border:1px solid var(--line);
+  background:var(--panel2);position:relative;margin:4px 0 2px}
+.tpm{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--targ);margin-left:-1px}
+.tpm.tip{background:var(--ink)}
+.tfv{font-size:12px;color:var(--ink);font-variant-numeric:tabular-nums;padding:7px 0;font-weight:600}
+.tpbar i{display:block;height:100%;flex:none;min-width:1px}
+.tpbar i.x{background:repeating-linear-gradient(45deg,transparent 0 3px,var(--line) 3px 4px)}
+.tpbar i.est{opacity:.72}
+.tprow{display:grid;grid-template-columns:auto 64px minmax(0,1fr);gap:0 8px;font-size:11.5px;
+  align-items:baseline;cursor:pointer;padding:1px 0;border-radius:4px}
+.tprow:hover .tpa,.tprow:focus-visible .tpa{text-decoration:underline}
+.tprow.x{cursor:default;color:var(--muted)}
+.tpd{font-variant-numeric:tabular-nums;color:var(--muted);white-space:nowrap}
+.tpa{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-weight:600;color:var(--accent);
+  word-break:break-all}
+.tpn{color:var(--muted);overflow-wrap:anywhere}
+.sw{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+.tpc{font-size:11px;color:var(--muted);margin:0;line-height:1.5}
+.tpc b{color:var(--ink);font-weight:600}
 
 /* ---------- the selected structure, pinned under the list ---------- */
 .det{padding:12px 14px;border-top:1px solid var(--line);background:var(--panel2);
@@ -159,6 +186,21 @@ input[type=search]:focus{border-color:var(--accent)}
 .pbtn{font-size:11.5px;padding:2px 6px;border-radius:5px;background:var(--chip);cursor:pointer;
   font-variant-numeric:tabular-nums;flex:none}
 .pbtn:hover{background:var(--accent);color:#fff}
+/* the structure on each of its plates, cropped around it */
+.gal{display:flex;gap:6px;margin-top:8px;overflow-x:auto;padding-bottom:4px}
+.gal:empty{display:none}
+.gitem{position:relative;flex:none;cursor:pointer;border-radius:6px}
+.gth{display:block;width:132px;height:84px;border:1px solid var(--line);border-radius:6px;background:#fff}
+.gitem.cur .gth{outline:2px solid var(--accent);outline-offset:-1px}
+.gcap{position:absolute;left:4px;top:3px;font-size:10.5px;line-height:1.3;padding:0 4px;
+  border-radius:3px;background:rgba(255,255,255,.88);color:#1b1a17;font-variant-numeric:tabular-nums}
+/* the last few structures looked at, and the alias a result came in by */
+.recent{display:flex;gap:5px;align-items:center;flex-wrap:wrap;font-size:11px;color:var(--muted)}
+.recent[hidden]{display:none}
+.recent .pbtn{border:0;font-family:inherit;font-size:11.5px;color:var(--ink)}
+.recent .pbtn:hover{color:#fff}
+.via{font-size:10.5px;color:var(--muted);white-space:nowrap}
+.empty.fz{padding:8px 14px 4px;font-size:12px}
 
 /* ---------- viewer chrome ---------- */
 .vbar{display:flex;flex-wrap:wrap;align-items:center;gap:7px 9px;
@@ -276,6 +318,13 @@ input[type=range]{accent-color:var(--accent)}
 #tk .leg{stroke-width:1.4;stroke-dasharray:2 4;stroke-opacity:.75}
 #tk circle{fill:none;stroke:var(--targ);stroke-width:2.4;vector-effect:non-scaling-stroke}
 #tk circle.here{stroke-width:1.6;stroke-dasharray:3 3}
+/* a tick where the track crosses into the next structure, and the shank past the target */
+#tk line.bd{stroke-width:1.6;stroke-opacity:.9}
+#tk path.ext{stroke-width:1.4;stroke-dasharray:1 3;stroke-opacity:.85}
+/* the footprint sphere, cut by this plane; on the projections, the sphere's silhouette */
+#tk ellipse.fp{fill:var(--targ);fill-opacity:.08;stroke:var(--targ);stroke-width:1.6;stroke-dasharray:3 3;
+  vector-effect:non-scaling-stroke}
+#pjtk circle.fp{fill:var(--targ);fill-opacity:.08;stroke-width:1.6;stroke-dasharray:3 3}
 #tk text{fill:var(--targ);font-size:14px;font-weight:600;paint-order:stroke;
   stroke:#fff;stroke-width:3.5px;stroke-linejoin:round}
 .sbar{position:absolute;left:12px;bottom:11px;z-index:4;pointer-events:none;

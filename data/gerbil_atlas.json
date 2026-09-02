@@ -4346,6 +4346,142 @@
    "MNTB",
    "LNTB",
    "VNTB"
+  ],
+  "nucleus accumbens": [
+   "AcbC",
+   "AcbSh"
+  ],
+  "NAc": [
+   "AcbC",
+   "AcbSh"
+  ],
+  "accumbens": [
+   "AcbC",
+   "AcbSh"
+  ],
+  "SN": [
+   "SNC",
+   "SNR"
+  ],
+  "lateral geniculate": [
+   "DLG"
+  ],
+  "prefrontal": [
+   "PrL",
+   "IL",
+   "Cg1",
+   "Cg2"
+  ],
+  "orbitofrontal": [
+   "VO",
+   "LO",
+   "MO",
+   "DLO"
+  ],
+  "OFC": [
+   "VO",
+   "LO",
+   "MO",
+   "DLO"
+  ],
+  "caudate": [
+   "CPu"
+  ],
+  "putamen": [
+   "CPu"
+  ],
+  "periaqueductal": [
+   "DMPAG",
+   "DLPAG",
+   "LPAG",
+   "VLPAG"
+  ],
+  "raphe": [
+   "DR",
+   "MnR",
+   "RMg",
+   "RPa",
+   "ROb",
+   "RLi",
+   "PMnR",
+   "DRC",
+   "DRD",
+   "DRL",
+   "DRV"
+  ],
+  "thalamic reticular": [
+   "Rt"
+  ],
+  "TRN": [
+   "Rt"
+  ],
+  "nRT": [
+   "Rt"
+  ],
+  "pontine nuclei": [
+   "Pn"
+  ],
+  "DCN cerebellar": [
+   "Med",
+   "IntA",
+   "IntP",
+   "Lat"
+  ],
+  "barrel field": [
+   "S1BF"
+  ],
+  "auditory brainstem": [
+   "VCA",
+   "VCP",
+   "MSO",
+   "LSO",
+   "MNTB",
+   "SPN",
+   "CIC",
+   "ECIC",
+   "DCIC"
+  ],
+  "entorhinal": [
+   "LEnt",
+   "MEnt",
+   "CEnt"
+  ],
+  "habenula": [
+   "LHbL",
+   "LHbM",
+   "MHb"
+  ],
+  "zona incerta": [
+   "ZI",
+   "ZIC",
+   "ZID",
+   "ZIR",
+   "ZIV"
+  ],
+  "ventral pallidum": [
+   "VP"
+  ],
+  "septum": [
+   "LSD",
+   "LSI",
+   "LSV",
+   "MS"
+  ],
+  "bed nucleus stria terminalis": [
+   "STMA",
+   "STMV",
+   "STMP",
+   "STLV",
+   "STLP",
+   "STIA"
+  ],
+  "BNST": [
+   "STMA",
+   "STMV",
+   "STMP",
+   "STLV",
+   "STLP",
+   "STIA"
   ]
  },
  "structures": [

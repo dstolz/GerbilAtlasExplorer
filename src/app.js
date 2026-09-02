@@ -223,9 +223,11 @@ const PTS=[];
 for(const p in LB){ const ap=plateOf[+p].bregma;
   for(const ab in LB[p]) LB[p][ab].forEach((b,i)=>{
     const [x,y]=ptAt(p,ab,i,b);
-    PTS.push({ab,p:+p,ap,ml:toML(x*NW),dv:toDV(y*NH)});
+    PTS.push({ab,p:+p,i,ap,ml:toML(x*NW),dv:toDV(y*NH),ld:!!ldAt(p,ab,i)});
   });
 }
+/* the build this page came from, for the files it writes */
+const BUILD=((document.querySelector('meta[name="gae-build"]')||{}).content||'').trim();
 const ptsOf={};
 PTS.forEach(q=>(ptsOf[q.ab]||(ptsOf[q.ab]=[])).push(q));
 
@@ -244,40 +246,88 @@ let targSide=1, tgTilt=0, tgRoll=0, tgYaw=0, tgLegs=false;
    the old behaviour, so a plan made before either existed still means what it meant. */
 let tgPlate=0, tgOff={ap:0,ml:0,dv:0};
 const tgOffOn = () => !!(tgOff.ap||tgOff.ml||tgOff.dv);
+/* and how long the probe is, if the whole shank is to be read rather than the tip alone.
+   0 means no probe: the plan then stops at the target as it always did. */
+let tgProbe=0;
+const TG_PROBEMAX=20;
+/* and the radius of a sphere about the target, for reading what an injection of that
+   volume would sit in. 0 for none. */
+let tgFoot=0;
+const TG_FOOTMAX=3;
+const footVol = r => 4/3*Math.PI*r*r*r*1000;    /* mm^3 -> nL */
+const footVolTxt = r => { const v=footVol(r); return v>=1000 ? (v/1000).toFixed(2)+' µL' : v.toFixed(0)+' nL'; };
 
 /* ---------- filter chips ---------- */
 const sysEl = $('sys');
 SYSLIST.forEach(t=>{
   const c=document.createElement('span'); c.className='chip'; c.textContent=t.replace(/_/g,' ');
+  c.setAttribute('role','button'); c.tabIndex=0; c.setAttribute('aria-pressed','false');
   c.onclick=()=>{
     const on=!active.has(t);
     on?active.add(t):active.delete(t);
-    c.classList.toggle('on',on);
+    c.classList.toggle('on',on); c.setAttribute('aria-pressed',on?'true':'false');
     c.style.order=on?-1:0;      /* an active filter is never hidden by the two-row clamp */
     run();
   };
+  c.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); c.click(); } };
   sysEl.appendChild(c);
 });
 
 /* ---------- search ---------- */
 function aliasHits(q){
-  const n=norm(q); const out=new Set();
-  for(const [k,v] of Object.entries(AL)) if(norm(k).includes(n)&&n.length>1) v.forEach(a=>out.add(a));
+  const n=norm(q); const out=new Map();       /* abbr -> the alias that brought it in */
+  for(const [k,v] of Object.entries(AL)) if(norm(k).includes(n)&&n.length>1) v.forEach(a=>{ if(!out.has(a)) out.set(a,k); });
   return out;
 }
+/* edit distance, capped: "medial geniculte" should find its structure and nothing two
+   letters off should */
+function editDist(a,b,max){
+  if(Math.abs(a.length-b.length)>max) return max+1;
+  let prev=Array.from({length:b.length+1},(_,i)=>i);
+  for(let i=1;i<=a.length;i++){
+    const cur=[i]; let rowMin=i;
+    for(let j=1;j<=b.length;j++){
+      const c=Math.min(prev[j]+1, cur[j-1]+1, prev[j-1]+(a[i-1]===b[j-1]?0:1));
+      cur.push(c); if(c<rowMin) rowMin=c;
+    }
+    if(rowMin>max) return max+1;
+    prev=cur;
+  }
+  return prev[b.length];
+}
+/* what a query that matched nothing exactly was probably reaching for: an abbreviation
+   one letter off, or every word of it a prefix of, or one letter off, a word of a name */
+function fuzzyHits(n){
+  const toks=n.split(' ').filter(Boolean), flat=n.replace(/ /g,''), out=[];
+  if(!toks.length) return out;
+  for(const r of S){
+    const ab=r.abbr.toLowerCase(), words=norm(r.name).split(' ');
+    let sc=null;
+    if(flat.length>=2 && editDist(flat,ab,1)<=1) sc=1;
+    else if(toks.every(t=>words.some(w=>w.startsWith(t)||(t.length>=4&&editDist(t,w,1)<=1)))) sc=2;
+    if(sc!==null) out.push({r,sc});
+  }
+  return out.sort((a,b)=>a.sc-b.sc||a.r.name.localeCompare(b.r.name)).map(x=>x.r);
+}
+let fuzzy=false, via={};
 /* refine() only re-filters; run() also reads the box for a plate or a bregma to jump
    to. Keeping the two apart lets go() refresh a plate-scoped list without the pair of
    them calling each other in a circle. */
 function refine(){
   const raw=$('q').value.trim(), n=norm(raw), al=aliasHits(raw);
+  fuzzy=false; via={};
+  const inScope=r=>!(scope==='plate' && !r.plates.includes(cur)) && !(active.size && !r.systems.some(t=>active.has(t)));
   results = S.filter(r=>{
-    if(scope==='plate' && !r.plates.includes(cur)) return false;
-    if(active.size && !r.systems.some(t=>active.has(t))) return false;
+    if(!inScope(r)) return false;
     if(!n) return true;
-    if(al.has(r.abbr)) return true;
-    if(r.abbr.toLowerCase()===n.replace(/ /g,'')) return true;
-    return norm(r.name).includes(n) || r.abbr.toLowerCase().includes(n.replace(/ /g,'')) || r.systems.some(t=>t.replace(/_/g,' ').includes(n));
+    const direct = r.abbr.toLowerCase()===n.replace(/ /g,'') || norm(r.name).includes(n) ||
+      r.abbr.toLowerCase().includes(n.replace(/ /g,'')) || r.systems.some(t=>t.replace(/_/g,' ').includes(n));
+    if(direct) return true;
+    if(al.has(r.abbr)){ via[r.abbr]=al.get(r.abbr); return true; }
+    return false;
   });
+  /* nothing exact: offer what was probably meant, and say that it is a guess */
+  if(n.length>=3 && !results.length){ results=fuzzyHits(n).filter(inScope); fuzzy=!!results.length; }
   draw();
 }
 function run(){
@@ -298,17 +348,32 @@ function draw(){
     ? results.length+' of '+nHere+' on plate '+cur
     : results.length+' of '+S.length+' structures';
   $('sortl').textContent = results.length? 'plates '+Math.min(...results.map(r=>r.first_plate))+'–'+Math.max(...results.map(r=>r.last_plate)) : '';
-  $('ecsv').disabled = !results.length;
+  $('ecsv').disabled = !results.length; $('elab').disabled = !results.length;
+  recentDraw();
   if(!results.length){ L.innerHTML='<p class="empty">Nothing matched. Try an abbreviation (MGV), a name (medial geniculate), a system chip, or “plate 42”.</p>'; return; }
-  L.innerHTML = results.slice(0,400).map(r=>
-    `<div class="row${sel===r.abbr?' sel':''}" data-a="${esc(r.abbr)}">
+  L.innerHTML = (fuzzy?'<p class="empty fz">Nothing matched exactly. Close matches:</p>':'') + results.slice(0,400).map(r=>
+    `<div class="row${sel===r.abbr?' sel':''}" data-a="${esc(r.abbr)}" role="option" tabindex="0" aria-selected="${sel===r.abbr?'true':'false'}">
        <span class="ab">${esc(r.abbr)}</span>
-       <span class="nm">${esc(r.name)}</span>
+       <span class="nm">${esc(r.name)}${via[r.abbr]?` <span class="via">via ${esc(via[r.abbr])}</span>`:''}</span>
        <span class="pl">${r.first_plate===r.last_plate?r.first_plate:r.first_plate+'–'+r.last_plate}</span>
      </div>`).join('') + (results.length>400?'<p class="empty">…and '+(results.length-400)+' more. Narrow the search.</p>':'');
   [...L.querySelectorAll('.row')].forEach(el=>el.onclick=()=>{select(el.dataset.a);go(byAb[el.dataset.a].first_plate);});
 }
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+/* the last few structures looked at, kept in this browser, offered while the box is empty */
+let RECENT=[];
+try{ RECENT=(JSON.parse(localStorage.getItem('gae-recent')||'[]')||[]).filter(a=>byAb[a]).slice(0,8); }catch(_){}
+function recentAdd(a){
+  RECENT=[a,...RECENT.filter(x=>x!==a)].slice(0,8);
+  try{ localStorage.setItem('gae-recent',JSON.stringify(RECENT)); }catch(_){}
+}
+function recentDraw(){
+  const el=$('recent'); if(!el) return;
+  const show=RECENT.length && !$('q').value.trim() && !active.size && scope==='all';
+  el.hidden=!show; if(!show) return;
+  el.innerHTML='<span>Recent</span>'+RECENT.map(a=>`<button type="button" class="pbtn" data-a="${esc(a)}" title="${esc(byAb[a].name)}">${esc(a)}</button>`).join('');
+  [...el.querySelectorAll('.pbtn')].forEach(b=>b.onclick=()=>{ select(b.dataset.a); go(byAb[b.dataset.a].first_plate); });
+}
 
 /* ---------- detail ---------- */
 /* the printed label positions give a structure a stereotaxic centre; ML is folded to
@@ -369,14 +434,69 @@ function select(a){
         <dd>${extTxt(fx||x)}${fx?`<span class="atl">atlas ${extTxt(x)}</span>`:''}</dd>`:''}
      <dt>Systems</dt><dd>${r.systems.map(t=>esc(t.replace(/_/g,' '))).join(', ')}</dd>
    </dl>
-   <div class="plines">${r.plates.map(p=>`<span class="pbtn" data-p="${p}">${p}</span>`).join('')}</div>
+   <div class="plines">${r.plates.map(p=>`<span class="pbtn" data-p="${p}" role="button" tabindex="0">${p}</span>`).join('')}</div>
+   <div class="gal" id="gal" aria-label="The structure on each of its plates"></div>
    <button class="detx" id="detx" type="button" title="Drop the selection" aria-label="Drop the selection">&times;</button>`;
-  [...D.querySelectorAll('.pbtn')].forEach(el=>el.onclick=()=>go(+el.dataset.p));
+  [...D.querySelectorAll('.pbtn')].forEach(el=>{ el.onclick=()=>go(+el.dataset.p);
+    el.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); el.click(); } }; });
   $('detx').onclick=clear;
   D.scrollTop=0;
+  recentAdd(a);
   draw();
   mark(); fit(); reveal(); tgSync(); queueHash();
+  galBuild(a);
 }
+
+/* ---- the structure on every plate it is on, as a strip of thumbnails ----
+   The card's plate buttons say which plates; this shows them. Each thumbnail is the plate
+   cropped around the structure, with its extent outlined or its label circled, drawn from
+   the plate images already loaded -- built after the card paints, one plate at a time,
+   and abandoned the moment the selection changes. */
+let galTok=0; const GALC={}; const GW=132, GH=84;
+async function galBuild(a){
+  const el=$('gal'), r=byAb[a]; if(!el||!r) return;
+  const tok=++galTok, pls=r.plates.slice(0,48);
+  el.innerHTML=pls.map(p=>`<div class="gitem${p===cur?' cur':''}" data-p="${p}" title="Plate ${p} · bregma ${sgn(plateOf[p].bregma)}" role="button" tabindex="0">`+
+    `<canvas class="gth" width="${GW}" height="${GH}"></canvas><span class="gcap">${p}</span></div>`).join('');
+  [...el.children].forEach(d=>{ d.onclick=()=>go(+d.dataset.p);
+    d.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); d.click(); } }; });
+  for(const d of [...el.children]){
+    if(tok!==galTok) return;
+    const p=+d.dataset.p, key=a+'|'+p+'|'+psrc, cv=d.firstElementChild;
+    if(GALC[key]){ cv.getContext('2d').drawImage(GALC[key],0,0); continue; }
+    const im=new Image(); im.src=plateImg(p);
+    try{ await im.decode(); }catch(_){ continue; }
+    if(tok!==galTok) return;
+    const R=regBuild(p).by[a], bs=(LB[p]||{})[a]||[];
+    let x0,y0,x1,y1;
+    if(R){ x0=R.x0; y0=R.y0; x1=R.x1; y1=R.y1; }
+    else if(bs.length){
+      const at=bs.map((b,i)=>ptAt(p,a,i,b));
+      x0=Math.min(...at.map(q=>q[0]))*NW-24; x1=Math.max(...at.map(q=>q[0]))*NW+24;
+      y0=Math.min(...at.map(q=>q[1]))*NH-24; y1=Math.max(...at.map(q=>q[1]))*NH+24;
+    } else { x0=0; y0=0; x1=NW; y1=NH; }
+    /* the crop keeps the thumbnail's aspect and never zooms past about 8x */
+    let w=Math.max(x1-x0,GW/8)*1.5, h=Math.max(y1-y0,GH/8)*1.5;
+    if(w/h<GW/GH) w=h*GW/GH; else h=w*GH/GW;
+    const cx=(x0+x1)/2, cy=(y0+y1)/2, sx=cx-w/2, sy=cy-h/2;
+    const g=cv.getContext('2d');
+    g.fillStyle='#fff'; g.fillRect(0,0,GW,GH);
+    g.drawImage(im, sx,sy,w,h, 0,0,GW,GH);
+    const X=x=>(x-sx)/w*GW, Y=y=>(y-sy)/h*GH;
+    g.strokeStyle='#0a5cff'; g.lineWidth=1.4;
+    if(R){
+      g.beginPath();
+      R.gs.forEach(gg=>{ gg.forEach(([x,y],i)=>i?g.lineTo(X(x),Y(y)):g.moveTo(X(x),Y(y))); g.closePath(); });
+      g.fillStyle='rgba(10,92,255,.12)'; g.fill('evenodd');
+      if(regEst(R)) g.setLineDash([4,3]);
+      g.stroke(); g.setLineDash([]);
+    } else bs.forEach((b,i)=>{ const [qx,qy]=ptAt(p,a,i,b), Rr=Math.max(b[2]*NW,b[3]*NH);
+      g.beginPath(); g.ellipse(X(qx*NW),Y(qy*NH),(Rr*0.85+7)*GW/w,(Rr*0.55+6)*GH/h,0,0,6.2832); g.stroke(); });
+    const c2=document.createElement('canvas'); c2.width=GW; c2.height=GH;
+    c2.getContext('2d').drawImage(cv,0,0); GALC[key]=c2;
+  }
+}
+function galMark(){ const el=$('gal'); if(el) [...el.children].forEach(d=>d.classList.toggle('cur',+d.dataset.p===cur)); }
 function clear(){
   if(!sel) return;
   sel=null; $('det').hidden=true; draw();
@@ -406,7 +526,7 @@ function go(k){
   nHere=S.filter(r=>r.plates.includes(cur)).length;
   $('scP').innerHTML='On plate '+cur+' <b>'+nHere+'</b>';
   if(scope==='plate') refine();
-  labels();
+  labels(); galMark();
   mark(); fit(); drawSK(); drawLM(); tgDraw(); pjGuide(); v3note(); v3frame(); revSync(); queueHash();
 }
 
@@ -625,11 +745,14 @@ const RGN=window.__REGION__||{}, RDAT=RGN.r||{}, RUNA=RGN.u||{},
 const ROK=Object.keys(RDAT).length>0;
 
 let regs=[], regBy={};
-/* rebuilt per plate beside labels(), and for the same reason: only one plate is on screen */
-function regIndex(){
-  regs=[]; regBy={};
-  if(!ROK) return;
-  const b=RDAT[cur]||{};
+/* The index of one plate, built once and kept: the plate on screen reads it on every
+   pointer move, and the track planner reads the plates a track passes through. */
+const REGC={};
+function regBuild(pl){
+  if(REGC[pl]) return REGC[pl];
+  const out={regs:[],by:{}};
+  if(!ROK) return REGC[pl]=out;
+  const b=RDAT[pl]||{};
   for(const ab in b){
     const v=b[ab], gs=v.g.map(g=>g.map(([x,y])=>[x*NW,y*NH]));
     let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9, wt=0, tf=0;
@@ -642,19 +765,29 @@ function regIndex(){
       const w=Math.abs(shoe(gs[i])); wt+=w; tf+=v.s[i]*w;
     }
     const o={ab,gs,x0,y0,x1,y1,mm2:v.a,n:v.n,tf:wt?tf/wt:0};
-    regs.push(o); regBy[ab]=o;
+    out.regs.push(o); out.by[ab]=o;
   }
   /* every name of a joined label resolves to that label's one entry -- into regBy, which
      answers "what did I select", and not into regs, which answers "what is under the
      pointer": there is one area there and it is named once. The entry keeps the other
      names too, so pointing at it can say what the plate actually prints. */
-  for(const g of (RBLK[cur]||[])){
-    const o=regBy[g[0]]; if(!o) continue;
-    o.also=g; for(const n of g) regBy[n]=o;
+  for(const g of (RBLK[pl]||[])){
+    const o=out.by[g[0]]; if(!o) continue;
+    o.also=g; for(const n of g) out.by[n]=o;
   }
   /* smallest first: a structure drawn inside another has to stay reachable, which is the
      tie-break pick() already makes between two printed labels */
-  regs.sort((p,q)=>p.mm2-q.mm2);
+  out.regs.sort((p,q)=>p.mm2-q.mm2);
+  return REGC[pl]=out;
+}
+/* rebuilt per plate beside labels(), and for the same reason: only one plate is on screen */
+function regIndex(){ const r=regBuild(cur); regs=r.regs; regBy=r.by; }
+/* the same question of any plate, for a track that runs through several */
+function regAtOn(pl,x,y){ for(const o of regBuild(pl).regs) if(regIn(o,x,y)) return o; return null; }
+/* a colour per structure, the same every time, for the bars that name several at once */
+function regColor(ab){
+  let h=0; for(let i=0;i<ab.length;i++) h=(h*31+ab.charCodeAt(i))>>>0;
+  return `hsl(${h%360} 55% 62%)`;
 }
 function shoe(g){
   let a=0;
@@ -795,7 +928,16 @@ IW.addEventListener('click',e=>{
   else if(byAb[h.ab]) select(h.ab);   /* every printed label is indexed, but guard as showTip() does */
 });
 addEventListener('scroll',()=>{ if(hot) hideTip(); if(phot) pjHide(); },{passive:true,capture:true});
-addEventListener('resize',()=>{ hideTip(); pjHide(); fit(); applyView(); });
+let rszT=null;
+addEventListener('resize',()=>{ hideTip(); pjHide();
+  if(rszT) return; rszT=requestAnimationFrame(()=>{ rszT=null; fit(); applyView(); }); });
+/* a warning where the hint line is, in place of a modal alert; it goes when the plate
+   is next redrawn or after a moment, whichever is first */
+let hintT=null;
+function hintWarn(msg){
+  const vh=$('vhint'); vh.className='vhint warn'; vh.textContent=msg;
+  clearTimeout(hintT); hintT=setTimeout(()=>{ hintT=null; mark(); },4000);
+}
 
 /* ---------- coordinate readout, grid, scale bar ---------- */
 function drawXH(f){
@@ -1064,7 +1206,139 @@ function tgSolve(){
   }
   const v=tgWalk(T,[0,0,-1]);                   /* the comparison everyone wants */
   if(v) o.vert=v.s;
+  o.path=tgPath(o);
+  o.foot=tgFootprint(o);
   tgPlan=o;
+}
+
+/* ---- an injection's footprint ----
+   A sphere of a given radius about the target, read against the same extents: the share
+   of its volume that falls in each structure, and the share outside the section. A bolus
+   is not a sphere and does not stop at a boundary, so this says where a sphere of that
+   volume sits, not where an injection goes. Read on a lattice fine enough for about
+   sixteen samples across, each resolved on its nearest plate. */
+function tgFootprint(o){
+  if(!tgFoot||!ROK) return null;
+  const r=tgFoot, c=o.Ta, h=Math.max(.03,r/8), tally=new Map(); let n=0;
+  for(let x=-r;x<=r+1e-9;x+=h) for(let y=-r;y<=r+1e-9;y+=h) for(let z=-r;z<=r+1e-9;z+=h){
+    if(x*x+y*y+z*z>r*r) continue;
+    n++;
+    const ap=c.ap+x, ml=c.ml+y, dv=c.dv+z, pl=plateAt(ap);
+    let key, ab=null, name;
+    if(!pl){ key='off'; name='beyond the plate series'; }
+    else if(!inBrain(ap,ml,dv)){ key='out'; name='outside the section'; }
+    else {
+      const g=regAtOn(pl.plate, fromML(ml), fromDV(dv));
+      if(g){ key='r:'+g.ab; ab=g.ab; name=byAb[g.ab]?byAb[g.ab].name:''; }
+      else { key='un'; name='a face the atlas leaves unnamed'; }
+    }
+    const t=tally.get(key)||{ab,name,n:0}; t.n++; tally.set(key,t);
+  }
+  const rows=[...tally.values()].map(t=>({ab:t.ab,name:t.name,share:t.n/n})).sort((a,b)=>b.share-a.share);
+  return {r,vol:footVol(r),rows,n};
+}
+function tgFootHTML(o){
+  const el=$('tfootl'), F=o&&o.foot;
+  $('tfootv').textContent = tgFoot ? '≈ '+footVolTxt(tgFoot) : '';
+  if(!F){ el.hidden=true; el.innerHTML=''; return; }
+  const rows=F.rows.filter(t=>t.share>=.005).slice(0,12).map(t=>
+    `<div class="tprow${t.ab?'':' x'}" ${t.ab?`data-a="${esc(t.ab)}" role="button" tabindex="0"`:''}>`+
+    `<span class="tpd">${(t.share*100).toFixed(0)}%</span>`+
+    `<span class="tpa">${t.ab?`<span class="sw" style="background:${regColor(t.ab)}"></span>${esc(t.ab)}`:''}</span>`+
+    `<span class="tpn">${esc(t.name)}</span></div>`).join('');
+  el.innerHTML=`<p class="tlbl"><b>Footprint</b> &mdash; a ${F.r.toFixed(2)} mm sphere about the target, ≈ ${footVolTxt(F.r)}</p>`+
+    rows+`<p class="tpc">The share of that sphere's volume in each structure, read on the nearest plate. `+
+    `A bolus is not a sphere and does not stop at a boundary: this places a volume, it does not model spread.</p>`;
+  el.hidden=false;
+  [...el.querySelectorAll('.tprow[data-a]')].forEach(r=>{
+    const act=()=>select(r.dataset.a);
+    r.onclick=act; r.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); act(); } };
+  });
+}
+
+/* ---- what the track passes through ----
+   The extents tile every section by structure, so a track can be read off them the way
+   a probe track is read off the histology afterwards: sample it every 20 um from the
+   entry down, ask the nearest plate which region holds each sample, and merge the runs
+   into a list of structures with the depths they span. A probe length reads the whole
+   shank rather than the track to the tip, and says what the tip sits in.
+
+   Two limits, both said in the panel. A sample resolves to the nearest 350 um section,
+   so a boundary that runs obliquely between two plates lands on whichever plate is
+   nearer; and where the atlas does not print a boundary the extent is an estimate, and
+   the row says so. Depths are along the track from the surface, in the working frame,
+   the same length the plan calls the drive. */
+const TG_PS=.02;
+function tgPath(o){
+  if(o.len===undefined||!ROK) return null;
+  const reach=Math.max(o.len, tgProbe||0), n=Math.round(reach/TG_PS), segs=[];
+  let last=null;
+  for(let i=0;i<=n;i++){
+    const d=i*TG_PS, s=o.len-d;
+    const q=tgBack({ap:o.T.ap-o.d[0]*s, ml:o.T.ml-o.d[1]*s, dv:o.T.dv-o.d[2]*s});
+    const pl=plateAt(q.ap);
+    let key, ab=null, est=false, name;
+    if(!pl){ key='off'; name='beyond the plate series'; }
+    else if(!inBrain(q.ap,q.ml,q.dv)){ key='out'; name='outside the section'; }
+    else {
+      const r=regAtOn(pl.plate, fromML(q.ml), fromDV(q.dv));
+      if(r){ key='r:'+r.ab; ab=r.ab; est=regEst(r); name=byAb[r.ab]?byAb[r.ab].name:''; }
+      else { key='un'; name='a face the atlas leaves unnamed'; }
+    }
+    if(last&&last.key===key){ last.to=d; if(pl) last.plates.add(pl.plate); }
+    else { last={key,ab,est,name,from:d,to:d,plates:new Set(pl?[pl.plate]:[])}; segs.push(last); }
+  }
+  /* a sliver of nothing at an end is the entry sitting on the outline or the target on a
+     boundary; two samples of it say nothing, so it goes to its neighbour, and two runs of
+     one structure that it kept apart are joined again */
+  for(let i=segs.length-1;i>=0&&segs.length>1;i--){
+    const q=segs[i];
+    if(q.ab || q.to-q.from>=.03) continue;
+    if(segs[i+1]) segs[i+1].from=q.from; else segs[i-1].to=q.to;
+    segs.splice(i,1);
+  }
+  for(let i=segs.length-1;i>0;i--)
+    if(segs[i].key===segs[i-1].key){ segs[i-1].to=segs[i].to; segs[i].plates.forEach(x=>segs[i-1].plates.add(x)); segs.splice(i,1); }
+  /* the tip: what the probe ends in, read at its own depth rather than at the end of the path */
+  const tip = tgProbe ? (segs.find(q=>tgProbe>=q.from-1e-9&&tgProbe<=q.to+1e-9)||segs[segs.length-1]) : null;
+  return {segs,reach,tip};
+}
+/* a point a given depth down the track from the entry, in atlas millimetres */
+function tgAtDepth(o,d){
+  const s=o.len-d;
+  return tgBack({ap:o.T.ap-o.d[0]*s, ml:o.T.ml-o.d[1]*s, dv:o.T.dv-o.d[2]*s});
+}
+function tgPathHTML(o){
+  const P=o.path, el=$('tpath');
+  if(!P||P.segs.length<2&&!tgProbe){ el.hidden=true; el.innerHTML=''; return; }
+  const w=s=>((s.to-s.from)/P.reach*100).toFixed(2)+'%';
+  const bar=P.segs.map(s=>`<i class="${s.ab?'':'x'}${s.est?' est':''}" style="width:${w(s)};`+
+    `${s.ab?`background:${regColor(s.ab)}`:''}" title="${esc(s.ab||s.name)} · ${s.from.toFixed(2)}–${s.to.toFixed(2)} mm"></i>`).join('');
+  const rows=P.segs.map(s=>{
+    const pl=[...s.plates].sort((a,b)=>a-b);
+    return `<div class="tprow${s.ab?'':' x'}" ${s.ab?`data-a="${esc(s.ab)}" data-p="${pl[0]||''}" role="button" tabindex="0"`:''}>`+
+      `<span class="tpd">${s.from.toFixed(2)}–${s.to.toFixed(2)}</span>`+
+      `<span class="tpa">${s.ab?`<span class="sw" style="background:${regColor(s.ab)}"></span>${esc(s.ab)}`:''}</span>`+
+      `<span class="tpn">${esc(s.name)}${s.est?' · boundary estimated':''}`+
+      `${pl.length>1?` · plates ${pl[0]}–${pl[pl.length-1]}`:''}</span></div>`; }).join('');
+  const mk=(d,cls,t)=>`<span class="tpm ${cls}" style="left:${(d/P.reach*100).toFixed(2)}%" title="${t}"></span>`;
+  let tipTxt='';
+  if(P.tip){
+    const past=tgProbe-o.len;
+    tipTxt=`<p class="tpc">A <b>${tgProbe.toFixed(2)} mm</b> probe from this entry ends in `+
+      `<b>${esc(P.tip.ab||P.tip.name)}</b>, `+
+      (Math.abs(past)<.005 ? 'at the target.' :
+       past>0 ? `${past.toFixed(2)} mm past the target.` : `${(-past).toFixed(2)} mm short of the target.`)+'</p>';
+  }
+  el.innerHTML=`<p class="tlbl"><b>Along the track</b> &mdash; depth from the surface, mm</p>`+
+    `<div class="tpbar" aria-hidden="true">${bar}${mk(o.len,'tgt','the target')}${tgProbe?mk(tgProbe,'tip','the probe tip'):''}</div>${rows}${tipTxt}`+
+    `<p class="tpc">Read off the extents of the nearest plate at each 20 µm step: a boundary between two plates `+
+    `lands on whichever is nearer, and a dashed extent is an estimate.</p>`;
+  el.hidden=false;
+  [...el.querySelectorAll('.tprow[data-a]')].forEach(r=>{
+    const act=()=>{ const p=+r.dataset.p; if(p) go(p); select(r.dataset.a); };
+    r.onclick=act; r.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); act(); } };
+  });
 }
 
 /* ---- the panel ---- */
@@ -1122,11 +1396,11 @@ function tgPanel(){
   tgPlateSel();
   $('tozero').hidden = !tgPlate && !tgOffOn();
   if(!OUTOK){
-    D.innerHTML=''; N.hidden=false;
+    D.innerHTML=''; N.hidden=false; $('tpath').hidden=true; tgFootHTML(null);
     N.textContent='This build carries no brain outline, so a depth from the surface cannot be measured.';
     return;
   }
-  if(!o){ D.innerHTML=''; N.hidden=true; return; }
+  if(!o){ D.innerHTML=''; N.hidden=true; $('tpath').hidden=true; tgFootHTML(null); return; }
   $('ttgt').innerHTML=`<b style="color:var(--targ)">${esc(o.abbr)}</b> · `+
     `${o.side>0?'right':'left'} · ${o.plate?'plate '+o.plate:'off the series'}`+
     ` · ${o.T.n} label${o.T.n===1?'':'s'}${o.pick?' on it':''}`;
@@ -1179,6 +1453,7 @@ function tgPanel(){
   if(o.flank) warn.push('The entry is on the flank of the section, not its dorsal surface: '+
     'this track goes in through the side of the head.');
   N.hidden=!warn.length; N.innerHTML=warn.join(' ');
+  tgPathHTML(o); tgFootHTML(o);
 }
 
 /* ---- the track on the plate ----
@@ -1225,9 +1500,38 @@ function tgDraw(){
   const c=q.find(p=>p.on);
   if(c && q.some(p=>!p.on))
     out.push(`<circle class="here" cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="13"/>`);
+  /* the shank past the target, and a tick where the track crosses from one structure into
+     the next -- the panel names them; the plate only has to show where they fall */
+  if(o.path){
+    const P=o.path;
+    if(P.reach>o.len+1e-9){
+      const ext=[]; const m=Math.max(2,Math.round((P.reach-o.len)/.1));
+      for(let i=0;i<=m;i++){ const p=tgAtDepth(o,o.len+(P.reach-o.len)*i/m);
+        ext.push({x:fromML(p.ml), y:fromDV(p.dv), on:Math.abs(p.ap-ap0)<=half}); }
+      out.push(`<path class="ext${ext.every(p=>p.on)?'':' gh'}" d="M`+ext.map(p=>p.x.toFixed(1)+' '+p.y.toFixed(1)).join('L')+'"/>');
+    }
+    for(let i=1;i<P.segs.length;i++){
+      const d=P.segs[i].from, a=tgAtDepth(o,d), b=tgAtDepth(o,Math.min(d+.05,P.reach));
+      if(Math.abs(a.ap-ap0)>half) continue;
+      const ax=fromML(a.ml), ay=fromDV(a.dv), dx=fromML(b.ml)-ax, dy=fromDV(b.dv)-ay, L=Math.hypot(dx,dy)||1;
+      const nx=-dy/L*6, ny=dx/L*6;
+      out.push(`<line class="bd" x1="${(ax-nx).toFixed(1)}" y1="${(ay-ny).toFixed(1)}" x2="${(ax+nx).toFixed(1)}" y2="${(ay+ny).toFixed(1)}"/>`);
+    }
+  }
+  out.push(...tgFootPlate(o));
   g.innerHTML=out.join('');
   tgPJ();
   if(typeof v3frame==='function') v3frame();
+}
+/* the sphere cut by this plate's plane: a circle shrinking with the plane's distance from
+   the target, in atlas millimetres on both axes */
+function tgFootPlate(o){
+  if(!tgFoot||!o) return [];
+  const dAP=o.Ta.ap-plateOf[cur].bregma, rr=tgFoot*tgFoot-dAP*dAP;
+  if(rr<=0) return [];
+  const r2=Math.sqrt(rr);
+  return [`<ellipse class="fp" cx="${fromML(o.Ta.ml).toFixed(1)}" cy="${fromDV(o.Ta.dv).toFixed(1)}"`+
+          ` rx="${(r2*ML_PXMM).toFixed(1)}" ry="${(r2*DV_PXMM).toFixed(1)}"/>`];
 }
 /* the same track on the projections, where neither axis is foreshortened and a tilt reads
    at its true angle -- which is why a tilted plan is worth looking at here */
@@ -1246,6 +1550,7 @@ function tgPJ(){
   out.push(`<line x1="${X(E)}" y1="${Y(E)}" x2="${X(Tt)}" y2="${Y(Tt)}"/>`,
            `<circle cx="${X(E)}" cy="${Y(E)}" r="4"/>`,
            `<circle cx="${X(Tt)}" cy="${Y(Tt)}" r="7"/>`);
+  if(tgFoot) out.push(`<circle class="fp" cx="${X(Tt)}" cy="${Y(Tt)}" r="${(tgFoot*K).toFixed(1)}"/>`);
   g.innerHTML=out.join('');
 }
 
@@ -1287,7 +1592,23 @@ function tgNotes(){
     ln.push(`sides         ${o.down.toFixed(2)} mm down, ${o.across.toFixed(2)} mm across`);
   }
   if(o.vert!==undefined) ln.push(`straight down ${o.vert.toFixed(2)} mm`);
+  if(o.path&&o.path.segs.length){
+    ln.push('');
+    ln.push('along the track  depth from the surface, mm');
+    for(const s of o.path.segs)
+      ln.push(`  ${s.from.toFixed(2).padStart(5)}–${s.to.toFixed(2).padStart(5)}  ${(s.ab||'—').padEnd(8)} ${s.name}${s.est?' (boundary estimated)':''}`);
+    if(o.path.tip){ const past=tgProbe-o.len;
+      ln.push(`probe         ${tgProbe.toFixed(2)} mm; the tip ends in ${o.path.tip.ab||o.path.tip.name}, `+
+        (Math.abs(past)<.005?'at the target':past>0?`${past.toFixed(2)} mm past the target`:`${(-past).toFixed(2)} mm short of the target`)); }
+  }
+  if(o.foot){
+    ln.push('');
+    ln.push(`footprint     ${o.foot.r.toFixed(2)} mm sphere about the target, ~${footVolTxt(o.foot.r)}`);
+    for(const t of o.foot.rows.filter(t=>t.share>=.005).slice(0,12))
+      ln.push(`  ${(t.share*100).toFixed(0).padStart(3)}%  ${(t.ab||'—').padEnd(8)} ${t.name}`);
+  }
   ln.push('');
+  ln.push(`build         ${BUILD||'unstamped'}`);
   ln.push(`frame         ${FRAME.on?frameTxt()+' · zero at '+orgFull():'atlas coordinates'}`);
   ln.push(`angle order   roll, then tilt, then yaw about the vertical`);
   ln.push(`signs         tilt + drives the tip anterior, roll + to the right`);
@@ -1366,11 +1687,56 @@ function tgOffIn(id,k){
     tgSync(); queueHash(); };
 }
 tgOffIn('toap','ap'); tgOffIn('toml','ml'); tgOffIn('todv','dv');
+$('tprobe').oninput=e=>{ const v=+e.target.value;
+  tgProbe=Number.isFinite(v)&&v>0?Math.min(TG_PROBEMAX,v):0; tgSync(); queueHash(); };
+$('tfoot').oninput=e=>{ const v=+e.target.value;
+  tgFoot=Number.isFinite(v)&&v>0?Math.min(TG_FOOTMAX,v):0; tgSync(); queueHash(); };
+/* the plan as data, for a lab notebook or a script: everything the notes say, typed */
+function tgJSON(){
+  const o=tgPlan; if(!o) return null;
+  const r=byAb[o.abbr], F=FRAME.on?1:0;
+  const pt=q=>q?{ap:+q.ap.toFixed(3),ml:+q.ml.toFixed(3),dv:+q.dv.toFixed(3)}:null;
+  return {
+    app:'Gerbil Atlas Explorer', build:BUILD||null, generated:new Date().toISOString(),
+    experimental:true, link:location.href,
+    target:{abbr:o.abbr, name:r?r.name:null, hemisphere:o.side>0?'right':'left',
+      plate:o.plate, labels_read_from_plate:o.pick||null, n_labels:o.T.n,
+      label:pt(o.T.L), offset_atlas_mm:{...tgOff}, position:pt(o.T), inside_outline:o.inside},
+    approach:{tilt_deg:tgTilt, roll_deg:tgRoll, yaw_deg:tgYaw, order:'roll, then tilt, then yaw',
+      signs:'tilt + drives the tip anterior, roll + to the right',
+      from_vertical_deg:o.len!==undefined?+o.deg.toFixed(2):null, heading:o.len!==undefined?tgHead(o):null},
+    entry:o.len!==undefined?pt(o.E):null,
+    drive_mm:o.len!==undefined?+o.len.toFixed(3):null,
+    legs_mm:o.len!==undefined?{down:+o.down.toFixed(3),across:+o.across.toFixed(3)}:null,
+    straight_down_mm:o.vert!==undefined?+o.vert.toFixed(3):null,
+    entry_on_flank:!!o.flank,
+    probe_mm:tgProbe||null,
+    footprint:o.foot?{radius_mm:o.foot.r, volume_nl:+o.foot.vol.toFixed(1),
+      shares:o.foot.rows.map(t=>({abbr:t.ab,name:t.name,share:+t.share.toFixed(4)}))}:null,
+    along_track:o.path?o.path.segs.map(s=>({from_mm:+s.from.toFixed(2),to_mm:+s.to.toFixed(2),
+      abbr:s.ab,name:s.name,boundary_estimated:!!s.est,plates:[...s.plates].sort((a,b)=>a-b)})):null,
+    frame:{on:!!FRAME.on, text:FRAME.on?frameTxt():'atlas coordinates', zero:FRAME.on?orgFull():'the atlas origin',
+      ap_label:apLab(F), pitch:FRAME.pitch, roll:FRAME.roll, yaw:FRAME.yaw,
+      pivot:[FRAME.pap,FRAME.pml,FRAME.pdv], offset:[FRAME.dap,FRAME.dml,FRAME.ddv],
+      origin:FRAME.org?{landmark:LM[FRAME.oref][0].toLowerCase(),offset:[FRAME.oap,FRAME.oml,FRAME.odv]}:null},
+    notes:'The target is the median position of the printed abbreviation, not a centroid. The surface is '+
+      'the outline of the nearest plate, 350 um apart, of a fixed sectioned brain. Along-track structures are '+
+      'read off the extents of the nearest plate at each 20 um step. Experimental: check against anatomy you know.',
+    source:'Radtke-Schuller et al. 2016, Brain Struct Funct 221(Suppl 1):1-272, doi:10.1007/s00429-016-1259-0'
+  };
+}
+$('tjson').onclick=()=>{
+  const j=tgJSON(); if(!j) return;
+  const b=new Blob([JSON.stringify(j,null,2)],{type:'application/json'});
+  const u=URL.createObjectURL(b);
+  dl(`track_${tgPlan.abbr.replace(/[^A-Za-z0-9]/g,'')}_${tgPlan.side>0?'R':'L'}.json`,u,u);
+};
 $('tozero').onclick=()=>{
   tgPlate=0; tgOff={ap:0,ml:0,dv:0};
   $('toap').value=0; $('toml').value=0; $('todv').value=0;
   tgSync(); queueHash();
 };
+$('tside').setAttribute('aria-label','Hemisphere');
 [...$('tside').children].forEach(b=>b.onclick=()=>{ targSide=+b.dataset.h; tgSync(); queueHash(); });
 $('tlegs').onchange=e=>{ tgLegs=e.target.checked; tgDraw(); queueHash(); };
 $('tzero').onclick=()=>{
@@ -1419,7 +1785,7 @@ function exportPNG(){
      it is cleared: a contrast stretch belongs to the section, not to the annotation. */
   g.filter=plateFilter();
   try{ g.drawImage(im,0,0,NW,NH); }
-  catch(_){ alert('The plate image is still loading — try again in a moment.'); return; }
+  catch(_){ hintWarn('The plate image is still loading — try again in a moment.'); return; }
   finally{ g.filter='none'; }
 
   if(showGrid){
@@ -1496,6 +1862,10 @@ function exportPNG(){
     g.setLineDash(Tt.on?[]:[5,4]); g.lineWidth=Tt.on?2.4:1.6;
     g.beginPath(); g.arc(Tt.x,Tt.y,8,0,6.2832); g.stroke();
     g.setLineDash([]);
+    if(tgFoot){ const dAP=tgPlan.Ta.ap-ap0, rr=tgFoot*tgFoot-dAP*dAP;
+      if(rr>0){ const r2=Math.sqrt(rr); g.lineWidth=1.6; g.setLineDash([3,3]);
+        g.beginPath(); g.ellipse(fromML(tgPlan.Ta.ml),fromDV(tgPlan.Ta.dv),r2*ML_PXMM,r2*DV_PXMM,0,0,6.2832); g.stroke();
+        g.setLineDash([]); } }
   }
   /* the coordinate lookup's query point, but only on the plate its AP resolves to */
   const qa = smode==='coord' ? revAtlas() : null;
@@ -1529,7 +1899,7 @@ function exportPNG(){
       `${tgOffOn()?`, ${tgOffTxt()} from its label`:''}`+
       `${tgPlan.pick?`${tgOffOn()?'':', from its label'} on plate ${tgPlan.pick}`:''} — `+
       `${tgPlan.len.toFixed(2)} mm from the surface at tilt ${tgTilt}°, roll ${tgRoll}°, `+
-      `yaw ${tgYaw}° — experimental`);
+      `yaw ${tgYaw}°${tgFoot?` — ${tgFoot.toFixed(2)} mm footprint sphere`:''} — experimental`);
   /* the sheet carries the plate and its overlays, all of which are atlas-framed, so it
      says so rather than letting a working frame be assumed from the app around it */
   if(showSK) notes.push('Skull outline — experimental, approximate fit');
@@ -1558,7 +1928,7 @@ function svgText(x,y,size,fill,txt,weight){
 }
 function exportSVG(){
   const V = VEC && VEC[cur];
-  if(!V){ alert('No vector outlines are bundled for this plate.'); return; }
+  if(!V){ hintWarn('No vector outlines are bundled for this plate.'); return; }
   const CAP=104, H=NH+CAP, o=[];
   o.push('<?xml version="1.0" encoding="UTF-8"?>');
   o.push(`<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="${NW}" height="${H}" `+
@@ -1580,6 +1950,18 @@ function exportSVG(){
   o.push(grp('outlines-solid',V.s,false));
   o.push(grp('outlines-dashed',V.d,true));
   o.push('</g></g>');
+  /* the extents, one group per structure and named for it, so an illustrator can pick a
+     region up by name rather than by hunting for its lines. Drawn faint: the tracing above
+     is the atlas's line, and this is the face it encloses. */
+  if(ROK){
+    const R=regBuild(cur), idOf=t=>t.replace(/[^A-Za-z0-9_-]/g,'_');
+    o.push('<g id="regions" fill="none" stroke="#1b1a17" stroke-opacity="0.35" stroke-width="0.8">'+
+      R.regs.map(r=>`<g id="region-${idOf(r.ab)}" data-abbr="${xml(r.ab)}" data-name="${xml(byAb[r.ab]?byAb[r.ab].name:'')}"`+
+        `${regEst(r)?' stroke-dasharray="4 3"':''}><title>${xml(r.ab+(byAb[r.ab]?' — '+byAb[r.ab].name:''))}</title>`+
+        `<path d="${regD(r)}"/></g>`).join('')+
+      (RUNA[cur]||[]).map((g,k)=>`<g id="region-unnamed-${k+1}" data-name="unnamed sealed face"><path d="M`+
+        g.map(([x,y])=>(x*NW).toFixed(1)+' '+(y*NH).toFixed(1)).join('L')+'Z"/></g>').join('')+'</g>');
+  }
 
   /* --- overlays, in the order and the colours the PNG draws them --- */
   if(showGrid){
@@ -1642,6 +2024,7 @@ function exportSVG(){
            (E.on?'':' stroke-dasharray="5 4"')+'/>');
     T.push(`<circle cx="${Tt.x}" cy="${Tt.y}" r="8" stroke-width="${Tt.on?2.4:1.6}"`+
            (Tt.on?'':' stroke-dasharray="5 4"')+'/>');
+    tgFootPlate(tgPlan).forEach(e=>T.push(e.replace('class="fp"','stroke-width="1.6" stroke-dasharray="3 3"')));
     o.push('<g id="track" fill="none" stroke="#c4008f">'+T.join('')+'</g>');
   }
   const qa = smode==='coord' ? revAtlas() : null;
@@ -1664,7 +2047,8 @@ function exportSVG(){
   cap.push(svgText(0,NH+50,15,'#5a554c',
     `AP   bregma ${p.bregma.toFixed(2)}  ·  lambda ${p.lambda_.toFixed(2)}  ·  `+
     `interaural ${p.interaural.toFixed(2)}  ·  occipital crest ${p.occipital_crest.toFixed(2)} mm`));
-  const notes=['Regional outlines traced from the printed plate — vector paths only, no section image'];
+  const notes=['Regional outlines traced from the printed plate — vector paths only, no section image'+
+               (ROK?'; one named group per region':'')];
   if(mA&&mB){ const dml=toML(mB[0])-toML(mA[0]), ddv=toDV(mB[1])-toDV(mA[1]);
     notes.push(`Measured ${Math.hypot(dml,ddv).toFixed(2)} mm (ΔML ${sgn(dml)}, ΔDV ${sgn(ddv)})`); }
   if(qOn) notes.push(`Query point ML ${sgn(qa.ml)}, DV ${sgn(qa.dv)}`);
@@ -1727,9 +2111,30 @@ function exportCSV(){
   dl('gerbil_atlas_structures.csv',
      URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'})), true);
 }
+/* one row per printed label rather than one per structure: every located label of the
+   structures in the list, with the triplet the app reads it at -- the end of its leader
+   line where the atlas draws one, the centre of the word otherwise */
+function exportLabelsCSV(){
+  const q=v=>`"${String(v).replace(/"/g,'""')}"`;
+  const head=['abbr','name','plate','label_index','ap_bregma_mm','ml_mm','ml_abs_mm','dv_mm','position_from'];
+  const FR=FRAME.on;
+  if(FR) head.push('frame_AP_mm','frame_ML_mm','frame_DV_mm','frame_spec');
+  const spec=FR?`pitch=${FRAME.pitch} roll=${FRAME.roll} yaw=${FRAME.yaw} zero=${orgFull().replace(/ /g,'-')}`:'';
+  const rows=[];
+  for(const r of results) for(const t of (ptsOf[r.abbr]||[])){
+    const row=[t.ab,r.name,t.p,t.i,t.ap.toFixed(2),t.ml.toFixed(2),Math.abs(t.ml).toFixed(2),t.dv.toFixed(2),
+               t.ld?'leader tip':'label box'];
+    if(FR){ const k=toFrame(t.ap,t.ml,t.dv); row.push(k.ap.toFixed(2),k.ml.toFixed(2),k.dv.toFixed(2),spec); }
+    rows.push(row.map(q).join(','));
+  }
+  const csv='\ufeff'+[head.map(q).join(',')].concat(rows).join('\r\n')+'\r\n';
+  dl('gerbil_atlas_labels.csv',
+     URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'})), true);
+}
 $('epng').onclick=exportPNG;
 $('esvg').onclick=exportSVG;
 $('ecsv').onclick=exportCSV;
+$('elab').onclick=exportLabelsCSV;
 
 
 /* ---------- sagittal / top-down projection ----------
@@ -2609,6 +3014,16 @@ function v3render(){
     gl.uniform3fv(U(pLine,'u_c'),v3col.tg);
     gl.uniform1f(U(pLine,'u_a'),.95);
     gl.drawArrays(gl.LINE_STRIP,0,q.length);
+    if(tgFoot){                                /* the sphere, as three rings */
+      const c=[tgPlan.Ta.ml, w3y(tgPlan.Ta.dv), w3z(tgPlan.Ta.ap)], rr=tgFoot, ring=[];
+      for(const ax of [0,1,2]) for(let i=0;i<=32;i++){ const t=i/32*6.2832, u=Math.cos(t)*rr, v=Math.sin(t)*rr;
+        const pnt=[...c]; pnt[(ax+1)%3]+=u; pnt[(ax+2)%3]+=v; ring.push(...pnt);
+        if(i===0||i===32) ring.push(...pnt); }   /* doubled ends break the strip between rings */
+      gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(ring),gl.STREAM_DRAW);
+      gl.uniform1f(U(pLine,'u_a'),.55);
+      gl.drawArrays(gl.LINE_STRIP,0,ring.length/3);
+      gl.uniform1f(U(pLine,'u_a'),.95);
+    }
     const e=q[0], r=.5;                      /* a cross on the entry, to find it by */
     gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([
       e[0]-r,e[1],e[2], e[0]+r,e[1],e[2],
@@ -2878,9 +3293,11 @@ function writeHash(){
   if(smode==='targ'&&sel){
     h+='&tg='+encodeURIComponent(sel)+','+(targSide>0?'R':'L')+
        ','+tgTilt+','+tgRoll+','+tgYaw;
-    if(tgPlate||tgOffOn())
+    if(tgPlate||tgOffOn()||tgProbe)
       h+=','+tgPlate+','+tgOff.ap+','+tgOff.ml+','+tgOff.dv;
+    if(tgProbe) h+=','+tgProbe;
   }
+  if(smode==='targ'&&sel&&tgFoot) h+='&ft='+tgFoot;
   if(v3mode!=='contour') h+='&r='+v3mode;
   if(v3a>0||v3b<61) h+='&sl='+(v3a+1)+','+(v3b+1);
   if(v3half) h+='&hf=1';
@@ -2989,6 +3406,10 @@ function readHash(){
     const off=(i)=>{ const q=+tg[i]; return Number.isFinite(q)?Math.max(-10,Math.min(10,q)):0; };
     tgOff={ap:off(6), ml:off(7), dv:off(8)};
     $('toap').value=tgOff.ap; $('toml').value=tgOff.ml; $('todv').value=tgOff.dv;
+    const pb=+tg[9]; tgProbe=Number.isFinite(pb)&&pb>0?Math.min(TG_PROBEMAX,pb):0;
+    $('tprobe').value=tgProbe||'';
+    const ft=+par.ft; tgFoot=Number.isFinite(ft)&&ft>0?Math.min(TG_FOOTMAX,ft):0;
+    $('tfoot').value=tgFoot||'';
     /* set before the selection, because selecting is what solves the plan */
     if(sel!==tga) select(tga);
     setMode('targ');
@@ -3151,6 +3572,9 @@ addEventListener('keydown',e=>{
   if(e.key==='0'){ if(tab==='v3d') $('v3r').click();
                    else { zoom=1; tx=ty=0; hideTip(); applyView(); } }
   if(e.key==='/'){ e.preventDefault(); setMode('find'); $('q').focus(); $('q').select(); }
+  if(e.key==='?'){ e.preventDefault(); openAbout(); }
+  if(e.key==='Home'){ e.preventDefault(); go(1); }
+  if(e.key==='End'){ e.preventDefault(); go(62); }
   if(e.key==='Escape'){ if(pickArm) setPick(false);
                         else if(measMode&&mA){ mA=mB=mHover=null; drawMeas(); } else clear(); }
 });
@@ -3568,6 +3992,20 @@ function skullNote(){
 [...document.querySelectorAll('.ast')].forEach(b=>b.onclick=skullNote);
 ABOUT.addEventListener('click',e=>{ if(e.target===ABOUT) ABOUT.close(); });
 
+/* every segmented control is a tab list, and its .on class is mirrored to aria-selected
+   from one place rather than at each of the dozen sites that toggle it */
+for(const seg of document.querySelectorAll('.seg')){
+  seg.setAttribute('role','tablist');
+  for(const b of seg.children){ b.setAttribute('role','tab'); b.setAttribute('aria-selected',b.classList.contains('on')?'true':'false'); }
+  new MutationObserver(ms=>ms.forEach(m=>{ const b=m.target;
+    if(b.tagName==='BUTTON') b.setAttribute('aria-selected',b.classList.contains('on')?'true':'false'); }))
+    .observe(seg,{attributes:true,attributeFilter:['class'],subtree:true});
+}
+/* the results list is a listbox the keyboard can walk: Enter or Space picks a row */
+$('list').addEventListener('keydown',e=>{
+  const r=e.target.closest&&e.target.closest('.row'); if(!r) return;
+  if(e.key==='Enter'||e.key===' '){ e.preventDefault(); r.click(); }
+});
 frameLoad();                 /* before readHash, so a link's frame wins over the stored one */
 pjAxes(); run();
 if(!readHash()) go(30);

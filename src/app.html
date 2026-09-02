@@ -15,6 +15,7 @@
 <!-- @css app.css -->
 </head>
 <body>
+<noscript><p style="padding:16px;font:15px ui-sans-serif,system-ui,sans-serif">The Gerbil Atlas Explorer needs JavaScript: the atlas, the search and every overlay are drawn by it. The data is also available as plain files in the repository&rsquo;s <code>data/</code> folder.</p></noscript>
 <header>
   <div class="brand">
     <h1>Gerbil Atlas Explorer</h1>
@@ -37,18 +38,20 @@
     </div>
 
     <div class="pane on" id="paneFind">
-      <input type="search" id="q" placeholder="Name, abbreviation, system &mdash; or &ldquo;plate 30&rdquo;, &ldquo;bregma -2.3&rdquo;" autocomplete="off">
+      <input type="search" id="q" aria-label="Search structures by name, abbreviation or system" placeholder="Name, abbreviation, system &mdash; or &ldquo;plate 30&rdquo;, &ldquo;bregma -2.3&rdquo;" autocomplete="off">
       <div class="chipwrap">
         <div class="chips" id="sys"></div>
         <button type="button" class="more" id="moresys" hidden>More systems</button>
       </div>
+      <div class="recent" id="recent" hidden></div>
       <div class="seg full" id="scopeseg">
         <button type="button" class="on" data-s="all" id="scA">All <b>723</b></button>
         <button type="button" data-s="plate" id="scP">On plate 30</button>
       </div>
-      <div class="count"><span id="cnt"></span>
+      <div class="count"><span id="cnt" aria-live="polite"></span>
         <span class="cr"><span id="sortl"></span>
-        <button class="z" id="ecsv" type="button" title="Download the structures listed below as CSV, with their stereotaxic coordinates">CSV</button></span></div>
+        <button class="z" id="ecsv" type="button" title="Download the structures listed below as CSV, with their stereotaxic coordinates">CSV</button>
+        <button class="z" id="elab" type="button" title="Download every located label of the structures listed below as CSV: one row per printed label, with its stereotaxic triplet">Labels</button></span></div>
     </div>
 
     <div class="pane" id="paneCoord">
@@ -72,7 +75,7 @@
       <p class="texp"><b>Experimental.</b> A straight track to where a structure&rsquo;s
         abbreviation is <em>printed</em>, measured against a brain surface traced off the
         drawings. Check it against anatomy you know before you drive by it.</p>
-      <input type="search" id="tq" placeholder="Target &mdash; name or abbreviation" autocomplete="off">
+      <input type="search" id="tq" aria-label="Target structure" placeholder="Target &mdash; name or abbreviation" autocomplete="off">
       <div class="count"><span id="ttgt">No target yet.</span></div>
       <div class="seg full" id="tside">
         <button type="button" data-h="-1">Left</button>
@@ -92,18 +95,27 @@
         <label class="rvf" title="Moves the target away from the midline on whichever hemisphere is chosen, so left and right stay mirror images of each other."><span>ML mm &middot; lat +</span><input type="number" id="toml" step="0.05" value="0"></label>
         <label class="rvf" title="Moves the target dorsal of the label. Positive is up, toward the surface."><span>DV mm &middot; dors +</span><input type="number" id="todv" step="0.05" value="0"></label>
       </div>
+      <p class="tlbl"><b>Probe and footprint</b> &mdash; optional: the whole shank, or a volume about the target</p>
+      <div class="tgrid">
+        <label class="rvf" title="The length of shank below the brain surface, measured along the track. Set it to read which structures the whole probe spans and what its tip ends in — 3.84 mm is the active length of a Neuropixels 1.0 shank."><span>Probe length mm</span><input type="number" id="tprobe" step="0.1" min="0" max="20" placeholder="e.g. 3.84"></label>
+        <label class="rvf" title="The radius of a sphere about the target — an injection of that volume, if it spread evenly. The plan then lists the share of the sphere in each structure. It places a volume; it does not model how a bolus spreads."><span>Footprint radius mm</span><input type="number" id="tfoot" step="0.05" min="0" max="3" placeholder="e.g. 0.25"></label>
+        <span class="rvf"><span>sphere volume</span><b class="tfv" id="tfootv"></b></span>
+      </div>
       <dl class="tplan" id="tplan"></dl>
-      <p class="tnote" id="twarn" hidden></p>
+      <p class="tnote" id="twarn" hidden aria-live="polite"></p>
+      <div class="tpath" id="tpath" hidden></div>
+      <div class="tpath" id="tfootl" hidden></div>
       <label class="tg" title="Draw the vertical drop and the horizontal offset that the track is the hypotenuse of — what you set on the arm before you lower it"><input type="checkbox" id="tlegs">Right-triangle sides</label>
       <div class="tbtns">
         <button class="b" id="tcopy" type="button" title="Copy the plan as plain text">Copy notes</button>
         <button class="b" id="tdl" type="button" title="Download the plan as a text file">Download</button>
+        <button class="b" id="tjson" type="button" title="Download the plan as JSON: every number the notes carry, typed, with the structures along the track">JSON</button>
         <button class="b" id="tzero" type="button" title="Back to a vertical dorsal approach">Straight down</button>
         <button class="b" id="tozero" type="button" hidden title="Back to the label itself: clears the offset and the plate it was taken from">On the label</button>
       </div>
     </div>
 
-    <div class="list on" id="list"></div>
+    <div class="list on" id="list" role="listbox" aria-label="Structures"></div>
     <div class="list" id="revout"></div>
     <div class="det" id="det" hidden></div>
   </section>
@@ -218,9 +230,9 @@
             <div class="tip" id="tip" hidden></div>
           </div>
         </div>
-        <div class="rdout" id="rd" hidden></div>
+        <div class="rdout" id="rd" hidden aria-live="polite"></div>
         <div class="rdout ms" id="rm" hidden></div>
-        <p class="vhint" id="vhint"></p>
+        <p class="vhint" id="vhint" aria-live="polite"></p>
       </div>
 
       <div class="view" id="projview">
@@ -245,7 +257,7 @@
         <div class="v3w" id="v3w">
           <canvas id="v3c"></canvas>
           <div class="tip" id="v3t" hidden></div>
-          <div class="v3msg" id="v3msg" hidden></div>
+          <div class="v3msg" id="v3msg" hidden aria-live="polite"></div>
         </div>
         <p class="v3n" id="v3n"></p>
       </div>
@@ -466,7 +478,9 @@
       <dt><kbd>+</kbd> <kbd>&minus;</kbd> <kbd>0</kbd></dt><dd>zoom in, out, and back to fit</dd>
       <dt>drag in 3-D</dt><dd>orbit &mdash; which leaves any named view; shift-drag or
         right-drag to pan, wheel to zoom</dd>
+      <dt><kbd>Home</kbd> <kbd>End</kbd></dt><dd>the first and the last plate</dd>
       <dt><kbd>/</kbd></dt><dd>jump to the search box</dd>
+      <dt><kbd>?</kbd></dt><dd>open this panel</dd>
       <dt><kbd>Esc</kbd></dt><dd>drop the selection, or clear a measurement</dd>
       <dt>double-click</dt><dd>zoom into the plate at that point; drag to pan</dd>
       <dt>hover a label</dt><dd>read its full name; click it to select that structure</dd>
