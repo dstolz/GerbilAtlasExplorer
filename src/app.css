@@ -330,6 +330,13 @@ input[type=range]{accent-color:var(--accent)}
 .tip .tn{display:block;font-size:12.5px;margin-top:1px}
 .tip .tx{display:block;font-size:11px;color:var(--muted);margin-top:3px;font-variant-numeric:tabular-nums}
 
+/* The plate hit-tests itself and draws its own highlight -- the outline under the
+   pointer, the tooltip, the selected region -- so the platform's tap highlight is
+   redundant here. It is also alarming: on touch it paints a translucent blue box over
+   the whole of the element that carries the handler, and that element is the entire
+   section. Same for the other surfaces that answer a tap by drawing on themselves. */
+.imgwrap,.pjw,.v3w,.gitem{-webkit-tap-highlight-color:transparent}
+
 /* ---------- overlays drawn on the plate ---------- */
 #grid line{stroke:var(--grid);stroke-opacity:.34;stroke-width:1;vector-effect:non-scaling-stroke}
 #grid line.ax{stroke-opacity:.72;stroke-width:1.6}
