@@ -40,9 +40,9 @@ UNASSIGNED = -1             # the label for a sealed face the atlas does not nam
 class Frame:
     """Fractions of the 1100 x 703 plate frame into stereotaxic millimetres.
 
-    The same two formulae the app applies at gerbil_atlas_explorer.html:1110 and to the
-    outlines at :1910, taken from `plate_frame` rather than copied, so a recalibration
-    moves both together."""
+    The same two formulae the app applies -- `toML()` / `toDV()` in src/app.js, which
+    is also how it reads the outlines -- taken from `plate_frame` rather than copied,
+    so a recalibration moves both together."""
 
     def __init__(self, pf):
         self.x0 = pf['ml_zero_px']
@@ -120,11 +120,10 @@ def grid_for(frame, outline, aps, res=RES, sub=SUB, cap=CAP, margin=0.3):
 def fill(rings, grid):
     """Even-odd fill of a set of closed rings onto the ML x DV lattice.
 
-    Even-odd across the whole set, which is `regIn()` at
-    gerbil_atlas_explorer.html:1683: the two hemispheres of a bilateral structure union,
-    a hole subtracts, and no winding order has to be kept right for either. The crossings
-    of every ring are counted on one scanline together, so that holds without any
-    per-ring bookkeeping."""
+    Even-odd across the whole set, which is `regIn()` in src/app.js: the two hemispheres
+    of a bilateral structure union, a hole subtracts, and no winding order has to be
+    kept right for either. The crossings of every ring are counted on one scanline
+    together, so that holds without any per-ring bookkeeping."""
     m = np.zeros((grid.ny, grid.nx), bool)
     segs = []
     for r in rings:
@@ -316,7 +315,7 @@ def quantise(v, step=0.01):
 
 
 def write_stl(path, v, f, name='mesh'):
-    with open(path, 'w') as fh:
+    with open(path, 'w', encoding='utf8', newline='') as fh:
         fh.write('solid %s\n' % name)
         for t in f:
             a, b, c = v[t[0]], v[t[1]], v[t[2]]

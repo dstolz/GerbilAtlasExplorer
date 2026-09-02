@@ -28,11 +28,12 @@ same offset from the matched patch that the source box had from its own -- so
 what comes out is what the label pass would have written had it read the word.
 
 Reads:  the source PDF (--pdf), data/gerbil_atlas.json
-Writes: data/gerbil_atlas.json (extends label_positions), and the app's
-        __BOX__, which has to stay identical to it
+Writes: data/gerbil_atlas.json (extends label_positions); the app is rebuilt from
+        it by tools/build_app.py. With --qc, qc/chk_found_NN.png for each plate
+        that gained a label, every found box outlined on the plate.
 
 Usage:  python3 tools/find_missing_labels.py --pdf path/to/GerbilAtlas.pdf
-                                             [--dry-run] [--qc]
+                                             [--dry-run] [--qc] [--dump found.json]
 """
 
 import argparse
@@ -44,12 +45,9 @@ import numpy as np
 from scipy.signal import fftconvolve
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from label_blocks import native, to_native, denoise, INK      # noqa: E402
-
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-JSON = os.path.join(ROOT, 'data', 'gerbil_atlas.json')
-HTML = os.path.join(ROOT, 'gerbil_atlas_explorer.html')
-QCDIR = os.path.join(ROOT, 'qc')
+import atlaslib as A                                          # noqa: E402
+from atlaslib import to_native, from_native                   # noqa: E402
+from label_blocks import native, denoise, INK                 # noqa: E402
 
 PAD = 3         # native px of white kept around a cut word
 KEEP = 0.80     # NCC a match has to reach; see the docstring for the spread
@@ -153,25 +151,21 @@ def suppress(score, shape, thr, cap):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('--pdf', default=os.environ.get('GERBIL_ATLAS_PDF', ''))
+    ap.add_argument('--pdf', default=os.environ.get('GERBIL_ATLAS_PDF', ''),
+                    help='the source PDF; or set GERBIL_ATLAS_PDF')
     ap.add_argument('--dry-run', action='store_true')
     ap.add_argument('--qc', action='store_true',
-                    help='write qc/chk_found_labels.png, every word found')
+                    help='write qc/chk_found_NN.png: every word found, boxed on its plate')
     ap.add_argument('--dump', default='',
                     help='also write the finds, with their scores, as JSON')
-    ap.add_argument('--sync-box', action='store_true',
-                    help='only put label_positions into the app as __BOX__')
     a = ap.parse_args()
-    if a.sync_box:
-        sync_box(json.load(open(JSON))['label_positions']['data'])
-        return
     if not a.pdf:
         raise SystemExit('--pdf is required: this matches the printed word, and '
                          "the app's plate is too small to match one on.")
     import pymupdf
     doc = pymupdf.open(a.pdf)
 
-    DB = json.load(open(JSON))
+    DB = A.load_db()
     NW = DB['plate_frame']['width_px']
     NH = DB['plate_frame']['height_px']
     LP = DB['label_positions']['data']
@@ -206,7 +200,7 @@ def main():
                     tpl.setdefault(ab, []).append(t)
         print('cut templates from plate %d' % q, flush=True)
 
-    found, misses, qc = {}, [], []
+    found, misses = {}, []
     for p in sorted(want):
         todo = [ab for ab in want[p] if tpl.get(ab)]
         if not todo:
@@ -248,8 +242,7 @@ def main():
                     continue                     # a located label is already there
                 taken.append((x0, y0, x1, y1))
                 found.setdefault(p, {}).setdefault(ab, []).append(
-                    (from_native(x0, y0, x1, y1, NW, NH), round(s, 3)))
-                qc.append((p, ab, x0, y0, x1, y1, s))
+                    (box_of(x0, y0, x1, y1, NW, NH), round(s, 3)))
             if not hits:
                 misses.append((p, ab))
         print('plate %2d: %d of %d found' % (
@@ -265,85 +258,57 @@ def main():
             '%s x%d (%.2f)' % (ab, len(v), max(s for _b, s in v))
             for ab, v in sorted(found[p].items()))))
     if a.dump:
-        json.dump({str(k): {ab: v for ab, v in d.items()}
-                   for k, d in found.items()}, open(a.dump, 'w'), indent=1)
+        with open(a.dump, 'w', encoding='utf8', newline='') as f:
+            json.dump({str(k): d for k, d in found.items()}, f, indent=1)
         print('wrote %s' % a.dump)
+    if a.qc:
+        qc_draw(found, NW, NH)
     if a.dry_run:
         return
     write(DB, found)
 
 
-def from_native(x0, y0, x1, y1, NW, NH):
-    """Back to the app's frame, in the [cx, cy, w, h] fractions LP stores."""
-    sx = (1031.5 - 10.25) / (2558.0 - 1.0)
-    sy = (692.25 - 10.25) / (1708.5 - 1.0)
-    ax0 = 10.25 + (x0 - 1.0) * sx
-    ay0 = 10.25 + (y0 - 1.0) * sy
-    ax1 = 10.25 + (x1 - 1.0) * sx
-    ay1 = 10.25 + (y1 - 1.0) * sy
+def box_of(x0, y0, x1, y1, NW, NH):
+    """A native page box back in the app's frame, as the [cx, cy, w, h] fractions
+    label_positions stores."""
+    ax0, ay0 = from_native(x0, y0)
+    ax1, ay1 = from_native(x1, y1)
     return [round((ax0 + ax1) / 2 / NW, DEC), round((ay0 + ay1) / 2 / NH, DEC),
             round((ax1 - ax0) / NW, DEC), round((ay1 - ay0) / NH, DEC)]
 
 
 def write(DB, found):
-    """Extend `label_positions` in the JSON, and the app's copy of it.
+    """Extend `label_positions` with what was found and write the database.
 
-    Written in the shape the file already has -- indent of one, expanded, the
-    whole block re-emitted -- because that is what the rest of the file is, and
-    a block written any other way would show up as forty thousand changed lines
-    with the twenty-three new entries hidden somewhere inside them. Round-
-    tripping the committed block through this reproduces it byte for byte.
-
-    `window.__BOX__` is a verbatim dump of `label_positions.data` and has to
-    stay one, so both move together or neither does."""
+    Each plate's abbreviations are kept sorted, as the block is, and the app's
+    __BOX__ is rebuilt from the database by tools/build_app.py."""
     LP = DB['label_positions']['data']
     for p, d in found.items():
         for ab, v in d.items():
             LP.setdefault(str(p), {})[ab] = [b for b, _s in v]
         LP[str(p)] = {k: LP[str(p)][k] for k in sorted(LP[str(p)])}
-    src = open(JSON, encoding='utf8').read()
-    a = src.index('\n "label_positions": {')
-    depth, end = 0, None
-    for k in range(a + 1, len(src)):
-        if src[k] == '{':
-            depth += 1
-        elif src[k] == '}':
-            depth -= 1
-            if depth == 0:
-                end = k + 1
-                break
-    body = json.dumps(DB['label_positions'], indent=1, ensure_ascii=False)
-    block = ' "label_positions": ' + '\n'.join(
-        (' ' + l if i else l) for i, l in enumerate(body.split('\n')))
-    out = src[:a + 1] + block + src[end:]
-    json.loads(out)                              # never write something unreadable
-    tmp = JSON + '.tmp'
-    with open(tmp, 'w', encoding='utf8', newline='') as f:
-        f.write(out)
-    os.replace(tmp, JSON)
-    print('wrote %s' % JSON)
-    sync_box(LP)
+    DB['label_positions']['data'] = {k: LP[k] for k in sorted(LP, key=int)}
+    A.save_db(DB)
+    print('wrote %s' % A.JSON)
 
 
-def sync_box(LP):
-    """Put `label_positions.data` into the app as __BOX__, where it has to match.
-
-    Not a line match: __BOX__ does not start its line -- it follows the tail of
-    a 6 MB base64 blob on the same one -- so the object is found by decoding it,
-    which also says exactly where it ends."""
-    src = open(HTML, encoding='utf8').read()
-    tag = 'window.__BOX__='
-    i = src.find(tag)
-    if i < 0:
-        raise SystemExit(tag + ' not found in ' + HTML)
-    j = i + len(tag)
-    _obj, end = json.JSONDecoder().raw_decode(src, j)
-    out = src[:j] + json.dumps(LP, separators=(',', ':')) + src[j + (end - j):]
-    tmp = HTML + '.tmp'
-    with open(tmp, 'w', encoding='utf8', newline='') as f:
-        f.write(out)
-    os.replace(tmp, HTML)
-    print('wrote __BOX__ into %s' % HTML)
+def qc_draw(found, NW, NH):
+    """Every found box outlined on the plate it was found on, one PNG per plate
+    that gained a label, with the abbreviation and its score beside it."""
+    from PIL import ImageDraw
+    os.makedirs(A.QCDIR, exist_ok=True)
+    for p in sorted(found):
+        im = A.plate_image('drawing', p).convert('RGB')
+        d = ImageDraw.Draw(im)
+        for ab, v in sorted(found[p].items()):
+            for (cx, cy, w, h), s in v:
+                x0, y0 = (cx - w / 2) * NW, (cy - h / 2) * NH
+                x1, y1 = (cx + w / 2) * NW, (cy + h / 2) * NH
+                d.rectangle((x0 - 1, y0 - 1, x1 + 1, y1 + 1), outline=(0, 110, 255))
+                d.text((x0, y1 + 2), '%s %.2f' % (ab, s), fill=(0, 110, 255))
+        path = os.path.join(A.QCDIR, 'chk_found_%02d.png' % p)
+        im.save(path)
+        print('  wrote %s' % os.path.relpath(path, A.ROOT))
 
 
 if __name__ == '__main__':

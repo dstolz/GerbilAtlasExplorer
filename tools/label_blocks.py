@@ -37,8 +37,8 @@ told from an `l`. The published pages carry the same plate at 2558 x 1708 -- 2.5
 a 20 px glyph, letters cleanly apart -- which is the same source, and the same
 reason the label pass itself was run there. See METHODS.
 
-Reads:  the source PDF (--pdf), data/gerbil_atlas.json
-Writes: data/gerbil_atlas.json (adds `label_blocks`), optional qc/chk_blocks_NN.png
+Reads:  the source PDF (--pdf), data/gerbil_atlas.json, svg/*.svg, data/vec.json
+Writes: data/gerbil_atlas.json (`label_blocks`), optional qc/chk_blocks_NN.png
 
 Usage:  python3 tools/label_blocks.py --pdf path/to/GerbilAtlas4Analysis.pdf
                                       [--qc] [--dry-run]
@@ -46,26 +46,22 @@ Usage:  python3 tools/label_blocks.py --pdf path/to/GerbilAtlas4Analysis.pdf
 
 import argparse
 import io
-import json
 import os
-
-import re
+import sys
 
 import numpy as np
 from PIL import Image
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-JSON = os.path.join(ROOT, 'data', 'gerbil_atlas.json')
-QCDIR = os.path.join(ROOT, 'qc')
-
-# the printed axes frame, in native page px and in the app's plate px
-FRAME_N = (1.0, 1.0, 2558.0, 1708.5)
-FRAME_A = (10.25, 10.25, 1031.5, 692.25)
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import atlaslib as A                                           # noqa: E402
+# the printed axes frame, in native page px and in the app's plate px, and the map
+# between them; re-exported here because label_leaders.py and
+# find_missing_labels.py read them from this module
+from atlaslib import FRAME_N, FRAME_A, to_native               # noqa: E402,F401
 
 INK = 110       # 0-255; line art over a speckled halftone ground
 SEEK = 2        # native px a mapped box may be nudged to seat on its own ink
 RUN = 2         # columns of white that separate one glyph from the next
-OVER = 1.7      # a stroke taller than this many line heights is a drawn line
 ROW = 7         # native px of baseline scatter that is still the same line
 GAP = 7         # columns of white still inside one printed word
 REACH = 40      # native px looked along a line for punctuation past the letters
@@ -82,10 +78,6 @@ ALIGN = 12      # native px: how nearly a wrapped line starts under its first
 WIDEN = 2       # native px the traced paths are thickened by before that test
 
 
-SVGDIR = os.path.join(ROOT, 'svg')
-HTML = os.path.join(ROOT, 'gerbil_atlas_explorer.html')
-
-
 # One label the read cannot reach, and why. On plate 49 the slash of "PM/ Cop"
 # is drawn along the very boundary it names, so the tracing runs down it and the
 # test below cannot tell the mark from the line -- at every threshold that keeps
@@ -98,35 +90,24 @@ ALSO = {49: [['PM', 'Cop']]}
 
 # ---------------------------------------------------------------- the tracings
 
-def load_vec_matrices():
-    """`__VEC__[plate].m` maps the tracing's page frame onto the plate frame."""
-    with open(HTML) as f:
-        for line in f:
-            if line.startswith('<script>window.__VEC__='):
-                s = line.index('{')
-                return {k: v['m'] for k, v in json.loads(line[s:line.rindex('}') + 1]).items()}
-    raise SystemExit('window.__VEC__ not found in ' + HTML)
-
-
 def traced_mask(plate, VECM, shape_, cache={}):
     """Every line the atlas draws on this plate, in the native page frame.
 
-    svg/ holds them in the frame they were traced in; __VEC__ carries that onto
-    the app's plate frame, and to_native carries it on to this one."""
+    svg/ holds them in the frame they were traced in; the matrices in
+    data/vec.json (atlaslib.vec_matrices) carry that onto the app's plate frame,
+    and to_native carries it on to this one. Each cubic is cut into twelve, as
+    it always was here."""
     if plate in cache:
         return cache[plate]
-    path = os.path.join(SVGDIR, 'GerbilAtlas_Plate_%02d.svg' % plate)
-    if not os.path.exists(path):
+    if not os.path.exists(os.path.join(A.SVGDIR, 'GerbilAtlas_Plate_%02d.svg' % plate)):
         return None
     m = VECM[str(plate)]
-    txt = open(path).read()
     mask = np.zeros(shape_, bool)
-    for d in re.findall(r'<path d="([^"]+)"', txt):
-        pts = flatten(d)
+    for d, _sw, _gid in A.read_svg(plate):
+        pts = [p for sub, _closed in A.flatten(d, seg=12) for p in sub]
         if len(pts) < 2:
             continue
-        q = [to_native(m[0] * x + m[2] * y + m[4], m[1] * x + m[3] * y + m[5])
-             for x, y in pts]
+        q = [to_native(*A.xf(m, x, y)) for x, y in pts]
         draw(mask, q)
     if WIDEN:
         k = WIDEN
@@ -140,34 +121,11 @@ def traced_mask(plate, VECM, shape_, cache={}):
     return mask
 
 
-def flatten(d):
-    """Flatten the tracer's M/C/Z path to a polyline. It emits nothing else."""
-    t = d.replace(',', ' ').split()
-    pts, cur, i = [], None, 0
-    while i < len(t):
-        if t[i] == 'M':
-            cur = (float(t[i + 1]), float(t[i + 2]))
-            pts.append(cur)
-            i += 3
-        elif t[i] == 'C':
-            p0 = cur
-            p = [(float(t[i + 1]), float(t[i + 2])), (float(t[i + 3]), float(t[i + 4])),
-                 (float(t[i + 5]), float(t[i + 6]))]
-            for k in range(1, 13):
-                u = k / 12.0
-                v = 1 - u
-                pts.append((v ** 3 * p0[0] + 3 * v * v * u * p[0][0] +
-                            3 * v * u * u * p[1][0] + u ** 3 * p[2][0],
-                            v ** 3 * p0[1] + 3 * v * v * u * p[0][1] +
-                            3 * v * u * u * p[1][1] + u ** 3 * p[2][1]))
-            cur = p[2]
-            i += 7
-        else:
-            i += 1
-    return pts
-
-
 def draw(mask, pts):
+    """A polyline into a mask, one pixel per step of its longer axis.
+
+    Not atlaslib.rasterize: that is Bresenham between integer endpoints, and the
+    committed blocks were read against a mask drawn this way."""
     H, W = mask.shape
     for i in range(len(pts) - 1):
         x0, y0 = pts[i]
@@ -190,13 +148,6 @@ def native(doc, plate):
     xref = doc[plate - 1].get_images(full=True)[0][0]
     im = Image.open(io.BytesIO(doc.extract_image(xref)['image']))
     return im.rotate(-90, expand=True).convert('L')
-
-
-def to_native(x, y):
-    sx = (FRAME_N[2] - FRAME_N[0]) / (FRAME_A[2] - FRAME_A[0])
-    sy = (FRAME_N[3] - FRAME_N[1]) / (FRAME_A[3] - FRAME_A[1])
-    return (FRAME_N[0] + (x - FRAME_A[0]) * sx,
-            FRAME_N[1] + (y - FRAME_A[1]) * sy)
 
 
 def denoise(ink):
@@ -299,7 +250,8 @@ def shape(ink, sub, g, x0, y0, y1, tall, part, traced=None):
     # does not have to: the boundaries are already vectorised in svg/, so a
     # candidate sitting on a traced path is a boundary, said and not guessed.
     if traced is not None:
-        hit = traced[max(0, y0):y1, x0 + g[0]:x0 + g[-1] + 1][s].mean()             if s.any() else 0.0
+        hit = (traced[max(0, y0):y1, x0 + g[0]:x0 + g[-1] + 1][s].mean()
+               if s.any() else 0.0)
         if hit > ONLINE:
             return None
 
@@ -395,14 +347,16 @@ def blocks(ink, boxes, traced=None):
             # starts where the line above it started. Without that, an `E/OV`
             # whose `OV` the line grouping missed reaches down and claims the
             # `AOE` printed under it, which is a different label on a leader.
-            runs_on = up_tail == '/' and                 abs(span[2] - up_span[2]) <= ALIGN
+            runs_on = (up_tail == '/'
+                       and abs(span[2] - up_span[2]) <= ALIGN)
             if not (runs_on or bracketed):
                 continue
             hi, lo = boxes[up_ln[0]][1], boxes[ln[0]][1]
             h = max(1, boxes[up_ln[0]][3] - hi)
             if not 0 < lo - hi <= NEXT * h:
                 continue
-            if min(span[3], up_span[3]) - max(span[2], up_span[2]) <                     SIDE * min(span[3] - span[2], up_span[3] - up_span[2]):
+            if (min(span[3], up_span[3]) - max(span[2], up_span[2])
+                    < SIDE * min(span[3] - span[2], up_span[3] - up_span[2])):
                 continue
             # Only the boxes actually standing under one another. A line can
             # carry a second label further along it -- "CG2/ RSGc" with a `cg`
@@ -433,12 +387,14 @@ def main():
                          "app's downsampled copy. See the module docstring.")
     import pymupdf
     doc = pymupdf.open(a.pdf)
-    VECM = load_vec_matrices()
+    VECM = A.vec_matrices()
 
-    DB = json.load(open(JSON))
+    DB = A.load_db()
     NW = DB['plate_frame']['width_px']
     NH = DB['plate_frame']['height_px']
     LP = DB['label_positions']['data']
+    if a.qc:
+        os.makedirs(A.QCDIR, exist_ok=True)
 
     out, found = {}, []
     for p in sorted(LP, key=int):
@@ -498,7 +454,7 @@ def main():
         print('  %-24s plates %s' % ('/'.join(nm), ','.join(str(x) for x in ps)))
     if a.dry_run:
         return
-    write_block(out)
+    write_block(DB, out)
 
 
 def qc_draw(im, boxes, bl, p):
@@ -510,7 +466,7 @@ def qc_draw(im, boxes, bl, p):
                      min(boxes[k][1] for k in g) - 5,
                      max(boxes[k][2] for k in g) + 5,
                      max(boxes[k][3] for k in g) + 5), outline=(0, 110, 255))
-    c.save(os.path.join(QCDIR, 'chk_blocks_%02d.png' % int(p)))
+    c.save(os.path.join(A.QCDIR, 'chk_blocks_%02d.png' % int(p)))
 
 
 NOTE = ("Abbreviations the atlas typesets into one printed label, per plate, and "
@@ -523,38 +479,12 @@ NOTE = ("Abbreviations the atlas typesets into one printed label, per plate, and
         "for any name in a group with the group's one outline.")
 
 
-def write_block(out):
-    """Append `label_blocks` to the JSON in the style the file already uses.
-
-    Not json.dump over the whole thing: the file is hand-shaped, one compact
-    line per plate, and rewriting it wholesale would bury this in a diff of
-    61,000 changed lines."""
-    j = lambda o: json.dumps(o, separators=(',', ':'), ensure_ascii=False)
-    L = [' "label_blocks": {', '  "note": %s,' % j(NOTE), '  "data": {']
-    items = sorted(out, key=int)
-    for i, p in enumerate(items):
-        L.append('   %s: %s%s' % (j(p), j(out[p]),
-                                  '' if i == len(items) - 1 else ','))
-    L += ['  }', ' }']
-    txt = '\n'.join(L)
-
-    src = open(JSON).read()
-    a = src.find('\n "label_blocks": {\n')
-    if a >= 0:                                   # drop the previous block
-        b = src.index('\n }', a)
-        src = src[:a] + src[src.index('\n', b + 3):]
-    tail = src.rstrip()
-    assert tail.endswith('}'), 'unexpected end of ' + JSON
-    body = tail[:-1].rstrip()
-    if body.endswith(','):
-        body = body[:-1]
-    o = body + ',\n' + txt + '\n}\n'
-    json.loads(o)                                # never write something unreadable
-    tmp = JSON + '.tmp'
-    with open(tmp, 'w') as f:
-        f.write(o)
-    os.replace(tmp, JSON)
-    print('wrote %s' % JSON)
+def write_block(DB, out):
+    """`label_blocks` into the database: the note, and one line per plate that
+    carries a joined label (atlaslib.render_db lays the block out that way)."""
+    DB['label_blocks'] = {'note': NOTE, 'data': {p: out[p] for p in sorted(out, key=int)}}
+    A.save_db(DB)
+    print('wrote %s' % A.JSON)
 
 
 if __name__ == '__main__':

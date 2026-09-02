@@ -43,15 +43,13 @@ The pipeline, in order:
      Store as fractions of the app's 1100 x 703 plate frame, the frame and
      convention brain_outline already uses.
 
-Reads:  svg/*.svg, data/gerbil_atlas.json, the __VEC__ matrices in the HTML
-Writes: data/gerbil_atlas.json (adds `region_extents`), optional qc/ overlays
+Reads:  svg/*.svg, data/gerbil_atlas.json, the page-to-plate matrices in data/vec.json
+Writes: data/gerbil_atlas.json (`region_extents`), optional qc/chk_regions_NN.png
 
-Usage:  python3 tools/build_region_extents.py [--plates 1,30,45] [--qc] [--dry-run]
+Usage:  python3 tools/build_region_extents.py [--plates 30 | 28-33 | 5,30,45] [--qc] [--dry-run]
 """
 
 import argparse
-import base64
-import io
 import json
 import math
 import os
@@ -64,13 +62,9 @@ from scipy.spatial import cKDTree
 from skimage.segmentation import watershed
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import regiongeom as G
-
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-JSON = os.path.join(ROOT, 'data', 'gerbil_atlas.json')
-HTML = os.path.join(ROOT, 'gerbil_atlas_explorer.html')
-SVGDIR = os.path.join(ROOT, 'svg')
-QCDIR = os.path.join(ROOT, 'qc')
+import atlaslib as A                              # noqa: E402
+import regiongeom as G                            # noqa: E402
+from atlaslib import xf, inv6, pip, poly_area     # noqa: E402
 
 BRIDGE_PX = 20      # page px; 99% of tracing gaps are under 25, 94% under 12
 DP_PX = 2.0         # plate px, as brain_outline uses: 35 um
@@ -85,10 +79,17 @@ DEC = 5             # fraction decimals, matching brain_outline
 
 
 # ---------------------------------------------------------------- svg reading
+#
+# Kept here rather than taken from atlaslib, on purpose: atlaslib.flatten cuts a
+# cubic into more segments (its chord includes the p0-p3 span) and
+# atlaslib.rasterize is Bresenham between integer endpoints, and the committed
+# extents were cut with the two below. Either change moves boundary pixels, so
+# they stay until the extents are rebuilt on purpose.
 
 def read_svg(path):
     """Return (width, height, [polyline, ...]) for one traced plate."""
-    txt = open(path).read()
+    with open(path, encoding='utf8') as f:
+        txt = f.read()
     vb = re.search(r'viewBox="([^"]+)"', txt).group(1).split()
     W, H = int(float(vb[2])), int(float(vb[3]))
     polys = []
@@ -134,18 +135,6 @@ def flatten(d):
 
 # ------------------------------------------------------------------ geometry
 
-def inv6(m):
-    a, b, c, d, e, f = m
-    det = a * d - b * c
-    return (d / det, -b / det, -c / det, a / det,
-            (c * f - d * e) / det, (b * e - a * f) / det)
-
-
-def xf(m, x, y):
-    a, b, c, d, e, f = m
-    return (a * x + c * y + e, b * x + d * y + f)
-
-
 def rasterize(mask, pts, W, H):
     """Draw a polyline as a 1-px 8-connected wall. Eight-connected ink blocks a
     four-connected fill, so a one-pixel line is a watertight boundary."""
@@ -165,7 +154,7 @@ def rasterize(mask, pts, W, H):
 # ------------------------------------------------------------------ per plate
 
 def build_plate(plate, DB, VECM, want_qc=False):
-    W, H, polys = read_svg(os.path.join(SVGDIR, 'GerbilAtlas_Plate_%02d.svg' % plate))
+    W, H, polys = read_svg(os.path.join(A.SVGDIR, 'GerbilAtlas_Plate_%02d.svg' % plate))
     NW = DB['plate_frame']['width_px']
     NH = DB['plate_frame']['height_px']
     m = VECM[str(plate)]
@@ -433,28 +422,19 @@ def support(ring, near):
 
 # ---------------------------------------------------------------------- main
 
-def load_vec_matrices():
-    with open(HTML) as f:
-        for i, line in enumerate(f, 1):
-            if line.startswith('<script>window.__VEC__='):
-                s = line.index('{')
-                e = line.rindex('}')
-                return {k: v['m'] for k, v in json.loads(line[s:e + 1]).items()}
-    raise SystemExit('window.__VEC__ not found in ' + HTML)
-
-
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('--plates', default='', help='e.g. 1,30,45; default all')
+    A.add_plates_arg(ap)
     ap.add_argument('--dry-run', action='store_true',
                     help='report only, do not touch data/gerbil_atlas.json')
-    ap.add_argument('--qc', action='store_true', help='write qc/ overlays')
+    ap.add_argument('--qc', action='store_true', help='write qc/chk_regions_NN.png')
     a = ap.parse_args()
 
-    DB = json.load(open(JSON))
-    VECM = load_vec_matrices()
-    plates = ([int(x) for x in a.plates.split(',')] if a.plates
-              else [p['plate'] for p in DB['plates']])
+    DB = A.load_db()
+    VECM = A.vec_matrices()
+    plates = a.plates or [p['plate'] for p in DB['plates']]
+    if a.qc:
+        os.makedirs(A.QCDIR, exist_ok=True)
 
     data, unass, rows = {}, {}, []
     for p in plates:
@@ -468,7 +448,7 @@ def main():
             unass[str(p)] = ua
         rows.append(st)
         if a.qc and qc:
-            write_qc(p, qc, out)
+            write_qc(p, qc)
         print('plate %2d: %3d regions %4d polys %6d pts | %3d seeds '
               '(%d snapped, %d dropped) | %2d unassigned | %.0f%% covered'
               % (p, st['regions'], st['polys'], st['pts'], st['seeds'],
@@ -495,71 +475,30 @@ def main():
     summary.update(check_tiling(data, unass, DB))
     print('\n' + json.dumps(summary, indent=1))
 
-    if a.dry_run:
+    if A.refuse_partial_write(a, 'region_extents'):
         return
-    write_block(dict(
+    write_block(DB, dict(
         note=NOTE,
         derivation=DERIV,
-        validation=validation_text(summary),
+        validation=validation_text(summary, DB),
         grades={'traced': 0.9, 'estimated': 0.5},
         summary=summary,
-        data=data,
-        unassigned=unass))
+        data={p: data[p] for p in sorted(data, key=int)},
+        unassigned={p: unass[p] for p in sorted(unass, key=int)}))
 
 
-def write_block(block):
-    """Splice `region_extents` into the JSON in the style the file already uses.
+def write_block(DB, block):
+    """`region_extents` into the database, whole.
 
-    Not json.dump over the whole thing: the file is hand-shaped -- one compact
-    line per plate under `brain_outline.data`, expanded elsewhere -- and
-    rewriting it wholesale turns a reviewable diff into 61,000 changed lines
-    with the new data hidden somewhere inside it. So the existing text is left
-    byte for byte alone and the new block is appended to it.
-
-    Re-running replaces the block rather than adding a second one."""
-    j = lambda o: json.dumps(o, separators=(',', ':'), ensure_ascii=False)
-    L = [' "region_extents": {']
-    for k in ('note', 'derivation', 'validation'):
-        L.append('  %s: %s,' % (j(k), j(block[k])))
-    L.append('  "grades": %s,' % j(block['grades']))
-    L.append('  "summary": %s,' % j(block['summary']))
-    for key in ('data', 'unassigned'):
-        L.append('  %s: {' % j(key))
-        items = sorted(block[key], key=int)
-        for i, p in enumerate(items):
-            L.append('   %s: %s%s' % (j(p), j(block[key][p]),
-                                      '' if i == len(items) - 1 else ','))
-        L.append('  }%s' % ('' if key == 'unassigned' else ','))
-    L.append(' }')
-    txt = '\n'.join(L)
-
-    src = open(JSON).read()
-    a = src.find('\n "region_extents": {\n')
-    if a >= 0:                                   # drop the previous block
-        b = src.index('\n }', a)
-        end = src.index('\n', b + 3)
-        src = src[:a] + src[end:]
-    tail = src.rstrip()
-    assert tail.endswith('}'), 'unexpected end of ' + JSON
-    body = tail[:-1].rstrip()
-    if body.endswith(','):
-        body = body[:-1]
-    out = body + ',\n' + txt + '\n}\n'
-    json.loads(out)                              # never write something unreadable
-    tmp = JSON + '.tmp'
-    with open(tmp, 'w') as f:
-        f.write(out)
-    os.replace(tmp, JSON)
-    print('wrote %s (%.2f MB)' % (JSON, os.path.getsize(JSON) / 1e6))
+    The block is keyed by plate and replaced as one, which is why a run over some
+    plates reports and does not write. atlaslib.render_db lays it out one compact
+    line per plate, so a re-run still diffs by plate."""
+    DB['region_extents'] = block
+    A.save_db(DB)
+    print('wrote %s (%.2f MB)' % (A.JSON, os.path.getsize(A.JSON) / 1e6))
 
 
 # ------------------------------------------------------------ verification
-
-def poly_area(g):
-    x = np.array([p[0] for p in g])
-    y = np.array([p[1] for p in g])
-    return 0.5 * float(np.dot(x[:-1], y[1:]) - np.dot(x[1:], y[:-1]))
-
 
 def check_tiling(data, unass, DB):
     """Do the regions plus the unassigned faces add up to the section, and does
@@ -572,10 +511,8 @@ def check_tiling(data, unass, DB):
     NH = DB['plate_frame']['height_px']
     worst_gap, ins, tot = 0.0, 0, 0
     for p, regs in data.items():
-        s = sum(abs(poly_area(g)) * (1 if poly_area(g) > 0 else -1)
-                for v in regs.values() for g in v['g'])
-        s += sum(abs(poly_area(g)) * (1 if poly_area(g) > 0 else -1)
-                 for g in unass.get(p, []))
+        s = sum(poly_area(g) for v in regs.values() for g in v['g'])
+        s += sum(poly_area(g) for g in unass.get(p, []))
         o = sum(abs(poly_area(g)) for g in DB['brain_outline']['data'][p])
         if o:
             worst_gap = max(worst_gap, abs(abs(s) - o) / o)
@@ -625,32 +562,15 @@ def check_shared_edges(data, unass):
     return round(1 - bad / seen, 5) if seen else 1.0
 
 
-def pip(g, x, y):
-    c = False
-    j = len(g) - 1
-    for i in range(len(g)):
-        a, b = g[i], g[j]
-        if (a[1] > y) != (b[1] > y) and \
-           x < (b[0] - a[0]) * (y - a[1]) / (b[1] - a[1]) + a[0]:
-            c = not c
-        j = i
-    return c
-
-
-def write_qc(plate, qc, out):
+def write_qc(plate, qc):
     """Overlay the regions on the plate drawing, tinted by how much of each
     boundary the atlas actually prints: green where it is drawn, red where the
     split had to be inferred. This is the check a reader can make by eye, and
     the one that catches a leak the numbers average away."""
     from PIL import Image
-    LBL, interior, traced, m, W, H, order, sup = qc
-    NW, NH = 1100, 703
-    line = next(l for l in open(HTML) if 'window.__IMG__=' in l)
-    j = line.index('{', line.index('window.__IMG__='))
-    k = line.index('window.__BOX__')
-    src = json.loads(line[j:line.rindex('}', j, k) + 1])[str(plate)]
-    base = Image.open(io.BytesIO(base64.b64decode(
-        src.split(',')[1]))).convert('RGB')
+    LBL, _interior, _traced, m, W, H, order, sup = qc
+    NW, NH = A.NW, A.NH
+    base = A.plate_image('drawing', plate).convert('RGB')
 
     # sample the page-frame label image on the plate-frame lattice
     im = inv6(m)
@@ -669,16 +589,22 @@ def write_qc(plate, qc, out):
     idx = np.where((lab >= 1) & (lab <= nreg), lab, nreg + 1)
     ov = Image.fromarray(tint[idx])
     img = Image.blend(base, ov, 0.42)
-    path = os.path.join(QCDIR, 'chk_regions_%02d.png' % plate)
+    path = os.path.join(A.QCDIR, 'chk_regions_%02d.png' % plate)
     img.save(path)
     print('  wrote %s' % path)
 
 
-def validation_text(v):
+def validation_text(v, DB):
+    """The summary as prose. Every number in it is read off the data, the two
+    denominators included: what the label pass located is the (plate, abbreviation)
+    pairs in label_positions, what the index lists is the plates of every structure."""
     pc = lambda k: '%.0f%%' % (100 * v[k])
+    located = sum(len(d) for d in DB['label_positions']['data'].values())
+    indexed = sum(len(s['plates']) for s in DB['structures'])
+    n = v['structure_plate_entries']
     return (
-        "%(n)d structure-plate entries carry an area -- 95%% of the 3,270 the "
-        "label pass located, 89%% of the 3,506 the published index lists -- as "
+        "%(n)d structure-plate entries carry an area -- %(of_loc)s of the %(loc)s the "
+        "label pass located, %(of_idx)s of the %(idx)s the published index lists -- as "
         "%(poly)d polygons over %(pts)d points. Of the %(seed)d printed labels "
         "seeded, %(led)d are printed outside their region with a line drawn "
         "back into it and were seeded at the end of that line rather than on "
@@ -696,7 +622,9 @@ def validation_text(v):
         "plate. Per polygon, the share of the border lying on ink the tracing "
         "actually drew: median %(med).2f, %(ge90)s at or above 0.90, %(ge75)s "
         "at or above 0.75, %(lt50)s below 0.50."
-    ) % dict(n=v['structure_plate_entries'], poly=v['polygons'],
+    ) % dict(n=n, poly=v['polygons'],
+             loc='{:,}'.format(located), of_loc='%.0f%%' % (100.0 * n / max(located, 1)),
+             idx='{:,}'.format(indexed), of_idx='%.0f%%' % (100.0 * n / max(indexed, 1)),
              pts=v['points'], seed=v['labels_seeded'],
              led=v['labels_on_a_leader'], snap=v['labels_relocated'],
              drop=v['labels_dropped'],

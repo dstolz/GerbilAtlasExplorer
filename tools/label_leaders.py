@@ -19,7 +19,7 @@ Nothing here reads letters either. A leader is the only thing on the page that
 is all three of: ink the tracing did not draw, straight over its whole length,
 and running out of a located label. So:
 
-  1. Ink is `A < INK`, as the rest of the label pass has it, but *not* denoised:
+  1. Ink is `page < INK`, as the rest of the label pass has it, but *not* denoised:
      `denoise` wants two orthogonal neighbours and a two-pixel diagonal rule has
      none, so it deletes exactly what this is looking for.
   2. Subtract the tracing -- every line the atlas draws, from `svg/` -- and the
@@ -40,15 +40,15 @@ and running out of a located label. So:
   6. Then read all 228 against the printed plate, because the shape tests cannot
      settle every one of them -- see REJECT.
 
-Reads:  the source PDF (--pdf), svg/*.svg, data/gerbil_atlas.json, __VEC__
-Writes: data/gerbil_atlas.json (adds `label_leaders`), and the app's __LEAD__
+Reads:  the source PDF (--pdf), svg/*.svg, data/gerbil_atlas.json, data/vec.json
+Writes: data/gerbil_atlas.json (`label_leaders`); the app is rebuilt from it by
+        tools/build_app.py
 
 Usage:  python3 tools/label_leaders.py --pdf path/to/GerbilAtlas.pdf
                                        [--plates 30,31] [--dry-run] [--qc]
 """
 
 import argparse
-import json
 import math
 import os
 import sys
@@ -57,15 +57,9 @@ import numpy as np
 from scipy import ndimage
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from label_blocks import (native, to_native, load_vec_matrices,      # noqa: E402
-                          traced_mask, INK, FRAME_N, FRAME_A)
-
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-JSON = os.path.join(ROOT, 'data', 'gerbil_atlas.json')
-HTML = os.path.join(ROOT, 'gerbil_atlas_explorer.html')
-QCDIR = os.path.join(ROOT, 'qc')
-
-NW, NH = 1100, 703      # the app's plate frame, which the output is in
+import atlaslib as A                                                 # noqa: E402
+from atlaslib import NW, NH, FRAME_N, FRAME_A, to_native, from_native  # noqa: E402
+from label_blocks import native, traced_mask, INK                    # noqa: E402
 
 # Everything below is native page px at 300 dpi. The plate frame is 2.33x
 # smaller, so a number here is a little under half of one there.
@@ -94,6 +88,12 @@ DEC = 4             # fraction decimals, as label_positions already uses
 # plate 30 stops four pixels under `VMHDM` and is real -- so they are listed
 # here, which is what lets a re-run reproduce the committed block and a reader
 # check the judgement rather than take it.
+#
+# An entry is keyed (plate, abbreviation), which puts aside every impression of
+# that abbreviation on the plate -- a word is printed on both hemispheres -- or
+# (plate, abbreviation, index), which puts aside one of them, `index` being the
+# label's position in its label_positions list, as the output keys on. None of
+# the entries below needed the index; see rejected().
 REJECT = {
     (8, 'Gl'): "aci's line, picked up past the stub beside Gl",
     (10, 'GrO'): "Mi's line, which ends beside GrO",
@@ -108,6 +108,13 @@ REJECT = {
                  'the only piece left starts under an over-tall MSO box',
     (47, 'MSO'): "a piece of MVPO's line, as on plate 45",
 }
+
+
+def rejected(plate, ab, index):
+    """Why a label's line was put aside on reading the page, or None.
+
+    An entry with an index applies to that impression; one without applies to all."""
+    return REJECT.get((plate, ab, index)) or REJECT.get((plate, ab))
 
 
 def boxdist(p, b):
@@ -185,15 +192,15 @@ def march(free, tr, start, d, shape, maxlen, box=None, skipmax=SKIP):
     return last, False
 
 
-def leaders(A, tr, boxes, blocks=()):
+def leaders(page, tr, boxes, blocks=()):
     """Every located label on one plate that has a line, and where it points."""
-    shape = A.shape
+    shape = page.shape
     H, W = shape
     occ = np.zeros(shape, bool)
     for x0, y0, x1, y1 in [b[1:] for b in boxes] + list(blocks):
         occ[max(0, int(y0) - PAD):int(y1) + 1 + PAD,
             max(0, int(x0) - PAD):int(x1) + 1 + PAD] = True
-    free = (A < INK) & ~tr & ~occ
+    free = (page < INK) & ~tr & ~occ
 
     # A piece is one line's, not one label's: two labels can each reach it and
     # only one of them printed it, so the claims are collected against the piece
@@ -304,14 +311,9 @@ def joined(DB, plate, boxes):
     return out
 
 
+# plate px per native page px, along each axis
 PX = ((FRAME_A[2] - FRAME_A[0]) / (FRAME_N[2] - FRAME_N[0]),
       (FRAME_A[3] - FRAME_A[1]) / (FRAME_N[3] - FRAME_N[1]))
-
-
-def to_plate(x, y):
-    """The inverse of to_native: a native page point in the app's plate frame."""
-    return (FRAME_A[0] + (x - FRAME_N[0]) * PX[0],
-            FRAME_A[1] + (y - FRAME_N[1]) * PX[1])
 
 
 def inside(polys, x, y):
@@ -332,7 +334,7 @@ def inside(polys, x, y):
 
 # ------------------------------------------------------------------------- qc
 
-def qc_draw(A, boxes, out, path):
+def qc_draw(page, boxes, out, path):
     """The plate at half size, every box outlined and every line drawn to its tip.
 
     Half the page, and paletted: the halftone ground is most of what a
@@ -341,8 +343,8 @@ def qc_draw(A, boxes, out, path):
     over a page of greys throws the three marks away, which are the whole point.
     A leader is still a line and its tip is still a dot at 150 dpi."""
     from PIL import Image
-    H, W = A.shape
-    q = np.asarray(Image.fromarray(A.astype(np.uint8))
+    H, W = page.shape
+    q = np.asarray(Image.fromarray(page.astype(np.uint8))
                    .resize((W // 2, H // 2), Image.LANCZOS)) // 4
     pal = [(g * 4, g * 4, g * 4) for g in range(64)]
     BOX, LINE, TIP = 64, 65, 66
@@ -369,12 +371,10 @@ def qc_draw(A, boxes, out, path):
             put(c[1], c[0], LINE)
         q[max(0, int(e[1]) - 2):int(e[1]) + 3,
           max(0, int(e[0]) - 2):int(e[0]) + 3] = TIP
-    if not os.path.isdir(QCDIR):
-        os.makedirs(QCDIR)
     im = Image.fromarray(q.astype(np.uint8), 'P')
     im.putpalette([v for c in pal for v in c] + [0] * (3 * (256 - len(pal))))
     im.save(path, optimize=True)
-    print('   wrote %s' % os.path.relpath(path, ROOT))
+    print('   wrote %s' % os.path.relpath(path, A.ROOT))
 
 
 # ----------------------------------------------------------------------- main
@@ -391,19 +391,25 @@ NOTE = ("Where the atlas prints an abbreviation outside the region it names and 
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('--pdf', required=True, help='the published atlas PDF')
-    ap.add_argument('--plates', help='e.g. 30 or 28-33 or 5,30,45')
+    ap.add_argument('--pdf', default=os.environ.get('GERBIL_ATLAS_PDF', ''),
+                    help='the published atlas PDF; or set GERBIL_ATLAS_PDF')
+    A.add_plates_arg(ap)
     ap.add_argument('--dry-run', action='store_true')
     ap.add_argument('--qc', action='store_true',
                     help='write qc/chk_leader_NN.png per plate')
     a = ap.parse_args()
+    if not a.pdf:
+        raise SystemExit('--pdf is required: this reads the printed page, not the '
+                         "app's downsampled copy. See the module docstring.")
 
     import pymupdf
-    DB = json.load(open(JSON, encoding='utf8'))
+    DB = A.load_db()
     doc = pymupdf.open(a.pdf)
-    VECM = load_vec_matrices()
+    VECM = A.vec_matrices()
+    if a.qc:
+        os.makedirs(A.QCDIR, exist_ok=True)
 
-    want = parse_plates(a.plates) if a.plates else list(range(1, 63))
+    want = a.plates or list(range(1, A.N_PLATES + 1))
     outline = {int(p): v for p, v in DB['brain_outline']['data'].items()}
 
     data, rows = {}, []
@@ -411,19 +417,19 @@ def main():
         boxes, idx = plate_boxes(DB, p)
         if not boxes:
             continue
-        A = np.asarray(native(doc, p))
-        tr = traced_mask(p, VECM, A.shape)
+        page = np.asarray(native(doc, p))
+        tr = traced_mask(p, VECM, page.shape)
         if tr is None:
             print('plate %d: no tracing, skipped' % p)
             continue
-        found, _free = leaders(A, tr, boxes, joined(DB, p, boxes))
+        found, _free = leaders(page, tr, boxes, joined(DB, p, boxes))
         keep, off, cut = [], 0, 0
         for o in found:
             ab, j = idx[o['i']]
-            if (p, ab) in REJECT:
+            if rejected(p, ab, j):
                 cut += 1
                 continue
-            x, y = to_plate(*o['tip'])
+            x, y = from_native(*o['tip'])
             fx, fy = x / NW, y / NH
             if not inside(outline.get(p, []), fx, fy):
                 off += 1                          # a line points into the brain
@@ -442,17 +448,13 @@ def main():
                  (' (%d read against the page and rejected)' % cut) if cut else '',
                  ' '.join(sorted({ab for ab, *_ in keep}))))
         if a.qc:
-            qc_draw(A, boxes, [o for o in found
-                               if (p, idx[o['i']][0]) not in REJECT],
-                    os.path.join(QCDIR, 'chk_leader_%02d.png' % p))
+            qc_draw(page, boxes, [o for o in found if not rejected(p, *idx[o['i']])],
+                    os.path.join(A.QCDIR, 'chk_leader_%02d.png' % p))
 
     summary = report(rows, DB)
-    if a.dry_run or a.plates:
-        if a.plates and not a.dry_run:
-            print('\n--plates writes only what it read, which would drop the '
-                  'other plates; not writing. Re-run over all 62 to write.')
+    if A.refuse_partial_write(a, 'label_leaders'):
         return
-    write_block(data, summary)
+    write_block(DB, data, summary)
 
 
 def report(rows, DB):
@@ -474,67 +476,14 @@ def report(rows, DB):
     return s
 
 
-def parse_plates(s):
-    out = []
-    for part in s.split(','):
-        if '-' in part:
-            a, b = part.split('-')
-            out += list(range(int(a), int(b) + 1))
-        else:
-            out.append(int(part))
-    return out
-
-
-def write_block(data, summary):
-    """Add `label_leaders` to the JSON, in the style the file already uses."""
-    j = lambda o: json.dumps(o, separators=(',', ':'), ensure_ascii=False)
-    L = [' "label_leaders": {', '  "note": %s,' % j(NOTE),
-         '  "summary": %s,' % j(summary), '  "data": {']
-    items = sorted(data, key=int)
-    for i, p in enumerate(items):
-        L.append('   %s: %s%s' % (j(p), j(data[p]),
-                                  '' if i == len(items) - 1 else ','))
-    L += ['  }', ' }']
-    txt = '\n'.join(L)
-
-    src = open(JSON, encoding='utf8').read()
-    a = src.find('\n "label_leaders": {\n')
-    if a >= 0:                                    # drop the previous block
-        b = src.index('\n }', a)
-        src = src[:a] + src[src.index('\n', b + 3):]
-    tail = src.rstrip()
-    assert tail.endswith('}'), 'unexpected end of ' + JSON
-    body = tail[:-1].rstrip()
-    if body.endswith(','):
-        body = body[:-1]
-    o = body + ',\n' + txt + '\n}\n'
-    json.loads(o)                                 # never write something unreadable
-    tmp = JSON + '.tmp'
-    with open(tmp, 'w', encoding='utf8', newline='') as f:
-        f.write(o)
-    os.replace(tmp, JSON)
-    print('wrote %s' % JSON)
-    sync_lead(data)
-
-
-def sync_lead(data):
-    """Put the block into the app as __LEAD__, where it has to match.
-
-    Same contract __BOX__ has: the app's copy is a verbatim dump of the JSON's,
-    so both move together or neither does."""
-    src = open(HTML, encoding='utf8').read()
-    tag = 'window.__LEAD__='
-    i = src.find(tag)
-    if i < 0:
-        raise SystemExit(tag + ' not found in ' + HTML)
-    k = i + len(tag)
-    _obj, end = json.JSONDecoder().raw_decode(src, k)
-    out = src[:k] + json.dumps(data, separators=(',', ':')) + src[end:]
-    tmp = HTML + '.tmp'
-    with open(tmp, 'w', encoding='utf8', newline='') as f:
-        f.write(out)
-    os.replace(tmp, HTML)
-    print('wrote __LEAD__ into %s' % HTML)
+def write_block(DB, data, summary):
+    """`label_leaders` into the database: the note, the summary, and one line per
+    plate that carries a leader (atlaslib.render_db lays the block out that way).
+    The app's copy is rebuilt from it by tools/build_app.py."""
+    DB['label_leaders'] = {'note': NOTE, 'summary': summary,
+                           'data': {p: data[p] for p in sorted(data, key=int)}}
+    A.save_db(DB)
+    print('wrote %s' % A.JSON)
 
 
 if __name__ == '__main__':
