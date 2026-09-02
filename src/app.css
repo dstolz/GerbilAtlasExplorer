@@ -244,9 +244,10 @@ input[type=search]:focus{border-color:var(--accent)}
   padding:8px 14px;border-bottom:1px solid var(--line);flex:none}
 .vctl{display:flex;flex-wrap:wrap;align-items:center;gap:7px 9px;min-width:0}
 .vctl[hidden]{display:none}
-#elink{margin-left:auto;display:inline-flex;align-items:center;justify-content:center;
+.elinkgrp{margin-left:auto;display:inline-flex;align-items:center;gap:6px}
+#elink,#ewiki{display:inline-flex;align-items:center;justify-content:center;
   padding:5px;line-height:0}
-#elink svg{width:14px;height:14px;display:block}
+#elink svg,#ewiki svg{width:14px;height:14px;display:block}
 .tsep{width:1px;align-self:stretch;min-height:17px;background:var(--line)}
 .tg{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;color:var(--muted);
   cursor:pointer;user-select:none;white-space:nowrap}
@@ -267,10 +268,11 @@ button.b,a.b{border:1px solid var(--line);background:var(--panel2);color:var(--i
   padding:5px 10px;font-size:13px;cursor:pointer;font-family:inherit;white-space:nowrap}
 a.b{display:inline-block;text-decoration:none;box-sizing:border-box}
 button.b:hover,a.b:hover{border-color:var(--accent);color:var(--accent)}
-button.z{border:1px solid var(--line);background:var(--panel2);color:var(--ink);
+button.z,a.z{border:1px solid var(--line);background:var(--panel2);color:var(--ink);
   border-radius:7px;padding:3px 9px;font-size:12.5px;cursor:pointer;line-height:1.45;
   font-variant-numeric:tabular-nums;font-family:inherit;white-space:nowrap}
-button.z:hover:not([disabled]){border-color:var(--accent);color:var(--accent)}
+a.z{display:inline-block;text-decoration:none;box-sizing:border-box}
+button.z:hover:not([disabled]),a.z:hover{border-color:var(--accent);color:var(--accent)}
 button.z[disabled]{opacity:.38;cursor:default}
 /* a button that is waiting for a click somewhere else has to look like it is waiting */
 button.z.armed,button.z.armed:hover{background:var(--accent);border-color:var(--accent);
@@ -603,7 +605,8 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
   /* the control group fills a line on its own, so let Copy link share the tab row
      rather than take a fifth one to itself */
   .vbar>.seg{order:1}
-  #elink{order:2;margin-left:0;padding:7px}
+  .elinkgrp{order:2;margin-left:0}
+  #elink,#ewiki{padding:7px}
   .vctl{order:3;width:100%}
 }
 @media (max-width:420px){
