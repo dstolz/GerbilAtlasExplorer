@@ -6,6 +6,9 @@ carries a `version` block naming the release its derived fields were built for.
 ## [Unreleased]
 
 ### Added
+- **Compare mode hovers both panes.** Hovering a structure on either plate now outlines it
+  on both, by abbreviation, where the other plate has that structure too — not just the
+  selection, which already carried across.
 - **Gross divisions.** The atlas names 723 structures and no containers for them; twenty
   are added here — cerebral cortex and its four lobes, hippocampal formation, olfactory
   areas, olfactory bulb, amygdala, striatum and pallidum, septum and basal forebrain,
