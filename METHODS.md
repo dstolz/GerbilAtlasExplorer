@@ -168,10 +168,13 @@ matrix that maps one to the other. Keeping the geometry as the tracer produced i
 bad registration shows as a wrong matrix, which is six numbers to check, instead of being
 baked irreversibly into 9,076 paths.
 
-The tracings are in `svg/`, one file per plate, as they came out of the vectorizer — the
-same paths the app carries, before any matrix is applied. They are the only source asset
-kept in the repository rather than only embedded, because the registration below is
-measured against them and the numbers are otherwise unauditable.
+The tracings are in `svg/`, one file per plate, as they came out of the vectorizer. The
+paths the app carries are those with the vectorizer's stray fragments dropped, rounded to
+whole page pixels, and they are committed with the fitted matrices in `data/vec.json`;
+the matrices alone are copied into `plate_registration` in the database, where a test
+keeps the two equal. The pass that selected the paths and fitted the matrices is described
+here and not held as code, so `data/vec.json` is one of the assets `tools/README.md`
+lists as committed rather than regenerated.
 
 The matrix is **fitted to each plate's own printed ink, not read off the page layout**. The
 scale is shared and comes from the 1 mm ticks the pages print (142.6 px/mm across ML, 142.2
@@ -438,7 +441,7 @@ Three checks, none of which the extraction was tuned to pass:
 | --- | --- |
 | Every boundary between two regions stored as one polyline, twice | **100%** of directed boundary edges have their reverse in exactly one neighbour, so the regions tile the section — a point is inside exactly one, or inside none |
 | Printed labels inside the region they name | **97%**, read at the end of the label's line where the atlas draws one |
-| Regions plus unassigned faces against the section area | within **5%** on the worst plate |
+| Regions plus unassigned faces against the section area | within **2.1%** on the worst plate (an earlier figure of 4.5% omitted the closing edge of the outline rings, which `brain_outline` stores unclosed) |
 
 **What the numbers do not say is which boundaries are real, so every polygon carries that
 too.** `s` is the traced share of that polygon's border: median **0.98**, 77% at or above
@@ -640,8 +643,14 @@ interpolation is either plausible between them or it is not.
 coronal views of the whole thing.
 
 **Nothing here is inlined into the app.** The meshes are 21 MB and the app is a single file
-you open; how they should reach it — as a side-car fetched on demand, or as a label volume
-for the ray-marcher it already has — is a decision the geometry should be looked at first.
+you open. The 3-D view fetches `data/gerbil_atlas_volumes.json` on demand instead —
+**Meshes** in its controls — when the page is served over HTTP, and offers the file picker
+when it was opened from disk; it draws the selected structure, or a filtered list of up to
+forty, as closed surfaces, says which grade each is and that six planes in seven are
+interpolated, and writes the selected one as STL. The meshes were regenerated with the
+library versions `tools/requirements.txt` pins: the vertices are those of the first build
+to the 0.01 mm the file stores, and the triangle order differs, which is what a different
+scikit-image does with a tie.
 
 
 ## Your own coordinate frame
@@ -908,6 +917,32 @@ Deep links carry both, appended after the five fields a plan link has always had
 when they are not the defaults. A plan aiming at the label itself writes the exact link it
 wrote before, and a reader that stops at the fifth field reads a new link as the plan
 minus its offset rather than as nonsense.
+
+### What the track passes through
+
+The extents give every section a tiling by structure, so a track can be read off them the
+way a probe track is read off the histology afterwards. The planner samples the track every
+20 µm from the entry down, asks the nearest plate which region holds each sample — outside
+the outline, an unnamed face, or a structure — and merges the runs into a list of structures
+with the depth each spans from the surface, along the track and in the working frame, the
+same length the plan calls the drive. A probe length reads the whole shank rather than the
+track to the tip, and says what the tip ends in and how far past or short of the target it
+is. The plate marks each crossing with a tick; the notes and the JSON carry the list.
+
+Two limits, both said in the panel. A sample resolves to the nearest 350 µm section, so a
+boundary that runs obliquely between two plates lands on whichever plate is nearer; and a
+region whose boundary the atlas does not print is an estimate, and the row says so. A
+sliver of nothing shorter than 30 µm at either end — the entry sitting on the outline, or
+the target on a boundary — is given to its neighbour rather than listed.
+
+### An injection's footprint
+
+A sphere of a given radius about the target, read against the same extents on a lattice
+fine enough for about sixteen samples across, each resolved on its nearest plate: the
+share of the sphere's volume that falls in each structure, and the share outside the
+section. A bolus is not a sphere and does not stop at a boundary, so this says where a
+sphere of that volume sits, not where an injection goes. The sphere is drawn cut by the
+current plate's plane, as a circle on the projections, and as three rings in the 3-D view.
 
 ### What it does not do
 
