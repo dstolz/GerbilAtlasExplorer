@@ -183,6 +183,7 @@
         <span class="tsep"></span>
         <span class="tgw"><label class="tg" title="Outline the skull around the cloud, widening the axes to fit it"><input type="checkbox" id="ckpk">Skull</label><button type="button" class="ast" title="Skull alignment is approximate — read the note" aria-label="Note on skull alignment">*</button></span>
         <label class="tg" title="Bregma, lambda, interaural and the occipital crest as reference lines"><input type="checkbox" id="ckplm">Landmarks</label>
+        <label class="tg" id="pjfw" hidden title="Draw this view in your working frame instead of the atlas’s — the rotation you set, put on the picture. Appears once a pitch, roll or yaw is set."><input type="checkbox" id="ckpf">In frame</label>
       </span>
       <span class="vctl" id="ctl3d" hidden>
         <span class="seg" id="m3seg">
@@ -203,6 +204,7 @@
           >Bone <input type="range" id="v3so" min="6" max="100" value="32"></label>
         <label class="tg" title="Cut at the midline to see inside"><input type="checkbox" id="v3h">Half</label>
         <label class="tg" title="Parallel projection — no perspective foreshortening, so equal lengths read equally wherever they sit"><input type="checkbox" id="v3o">Ortho</label>
+        <label class="tg" id="v3fw" hidden title="Draw this view in your working frame instead of the atlas’s — the rotation you set, put on the picture. Appears once a pitch, roll or yaw is set."><input type="checkbox" id="v3f">In frame</label>
         <label class="tg" title="The brain surface and one mesh per structure, built offline from the extents and fetched on first use (20 MB). Interpolated between sections 350 µm apart: not a segmentation."><input type="checkbox" id="v3m">Meshes</label>
         <span class="tgw" id="v3msw" hidden><label class="tg" title="The interpolated brain surface as a faint shell"><input type="checkbox" id="v3ms">Surface</label>
         <button class="z" id="v3stl" type="button" hidden title="Download the selected structure's mesh as a binary STL, in atlas millimetres">STL</button>
@@ -420,13 +422,24 @@
       under the <em>Pivot</em> puts a rotation on that axis instead of on a parallel one
       several millimetres too high. The APs stay the atlas&rsquo;s own and exact; the heights
       inherit the skull fit&rsquo;s approximation, and say so.</p>
-    <p>A rotation is the part that has to be hedged. While one is set, the grid, the measure
-      tool, the projections and the 3-D view stay in atlas coordinates and say so. Note too that
-      a plate then stops being a single AP: at 17&deg; of
+    <p>A rotation is the part that has to be hedged. While one is set, the grid and the measure
+      tool stay in atlas coordinates and say so. Note too that a plate then stops being a single
+      AP: at 17&deg; of
       pitch the AP of a point drifts about 2.5&nbsp;mm between the top and the bottom of the
       brain, which is why the readout gives an AP per point. It is a rigid rotation of the
       published numbers and <em>not</em> a resectioning &mdash; no oblique plate is drawn, or
       could honestly be drawn, from a series sampled 350&nbsp;µm apart.</p>
+    <p>The projection and the 3-D view are the two that can do more than disclaim a rotation,
+      because both draw points rather than pixels: an <em>In frame</em> box appears in the
+      toolbar of each as soon as an angle is set, and ticking it turns the cloud and the stack
+      into your frame, so up on the screen is your frame&rsquo;s DV and the axes are the ones
+      the manipulator drives. One tick serves both &mdash; they are two pictures of the same
+      brain. Untick it and they are back in the atlas&rsquo;s orientation, which is the one
+      every published figure is in. Turning a view is still not a resectioning: the same 62
+      coronal sections are stood up at an angle, not recut. The skull outline and the landmark
+      rules are the one thing that cannot come along &mdash; each is flattened at the
+      atlas&rsquo;s own angle, and the outline of a turned skull is not the turned outline of
+      one &mdash; so they sit out a turned view rather than be drawn wrong in it.</p>
 
     <h3>Planning a track</h3>
     <p class="fexp"><b>Experimental.</b> New, and not yet checked against a track anybody has
@@ -699,12 +712,19 @@
     <h3>What it changes</h3>
     <p><b>Adjusted:</b> the structure card, the pointer readout on the plate, the coordinate
       lookup and the CSV export. <b>Left in atlas coordinates while the frame is rotated:</b>
-      the 1&nbsp;mm grid, the measure tool, the projections and the 3-D view &mdash; each says
-      so while it is on.</p>
+      the 1&nbsp;mm grid and the measure tool &mdash; each says so while it is on.</p>
+    <p><b>Yours to choose:</b> the projection and the 3-D view. Set an angle and an
+      <em>In frame</em> box appears in the toolbar of each; tick it and the label cloud and the
+      section stack are turned into your frame, so up on the screen is your frame&rsquo;s DV.
+      The two share the one setting. Leave it unticked and both stay in the atlas&rsquo;s
+      orientation, as they always have. A turned view is the same rigid rotation as every
+      number above it &mdash; the 62 coronal sections stood up at an angle, not recut &mdash;
+      and the skull outline and landmark rules, which are flattened at the atlas&rsquo;s angle
+      and cannot be re-flattened at yours, are unavailable while it is on.</p>
     <p>An origin on its own is the exception, and deliberately so. Moving zero moves no point:
       every distance and every angle is the one the atlas printed, so the projections and the
-      3-D view read their axes from your origin too, and the measure tool needs no caveat.
-      Set an angle as well and all of them fall back to atlas coordinates.</p>
+      3-D view read their axes from your origin too, and the measure tool needs no caveat, with
+      no box to tick and nothing to weigh.</p>
     <p>Readouts name what AP is measured from &mdash; <em>lambda</em> rather than <em>AP</em>
       &mdash; whenever an origin is set, and the atlas figure stays beside them as always.</p>
     <p>A plate is no longer a single AP once the frame is tilted: at 17&deg; of pitch the AP of a

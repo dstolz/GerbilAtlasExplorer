@@ -6,6 +6,21 @@ carries a `version` block naming the release its derived fields were built for.
 ## [Unreleased]
 
 ### Added
+- **The projection and the 3-D view can be drawn in your working frame.** Set a pitch, roll
+  or yaw and an **In frame** checkbox appears in the toolbar of each; tick it and the label
+  cloud and the section stack are turned into your frame, so up on the screen is your
+  frame's DV and the axes are the ones the manipulator drives. One setting serves both —
+  they are two pictures of one brain. Off by default, and carried in a deep link as `fv=1`
+  only beside a rotation, so no link written before this changes meaning. What is applied is
+  the rotation and nothing else: `toFrame` is `R(p−C)+A`, which is `Rp + (A−RC)`, so moving
+  zero stays a relabelling of the axes and cannot slide the cloud off the plot. The
+  projection widens its axes in whole millimetres per end to hold what the rotation pushed
+  past the atlas's extents, and the plate guide becomes the line where that section's plane
+  cuts the middle of the brain — still clickable, read back through the rotation at the
+  depth it is drawn at. The skull silhouette and the landmark rules are flattened at the
+  atlas's own angle and cannot be re-flattened at another, so their checkboxes go dead while
+  a turned view is on. A turned view is not a resectioning: the same 62 coronal sections,
+  stood up at an angle. See [METHODS](METHODS.md#views-in-the-working-frame).
 - **Compare mode hovers both panes.** Hovering a structure on either plate now outlines it
   on both, by abbreviation, where the other plate has that structure too — not just the
   selection, which already carried across.
@@ -40,9 +55,8 @@ carries a `version` block naming the release its derived fields were built for.
   are printed twice, one per hemisphere, but not all: `S1J` on plate 19, `MPtA` on 28,
   `LPtA` on 29 are set once, and the sealed face on the other side answered to nothing.
   `build_region_extents.py` now mirrors every seed about ML 0 and keeps the mirror where it
-  lands in a face the drawing seals and no printed abbreviation names, where all the mirrors
-  landing there come from one source face, and where over half of that face reflects back
-  into it. 122 seeds are added; what the page prints still wins in every face it prints in,
+  lands in a face the drawing seals and no printed abbreviation names, and where over half
+  of that face reflects back into the faces the mirrors came from. 122 seeds are added; what the page prints still wins in every face it prints in,
   so nothing is renamed. `region_extents` gains 3 entries and 68 polygons, and the share of
   a section that has a name rises from 93.6% to 94.3%; `df` gets its first extent, so 698
   structures now carry a mesh.
@@ -125,6 +139,12 @@ carries a `version` block naming the release its derived fields were built for.
   rather than leaving an empty view and asking for a selection already made.
 - The 3-D view's Surface toggle, STL button and mesh Load-file fallback were offered
   before the meshes were switched on: `.tgw` sets `display`, which beat `[hidden]`.
+- Tapping a region on a phone flashed the whole plate blue: the plate carries the click
+  handler, so Chrome painted its default translucent-blue tap highlight over the entire
+  section, and the new thumbnail strip held the tap open long enough to see it by decoding
+  every plate the structure is printed on. The surfaces that draw their own feedback now
+  suppress the platform highlight, and the strip draws a thumbnail only once it is on
+  screen — a tap costs no image decodes and is back to its pre-update duration.
 - The app's structure table (`window.__ATLAS__`) and `data/gerbil_atlas_structures.csv`
   carried the pre-correction plate ranges for AngT, RLi, Su3C and ZIC; both are now built
   from the database.

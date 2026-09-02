@@ -175,6 +175,15 @@ your stereotaxic frame. You can derive the angles from two points read off the s
 *rotation* is new and not fully tested: check adjusted coordinates against anatomy you already
 know before relying on them.
 
+**In frame** — once an angle is set, a checkbox by that name appears in the toolbar of the
+projection and the 3-D view. Tick it and the label cloud and the section stack are turned into
+your frame, so up on the screen is your frame's DV and the axes are the ones your manipulator
+drives; the two views share the one setting. Untick it and both are back in the atlas's
+orientation, which is the one every published figure is in. A turned view is the same rigid
+rotation as the numbers above it — the same 62 coronal sections stood up at an angle, not
+recut — and the skull outline and landmark rules, which are flattened at the atlas's angle and
+cannot be re-flattened at yours, are unavailable while it is on.
+
 ## Before you trust a coordinate
 
 - A structure's coordinate is the **median position of where its abbreviation is

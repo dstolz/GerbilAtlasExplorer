@@ -403,12 +403,14 @@ The steps, in order, run by `tools/build_region_extents.py`:
    are set once, and the sealed face on the other side is then a hole in the section that
    answers to nothing — which is what a reader sees as a region the app will not name. The
    drawing is symmetric about ML 0, so every seed is mirrored across it, and a mirror is
-   kept only where three things hold: it lands in a face the tracing seals and *no printed
+   kept only where two things hold: it lands in a face the tracing seals and *no printed
    abbreviation names*, so what the page says always wins and nothing here can rename
-   anything; every mirror landing in that face comes from one source face, which makes it
-   one face answering one face rather than a scatter of near misses; and more than half of
-   the face reflects into those source faces, which a face merely opposite a named one does
-   not do. **122 seeds** are added this way and they carry no weight of their own: `n`
+   anything; and that face really is the mirror of the ones the seeds came from, at least
+   half of it reflecting into them, which a face merely opposite a named one does not do.
+   The second test is against all of those faces together, because the drawing need not
+   seal the two hemispheres the same way: where one side draws the boundary between two
+   structures and the other does not, one unnamed face answers two named ones, and it is
+   then seeded from both and split like any other. **122 seeds** are added this way and they carry no weight of their own: `n`
    counts printed labels, and a mirror exists only where a printed label does.
 6. **Split the rest.** Where a face holds several abbreviations, ink is missing somewhere on
    the boundary between them. A watershed seeded on the printed labels and ridged on the
@@ -786,8 +788,10 @@ The atlas is cut **perpendicular to the brainstem axis**, which is not how a hea
 any particular stereotaxic frame. **Frame** in the header takes a pitch, a roll and a yaw
 about a pivot you choose, plus a translation, and restates the structure card, the pointer
 readout, the coordinate lookup and the CSV export in that frame — keeping the atlas figure
-beside each one, so the two can never be confused. The grid, the measure tool, the
-projections and the 3-D view stay in atlas coordinates and say so while it is on.
+beside each one, so the two can never be confused. The grid and the measure tool stay in
+atlas coordinates and say so while it is on. The projection and the 3-D view are the two
+that can do more than disclaim a rotation, and an **In frame** checkbox in the toolbar of
+each turns them into it — see *Views in the working frame* below.
 
 ```
 pitch  about ML, + = nose down          roll  about AP, + = right ear down
@@ -851,8 +855,56 @@ Moving zero is not a rotation and is not hedged as one: it moves no point, and e
 and angle is the one the atlas printed. So with every angle left at 0 the projections rule and
 label their axes from the origin, the measure tool needs no caveat, and the header button says
 so rather than warning about an approximation that is not being made. Set an angle as well and
-the projections, the grid, the measure tool and the 3-D view fall back to atlas coordinates and
-say so, as before.
+the grid and the measure tool fall back to atlas coordinates and say so, as before, while the
+projection and the 3-D view offer the **In frame** checkbox described below.
+
+### Views in the working frame
+
+The plate is an image and cannot be reoriented: a coronal drawing at 350 µm spacing has no
+oblique cut in it to show. The projection and the 3-D view are different in kind — both draw
+points and quads placed from coordinates, so a rotation is something they can be *put into*
+rather than only warned about. An **In frame** checkbox appears in the toolbar of each as soon
+as a pitch, roll or yaw is set, and one setting drives both: they are two pictures of the same
+brain, and a reader who has said which orientation they are working in has not said which panel
+they are looking at. It is off by default — the atlas orientation is the one every published
+figure is in — and the deep link carries it as `fv=1` only beside a rotation, so no link
+written before it existed changes meaning.
+
+What is turned is the rotation and nothing else. `toFrame` is `R(p−C)+A`, which is
+`Rp + (A−RC)`: a rotation about the atlas origin followed by a translation. The rotation goes
+onto the picture; the translation stays a relabelling of the axes, which is exactly how a
+re-zero has always been drawn. Splitting it that way is what keeps an origin at lambda from
+sliding the whole cloud five millimetres off the plot, and it makes the single-axis helpers
+those views rule their ticks with honest in both cases — with no rotation the split reproduces
+the old one-axis `toFrame` to the last decimal place.
+
+In the projection the label cloud is rotated point by point and the axes are widened, in whole
+millimetres per end, to hold whatever the rotation pushed past the atlas's own extents; at 17°
+of pitch that is most of the cortex, so a view that turned without widening would simply drop
+it. The plate guide stops being a vertical rule, because a plate stops being a single AP: it is
+drawn as the line where that section's plane cuts the middle of the brain, tilted by exactly
+the part of the rotation those two axes can see, and clicking it still lands on its plate —
+the click is read back through the rotation at the same depth the line is drawn at.
+
+In the 3-D view the whole scene — the 62-section stack, the 6,220 labels, the CT shell, the
+plate ring and any planned track — is held in one world built affinely out of atlas
+millimetres, so the turn is a model matrix in front of the camera rather than a rebuild of any
+of it, and three transformed basis vectors are the whole of that matrix. It is taken about the
+world's own centre so the brain turns in place instead of swinging out of shot, and because the
+atlas-to-world map has determinant −1 the result is `S R S⁻¹`: still a rotation, so its inverse
+is still its transpose, which is what restates the camera in model space for the ray-marcher,
+the shell's shading and the picker.
+
+Two things cannot come along, and they are the same thing twice: the skull silhouette on the
+projection and the landmark rules beside it. Both are flattened along the axis the view drops,
+and the flattening was done at the atlas's angle — the outline of a turned skull is not the
+turned outline of a skull, and a landmark whose AP is all the atlas prints stops being a line
+once the frame tilts. Their checkboxes go dead while a turned view is on rather than staying
+tickable and quietly drawing nothing. The 3-D shell is a real surface and has no such problem:
+it turns with everything else.
+
+A turned view is still not a resectioning. It is the same rigid rotation as every number above
+it, applied to the same 62 coronal sections — stood up at an angle, not recut.
 
 Naming an origin makes the pivot irrelevant, and not by choice: `R(P−piv)+piv` minus
 `R(O−piv)+piv` is `R(P−O)` for every `piv`, so re-zeroing on a point *is* rotating about it.

@@ -249,6 +249,11 @@ input[type=search]:focus{border-color:var(--accent)}
   padding:5px;line-height:0}
 #elink svg,#ewiki svg{width:14px;height:14px;display:block}
 .tsep{width:1px;align-self:stretch;min-height:17px;background:var(--line)}
+/* the display here outranks the UA rule for [hidden], the same way .lb3 does below */
+.tg[hidden]{display:none}
+/* a toggle the current view cannot honour reads as unavailable rather than as ignored */
+.tg:has(input:disabled){opacity:.45;cursor:default}
+.tg:has(input:disabled) input{cursor:default}
 .tg{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;color:var(--muted);
   cursor:pointer;user-select:none;white-space:nowrap}
 .tg input{accent-color:var(--accent);margin:0;cursor:pointer}
@@ -332,6 +337,13 @@ input[type=range]{accent-color:var(--accent)}
   font-size:11.5px;font-weight:600;color:var(--accent)}
 .tip .tn{display:block;font-size:12.5px;margin-top:1px}
 .tip .tx{display:block;font-size:11px;color:var(--muted);margin-top:3px;font-variant-numeric:tabular-nums}
+
+/* The plate hit-tests itself and draws its own highlight -- the outline under the
+   pointer, the tooltip, the selected region -- so the platform's tap highlight is
+   redundant here. It is also alarming: on touch it paints a translucent blue box over
+   the whole of the element that carries the handler, and that element is the entire
+   section. Same for the other surfaces that answer a tap by drawing on themselves. */
+.imgwrap,.pjw,.v3w,.gitem{-webkit-tap-highlight-color:transparent}
 
 /* ---------- overlays drawn on the plate ---------- */
 #grid line{stroke:var(--grid);stroke-opacity:.34;stroke-width:1;vector-effect:non-scaling-stroke}

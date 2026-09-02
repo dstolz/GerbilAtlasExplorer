@@ -114,6 +114,48 @@ test('a name printed on one hemisphere is outlined on both', async ({ page }) =>
   expect(new Set(sides[2]).size).toBe(2);      // one either side of ML 0
 });
 
+// A tap is answered by the app's own outline and tooltip, so the platform's tap
+// highlight -- a translucent blue box over the whole element -- must be off, and the
+// handler must not decode plate images while the finger is still down.
+test('a tap on the plate paints no platform highlight and decodes nothing', async ({ browser }) => {
+  const ctx = await browser.newContext({ viewport: { width: 412, height: 915 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true });
+  const page = await ctx.newPage();
+  await page.goto(BUNDLE + '#p30');
+  await page.waitForTimeout(600);
+  for (const id of ['iw', 'iw2']) {
+    const c = await page.evaluate(i => getComputedStyle(document.getElementById(i)).webkitTapHighlightColor, id);
+    expect(c.replace(/\s/g, '')).toBe('rgba(0,0,0,0)');
+  }
+  await page.evaluate(() => {
+    window.__dec = 0;
+    const D = Image.prototype.decode;
+    Image.prototype.decode = function () { window.__dec++; return D.apply(this, arguments); };
+  });
+  const b = await page.locator('#iw').boundingBox();
+  await page.touchscreen.tap(b.x + b.width * 0.45, b.y + b.height * 0.5);
+  await page.waitForTimeout(400);
+  expect(await page.evaluate(() => window.__gae.state().sel)).toBeTruthy();
+  // the card is below the fold on a phone, so no thumbnail is on screen and none is read in
+  expect(await page.evaluate(() => window.__dec)).toBe(0);
+  await ctx.close();
+});
+
+test('the gallery draws only the thumbnails that are on screen', async ({ page }) => {
+  await page.goto(BUNDLE + '#p30/CPu');
+  await page.waitForTimeout(2000);
+  const painted = () => page.evaluate(() => [...document.querySelectorAll('#gal canvas')]
+    .filter(c => { const d = c.getContext('2d').getImageData(0, 0, 132, 84).data;
+      for (let i = 0; i < d.length; i += 400) if (d[i + 3] > 0) return true; return false; }).length);
+  const total = await page.evaluate(() => document.querySelectorAll('#gal .gitem').length);
+  const first = await painted();
+  expect(total).toBeGreaterThan(4);
+  expect(first).toBeGreaterThan(0);
+  expect(first).toBeLessThan(total);              // not all of them, only what is visible
+  await page.evaluate(() => { const g = document.getElementById('gal'); g.scrollLeft = g.scrollWidth; });
+  await page.waitForTimeout(1500);
+  expect(await painted()).toBeGreaterThan(first); // scrolling fills the rest in
+});
+
 test('the lean page registers its service worker', async ({ page }) => {
   await page.goto(LEAN + '#p30');
   const state = await page.evaluate(async () => {
