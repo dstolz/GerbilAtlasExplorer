@@ -5428,6 +5428,157 @@ function skullNote(){
 [...document.querySelectorAll('.ast')].forEach(b=>b.onclick=skullNote);
 ABOUT.addEventListener('click',e=>{ if(e.target===ABOUT) ABOUT.close(); });
 
+/* ---------- reporting a region drawn wrong, and asking for a feature ----------
+   The tracker link beside these two has always been the tracker's front page, which is the
+   right place for "the page will not load" and the wrong one for "this boundary is drawn in
+   the wrong place": a drawing error means nothing without the region and the plate it is
+   about, and a reader looking at a wrong boundary should not have to go and find their names
+   before they can say so. The page knows both, and knows what it already has to say for that
+   boundary.
+
+   So both links open the same dialog, and it does three things. It shows what it is about to
+   attach, above the fields rather than below them, because that is the part being consented
+   to. It builds those rows once and uses them twice -- rendered here, written into the issue
+   -- so what the reader was shown is what is sent and cannot drift from it. And it sends
+   nothing itself: the button opens GitHub's own compose form with the text filled in, and the
+   report is submitted there, by the reader, or not at all. */
+const RDLG=$('rep'), REPO='https://github.com/dstolz/GerbilAtlasExplorer';
+/* where the view link has to point when the page was opened from a file, which is how the
+   README says to open the bundle. The hash describes the view wherever the page came from, so
+   the hosted copy reproduces it -- and a `file:///C:/Users/.../gerbil_atlas_explorer.html`
+   path, which says more about the reader than a bug report has any business carrying onto a
+   public tracker, never leaves the browser. */
+const SITE='https://dstolz.github.io/GerbilAtlasExplorer/';
+let repMode='', repAuto='', repU='';
+
+/* captured when the dialog opens and not recomputed while it is open: the view cannot change
+   behind a modal, and rebuilding it on every keystroke would be a history entry per keystroke */
+function repView(){
+  clearTimeout(hashT); writeHash();
+  const h=lastWritten||location.hash||'';
+  return (/^https?:$/.test(location.protocol) ? location.origin+location.pathname : SITE)+h;
+}
+/* what the plate already says about this outline, in the plate's own words rather than a
+   second account of the same numbers that could drift from the first */
+function repOutline(){
+  if(!sel) return '';
+  if(isFeat(sel)) return 'no outline \u2014 '+featTxt(sel);
+  const o=regBuild(cur).by[sel];
+  if(!o) return 'not drawn on plate '+cur;
+  return regTxt(o)+(o.also?' \u00b7 printed '+o.also.join('/')+', one region':'');
+}
+/* every row of the report, as [term, text] with a flag on the one that is a URL */
+function repRows(){
+  const b=BUILD||'unstamped';
+  if(repMode==='feat') return [['This view',repU,1],['Build',b]];
+  const r=sel?byAb[sel]:null;
+  const rows=[['Region', r ? r.name+' ('+r.abbr+')'+
+      (r.grp?' \u2014 a division of this app\u2019s, not one of the atlas\u2019s own names':'')
+    : 'none selected']];
+  rows.push(['Plate', cur+' \u00b7 bregma '+plateOf[cur].bregma.toFixed(2)+' mm']);
+  rows.push(['Shown as', SRCN[psrc]||psrc]);
+  const o=repOutline(); if(o) rows.push(['Outline', o]);
+  rows.push(['This view',repU,1],['Build',b]);
+  return rows;
+}
+/* what the report cannot say yet and what to do about it, said here rather than left for the
+   maintainer to work out from a report that names no region */
+function repNote(){
+  if(repMode!=='draw') return '';
+  if(!sel) return 'No region is selected, so this can name only the plate. Close it, pick the '+
+    'region \u2014 on the plate, or in the list \u2014 and open it again to have it named.';
+  const ab=byAb[sel].abbr;
+  if(isFeat(sel)) return 'The atlas draws '+ab+' no boundary of its own, so there is no outline '+
+    'here to be in the wrong place. Still worth saying if you think it should have one.';
+  if(!regBuild(cur).by[sel]) return ab+' is not drawn on plate '+cur+'. If it belongs here that '+
+    'is worth reporting; if you meant it on another plate, go there first and open this again.';
+  return '';
+}
+function repBody(){
+  const d=$('repmsg').value.trim();
+  return '### '+(repMode==='draw'?'What is wrong':'What would help')+'\n\n'+
+    (d||'_Not described yet._')+'\n\n### From the Explorer\n\n'+
+    repRows().map(r=>'- **'+r[0]+':** '+r[1]).join('\n')+'\n';
+}
+function repHref(){
+  return REPO+'/issues/new?title='+encodeURIComponent($('repsum').value.trim()||repAuto)+
+    '&body='+encodeURIComponent(repBody());
+}
+/* kept live rather than built on click, so the middle-click and the copy-link-address any
+   browser offers on an anchor carry the same report the button does */
+const repSync=()=>{ $('repgo').href=repHref(); };
+
+const REPT={
+  draw:{
+    h:'Report a drawing error',
+    i:'The regional outlines here were cut from the atlas\u2019s own printed lines \u2014 the '+
+      'paper publishes no segmentation \u2014 so a boundary can sit in the wrong place, take in '+
+      'ground that belongs next door, or be missing from a plate that prints the name. Say '+
+      'which, and the region and the plate in front of you go with it, already named.',
+    l:'What is wrong, and what it should be',
+    p:'The ventral boundary is drawn through the fibre tract rather than along it \u2014 it '+
+      'should follow the pale band about half a millimetre dorsal to where it sits.'
+  },
+  feat:{
+    h:'Request a feature',
+    i:'Something the Explorer should do and does not. Say what you were trying to do and what '+
+      'would have helped \u2014 the report carries the build and a link back to the view you '+
+      'were on, and nothing else about you.',
+    l:'What you were trying to do, and what would help',
+    p:'Let me export the plate with only the selected region\u2019s outline on it, so it drops '+
+      'straight into a figure.'
+  }
+};
+function repOpen(mode){
+  const t=REPT[mode]; if(!t) return;
+  /* a description written about a drawing error is not a feature request: switching mode
+     starts clean rather than carrying the wrong text into the wrong issue */
+  const swap = mode!==repMode;
+  repMode=mode; repU=repView();
+  $('reph').textContent=t.h; $('repint').textContent=t.i;
+  $('repml').textContent=t.l; $('repmsg').placeholder=t.p;
+  if(swap) $('repmsg').value='';
+  const auto = mode==='feat' ? 'Feature: '
+             : 'Drawing: '+(sel ? byAb[sel].abbr+' on plate '+cur : 'plate '+cur);
+  /* a summary the reader has edited is theirs and survives; one still as it was written
+     follows the plate and the selection, which are what it was written from */
+  const f=$('repsum');
+  if(swap || !f.value.trim() || f.value===repAuto) f.value=auto;
+  repAuto=auto;
+  f.placeholder = mode==='feat' ? 'Feature: what it should be able to do' : '';
+  $('repkv').innerHTML=repRows().map(r=>
+    '<dt>'+esc(r[0])+'</dt><dd'+(r[2]?' class="repu"':'')+'>'+esc(r[1])+'</dd>').join('');
+  const n=repNote(); $('repnb').hidden=!n; $('repnb').textContent=n;
+  repSync();
+  if(RDLG.showModal) RDLG.showModal(); else RDLG.setAttribute('open','');
+  /* the feature summary is the half-written one, so that is where the caret belongs; a
+     drawing summary is already complete and the description is what is missing. Focused
+     without scrolling, and the dialog put back to the top after: a field this far down a
+     modal drags the rows that say what will be attached off the screen above it, and
+     those are the part the reader is being asked to agree to. */
+  (mode==='feat'?f:$('repmsg')).focus({preventScroll:true});
+  RDLG.scrollTop=0;
+}
+$('repdb').onclick=()=>repOpen('draw');
+$('repfb').onclick=()=>repOpen('feat');
+$('repx').onclick=()=>RDLG.close();
+RDLG.addEventListener('click',e=>{ if(e.target===RDLG) RDLG.close(); });
+$('repsum').oninput=repSync;
+$('repmsg').oninput=repSync;
+/* the same report as plain text, for a reader who would rather not open a GitHub account or
+   put what they wrote on a public tracker */
+$('repcp').onclick=function(){
+  const t=($('repsum').value.trim()||repAuto)+'\n\n'+repBody(), b=this, old=b.textContent;
+  const ok=()=>{ b.textContent='Copied'; setTimeout(()=>b.textContent=old,1300); };
+  const fb=()=>{
+    const a=document.createElement('textarea'); a.value=t;
+    a.style.cssText='position:fixed;opacity:0'; document.body.appendChild(a);
+    a.select(); try{ document.execCommand('copy'); ok(); }catch(_){}
+    a.remove();
+  };
+  if(navigator.clipboard) navigator.clipboard.writeText(t).then(ok,fb); else fb();
+};
+
 /* ---------- the build stamp, read on the reader's own clock ---------- */
 /* The page is stamped in UTC, because a build cannot know where it will be opened. The
    moment travels in each stamp's `datetime`, and the text is rewritten here into whatever
@@ -5479,6 +5630,7 @@ fit(); applyView(); revRun();
 /* a handle for the tests and for the console: the pure functions and the state they
    read. Nothing in the app goes through it. */
 window.__gae={toFrame,fromFrame,writeHash,readHash,tgSolve,tgPath,tgFootprint,plan:()=>tgPlan,
+  repOpen,repRows,repBody,repHref,repNote,repMode:()=>repMode,
   select,go,clear,frameSet,frameApply,FRAME,frmBuild,BUILD,S,P,byAb,ptsOf,regBuild,plateAt,inBrain,
   coordsOf,tgJSON,tgNotes,meshList,setCmp,anMake,notes:()=>NOTES,mesh:()=>MESH,
   v3split,v3edit,v3rects,panes:()=>V3P.map(q=>({...q})),

@@ -6,6 +6,28 @@ carries a `version` block naming the release its derived fields were built for.
 ## [Unreleased]
 
 ### Added
+- **Reporting a region drawn wrong, and asking for a feature.** Two more links in the footer
+  beside *Report an issue*, which has always pointed at the tracker's front page — the right
+  place for "the page will not load" and the wrong one for "this boundary is drawn in the wrong
+  place". A drawing error means nothing without the region and the plate it is about, and
+  **Report a drawing error** attaches both: the structure and its abbreviation, the plate and its
+  bregma, which of the three plates is on screen, what the plate already says about that outline
+  — its area here, and how much of its boundary the atlas actually prints — and a link
+  back to the exact view. So a report arrives with the thing it is about already reconstructed,
+  rather than as a name someone has to go and find. It says what it cannot say, too: that no
+  region is selected, that the one selected is not drawn on this plate, or that it is a name the
+  atlas draws no boundary around at all. **Request a feature** is the same dialog carrying the
+  build and the view and nothing else, because a feature request is not about a region.
+
+  What will be attached is shown above the box you write in rather than below it, because that
+  is the part being agreed to, and the rows are built once and used twice — rendered there,
+  written into the issue — so what the reader was shown is what is sent and cannot drift
+  from it. Nothing is sent from the page itself: the button opens GitHub's own compose form with
+  the text filled in, and the report is submitted there, by the reader, or not at all. **Copy the
+  report** puts the same text on the clipboard for anyone who would rather not put it on a public
+  tracker. And a page opened from a file sends the hosted link rather than its own
+  `file:///C:/Users/…` path, which says more about the reader than a bug report has any
+  business carrying.
 - **The 3-D stack as a NIfTI.** **NIfTI** in the 3-D controls writes the whole 62-plate stack
   out as a gzipped NIfTI-1 volume — the reconstruction itself rather than a picture of it, so
   it opens in ITK-SNAP, FSLeyes, Slicer or nibabel and can be resliced, measured or registered

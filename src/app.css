@@ -603,6 +603,29 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
 .fmo button[disabled]{opacity:.45;cursor:default}
 .fmn{margin:7px 0 0;font-size:11px;color:var(--muted);line-height:1.5}
 
+/* ---------- the report dialog ---------- */
+/* The captured rows are shown before the writing fields, not after, because they are the
+   thing being consented to: the reader should have read what the report says about their
+   plate before they decide to write one. Set in the panel's own frame so it reads as a
+   quotation of the page rather than as more of the dialog's prose. */
+.repkv{border:1px solid var(--line);border-radius:9px;background:var(--panel2);
+  padding:10px 12px;margin:0 0 10px;font-size:12px}
+.repkv dt{color:var(--muted);white-space:nowrap}
+.repkv dd{margin:0;color:var(--ink);overflow-wrap:anywhere}
+/* the deep link is the one row that can run to a couple of hundred characters, and it is
+   the row worth reading, so it wraps small rather than being cut off */
+.repkv dd.repu{font-family:ui-monospace,Menlo,monospace;font-size:10.5px;color:var(--muted)}
+/* what the report cannot say yet -- no region picked, no outline on this plate. An accent
+   note rather than a warning: neither stops a report being worth filing. */
+.repnb{margin:-2px 0 10px;font-size:11.5px;color:var(--accent);line-height:1.5}
+.ffld textarea{width:100%;padding:8px 9px;border:1px solid var(--line);border-radius:8px;
+  background:var(--panel2);color:var(--ink);font-size:13px;font-family:inherit;
+  line-height:1.55;outline:none;resize:vertical;min-height:70px}
+.ffld textarea:focus{border-color:var(--accent)}
+.ffld textarea::placeholder{color:var(--muted);opacity:.75}
+/* the primary way out of the dialog, told apart from Copy without a second button style */
+#repgo{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+
 /* ---------- adapting to the window ---------- */
 /* two columns once both panes can be comfortable */
 @media (min-width:900px){
