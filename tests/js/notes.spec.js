@@ -37,10 +37,17 @@ async function place(page, fx, fy) {
   await expect(page.locator('#anf')).toBeVisible();
 }
 
-/* counts the clicks that reach the plate wrapper, which is where a retargeted one lands */
+/* counts the clicks that reach the plate wrapper, which is where a retargeted one lands.
+   Zeroed rather than installed on each call, and called immediately before the press being
+   judged: placing a note is a click on the plate, and so is clicking a marker -- a marker
+   lives in the overlay, which is why anAt() asks elementFromPoint rather than the event
+   target. Both are meant to arrive here, and only a press on the form is not. */
 const watchPlate = page => page.evaluate(() => {
+  if (!window.__plateWatch) {
+    window.__plateWatch = () => window.__plateClicks++;
+    document.getElementById('iw').addEventListener('click', window.__plateWatch);
+  }
   window.__plateClicks = 0;
-  document.getElementById('iw').addEventListener('click', () => window.__plateClicks++);
 });
 const plateClicks = page => page.evaluate(() => window.__plateClicks);
 
@@ -64,6 +71,7 @@ test('Cancel drops the note, Delete removes a saved one, and neither reaches the
     await watchPlate(page);
     await page.click('#ancan');
     await expect(page.locator('#anf')).toBeHidden();
+    expect(await plateClicks(page)).toBe(0);
     expect(await page.evaluate(() => window.__gae.notes().length)).toBe(0);
 
     await place(page, 0.5, 0.5);
@@ -73,6 +81,7 @@ test('Cancel drops the note, Delete removes a saved one, and neither reaches the
     await page.click('#an .note');                       /* the marker raises it again */
     await expect(page.locator('#ant')).toHaveValue('lesion');
     await expect(page.locator('#andel')).toBeVisible();  /* which a new note does not offer */
+    await watchPlate(page);                              /* from here, only the press counts */
     await page.click('#andel');
     await expect(page.locator('#an .note')).toHaveCount(0);
     expect(await page.evaluate(() => window.__gae.notes().length)).toBe(0);
