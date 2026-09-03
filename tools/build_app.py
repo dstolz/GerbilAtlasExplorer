@@ -13,10 +13,12 @@ Markers, each on a line of its own in `src/app.html`:
     <!-- @blob NAME -->          one data global: <script>window.__NAME__=...;</script>
     <!-- @lean-extras -->        the service worker and manifest; only in the lean page
 
-and three tokens that can appear anywhere: {{BUILD_HASH}}, {{BUILD_DATE}} and
-{{BUILD_TIME}}, the commit the page was built from and when. A commit cannot know its own
-hash, so the stamp in a committed bundle is the commit it was built *on*; CI passes the
-exact one with --commit.
+and four tokens that can appear anywhere: {{BUILD_HASH}}, {{BUILD_DATE}}, {{BUILD_TIME}}
+and {{BUILD_ISO}}, the commit the page was built from and when. A commit cannot know its own
+hash, so the stamp in a committed bundle is the commit it was built *on*; CI passes the exact
+one with --commit. The first three are the text the page ships with, in UTC; {{BUILD_ISO}} is
+that same moment machine-readable, which is what lets the page show it in the reader's own
+time zone.
 
 Outputs:
 
@@ -88,6 +90,20 @@ def stamp(commit=None, date=None, time=None):
     return commit[:47], date[:10], time[:16]
 
 
+def moment(date, time):
+    """The stamped moment as one instant the page can read, e.g. 2026-09-03T11:07:00Z.
+
+    The page ships stamped in UTC, because a build cannot know where it will be opened;
+    this is that same moment in a form the browser can turn into the reader's own clock.
+    An unstamped render keeps the token, so two builds still compare; a build with no
+    moment to give (no git, no --date) writes nothing and the page keeps its UTC text.
+    """
+    if '{{' in date:
+        return '{{BUILD_ISO}}'
+    t = re.match(r'\d\d:\d\d', time or '')
+    return '%sT%s:00Z' % (date, t.group(0)) if t and re.match(r'\d{4}-\d\d-\d\d$', date) else ''
+
+
 def read(name):
     with open(os.path.join(SRC, name), encoding='utf8', newline='') as f:
         return f.read()
@@ -138,7 +154,7 @@ def render(db=None, lean=False, dev=False, commit='{{BUILD_HASH}}', date='{{BUIL
         sys.exit('build_app: blobs never placed: %s' % ', '.join(sorted(data)))
     text = '\n'.join(out)
     return (text.replace('{{BUILD_HASH}}', commit).replace('{{BUILD_DATE}}', date)
-                .replace('{{BUILD_TIME}}', time))
+                .replace('{{BUILD_TIME}}', time).replace('{{BUILD_ISO}}', moment(date, time)))
 
 
 def write(path, text):
@@ -153,9 +169,11 @@ def unstamp(text):
     """Put the tokens back in a built page, so two builds compare without their stamps."""
     text = re.sub(r'(<meta name="gae-build" content=")[^"]*(")', r'\1{{BUILD_HASH}} {{BUILD_DATE}}\2', text)
     text = re.sub(r'(/commit/)[0-9a-zA-Z-]+(")', r'\1{{BUILD_HASH}}\2', text)
-    text = re.sub(r'(<code>)[0-9a-zA-Z-]+(</code></a>), [^.<]*\.', r'\1{{BUILD_HASH}}\2, {{BUILD_DATE}}.', text)
     text = re.sub(r'(/commit/\{\{BUILD_HASH\}\}"[^>]*><code>)[0-9a-zA-Z-]+(</code>)', r'\1{{BUILD_HASH}}\2', text)
-    text = re.sub(r'(class="fstamp">Updated )[^<]*(</span>)', r'\1{{BUILD_DATE}} {{BUILD_TIME}}\2', text)
+    # both stamps are a <time>: the instant is its attribute, the text is what it shows
+    text = re.sub(r'(<time class="bwhen"[^>]*datetime=")[^"]*(")', r'\1{{BUILD_ISO}}\2', text)
+    text = re.sub(r'(class="fstamp">Updated <time[^>]*>)[^<]*(</time>)', r'\1{{BUILD_DATE}} {{BUILD_TIME}}\2', text)
+    text = re.sub(r'(</code></a>, <time[^>]*>)[^<]*(</time>)', r'\1{{BUILD_DATE}}\2', text)
     return text
 
 

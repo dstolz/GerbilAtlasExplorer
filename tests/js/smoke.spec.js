@@ -46,6 +46,7 @@ for (const [name, url] of [['bundle', BUNDLE], ['lean', LEAN]]) {
       expect(await page.evaluate(() => document.querySelectorAll('#pjl circle').length)).toBeGreaterThan(0);
       await page.click('#vseg button[data-t="v3d"]');
       await page.waitForFunction(() => window.__gae && v3ready, null, { timeout: 60000 });
+      await expect(page.locator('#v3nii')).toBeVisible();   // the export appears with the stack
       expect(errors).toEqual([]);
     });
 
@@ -66,12 +67,133 @@ for (const [name, url] of [['bundle', BUNDLE], ['lean', LEAN]]) {
   });
 }
 
+/* The build stamps UTC, because it cannot know where the page will be opened; every
+   reader sees that same moment on their own clock, with the zone named. */
+test("the Updated stamp is rewritten onto the reader's own clock", async ({ browser }) => {
+  const read = async timezoneId => {
+    const ctx = await browser.newContext({ timezoneId, locale: 'en-US' });
+    const page = await ctx.newPage();
+    await page.goto(BUNDLE);
+    const out = await page.locator('footer time.bwhen').evaluate(el =>
+      ({ text: el.textContent, at: el.getAttribute('datetime'), tip: el.title }));
+    out.about = await page.locator('#about time.bwhen').textContent();
+    await ctx.close();
+    return out;
+  };
+  const utc = await read('UTC'), tokyo = await read('Asia/Tokyo');
+  expect(utc.at).toMatch(/^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:00Z$/);
+  const shown = s => s.slice(0, 10) + ' ' + s.slice(11, 16);
+  expect(utc.text).toBe(shown(utc.at) + ' UTC');
+  expect(utc.tip).toBe('Built ' + shown(utc.at) + ' UTC');      // the moment as it was stamped
+  // nine hours on, the zone named, and About's date follows the same clock
+  expect(tokyo.text).toMatch(/^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2} [^ ]+$/);
+  const back = s => Date.parse(s.slice(0, 10) + 'T' + s.slice(11, 16) + 'Z');
+  expect(back(tokyo.text) - Date.parse(utc.at)).toBe(9 * 3600e3);
+  expect(tokyo.about).toBe(tokyo.text.slice(0, 10));
+});
+
 test('the SVG export carries one named group per region', async ({ page }) => {
   await page.goto(BUNDLE + '#p1/Mi');
   const [dl] = await Promise.all([page.waitForEvent('download'), page.click('#esvg')]);
   const svg = fs.readFileSync(await dl.path(), 'utf8');
   expect((svg.match(/<path /g) || []).length).toBeGreaterThan(44);
   expect(svg).toContain('id="region-Mi"');
+});
+
+/* The NIfTI export, checked on a volume made up for the purpose rather than on the plates:
+   what can silently go wrong here is the geometry and the two axis flips, and neither of
+   them needs a real stack to catch. Building one takes a minute under swiftshader and the
+   test above already waits for one.
+
+   The header is asserted twice over: against the app's own calibration, so a recalibration
+   moves the file with it, and against the plate table's printed APs, so it cannot move
+   somewhere the atlas does not say. */
+test('the NIfTI export writes an RAS volume at the atlas\u2019s own millimetres', async ({ page }) => {
+  await page.goto(BUNDLE + '#p30');
+  const r = await page.evaluate(() => {
+    const N = V3W * V3H, nv = N * V3D;
+    // a pattern that differs in every voxel of the source, so a wrong index shows
+    const pat = (k, y, x, c) => (k * 7 + y * 3 + x * 5 + c * 11) & 255;
+    const vol = new Uint8Array(nv * 2);
+    for (let k = 0; k < V3D; k++) for (let y = 0; y < V3H; y++) for (let x = 0; x < V3W; x++)
+      for (let c = 0; c < 2; c++) vol[(k * N + y * V3W + x) * 2 + c] = pat(k, y, x, c);
+    const buf = window.__gae.v3niiBuf(vol, 'drawing'), v = new DataView(buf);
+    const out = new Uint8Array(buf, 352);
+    // a voxel of the file is the source voxel the (ML, AP up, DV up) mapping names
+    let wrong = 0;
+    for (const [x, j, l, c] of [[0, 0, 0, 0], [543, 61, 361, 1], [1, 0, 361, 0], [7, 13, 200, 1],
+                                [543, 0, 0, 1], [0, 61, 0, 0], [271, 30, 180, 0]])
+      if (out[c * nv + x + V3W * (j + V3D * l)] !== pat(V3D - 1 - j, V3H - 1 - l, x, c)) wrong++;
+    const f32 = o => v.getFloat32(o, true), i16 = o => v.getInt16(o, true);
+    const srow = o => [f32(o), f32(o + 4), f32(o + 8), f32(o + 12)];
+    const fx = (V3C[2] - V3C[0]) / V3W, fy = (V3C[3] - V3C[1]) / V3H;
+    const one = window.__gae.v3niiBuf(vol, 'nissl');
+    return {
+      wrong, bytes: buf.byteLength, magic: String.fromCharCode(...new Uint8Array(buf, 344, 3)),
+      hdr: v.getInt32(0, true), dim: [0, 1, 2, 3, 4].map(i => i16(40 + i * 2)),
+      datatype: i16(70), bitpix: i16(72), voxoff: f32(108), units: v.getUint8(123),
+      sform: i16(254), pixdim: [1, 2, 3].map(i => f32(76 + i * 4)),
+      x: srow(280), y: srow(296), z: srow(312),
+      want: { dx: fx / ML_PXMM, dz: fy / DV_PXMM, dy: 0.35,
+              x0: toML(V3C[0] + fx / 2), z0: toDV(V3C[1] + (V3H - 0.5) * fy) },
+      ap: [P[V3D - 1].bregma, P[0].bregma], V3W, V3H, V3D,
+      // one volume, not two, where the source has no drawn contour to put in a second
+      nissl: { dim0: new DataView(one).getInt16(40, true), bytes: one.byteLength },
+    };
+  });
+  expect(r.wrong).toBe(0);
+  expect(r.hdr).toBe(348);
+  expect(r.magic).toBe('n+1');
+  expect(r.datatype).toBe(2);          // uint8
+  expect(r.bitpix).toBe(8);
+  expect(r.voxoff).toBe(352);
+  expect(r.units).toBe(2);             // mm
+  expect(r.sform).toBe(1);
+  // (ML, AP, DV), with the drawing's two channels as two volumes and nothing else in it
+  expect(r.dim).toEqual([4, r.V3W, r.V3D, r.V3H, 2]);
+  expect(r.bytes).toBe(352 + r.V3W * r.V3H * r.V3D * 2);
+  expect(r.nissl.dim0).toBe(3);
+  expect(r.nissl.bytes).toBe(352 + r.V3W * r.V3H * r.V3D);
+  // the voxel and the sform are the app's own calibration, not a second copy of it
+  const near = (a, b) => expect(a).toBeCloseTo(b, 5);
+  near(r.pixdim[0], r.want.dx); near(r.pixdim[1], r.want.dy); near(r.pixdim[2], r.want.dz);
+  expect(r.x).toEqual([r.pixdim[0], 0, 0, r.x[3]]);   // diagonal: no rotation, no shear
+  expect(r.y).toEqual([0, r.pixdim[1], 0, r.y[3]]);
+  expect(r.z).toEqual([0, 0, r.pixdim[2], r.z[3]]);
+  near(r.x[3], r.want.x0); near(r.z[3], r.want.z0);
+  // and the AP axis runs from the last plate's printed bregma to the first plate's
+  near(r.y[3], r.ap[0]);
+  near(r.y[3] + (r.V3D - 1) * r.pixdim[1], r.ap[1]);
+});
+
+/* The export re-reads the 62 plates, which takes a couple of seconds -- long enough that
+   a click with no visible response would read as broken. The button is what the eye is on
+   right after the click, so the feedback goes there first: its own label counts the read
+   up to 100%, names the two short steps after it, and lands back on itself once the file
+   is handed to the browser -- never stuck on a stale percentage or silently re-enabled. */
+test('the NIfTI button shows its own progress while the file is written', async ({ page }) => {
+  await page.goto(BUNDLE + '#p30&t=v3d');
+  await page.waitForFunction(() => window.__gae && v3ready, null, { timeout: 60000 });
+  const btn = page.locator('#v3nii');
+  await expect(btn).toHaveText('NIfTI');
+  await page.evaluate(() => {
+    window.__labels = [];
+    const b = document.getElementById('v3nii');
+    window.__mo = new MutationObserver(() => window.__labels.push(b.textContent));
+    window.__mo.observe(b, { childList: true, characterData: true, subtree: true });
+  });
+  await btn.click();
+  await expect(btn).toBeDisabled();
+  await expect(btn).not.toHaveText('NIfTI');   // some busy label, before the file is ready
+  const dl = await page.waitForEvent('download');
+  expect(dl.suggestedFilename()).toBe('gerbil_atlas_stack_drawing.nii.gz');
+  const labels = await page.evaluate(() => { window.__mo.disconnect(); return window.__labels; });
+  expect(labels[0]).toBe('Reading 0%');
+  expect(labels).toContain('Reading 100%');
+  expect(labels).toContain('Writing…');
+  expect(labels).toContain('Zipping…');
+  expect(labels[labels.length - 1]).toBe('NIfTI');
+  await expect(btn).toBeEnabled();
 });
 
 /* Two different things end in no outline being drawn, and they are encoded differently

@@ -36,7 +36,7 @@ Reads:  the source PDF (--pdf), data/gerbil_atlas.json
 Writes: data/gerbil_atlas.json (label_positions and label_blocks)
 
 Usage:  python3 tools/find_compounds.py --pdf path/to/GerbilAtlas.pdf
-                                        [--only PLATE,PLATE] [--dry-run]
+                                        [--plates PLATE,PLATE] [--dry-run]
                                         [--sheet PATH] [--dump PATH]
 """
 
@@ -59,7 +59,6 @@ MARK = 3        # ink pixels that have to stand in that blank for it to be a mar
 KEEP = 0.55     # NCC a shortlisted match has to reach
 WIN = 150       # native px searched either side of a located member's box
 MOST = 2        # candidates offered per elision
-SEP = 24        # native px between two peaks for them to be two labels
 TRIM = 2        # native px of white kept round the ink when the box is seated
 
 # What was read on the plate, per (plate, token): one character per ranked
@@ -206,11 +205,7 @@ def compose(tok, lib, gaps):
 
 def drawn(plate, VECM, shape, cache={}):
     """Every line the atlas traced on this plate, from `svg/`, in the page frame."""
-    if plate not in cache:
-        if len(cache) >= 4:
-            cache.pop(next(iter(cache)))
-        cache[plate] = LB.traced_mask(plate, VECM, shape)
-    return cache[plate]
+    return F._cached(cache, plate, lambda: LB.traced_mask(plate, VECM, shape), 4)
 
 
 def blank_run(tpl, span):

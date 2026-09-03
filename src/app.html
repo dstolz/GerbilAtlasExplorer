@@ -235,6 +235,9 @@
             <option value="" disabled>Custom</option>
           </select></label>
         <button class="z" id="v3r" type="button" title="Back to the default viewpoint">Reset view</button>
+        <span class="tsep"></span>
+        <button class="z" id="v3nii" type="button" hidden
+          title="Download the whole 62-plate stack as a gzipped NIfTI-1 volume, in the atlas’s own millimetres from bregma — the reconstruction itself, not the picture of it, so nothing the toolbar sets is written into it. The labelled drawing writes two volumes: the tissue ink, then the drawn contour.">NIfTI</button>
       </span>
       <span class="elinkgrp">
         <button class="z" id="emax" type="button" aria-pressed="false"
@@ -344,7 +347,7 @@
 
 <footer>
   <p>Radtke-Schuller et al. (2016), <em>Brain Struct Funct</em> 221(Suppl 1):1&ndash;272
-    <a href="https://doi.org/10.1007/s00429-016-1259-0" target="_blank" rel="noopener">doi:10.1007/s00429-016-1259-0</a><span class="fsep">&middot;</span><button type="button" class="flink" id="aboutb2">About the data</button><span class="fsep">&middot;</span><a href="https://github.com/dstolz/GerbilAtlasExplorer/blob/main/METHODS.md" target="_blank" rel="noopener">Methods</a><span class="fsep">&middot;</span><a href="https://github.com/dstolz/GerbilAtlasExplorer" target="_blank" rel="noopener">Source</a><span class="fsep">&middot;</span><a href="https://github.com/dstolz/GerbilAtlasExplorer/issues" target="_blank" rel="noopener">Report an issue</a><span class="fsep">&middot;</span>Build <a href="https://github.com/dstolz/GerbilAtlasExplorer/commit/{{BUILD_HASH}}" target="_blank" rel="noopener"><code>{{BUILD_HASH}}</code></a><span class="fsep">&middot;</span><span class="fstamp">Updated {{BUILD_DATE}} {{BUILD_TIME}}</span></p>
+    <a href="https://doi.org/10.1007/s00429-016-1259-0" target="_blank" rel="noopener">doi:10.1007/s00429-016-1259-0</a><span class="fsep">&middot;</span><button type="button" class="flink" id="aboutb2">About the data</button><span class="fsep">&middot;</span><a href="https://github.com/dstolz/GerbilAtlasExplorer/blob/main/METHODS.md" target="_blank" rel="noopener">Methods</a><span class="fsep">&middot;</span><a href="https://github.com/dstolz/GerbilAtlasExplorer" target="_blank" rel="noopener">Source</a><span class="fsep">&middot;</span><a href="https://github.com/dstolz/GerbilAtlasExplorer/issues" target="_blank" rel="noopener">Report an issue</a><span class="fsep">&middot;</span>Build <a href="https://github.com/dstolz/GerbilAtlasExplorer/commit/{{BUILD_HASH}}" target="_blank" rel="noopener"><code>{{BUILD_HASH}}</code></a><span class="fsep">&middot;</span><span class="fstamp">Updated <time class="bwhen" datetime="{{BUILD_ISO}}">{{BUILD_DATE}} {{BUILD_TIME}}</time></span></p>
   <p class="fattr">Developed and maintained by Daniel Stolzberg and the
     <a href="https://www.caraslab.org" target="_blank" rel="noopener">Caras Lab</a>,
     <a href="https://biology.umd.edu" target="_blank" rel="noopener">Department of Biology</a>,
@@ -609,7 +612,7 @@
     <h3>This build</h3>
     <p>Spotted an error in the atlas data, hit a bug, or want a new feature?
       <a href="https://github.com/dstolz/GerbilAtlasExplorer/issues" target="_blank" rel="noopener">Raise an issue on GitHub</a>.
-      Build <a href="https://github.com/dstolz/GerbilAtlasExplorer/commit/{{BUILD_HASH}}" target="_blank" rel="noopener"><code>{{BUILD_HASH}}</code></a>, {{BUILD_DATE}}.</p>
+      Build <a href="https://github.com/dstolz/GerbilAtlasExplorer/commit/{{BUILD_HASH}}" target="_blank" rel="noopener"><code>{{BUILD_HASH}}</code></a>, <time class="bwhen" data-date datetime="{{BUILD_ISO}}">{{BUILD_DATE}}</time>.</p>
   </div>
 </dialog>
 
