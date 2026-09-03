@@ -188,6 +188,19 @@ carries a `version` block naming the release its derived fields were built for.
   `no_drawn_outline` carries the same flag into the per-plate GeoJSON.
 
 ### Fixed
+- **`PtP` was joined to `S1` on plate 30's left hemisphere.** The atlas prints `PtP` once per
+  hemisphere, and the label pass had located only the right one — the left instance never made
+  it into `label_positions`, so the extraction had nothing to seed that side's face with and
+  `S1` claimed the whole thing, ground and all. Found by cutting the right-hemisphere label as
+  a template and cross-correlating it against the same plate's page image (0.927, well over the
+  0.80 the finder in `tools/find_missing_labels.py` requires, and read against the printed page
+  before it was kept): the mirrored word is there, its region centred at ML -4.59 mm against
+  the located side's +4.24, not an exact mirror. `find_missing_labels.py` itself did not
+  catch this — its `want`
+  list is abbreviations with *no* location on a plate, not one missing a second instance — so
+  the box was added by hand and the region extraction rerun. `PtP` is now 1.50 mm² over both
+  hemispheres (was 0.79, one side only) with a real drawn boundary on each, and `S1` gives back
+  the 0.71 mm² it had no ink of its own claiming.
 - **A note could not be saved, so there were never any notes to show.** The plate wrapper
   takes pointer capture on `pointerdown`, so that a drag which leaves the box still pans
   rather than stopping at its edge. Capture retargets the click that follows it to the

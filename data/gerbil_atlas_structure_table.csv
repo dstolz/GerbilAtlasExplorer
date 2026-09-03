@@ -526,7 +526,7 @@ PT,paratenial thalamic nucleus,thalamus,25,27,3,25 26 27,6,3,-0.95,0.35,-5.08,3,
 Pta,pericollicular tegmental area,auditory;midbrain,39,43,5,39 40 41 42 43,10,5,-6.2,2.11,-4.25,5,3.633,1.438,0.88,1.2475,surface,2,1.84,-4.1,-6.35
 PTe,paraterete nucleus,thalamus,29,30,2,29 30,3,2,-2.35,1.74,-7.39,2,0.203,0.153,0.69,0.0746,slab,2,-1.73,-7.5,-2.22
 PTg,pedunculopontine tegmental nucleus,brainstem;midbrain,38,42,5,38 39 40 41 42,10,5,-5.85,1.51,-5.55,5,7.268,4.837,0.04,2.2624,surface,2,1.37,-5.57,-5.74
-PtP,"parietal cortex, posterior area",cortex,28,31,4,28 29 30 31,6,4,-2.17,4.19,-1.98,4,4.564,1.803,0.95,1.3283,surface,4,4.11,-1.75,-2.22
+PtP,"parietal cortex, posterior area",cortex,28,31,4,28 29 30 31,7,4,-2.35,4.21,-1.97,4,4.564,1.803,0.95,1.3283,surface,4,4.11,-1.75,-2.22
 PV,paraventricular thalamic nucleus,thalamus,27,28,2,27 28,2,2,-1.48,0.01,-4.42,2,0.453,0.232,0.97,0.1709,slab,1,-0.02,-4.42,-1.48
 PVA,"paraventricular thalamic nucleus, anterior part",thalamus,25,26,2,25 26,3,2,-0.6,0.16,-5.24,2,0.762,0.445,0.88,0.2786,slab,1,0.04,-5.05,-0.74
 PVP,"paraventricular thalamic nucleus, posterior part",thalamus,29,31,3,29 30 31,3,3,-2.35,0.01,-4.39,3,1.004,0.513,0.62,0.389,surface,1,-0.01,-4.33,-2.48
