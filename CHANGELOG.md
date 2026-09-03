@@ -125,6 +125,13 @@ carries a `version` block naming the release its derived fields were built for.
   when it was built from a dirty tree — so its date and its time cannot disagree.
 
 ### Changed
+- **A note on the plate is a marker, not its own text across the drawing.** Every note used
+  to print its line of text beside its ring, so a plate with a handful of them on it was
+  read through its own annotations. A note now draws as a small bubble with its tail on the
+  point it marks, and what it says is in its tooltip, in the **Notes** pane's list, and in
+  the form the marker raises when it is clicked — where it can be read, rewritten or
+  deleted. The marker's hit target is larger than the bubble, so it can be aimed at with a
+  finger as well as a pointer.
 - **A fissure is not a region, and neither is `cbw`.** Twenty of the 723 names the atlas
   prints name no ground of their own: the sixteen fissures, sulci and the rhinal incisure,
   which are the clefts *between* regions and are drawn as the lines between them; `cbw`,
@@ -194,6 +201,24 @@ carries a `version` block naming the release its derived fields were built for.
   the box was added by hand and the region extraction rerun. `PtP` is now 1.50 mm² over both
   hemispheres (was 0.79, one side only) with a real drawn boundary on each, and `S1` gives back
   the 0.71 mm² it had no ink of its own claiming.
+- **A note could not be saved, so there were never any notes to show.** The plate wrapper
+  takes pointer capture on `pointerdown`, so that a drag which leaves the box still pans
+  rather than stopping at its edge. Capture retargets the click that follows it to the
+  wrapper, and the note form sits inside that wrapper: a press on **Save**, **Delete** or
+  **Cancel** never reached the button it landed on. The click arrived at the plate instead
+  and did what a click on the plate does — selected whatever region the form was covering —
+  while the note stayed unwritten, which is why the **Notes** pane was empty however many
+  had been typed. Only Enter in the text field ever committed one. The form's own pointer
+  events now stop at the form, so its buttons get the clicks meant for them, and the plate's
+  tooltip comes down when the pointer moves onto it rather than hanging there.
+
+  The other half of it was geometry. The form was placed once, against the box as measured
+  at that instant — but arming **Add** rewraps the toolbar, and `fit()` resizes the box a
+  frame later. The box clips what overhangs it, so a note put near the right-hand edge
+  opened a form whose **Cancel** was outside the box and could not be clicked at all.
+  Placement is now `anPos()`, which measures the box and the form afresh each time and runs
+  again on every pan, zoom and refit, so the form follows its point instead of being left
+  behind by it.
 - **`S1DZ` had lost its strip on plate 23, and `S1BF` was standing in it.** The atlas draws
   the dysgranular zone as a narrow band between two dashed lines running from the pia to the
   white matter, `S1BF` one side of it and `S1FL` the other. On the left hemisphere both lines

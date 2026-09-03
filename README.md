@@ -138,9 +138,11 @@ the other histology of this level, the drawing, or the plate before or after —
 under the pointer on one is under it on the other.
 
 **Notes** are your own markers: click the plate where an electrode tip, a lesion or a
-place to come back to is, give it a line of text, and it draws on the plate, the
-projections and the 3D view, with its coordinates in whatever frame is set. They stay in
-your browser; export them as JSON to keep or share them, and a link carries a handful.
+place to come back to is, give it a line of text, and a marker draws there and on the
+projections and the 3D view alike. Click a marker to read the note, rewrite it or delete
+it; the **Notes** pane lists every one with its coordinates in whatever frame is set. They
+stay in your browser; export them as JSON to keep or share them, and a link carries a
+handful.
 
 **See a structure whole** — the printed atlas gives you one coronal plane at a time.
 - Selecting a structure shows it on **every plate it is on**, as a strip of thumbnails

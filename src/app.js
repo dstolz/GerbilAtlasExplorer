@@ -899,7 +899,7 @@ function applyView(){
   $('zo').disabled = zoom<=ZMIN+1e-6;
   $('zi').disabled = zoom>=ZMAX-1e-6;
   IW.classList.toggle('zoomed', zoom>1.01);
-  drawSB(); queueHash();
+  drawSB(); anPos(); queueHash();
 }
 function zoomAt(k,cx,cy){
   const nk=Math.max(ZMIN,Math.min(ZMAX,k));
@@ -1434,11 +1434,19 @@ function anMake(p,x,y,t,id){
           x:+(+x).toFixed(4), y:+(+y).toFixed(4), ap:plateOf[p].bregma,
           ml:+toML(x*NW).toFixed(2), dv:+toDV(y*NH).toFixed(2), t:String(t||'').slice(0,200)};
 }
+/* a marker says a note is here and no more: a small bubble with its tail on the point.
+   What the note says is in the tooltip, in the pane's list, and in the form the marker
+   raises when it is clicked -- printing it across the drawing would bury the plate under
+   its own annotations. The rect behind the bubble is the hit target, which the bubble at
+   this size is too small to be. */
+const ANPIN='M -6 -24 H 6 A 4 4 0 0 1 10 -20 V -10 A 4 4 0 0 1 6 -6 H 3 L 0 0 L -3 -6 '+
+            'H -6 A 4 4 0 0 1 -10 -10 V -20 A 4 4 0 0 1 -6 -24 Z';
 function anDraw(){
   const g=$('an');
   g.innerHTML = anShow ? NOTES.filter(n=>n.p===cur).map(n=>
-    `<g class="note" data-id="${esc(n.id)}"><circle cx="${(n.x*NW).toFixed(1)}" cy="${(n.y*NH).toFixed(1)}" r="6"/>`+
-    `<text x="${(n.x*NW+9).toFixed(1)}" y="${(n.y*NH-8).toFixed(1)}">${esc(n.t)}</text></g>`).join('') : '';
+    `<g class="note" data-id="${esc(n.id)}" transform="translate(${(n.x*NW).toFixed(1)},${(n.y*NH).toFixed(1)})">`+
+    `<title>${esc(n.t||'Untitled note')}</title>`+
+    `<rect class="hit" x="-16" y="-32" width="32" height="38"/><path d="${ANPIN}"/></g>`).join('') : '';
   anPJ(); if(typeof v3frame==='function') v3frame();
 }
 /* the note under a click, if any. The wrapper takes pointer capture on pointerdown, so
@@ -1452,10 +1460,17 @@ function anAt(e){
 function anOpen(n){
   anEdit=n; const f=$('anf'); f.hidden=false;
   $('ant').value=n.t||''; $('andel').hidden=!NOTES.includes(n);
-  const [sx,sy]=f2s(n.x*NW,n.y*NH), b=iwRect();
-  f.style.left=Math.max(2,Math.min(b.width-f.offsetWidth-2,sx+12)).toFixed(1)+'px';
-  f.style.top=Math.max(2,Math.min(b.height-f.offsetHeight-2,sy+12)).toFixed(1)+'px';
-  $('ant').focus();
+  hideTip(); anPos(); $('ant').focus();
+}
+/* and is kept inside the plate box, which clips what overhangs it -- a form hanging off
+   the right edge loses its buttons, which is a form you cannot save or cancel. The box is
+   measured afresh every time rather than once: fit() resizes it a frame after the click
+   that opened the form, and the view can be panned or zoomed while it is open. */
+function anPos(){
+  const f=$('anf'); if(f.hidden||!anEdit) return;
+  const [sx,sy]=f2s(anEdit.x*NW,anEdit.y*NH), b=iwRect();
+  f.style.left=Math.max(2,Math.min(b.width -f.offsetWidth -2,sx+12)).toFixed(1)+'px';
+  f.style.top =Math.max(2,Math.min(b.height-f.offsetHeight-2,sy+12)).toFixed(1)+'px';
 }
 function anClose(){ anEdit=null; $('anf').hidden=true; }
 function anChanged(){ anSave(); anDraw(); anList(); queueHash(); }
@@ -1465,6 +1480,15 @@ $('anf').onsubmit=e=>{ e.preventDefault(); if(!anEdit) return;
   anClose(); anChanged(); };
 $('andel').onclick=()=>{ NOTES=NOTES.filter(n=>n!==anEdit); anClose(); anChanged(); };
 $('ancan').onclick=anClose;
+/* the wrapper takes pointer capture on pointerdown, which retargets the click that follows
+   to the wrapper itself. Left to bubble, a press on Save would never reach the button: the
+   click would arrive at the plate instead and act on whatever the form is covering. The
+   form sits over the plate but is no part of it, so its pointer events stop here. */
+for(const t of ['pointerdown','pointermove','pointerup','click','dblclick','wheel'])
+  $('anf').addEventListener(t,e=>e.stopPropagation());
+/* and the plate's own tooltip goes with them: the wrapper is not left when the pointer
+   moves onto the form, which is inside it, so nothing else would take the tip down */
+$('anf').addEventListener('pointerenter',hideTip);
 function anArmSet(on){
   anArm=!!on; $('anadd').classList.toggle('armed',anArm); IW.classList.toggle('pick',anArm);
   $('anadd').setAttribute('aria-pressed',anArm?'true':'false');
