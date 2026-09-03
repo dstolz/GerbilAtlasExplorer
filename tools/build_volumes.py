@@ -575,8 +575,11 @@ def main():
         sys.exit('need at least two plates; the third dimension comes from the gap')
 
     aps = {p['plate']: p['bregma'] for p in db['plates']}
-    grid = V.grid_for(frame, {str(p): db['brain_outline']['data'][str(p)]
-                              for p in plates}, [aps[p] for p in plates], res=a.res)
+    try:
+        grid = V.grid_for(frame, {str(p): db['brain_outline']['data'][str(p)]
+                                  for p in plates}, [aps[p] for p in plates], res=a.res)
+    except ValueError as e:
+        sys.exit('build_volumes: %s' % e)
     print('grid  %s' % grid.describe())
     print('      %.1f M voxels' % (np.prod(grid.shape) / 1e6))
 
@@ -660,7 +663,7 @@ def main():
         'plates': len(plates),
         'voxel_mm': grid.res,
         'ap_step_mm': round(grid.res, 4),
-        'ap_interpolation_factor': int(round(0.35 / grid.res)),
+        'ap_interpolation_factor': grid.sub,
         'structures': len(meshes),
         'graded_surface': ngrade['surface'],
         'graded_slab': ngrade['slab'],
@@ -708,6 +711,7 @@ def main():
         'note': NOTE,
         'derivation': DERIVATION,
         'validation': validation_text(summary, val),
+        'checks': val,
         'grid': grid.describe(),
         'summary': summary,
         'grades': GRADES,
@@ -757,16 +761,16 @@ DERIVATION = (
     'step, closing the shape rather than extruding it. A hole in a structure\'s plate run '
     'is bridged only where the published index lists the missing plate, so an extraction '
     'miss is filled and a real absence is not. Surfaces are marching cubes on the distance '
-    'field of the label volume, decimated by vertex clustering. See METHODS.md.')
+    'field of the label volume, read at a stride set by the size of the structure so that '
+    'a mesh describes the shape rather than the lattice. See METHODS.md.')
 
 SURFACE_NOTE = (
     'The brain surface: the section outlines of all 62 plates, interpolated along AP and '
     'surfaced. The leader-line spurs that METHODS leaves on the 2-D outline -- where the '
     'flood fill runs out along the lines the drawing points at its abbreviations with -- '
-    'are removed here by an opening along AP alone, with an element longer than one '
-    'section step. A spur is drawn on one plate and the thin cortical sheet runs through '
-    'many, so this separates them without eroding anything within a section, which is what '
-    'the 2-D extraction could not do.')
+    'are left on it: an opening along AP alone would take them off, since a spur is drawn '
+    'on one plate and the thin cortical sheet runs through many, but it is a flag rather '
+    'than a step (--despur; see despur()), and `checks.spur_opening` says whether it ran.')
 
 
 def validation_text(s, v):

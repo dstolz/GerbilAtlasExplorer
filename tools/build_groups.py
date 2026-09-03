@@ -154,7 +154,7 @@ GROUPS = [
     dict(id='pons', abbr='PONS', name='pons',
          alias=('pons', 'pontine', 'metencephalon'),
          note='From the first plate that prints the pontine nuclei to the last that prints '
-              'the facial nucleus (plates %d–%d, bregma −5.50 to −9.35 mm): the '
+              'the facial nucleus (plates %d–%d, bregma −5.50 to −9.00 mm): the '
               'basis pontis and pontine tegmentum, the superior olivary complex and the nuclei '
               'of the lateral lemniscus, the parabrachial nuclei, the trigeminal motor and '
               'principal sensory nuclei, and the facial and abducens nuclei.' % PONS_PLATES,

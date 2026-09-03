@@ -415,7 +415,8 @@ def targets(DB, only):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split('\n')[0])
-    ap.add_argument('--pdf', required=True, metavar='PATH', help='the source atlas PDF')
+    ap.add_argument('--pdf', default=os.environ.get('GERBIL_ATLAS_PDF', ''), metavar='PATH',
+                    help='the source atlas PDF (or set $GERBIL_ATLAS_PDF)')
     ap.add_argument('--json', default=A.JSON, metavar='PATH')
     ap.add_argument('--only', default='', metavar='ABBR,ABBR',
                     help='restrict to these abbreviations')

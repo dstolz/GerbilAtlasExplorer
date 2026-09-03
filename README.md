@@ -150,7 +150,7 @@ handful.
 - **Projection** plots every printed label in side view (AP × DV) or top-down (AP × ML),
   with your selected structure highlighted, so you can see how it runs through the brain.
 - **3D** stacks the 62 plates where they actually sit: as contours — or as the Nissl or
-  myelin sections themselves — as a ray-marched volume, or as a point cloud of all 6,266
+  myelin sections themselves — as a ray-marched volume, or as a point cloud of all 6,315
   labels you can orbit. Clip to a slab or cut
   it in half at the midline. **Floor**, **Ceiling** and **Gamma** window the tissue before
   **Density** decides how opaque it is drawn — the difference between a grey fog and a
@@ -190,7 +190,7 @@ handful.
   [`data/`](data/) with GeoJSON of the outlines per plate — see the file list below.
 - The SVG carries no section image — it is the outlines, traced off the printed plate,
   plus whatever overlays were on: grid, skull, landmarks, the circled structure, the
-  measurement, the planned track and the query point, each in its own named group so you
+  measurement, the planned track, the query point and your notes, each in its own named group so you
   can restyle or delete one without touching the rest. Opens in Illustrator, Inkscape or
   a browser.
 
@@ -229,13 +229,13 @@ cannot be re-flattened at yours, are unavailable while it is on.
   printed** — close to, but not the same as, the structure's centre. It's a targeting
   aid, not a substitute for reading the plate. Where the atlas could not fit the name inside
   the region and set it outside with a line drawn back in, the coordinate is the end of that
-  line rather than the word: 215 labels on 47 plates, a median 0.52 mm apart.
-- Label positions were read from the plates automatically. Coverage is 94% of
-  structure–plate entries; **20 of the 723 structures have no located label**, so they
+  line rather than the word: 212 labels on 47 plates, a median 0.52 mm apart.
+- Label positions were read from the plates automatically. Coverage is 95% of
+  structure–plate entries; **7 of the 723 structures have no located label**, so they
   have no coordinate. The app tells you when a label is missing rather than showing
   nothing — you may notice a region you expected isn't marked.
 - A structure listed for a plate range is present at those levels but is **not
-  necessarily printed** on every plate of that range. Of the 3,510 the index lists, 3,298
+  necessarily printed** on every plate of that range. Of the 3,510 the index lists, 3,338
   carry a located label; the shortfall is mostly structures the plate does not name.
 - The **system tags** are a convenience layer added here, not part of the published atlas.
 - The **gross divisions** are the same kind of addition, and a larger one: the atlas publishes
@@ -243,11 +243,11 @@ cannot be re-flattened at yours, are unavailable while it is on.
   out in full — `data/gerbil_atlas_groups.csv` names every member of every division, and
   `tools/build_groups.py` is the rules that produced them — so it can be read and argued with.
   The one boundary the atlas's own geometry settles is the pons against the medulla, drawn at
-  the last plate that prints the facial nucleus (plate 49, bregma −9.35 mm); a structure
+  the last plate that prints the facial nucleus (plate 49, bregma −9.00 mm); a structure
   spanning it is in both. Six structures are in no division: two arteries, a blood vessel and
   three surface fissures, which are landmarks on the section rather than parts of the brain.
 - The **region outlines** are cut from the atlas's own drawn lines, not from a published
-  segmentation — the atlas has none. 3,055 structure–plate entries have one, and each says
+  segmentation — the atlas has none. 3,065 structure–plate entries have one, and each says
   how much of its own boundary the atlas prints: the median is 98%, but **3% of regions are
   under half drawn**, and those outlines are dashed and labelled as inferred because that is
   what they are. Where the drawing seals a face and names nothing, nothing is claimed.
@@ -260,7 +260,7 @@ cannot be re-flattened at yours, are unavailable while it is on.
   plane. See [METHODS](METHODS.md#region-extents).
 - Where the atlas typesets **two names into one label** — `S1Tr/ LPtA`, `Au1 (A1)` — they
   name one region between them, so both give the same outline and the app says which label
-  it is. 22 labels on 31 plates are joined this way.
+  it is. 27 labels on 41 plates are joined this way.
 - Nothing here is a segmentation, and the 3D views interpolate between sections that
   are 350 µm apart — the streaking is arithmetic, not anatomy.
 - The **myelin** plate of a level is an *adjacent* section, not the same slice as the Nissl:
@@ -303,7 +303,7 @@ plate range is malformed, and which are printed on one plate more than it gives 
 | `data/gerbil_atlas_structures.csv` | One row per structure: abbreviation, name, plate and bregma range, tags. |
 | `data/gerbil_atlas_groups.csv` | One row per gross division: its members spelled out, the plates it is on, its other names, and a note saying what it holds and what it deliberately does not. Written by `tools/build_groups.py`; added here, not published with the atlas. |
 | `data/gerbil_atlas_structure_table.csv` | One row per structure with its label centre, areas per plate, and the volume and centre of its mesh. |
-| `data/gerbil_atlas_labels.csv` | One row per printed label — 6,266 stereotaxic triplets, read at the end of the label's leader line where the atlas draws one. |
+| `data/gerbil_atlas_labels.csv` | One row per printed label — 6,315 stereotaxic triplets, read at the end of the label's leader line where the atlas draws one. |
 | `data/gerbil_atlas_plates.csv` | One row per plate: bregma / lambda / interaural / occipital-crest AP. |
 | `data/geojson/plate_NN.geojson` | The regional outlines of one plate in millimetres, one feature per structure, with the unnamed faces and the section outline. |
 | `data/gerbil_atlas_labels.nii.gz`, `data/gerbil_atlas_labels_lut.csv` | The label volume the meshes were cut from, as a NIfTI file at 50 µm: one id per voxel in RAS (x right, y anterior, z dorsal) with the atlas millimetres in its sform, and the table that names each id. Interpolated between sections 350 µm apart, like the meshes. |

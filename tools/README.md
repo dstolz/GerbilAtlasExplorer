@@ -11,14 +11,14 @@ anyone check any of them, so they are here as code, in the order they run.
 | --- | --- |
 | `atlaslib.py` | What every script shares: the paths, the plate frame in millimetres, the page-to-plate transform, the traced-outline readers, one `--plates` grammar (`30`, `28-33`, `5,30,45`), and the renderer that writes `data/gerbil_atlas.json` byte for byte as the repository keeps it. A script loads the database, changes its block and saves; nothing splices text. |
 | `build_app.py` | Builds `gerbil_atlas_explorer.html` and the lean `index.html` from `src/` and `data/`, stamps the commit, date and time into the page, and with `--check` exits non-zero when a committed page is not a fresh build. `--site DIR` writes everything GitHub Pages serves; `--dev` writes `build/dev.html`, which links `src/app.css` and `src/app.js` so code edits need no rebuild. |
-| `export_tables.py` | The flat files, all from the JSON: the two CSVs that used to be kept by hand, a per-label coordinate table, a per-structure table with areas, volumes and centres, and GeoJSON extents per plate. `--refresh-db` also recomputes the per-plate counts the database carries and the `plate_registration` block; `--check` exits non-zero if any committed table is stale. |
+| `export_tables.py` | The flat files, all from the JSON: the two CSVs that used to be kept by hand, a per-label coordinate table, a per-structure table with areas, volumes and centres, and GeoJSON extents per plate. `--refresh-db` also recomputes the counts the database carries — per plate, and the two totals in `verification` — and the `plate_registration` block; `--check` exits non-zero if any committed table is stale. |
 | `build_groups.py` | The twenty gross divisions — cortex, hippocampal formation, thalamus, pons, brainstem and the rest — as named lists of the atlas's own abbreviations, written into the `groups` block. Declarative rules rather than a hand list, so the taxonomy can be read and argued with; `--report` prints every division with its members and the residue, `--check` exits non-zero if the committed block is stale. It adds no geometry: a division's outline, area, coordinate and mesh are all derived in the app from its members'. Stdlib only. |
 | `check_indexes.py` | Reads the atlas's two published indexes against each other and against the database. No inputs beyond the repository. It is what says the 723 transcribed entries are intact, and it is where the seven malformed plate ranges are enumerated. It also writes the comparison out as `data/index_published.csv` (`--write`) and verifies the committed copy on every plain run. |
 | `find_missing_labels.py` | Finds printed labels the label pass missed, by cutting the word from a plate that carries it and matching it back on one that does not. Extends `label_positions`. Needs the source PDF. |
 | `find_unlettered.py` | Finds the printed labels no plate carries a located copy of, which is the case `find_missing_labels.py` structurally cannot reach: it cuts the word from a plate that has it, and these have none. Composes the word instead, letter by letter, from glyphs cut out of located labels on neighbouring plates, then matches it the same way. Extends `label_positions`. Needs the source PDF. |
 | `label_blocks.py` | Reads which abbreviations the atlas typeset into one printed label — `S1Tr/ LPtA`, `Au1 (A1)` — off the source PDF, and writes `label_blocks`. Those name one region between them, so `build_region_extents.py` seeds them as one. |
-| `find_compounds.py` | The join `label_blocks.py` cannot see: a mark *inside* one token, joining two names neither of which is printed whole — `9a,bCb` is 9aCb and 9bCb, `9/11N` is 9N and 11N. Elides every pair the index lists on a plate with one of them unlocated, composes that token and matches it. Writes the token's box for each member of `label_positions` and the pair into `label_blocks`. Needs the source PDF. |
-| `label_leaders.py` | Follows the line the atlas draws from a label it could not fit inside the region it names, and writes where that line ends into `label_leaders`. For those 215 labels the box is where the word is; this is where the structure is, and it is what everything downstream seeds and aims at. Needs the source PDF. |
+| `find_compounds.py` | The join `label_blocks.py` cannot see: a mark *inside* one token, joining two names neither of which is printed whole — `9a,bCb` is 9aCb and 9bCb, `9/11N` is 9N and 11N. Elides every pair the index lists on a plate with one of them unlocated, composes that token and matches it. Writes the token's box into `label_positions` for each member that has none of its own on it, and the pair into `label_blocks`. Needs the source PDF. |
+| `label_leaders.py` | Follows the line the atlas draws from a label it could not fit inside the region it names, and writes where that line ends into `label_leaders`. For those 212 labels the box is where the word is; this is where the structure is, and it is what everything downstream seeds and aims at. Needs the source PDF. |
 | `build_region_extents.py` | Cuts `region_extents` out of the tracings in `svg/` and the located abbreviations in `label_positions`, and writes it into `data/gerbil_atlas.json`. Also writes `features`, the twenty names the atlas prints that are no region — the fissures and sulci, `cbw`, the vessels — from `atlaslib.FEATURES`, because this is the script whose behaviour that table is: they are seeded and then emptied, and the ground goes to the regions around them. |
 | `regiongeom.py` | The boundary geometry: crack-lattice tracing, junction detection, arc-wise Douglas-Peucker. Kept apart because it is the part that has to be right for the regions to tile. |
 | `build_volumes.py` | Stacks the 62 plates, interpolates between them, and writes the brain surface and one mesh per structure to `data/gerbil_atlas_volumes.json`; `--stl DIR` writes the same meshes as STL, `--nifti PATH` the label volume they were cut from as a gzipped NIfTI-1 file with a lookup table beside it. |
@@ -51,10 +51,12 @@ python3 tools/build_groups.py --check                  # are the committed divis
 python3 -m pytest tests/python                         # the data's own promises, as tests
 ```
 
-Every script takes `--plates` the same way — `30`, `28-33`, `5,30,45`, or a mix — and
-every block keyed by plate is written whole: a run over some plates reports and refuses
-to write, because writing what it read would drop the other plates. `--dry-run` reports
-and touches nothing. `$GERBIL_ATLAS_PDF` can name the PDF in place of `--pdf`.
+Every script that works plate by plate takes `--plates` the same way — `30`, `28-33`,
+`5,30,45`, or a mix (`label_blocks.py`, `find_missing_labels.py` and `find_unlettered.py`
+run over all 62) — and every block keyed by plate is written whole: a run over some
+plates reports and refuses to write, because writing what it read would drop the other
+plates. `--dry-run` reports and touches nothing. `$GERBIL_ATLAS_PDF` can name the PDF in
+place of `--pdf`.
 
 `label_blocks.py`, `find_missing_labels.py` and `label_leaders.py` need the published PDF,
 because they read the page itself — punctuation for the first, the shape of a whole word for
@@ -83,8 +85,8 @@ two neighbours disagree about where their common boundary is and the regions no 
 Same inputs, same outputs — there is nothing random in the pipeline, so a reviewer can
 re-run it and diff.
 
-`build_volumes.py` prints its own verification numbers too, and stores them in
-`summary` / `validation` beside the meshes. The ones to watch are
+`build_volumes.py` prints its own verification numbers too, and stores them beside the
+meshes: `summary`, `checks` as figures, and `validation` as prose. The ones to watch are
 `regions_partition_the_volume`, which asserts rather than reports — every voxel inside the
 surface carries exactly one label — and `section_area_median_rel_error`, which says whether
 the interpolation moved the plates it was built from. It should stay near the 1.4% the
@@ -109,7 +111,8 @@ Python 3.11 or newer. On those,
 back with the same vertices and a different triangle order under a different
 scikit-image, which is why the pins are `==`.
 
-GitHub Actions runs `check_indexes.py`, `export_tables.py --check`, `build_app.py
---check`, the Python tests and the browser tests on every push (`.github/workflows/ci.yml`);
+GitHub Actions runs `check_indexes.py`, `export_tables.py --check`, `build_groups.py
+--check`, `build_app.py --check`, the Python tests and the browser tests on every push
+(`.github/workflows/ci.yml`);
 `pages.yml` builds the site for GitHub Pages and attaches the bundle to a release on a
 version tag.

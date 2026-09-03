@@ -3,7 +3,7 @@ abbr,name,systems,first_plate,last_plate,n_plates,plates,n_labels,n_plates_label
 10Cb,10th cerebellar lobule (nodule),cerebellum,50,55,6,50 51 52 53 54 55,6,6,-10.23,0.04,-4.77,6,10.112,2.61,0.7,3.9508,surface,1,0.08,-4.72,-10.26
 10N,dorsal motor nucleus of vagus,motor,53,58,6,53 54 55 56 57 58,10,6,-11.27,0.36,-6.01,6,0.71,0.151,0.94,0.2246,surface,3,0.44,-5.97,-10.98
 10n,vagus nerve,motor,52,52,1,52,3,1,-10.05,1.56,-6.64,1,0.607,0.607,0.75,0.2014,slab,3,-1.65,-6.77,-10.04
-11N,accessory nerve nucleus,motor,60,62,3,60 61 62,6,3,-13.2,0.42,-7.27,1,0.267,0.267,0.91,0.0989,slab,2,0.36,-7.27,-13.21
+11N,accessory nerve nucleus,motor,60,62,3,60 61 62,5,3,-13.2,0.39,-7.27,1,0.267,0.267,0.91,0.0989,slab,2,0.36,-7.27,-13.21
 12GH,"hypoglossal nucleus, geniohyoid part",motor,57,58,2,57 58,2,2,-11.98,0.59,-6.61,2,0.129,0.08,0.68,0.0461,slab,1,0.62,-6.57,-11.94
 12n,hypoglossal nerve,motor,53,58,6,53 54 55 56 57 58,9,6,-11.45,0.5,-7.1,6,2.79,1.095,0.26,0.7334,surface,4,-0.62,-7.14,-11.55
 12N,hypoglossal nucleus,motor,51,58,8,51 52 53 54 55 56 57 58,17,8,-11.1,0.17,-6.18,8,2.146,0.463,0.36,0.8519,surface,2,0.04,-6.25,-11.22
@@ -17,7 +17,7 @@ abbr,name,systems,first_plate,last_plate,n_plates,plates,n_labels,n_plates_label
 3PC,"oculomotor nucleus, parvicellular part",midbrain;motor,36,36,1,36,2,1,-4.45,0.21,-5.02,1,0.297,0.297,0.96,0.1056,slab,2,0.2,-5.12,-4.46
 3V,3rd ventricle,ventricular,23,34,12,23 24 25 26 27 28 29 30 31 32 33 34,21,12,-2,0.04,-5.68,11,4.07,0.869,0.71,1.2975,surface,6,0.03,-3.58,-1.94
 4,layer 4 of cortex,cortex,14,16,3,14 15 16,2,2,3.08,0.78,-6.45,2,0.229,0.117,0.79,0.052,slab,2,-0.87,-6.51,3.34
-4Cb,4th cerebellar lobule,cerebellum,41,49,9,41 42 43 44 45 46 47 48 49,10,9,-7.78,0.1,-2.18,8,21.022,5.96,0.3,7.9683,surface,1,-0.04,-2.47,-7.71
+4Cb,4th cerebellar lobule,cerebellum,41,49,9,41 42 43 44 45 46 47 48 49,9,9,-7.6,0.1,-2.13,8,21.022,5.96,0.3,7.9683,surface,1,-0.04,-2.47,-7.71
 4n,trochlear nerve,motor,41,44,4,41 42 43 44,7,4,-6.55,0.97,-4.64,4,0.994,0.676,0.82,0.3003,surface,3,0.14,-4.61,-6.53
 4N,trochlear nucleus,midbrain;motor,39,40,2,39 40,4,2,-5.67,0.28,-4.93,2,0.409,0.258,1,0.1518,slab,1,-0.04,-4.93,-5.71
 4Sh,trochlear nuclues shell region,motor,39,40,2,39 40,2,1,-5.5,0.28,-4.62,1,0.223,0.223,1,0.0713,slab,2,0.28,-4.66,-5.47
@@ -246,7 +246,7 @@ GlA,glomerular layer of the accessory olfactory bulb,olfactory,5,10,6,5 6 7 8 9 
 GP,globus pallidus,motor,24,29,6,24 25 26 27 28 29,12,6,-1.12,3.33,-5.35,6,15.022,5.034,0.78,5.2583,surface,2,2.81,-5.62,-0.94
 gr,gracile fasciculus,fiber_tract;somatosensory,54,62,9,54 55 56 57 58 59 60 61 62,7,5,-11.8,0.15,-5.66,5,0.55,0.314,0.54,0.162,surface,4,-0.09,-5.58,-11.51
 Gr,gracile nucleus,somatosensory,54,62,9,54 55 56 57 58 59 60 61 62,7,5,-11.8,0.32,-5.54,5,0.478,0.14,0.71,0.1778,surface,2,0.02,-5.61,-11.75
-GrA,granule cell layer of the accessory olfactory bulb,olfactory,3,10,8,3 4 5 6 7 8 9 10,14,7,5.88,1.5,-5.04,7,3.383,1.158,0.85,1.1946,surface,3,1.01,-4.96,6.71
+GrA,granule cell layer of the accessory olfactory bulb,olfactory,3,10,8,3 4 5 6 7 8 9 10,13,7,6.05,1.45,-5.02,7,3.383,1.158,0.85,1.1946,surface,3,1.01,-4.96,6.71
 GrC,granule cell layer of cochlear nuclei,auditory,43,50,8,43 44 45 46 47 48 49 50,18,7,-8.48,3.02,-5.6,7,2.431,0.599,0.51,0.734,surface,6,-2.56,-5.36,-7.22
 GrDG,granular layer of the dentate gyrus,hippocampal,27,36,10,27 28 29 30 31 32 33 34 35 36,27,10,-3.05,2.28,-3.31,9,7.881,3.019,0.4,2.6269,surface,9,-4.1,-4.4,-4
 GrO,granular cell layer of the olfactory bulb,olfactory,1,10,10,1 2 3 4 5 6 7 8 9 10,20,10,6.22,0.92,-6.43,10,18.942,3.217,0.69,6.9224,surface,3,-1.05,-5.76,6.21
@@ -272,7 +272,7 @@ IMG,amygdaloid intramedullary gray,amygdala;brainstem,27,28,2,27 28,4,2,-1.48,4.
 iml,internal medullary lamina,brainstem;thalamus,26,26,1,26,2,1,-0.95,1.4,-5.06,1,0.562,0.562,0.98,0.2208,slab,2,1.48,-4.6,-0.94
 imvc,intermedioventral thalamic commissure,fiber_tract;thalamus,29,30,2,29 30,2,2,-2.17,0,-5.31,2,0.136,0.085,0.14,0.0446,slab,1,0,-5.28,-2.22
 InC,interstitial nucleus of Cajal,midbrain,33,38,6,33 34 35 36 37 38,11,6,-4.45,0.55,-5.22,6,1.35,0.43,0.85,0.5934,surface,4,0.42,-5.32,-3.94
-InG,intermediate gray layer of the superior colliculus,midbrain;visual,33,41,9,33 34 35 36 37 38 39 40 41,20,9,-4.8,0.89,-2.47,9,9.761,1.688,0.91,3.2143,surface,2,0.01,-2.81,-4.81
+InG,intermediate gray layer of the superior colliculus,midbrain;visual,33,41,9,33 34 35 36 37 38 39 40 41,19,9,-4.8,0.89,-2.47,9,9.761,1.688,0.91,3.2143,surface,2,0.01,-2.81,-4.81
 INLL,intermediate nucleus of the lateral lemniscus,auditory;fiber_tract,40,42,3,40 41 42,6,3,-6.2,2.49,-5.62,3,1.771,0.795,0.98,0.634,surface,2,-2.48,-5.56,-6.28
 IntA,"interposed cerebellar nucleus, anterior part",cerebellum,47,49,3,47 48 49,6,3,-8.65,1.84,-4.14,3,1.88,1.134,0.32,0.7718,surface,2,-1.74,-4.17,-8.5
 IntDL,"interposed cerebellar nucleus, dorsolateral hump",cerebellum,47,50,4,47 48 49 50,8,4,-8.82,2.33,-3.84,4,4.719,3.697,0.48,1.4015,surface,2,-2.27,-3.65,-8.51
@@ -561,7 +561,7 @@ rs,rubrospinal tract,fiber_tract;motor,41,62,22,41 42 43 44 45 46 47 48 49 50 51
 RSD,retrosplenial dysgranular cortex,cortex,27,42,16,27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42,31,16,-3.75,1.24,-0.83,15,21.031,2.064,0.94,7.197,surface,1,0.15,-0.97,-3.66
 RSG,retrosplenial granular cortex,cortex,40,40,1,40,2,1,-5.85,2.36,-1.67,0,,,,,,,,,
 RSGa,"retrosplenial granular cortex, a region",cortex,35,39,5,35 36 37 38 39,10,5,-4.8,2.15,-1.6,5,4.748,1.256,0.9,1.6039,surface,2,-1.95,-1.6,-4.87
-RSGb,"retrosplenial granular cortex, b region",cortex,32,39,8,32 33 34 35 36 37 38 39,17,8,-4.45,0.93,-1.15,8,9.801,2.476,0.94,3.5266,surface,1,0.11,-1.29,-4.51
+RSGb,"retrosplenial granular cortex, b region",cortex,32,39,8,32 33 34 35 36 37 38 39,15,8,-4.45,0.93,-1.18,8,9.801,2.476,0.94,3.5266,surface,1,0.11,-1.29,-4.51
 RSGc,"retrosplenial granular cortex, c region",cortex,27,36,10,27 28 29 30 31 32 33 34 35 36,20,10,-2.88,0.51,-1.46,8,13.127,2.478,0.94,4.6459,surface,1,0.06,-1.31,-2.99
 Rt,reticular thalamic nucleus,thalamus,26,30,5,26 27 28 29 30,10,5,-1.65,3.38,-4.77,5,7.07,2.031,0.85,2.3716,surface,2,-2.57,-5.02,-1.49
 RtSt,reticluostrial nucleus,thalamus,26,26,1,26,2,1,-0.95,1.68,-4.03,1,0.129,0.129,0.99,0.0719,slab,2,1.75,-4.06,-0.92
@@ -574,7 +574,7 @@ S1DZ,"primary somatosensory cortex, dysgranular zone",cortex;somatosensory,16,28
 S1DZO,"primary somatosensory cortex, oral dysgranular zone",cortex;somatosensory,18,19,2,18 19,4,2,1.68,4.59,-3.95,2,1.562,0.956,1,0.5833,slab,2,-4.07,-4.05,1.79
 S1FL,"primary somatosensory cortex, forelimb region",cortex;somatosensory,15,24,10,15 16 17 18 19 20 21 22 23 24,20,10,1.32,3.44,-2.62,10,33.188,5.385,0.89,11.9126,surface,2,3.36,-2.88,1.51
 S1HL,"primary somatosensory cortex, hindlimb region",cortex;somatosensory,20,26,7,20 21 22 23 24 25 26,14,7,0.1,2.54,-1.99,7,20.32,4.018,0.99,7.1575,surface,2,2.51,-2.05,0.14
-S1J,"primary somatosensory cortex, jaw region",cortex;somatosensory,13,20,8,13 14 15 16 17 18 19 20,16,8,2.2,3.5,-3.83,8,24.666,4.982,0.9,8.6599,surface,4,-3.07,-4.34,2.88
+S1J,"primary somatosensory cortex, jaw region",cortex;somatosensory,13,20,8,13 14 15 16 17 18 19 20,14,8,2.38,3.34,-4.08,8,24.666,4.982,0.9,8.6599,surface,4,-3.07,-4.34,2.88
 S1Sh,"primary somatosensory cortex, shoulder region",cortex;somatosensory,25,26,2,25 26,4,2,-0.77,2.72,-1.86,2,5.19,2.709,1,1.6966,slab,2,2.68,-1.82,-0.77
 S1Tr,"primary somatosensory cortex, trunk region",cortex;somatosensory,27,28,2,27 28,4,2,-1.48,2.43,-1.62,2,7.213,4.389,0.99,2.2368,slab,2,2.41,-1.62,-1.45
 S1ULp,"primary somatosensory cortex, upper lip region",cortex;somatosensory,18,28,11,18 19 20 21 22 23 24 25 26 27 28,22,11,0.1,5.27,-3.86,11,42.047,5.572,0.94,15.3851,surface,2,-4.89,-3.78,0.15

@@ -9,15 +9,16 @@ again: CI runs `--check` and fails if a committed table is not what the JSON say
 
     data/gerbil_atlas_structures.csv     one row per structure, as before
     data/gerbil_atlas_plates.csv         one row per plate, as before
-    data/gerbil_atlas_labels.csv         one row per printed label: 6,266 stereotaxic triplets
+    data/gerbil_atlas_labels.csv         one row per printed label, with its stereotaxic triplet
     data/gerbil_atlas_structure_table.csv  one row per structure with its label centre,
                                          areas, and the volume and centre from the meshes
     data/gerbil_atlas_groups.csv         one row per gross division, with its members
     data/geojson/plate_NN.geojson        the region extents of one plate, in millimetres
 
-`--refresh-db` also recomputes the per-plate counts the database carries
-(`n_structures`, `n_labels_located`, `ocr_confirmed`) and the `plate_registration`
-block from data/vec.json, and stamps `version.generated`. `--check` verifies all of it.
+`--refresh-db` also recomputes the counts the database carries -- per plate
+(`n_structures`, `n_labels_located`, `ocr_confirmed`) and the two totals in
+`verification` -- and the `plate_registration` block from data/vec.json, and stamps
+`version.generated`. `--check` verifies all of it.
 """
 import argparse
 import csv
@@ -201,7 +202,8 @@ def geojson(db, plate):
     breg = A.bregma_of(db)
     names = {s['abbr']: s['name'] for s in db['structures']}
     mm = lambda pt: [round(fr.ml_f(pt[0]), 3), round(fr.dv_f(pt[1]), 3)]  # noqa: E731
-    ring = lambda g: [mm(pt) for pt in g] + [mm(g[0])]  # noqa: E731
+    # closed once: the extents store their rings closed already, the outline does not
+    ring = lambda g: [mm(pt) for pt in g] + ([] if g[0] == g[-1] else [mm(g[0])])  # noqa: E731
     feats = []
     for ab, e in db['region_extents']['data'].get(str(plate), {}).items():
         feats.append({'type': 'Feature',
@@ -252,6 +254,12 @@ def refresh_db(db, today=None):
         p['n_structures'] = count.get(n, 0)
         p['ocr_confirmed'] = sorted(boxes)
         p['n_labels_located'] = sum(len(v) for v in boxes.values())
+    # the two totals the verification block quotes are the same counts summed
+    ver = db.get('verification')
+    if ver is not None:
+        LP = db['label_positions']['data']
+        ver['ocr_confirmed'] = sum(len(d) for d in LP.values())
+        ver['label_positions_located'] = sum(len(b) for d in LP.values() for b in d.values())
     vec = A.load_vec()
     db['plate_registration'] = {
         'note': 'The affine [a, b, c, d, e, f] that maps the traced page (3296 x 2481 px; 2481 x 3296 '
@@ -290,7 +298,8 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__.split('\n')[0])
     ap.add_argument('--check', action='store_true', help='exit 1 if any committed table is stale')
     ap.add_argument('--refresh-db', action='store_true',
-                    help='also recompute the per-plate counts and version stamp in the JSON')
+                    help='also recompute the counts, the plate_registration block and the '
+                         'version stamp in the JSON')
     ap.add_argument('--today', help='the date to stamp (default: today), for reproducible runs')
     a = ap.parse_args()
     db = A.load_db()
@@ -301,9 +310,7 @@ def main():
         refresh_db(db2, today='')
         db3 = json.loads(json.dumps(db))
         db3.get('version', {}).pop('generated', None)
-        db3.get('version', {}).pop('note', None)
         db2.get('version', {}).pop('generated', None)
-        db2.get('version', {}).pop('note', None)
         if A.render_db(db2) != A.render_db(db3):
             stale.append('derived fields in data/gerbil_atlas.json (run --refresh-db)')
         for name, (path, text) in outputs(db).items():

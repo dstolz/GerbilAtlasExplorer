@@ -24,8 +24,10 @@ The score only shortlists, as ever. Every candidate over KEEP was cut out of the
 plate and read; READ holds the verdict on each and WAS says what the rejected
 ones turned out to be.
 
-What it writes, per confirmed compound: the whole token's box for **each**
-member of it in `label_positions`, and the members as a group in `label_blocks`.
+What it writes, per confirmed compound: the whole token's box for each member
+of it in `label_positions` that has no box on the token already -- the member the
+reader did locate keeps the box it was read with, since one printed word is one
+label -- and the members as a group in `label_blocks`.
 Both follow the convention the atlas's own bracketed joins already use --
 `Au1 (A1)` gives Au1 and A1 a box each and one `label_blocks` entry -- so
 `build_region_extents.py` seeds them as one and files the region under the name
@@ -314,6 +316,14 @@ def windows(ink, boxes, shape):
             if x1 - x0 > tw and y1 - y0 > th]
 
 
+def overlap(a, b):
+    """Intersection over union of two [cx, cy, w, h] boxes."""
+    ox = max(0.0, min(a[0] + a[2] / 2, b[0] + b[2] / 2) - max(a[0] - a[2] / 2, b[0] - b[2] / 2))
+    oy = max(0.0, min(a[1] + a[3] / 2, b[1] + b[3] / 2) - max(a[1] - a[3] / 2, b[1] - b[3] / 2))
+    inter = ox * oy
+    return inter / (a[2] * a[3] + b[2] * b[3] - inter) if inter else 0.0
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split('\n')[0])
     ap.add_argument('--pdf', default=os.environ.get('GERBIL_ATLAS_PDF', ''),
@@ -431,6 +441,10 @@ def main():
     for p, members, box in found:
         d = LP.setdefault(str(p), {})
         for ab in members:
+            # the anchored member was read from this same ink: a second box on it would
+            # make one printed word two labels, and 11N on plate 62 was that for a while
+            if any(overlap(b, box) > 0.3 for b in d.get(ab, [])):
+                continue
             d.setdefault(ab, []).append(box)
         LP[str(p)] = {k: d[k] for k in sorted(d)}
         have = blocks.setdefault(str(p), [])
