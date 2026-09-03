@@ -39,3 +39,19 @@ grant above, and any reuse must credit the atlas.
 `data/skull.json` is a decimated surface of a µCT scan of a gerbil skull, a
 different animal from the atlas's, registered to the atlas here (METHODS.md, "The
 skull"). It is released under CC BY 4.0 with the derived data above.
+
+## The MRI
+
+The atlas's reference MRI volume is **not redistributed here**. No part of the
+image is in this repository, and `tools/build_mri.py` reads it from wherever you
+keep your own copy; the app builds and behaves identically without it.
+
+What *is* here is `mri_frame` in `data/gerbil_atlas.json`: the measured mapping
+from a voxel of that volume to stereotaxic millimetres, with how it was derived
+and how it was checked. That is a measurement about an image rather than a
+reproduction of one, so it is released under CC BY 4.0 with the derived data
+above, and the same is intended for anything later traced from the volume.
+
+The volume's own terms are not settled by the plate images' licence, and nothing
+above should be read as a grant covering it. If you obtained a copy, its terms
+are whatever the authors gave you.

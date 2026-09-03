@@ -28,6 +28,42 @@
   "derivation": "Least-squares fit of the 1 mm tick lattice the atlas prints in its own coordinate box, read from all 62 plates: ML ticks -8 to +8 mm in the bottom border (rows 683-691), DV ticks +1 to -10 mm in the right border (columns 1022-1031), thresholded at grey < 140. Across the 62 plates the fits agree to 56.999 +/- 0.007 px/mm about x = 519.99 +/- 0.05 for ML, and 56.798 +/- 0.007 px/mm about y = 95.81 +/- 0.11 for DV; the largest single-tick residual on any plate is 0.42 px.",
   "validation": "Checked against anatomy, not just the fit. Midline structures sit within 0.10 mm of ML 0 (3V -0.02, Aq -0.04, 4V +0.01, cc +0.03, MnR -0.04 mm mean), and bilateral pairs are symmetric at the published widths (MSO +/-1.33, LSO +/-1.67, Au1 +/-6.48 mm). All 6,266 labels fall between DV -9.02 and -0.52 mm, i.e. below the dorsal surface plane, as they must."
  },
+ "mri_frame": {
+  "note": "Converts a voxel of the atlas's own MRI into stereotaxic millimetres. The volume is already in the atlas frame, one slice per plate, so nothing here is fitted along AP: plate = 62 - slice. The first six keys are the ones atlaslib.Frame reads.",
+  "width_px": 256,
+  "height_px": 256,
+  "ml_zero_px": 126.25,
+  "ml_px_per_mm": 8.547009,
+  "dv_zero_px": 44.5,
+  "dv_px_per_mm": 8.547009,
+  "n_slices": 72,
+  "ap_first": -13.55,
+  "ap_step": 0.35,
+  "in_plane_mm": 0.117,
+  "ml_mm": "(col - ml_zero_px) / ml_px_per_mm",
+  "dv_mm": "(dv_zero_px - row) / dv_px_per_mm",
+  "ap_mm": "ap_first + ap_step * slice",
+  "plate_of_slice": "62 - slice; slices 62-71 lie rostral of plate 1",
+  "emit_px": [
+   550,
+   352
+  ],
+  "derivation": "ml_px_per_mm and dv_px_per_mm are the TIFF's own XResolution (217.094 pixels per inch, i.e. 0.117 mm/px), read off the file and checked on load rather than fitted. ap_step is the one number the file does not carry - there is no ImageDescription and no z tag - and was recovered: it is conventions.spacing_mm, the atlas's own plate spacing, and plate_of_slice then falls out identically rather than being fitted. ml_zero_px is the column minimising the left-right mirror difference over the cerebral slices; dv_zero_px is the atlas's DV zero, fitted by maximising the image gradient under the brain_outline rings.",
+  "validation": "Projecting brain_outline onto the MRI under this map, with no AP fitting at all, leaves no systematic bias in either in-plane axis: over all 62 plates the median best whole-pixel shift is 0.000 mm in both DV and ML, with a per-plate scatter of about 0.39 mm and 0.38 mm, i.e. three voxels (build_mri.py --verify). Three further checks agree and none was fitted for: slice 0 lands on plate 62 and slice 61 on plate 1, consuming the 62 plates exactly with nothing left over; slice 18, the only slice in the stack carrying a burned-in mark, is bregma -7.25, which is the atlas's interaural AP zero (plate 44); and in a mid-sagittal reformat the dorsal cortical surface sits at DV 0, which is the atlas's own definition of DV zero. The residual worth knowing about is a small yaw: the per-slice mirror-symmetry column drifts across the series, so a single ml_zero_px carries a systematic ML error of a few tenths of a millimetre at the ends.",
+  "display_window": [
+   82.0,
+   21858.0
+  ],
+  "residual": {
+   "plates": 62,
+   "median_dv_mm": 0.0,
+   "median_ml_mm": 0.0,
+   "spread_dv_mm": 0.388,
+   "spread_ml_mm": 0.375,
+   "median_offset_mm": 0.36,
+   "note": "Whole-pixel shift per plate that best lines brain_outline up with the image gradient, in millimetres. Written by build_mri.py --verify."
+  }
+ },
  "plates": [
   {
    "plate": 1,
