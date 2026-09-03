@@ -67,6 +67,31 @@ for (const [name, url] of [['bundle', BUNDLE], ['lean', LEAN]]) {
   });
 }
 
+/* The build stamps UTC, because it cannot know where the page will be opened; every
+   reader sees that same moment on their own clock, with the zone named. */
+test("the Updated stamp is rewritten onto the reader's own clock", async ({ browser }) => {
+  const read = async timezoneId => {
+    const ctx = await browser.newContext({ timezoneId, locale: 'en-US' });
+    const page = await ctx.newPage();
+    await page.goto(BUNDLE);
+    const out = await page.locator('footer time.bwhen').evaluate(el =>
+      ({ text: el.textContent, at: el.getAttribute('datetime'), tip: el.title }));
+    out.about = await page.locator('#about time.bwhen').textContent();
+    await ctx.close();
+    return out;
+  };
+  const utc = await read('UTC'), tokyo = await read('Asia/Tokyo');
+  expect(utc.at).toMatch(/^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:00Z$/);
+  const shown = s => s.slice(0, 10) + ' ' + s.slice(11, 16);
+  expect(utc.text).toBe(shown(utc.at) + ' UTC');
+  expect(utc.tip).toBe('Built ' + shown(utc.at) + ' UTC');      // the moment as it was stamped
+  // nine hours on, the zone named, and About's date follows the same clock
+  expect(tokyo.text).toMatch(/^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2} [^ ]+$/);
+  const back = s => Date.parse(s.slice(0, 10) + 'T' + s.slice(11, 16) + 'Z');
+  expect(back(tokyo.text) - Date.parse(utc.at)).toBe(9 * 3600e3);
+  expect(tokyo.about).toBe(tokyo.text.slice(0, 10));
+});
+
 test('the SVG export carries one named group per region', async ({ page }) => {
   await page.goto(BUNDLE + '#p1/Mi');
   const [dl] = await Promise.all([page.waitForEvent('download'), page.click('#esvg')]);

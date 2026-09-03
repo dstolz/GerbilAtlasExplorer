@@ -5428,6 +5428,34 @@ function skullNote(){
 [...document.querySelectorAll('.ast')].forEach(b=>b.onclick=skullNote);
 ABOUT.addEventListener('click',e=>{ if(e.target===ABOUT) ABOUT.close(); });
 
+/* ---------- the build stamp, read on the reader's own clock ---------- */
+/* The page is stamped in UTC, because a build cannot know where it will be opened. The
+   moment travels in each stamp's `datetime`, and the text is rewritten here into whatever
+   zone this browser is in, named, so it is plain which clock is being read. A stamp with
+   no instant to read -- an undated build, a template nothing stamped -- keeps the UTC
+   text it was built with. */
+function stampLocal(){
+  const p=n=>String(n).padStart(2,'0');
+  /* EDT, JST, GMT+5:30 -- whatever this browser calls the zone, and a plain offset if it
+     will not say. Without it the reader cannot tell which clock the stamp is on. */
+  const zone=d=>{
+    try{ const z=new Intl.DateTimeFormat(undefined,{timeZoneName:'short'}).formatToParts(d)
+                   .find(x=>x.type==='timeZoneName');
+         if(z&&z.value) return z.value; }catch(_){}
+    const o=-d.getTimezoneOffset(), m=Math.abs(o);
+    return `UTC${o<0?'-':'+'}${Math.floor(m/60)}${m%60?':'+p(m%60):''}`;
+  };
+  for(const el of document.querySelectorAll('time.bwhen')){
+    const iso=el.getAttribute('datetime')||'', t=Date.parse(iso);
+    if(!isFinite(t)) continue;
+    const d=new Date(t);
+    el.textContent=`${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`
+      +(el.hasAttribute('data-date')?'':` ${p(d.getHours())}:${p(d.getMinutes())} ${zone(d)}`);
+    el.title=`Built ${iso.slice(0,16).replace('T',' ')} UTC`;   /* the moment as it was stamped */
+  }
+}
+stampLocal();
+
 /* every segmented control is a tab list, and its .on class is mirrored to aria-selected
    from one place rather than at each of the dozen sites that toggle it */
 for(const seg of document.querySelectorAll('.seg')){
