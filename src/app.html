@@ -347,7 +347,7 @@
 
 <footer>
   <p>Radtke-Schuller et al. (2016), <em>Brain Struct Funct</em> 221(Suppl 1):1&ndash;272
-    <a href="https://doi.org/10.1007/s00429-016-1259-0" target="_blank" rel="noopener">doi:10.1007/s00429-016-1259-0</a><span class="fsep">&middot;</span><button type="button" class="flink" id="aboutb2">About the data</button><span class="fsep">&middot;</span><a href="https://github.com/dstolz/GerbilAtlasExplorer/blob/main/METHODS.md" target="_blank" rel="noopener">Methods</a><span class="fsep">&middot;</span><a href="https://github.com/dstolz/GerbilAtlasExplorer" target="_blank" rel="noopener">Source</a><span class="fsep">&middot;</span><a href="https://github.com/dstolz/GerbilAtlasExplorer/issues" target="_blank" rel="noopener">Report an issue</a><span class="fsep">&middot;</span>Build <a href="https://github.com/dstolz/GerbilAtlasExplorer/commit/{{BUILD_HASH}}" target="_blank" rel="noopener"><code>{{BUILD_HASH}}</code></a><span class="fsep">&middot;</span><span class="fstamp">Updated <time class="bwhen" datetime="{{BUILD_ISO}}">{{BUILD_DATE}} {{BUILD_TIME}}</time></span></p>
+    <a href="https://doi.org/10.1007/s00429-016-1259-0" target="_blank" rel="noopener">doi:10.1007/s00429-016-1259-0</a><span class="fsep">&middot;</span><button type="button" class="flink" id="aboutb2">About the data</button><span class="fsep">&middot;</span><a href="https://github.com/dstolz/GerbilAtlasExplorer/blob/main/METHODS.md" target="_blank" rel="noopener">Methods</a><span class="fsep">&middot;</span><a href="https://github.com/dstolz/GerbilAtlasExplorer" target="_blank" rel="noopener">Source</a><span class="fsep">&middot;</span><a href="https://github.com/dstolz/GerbilAtlasExplorer/issues" target="_blank" rel="noopener">Report an issue</a><span class="fsep">&middot;</span><button type="button" class="flink" id="repdb">Report a drawing error</button><span class="fsep">&middot;</span><button type="button" class="flink" id="repfb">Request a feature</button><span class="fsep">&middot;</span>Build <a href="https://github.com/dstolz/GerbilAtlasExplorer/commit/{{BUILD_HASH}}" target="_blank" rel="noopener"><code>{{BUILD_HASH}}</code></a><span class="fsep">&middot;</span><span class="fstamp">Updated <time class="bwhen" datetime="{{BUILD_ISO}}">{{BUILD_DATE}} {{BUILD_TIME}}</time></span></p>
   <p class="fattr">Developed and maintained by Daniel Stolzberg and the
     <a href="https://www.caraslab.org" target="_blank" rel="noopener">Caras Lab</a>,
     <a href="https://biology.umd.edu" target="_blank" rel="noopener">Department of Biology</a>,
@@ -766,6 +766,44 @@
       coordinate as a targeting aid carrying the atlas&rsquo;s own error &mdash; a label marks
       where an abbreviation is <em>printed</em> &mdash; plus your alignment error and
       animal-to-animal skull variation.</p>
+  </div>
+</dialog>
+<!-- ---------- reporting a region drawn wrong, and asking for a feature ----------
+     One dialog in two modes, because they differ only in what is worth attaching. What
+     makes the first worth having over a bare link to the tracker is that a drawing error
+     means nothing without the region and the plate it is about, and someone looking at a
+     boundary in the wrong place should not have to go and find their names: the page
+     already knows both, and knows what it has to say about how that boundary got there.
+     Every row is built once and used twice -- shown here and written into the issue -- so
+     what the reader is told will be sent is exactly what is sent. Nothing is sent from
+     this dialog at all: the button opens GitHub's own compose form with the text filled
+     in, and the report is submitted there, by the reader, or not at all. -->
+<dialog id="rep">
+  <div class="dh">
+    <h2 id="reph">Report a drawing error</h2>
+    <button class="b" id="repx" type="button">Close</button>
+  </div>
+  <div class="db">
+    <p id="repint"></p>
+    <h3>What the report will carry</h3>
+    <dl class="keys repkv" id="repkv"></dl>
+    <p class="repnb" id="repnb" hidden></p>
+
+    <h3>In your words</h3>
+    <label class="ffld solo"><span>Summary &middot; the issue&rsquo;s title</span>
+      <input type="text" id="repsum" maxlength="140" autocomplete="off"></label>
+    <label class="ffld solo"><span id="repml">What is wrong, and what it should be</span>
+      <textarea id="repmsg" rows="7" maxlength="2500"></textarea></label>
+
+    <div class="frow">
+      <a class="b" id="repgo" target="_blank" rel="noopener">Open on GitHub</a>
+      <button class="b" id="repcp" type="button">Copy the report</button>
+    </div>
+    <p><b>Opening GitHub files nothing.</b> It fills in a new issue and leaves it to you to
+      read over and press <em>Submit</em> there, or to close the tab. Submitting one needs a
+      GitHub account, and puts what you wrote on a public tracker &mdash; so if you would
+      rather not, <b>Copy the report</b> puts the same text on the clipboard to send however
+      you like.</p>
   </div>
 </dialog>
 <!-- The atlas data. Each marker becomes one <script> line carrying window.__NAME__;
