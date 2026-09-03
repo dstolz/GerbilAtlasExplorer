@@ -270,6 +270,7 @@ plate range is malformed, and which are printed on one plate more than it gives 
 | `data/vec.json`, `data/skull.json` | The traced outlines with their per-plate registration, and the CT skull surface: the two assets no script here regenerates. |
 | `data/index_raw.txt` | The authors' Index of abbreviations as extracted. Source of truth for the rest. |
 | `data/index_structures_raw.txt` | The authors' Index of structures, the second of the two the atlas prints. Read against the first by `tools/check_indexes.py`, which is what says the 723 entries arrived intact. |
+| `data/index_published.csv` | The published index as a table: one row per structure, both printed plate fields side by side, the range expanded to a plate list, and a note on every entry whose reading took a decision. Written by `tools/check_indexes.py --write` from the two above and verified against them on every run — the ground truth the database is answerable to. |
 | `data/gerbil_atlas_volumes.json` | The brain surface and one mesh per structure, built by stacking the 62 plates and interpolating between them. Fetched by the 3D view on demand; `tools/build_volumes.py --stl` writes the same meshes as STL. See [METHODS](METHODS.md#the-third-dimension) before trusting the third axis. |
 | `svg/` | The traced regional outlines, one SVG per plate, in the published page frame. |
 | `qc/` | Verification renders kept from the build; [`qc/README.md`](qc/README.md) says which script writes each. Not used by the app. |
