@@ -108,6 +108,30 @@ def test_region_extents(db):
     assert sm['section_area_residual_worst_plate'] <= 0.05
 
 
+
+def test_labels_and_extents_are_in_step(db):
+    """`region_extents` was cut from the `label_positions` this file now carries.
+
+    Every printed box is either seeded or explicitly dropped, so the extraction's own
+    two counts have to add back up to what it was handed. A pass that extends the
+    labels and does not rebuild the block leaves it stale against its own inputs, and
+    nothing else here notices: a stale block still tiles the section exactly, still
+    passes every share and residual above, and still ships green. What it does is hand
+    the delta to whoever rebuilds next, who then owns a change they did not make -- and
+    a rebuild running against labels the block has never seen can cost a region its
+    ground. `ALPO` on plate 44, `CC` on 60 and `pyx` on 62 lost theirs that way, to 26
+    labels added four commits earlier.
+
+    This catches the block going stale. It does not catch a region losing ground to a
+    neighbour while these counts stay balanced, which is how those three were actually
+    lost; that needs a per-(plate, abbreviation) diff against the commit whose labels
+    the block was rebuilt from, and cannot be asserted from one snapshot.
+    """
+    s = db['region_extents']['summary']
+    boxes = sum(len(b) for d in db['label_positions']['data'].values()
+                for b in d.values())
+    assert s['labels_seeded'] + s['labels_dropped'] == boxes
+
 def test_shared_edges_recomputed(db):
     """Every directed boundary edge has its reverse in exactly one neighbour: the regions
     tile the section. Recomputed here rather than trusted from the summary."""
@@ -197,7 +221,11 @@ def test_volumes_consistent(db):
     assert set(V['data']) == have
     # 687: one mesh per abbreviation with an extent somewhere. The 20 names that are
     # no region -- the fissures, `cbw`, the vessels; see `features` -- have no extent
-    # anywhere and so no mesh, which is the point of them.
+    # anywhere and so no mesh, which is the point of them. 9N and 9aCb are the two
+    # that joined: both are named only inside a compound label (`9/11N`, `9a,bCb`),
+    # so until that label was split they had no position anywhere, hence no extent
+    # and no mesh. 9bCb and 11N still have none of their own -- they share the
+    # entry filed under the name their label leads with.
     assert V['summary']['structures'] == len(V['data']) == 687
     assert not (have & set(db['features']['data']))
     assert 'little-endian' in V['note']

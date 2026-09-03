@@ -220,12 +220,16 @@ test('a name that is no region has no entry, and highlights the name it prints',
     await expect(page.locator('#tip')).toContainText('the white matter of the lobules it runs through');
     await expect(page.locator('#hl')).toBeVisible();
     await expect(page.locator('#hr')).toBeHidden();
-    // selecting it circles every label and outlines nothing
+    // selecting it circles every label and outlines nothing. The reload via about:blank
+    // is not decoration: goto() to the same URL with a different fragment is a
+    // same-document navigation, so the app would never re-read the hash.
+    await page.goto('about:blank');
     await page.goto(BUNDLE + '#p52/cbw');
     await expect(page.locator('#vhint')).toContainText('the ground it lies in belongs to the regions around it');
     expect(await page.evaluate(() => document.querySelectorAll('#om ellipse').length)).toBe(11);
     expect(await page.evaluate(() => document.querySelectorAll('#om path').length)).toBe(0);
     // and the lobule whose white matter that is holds the ground instead
+    await page.goto('about:blank');
     await page.goto(BUNDLE + '#p52/Sp5I');
     await expect(page.locator('#vhint')).toContainText('Sp5I outlined');
   });
@@ -254,6 +258,7 @@ test('a name the atlas draws no boundary round keeps its area and highlights its
     // one closed rectangle per printed label, and no region outline
     expect(await hr.getAttribute('d')).toMatch(/^(M[\d.]+ [\d.]+H[\d.]+V[\d.]+H[\d.]+Z){4}$/);
     // selecting it circles the labels, and still quotes the area it has
+    await page.goto('about:blank');
     await page.goto(BUNDLE + '#p52/Crus2');
     await expect(page.locator('#vhint')).toContainText('no outline of its own to draw');
     await expect(page.locator('#vhint')).toContainText('mm² of section here');
