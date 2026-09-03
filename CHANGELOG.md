@@ -6,6 +6,25 @@ carries a `version` block naming the release its derived fields were built for.
 ## [Unreleased]
 
 ### Added
+- **The 3-D stack as a NIfTI.** **NIfTI** in the 3-D controls writes the whole 62-plate stack
+  out as a gzipped NIfTI-1 volume — the reconstruction itself rather than a picture of it, so
+  it opens in ITK-SNAP, FSLeyes, Slicer or nibabel and can be resliced, measured or registered
+  against something else. The header is the 348 bytes of struct `tools/volume.py` already
+  writes for the label volume, and the file is laid out the same way: voxels x fastest in
+  (ML, AP, DV) order so it reads as RAS, with an sform putting each voxel centre at its atlas
+  millimetres — 32.4 µm across a plate, 350 µm through the stack, that anisotropy written into
+  the file rather than resampled away. The labelled drawing writes two volumes, the ink and
+  then the drawn contour, because on it the red contour is a picture in its own right; a Nissl
+  or myelin stack writes one, because a photograph has no contour channel at all. Nothing the
+  toolbar sets goes in — not the slab, not the midline cut, not the tissue curve: those say
+  what is drawn, and this is what they are drawn from. The millimetres are the atlas's own,
+  from bregma as the plates print it, the frame the STL export writes in too.
+
+  Read from the plates again rather than kept from the build: the stack is 24 MB and the view
+  hands its only copy to the GPU, so a second copy held in the page for every visit, against an
+  export most of them never run, is the wrong side of that trade. It costs the few seconds the
+  view itself cost and the note under the view says so while it runs. Written uncompressed as
+  `.nii` where the browser has no `CompressionStream`, rather than not written at all.
 - **Two 3-D views at once.** **Split** puts a second pane beside the first, and everything the
   3-D toolbar sets belongs to a pane rather than to the view: mode, density, the tissue curve,
   the slab, the midline cut, the projection, the skull, the meshes and the camera. **A** and
