@@ -1,4 +1,4 @@
-"""The shared library: the renderer is byte-exact, the parsers agree, the payloads match."""
+﻿"""The shared library: the renderer is byte-exact, the parsers agree, the payloads match."""
 import json
 import os
 
@@ -101,6 +101,6 @@ def test_labels_table_rows():
     text = E.labels_csv(db)
     rows = text.split('\r\n')
     assert rows[0].startswith('abbr,name,plate,label_index,ap_bregma_mm,ml_mm')
-    assert len([r for r in rows[1:] if r]) == 6292
+    assert len([r for r in rows[1:] if r]) == 6322
     mso = [r for r in rows if r.startswith('MSO,')]
     assert len(mso) == 7
