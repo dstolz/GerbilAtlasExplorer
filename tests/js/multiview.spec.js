@@ -2,12 +2,14 @@
 const { test, expect } = require('@playwright/test');
 const path = require('path');
 
-const BUNDLE = 'file://' + path.resolve(__dirname, '../../gerbil_atlas_explorer.html').replace(/\\/g, '/');
+const BUNDLE = 'file://' + path.join(__dirname, '..', '..', 'gerbil_atlas_explorer.html');
 
 // The stack is built on first sight of the view and takes a few seconds under swiftshader.
+// v3ready is a module-scope `let` in a classic script, so it is not a property of window:
+// the bare identifier is what resolves to it, the same way the other 3-D specs wait.
 async function open(page, hash) {
   await page.goto(BUNDLE + hash);
-  await page.waitForFunction(() => window.__gae && window.v3ready, null, { timeout: 90000 });
+  await page.waitForFunction(() => window.__gae && v3ready, null, { timeout: 90000 });
 }
 
 // A drag on the canvas, in the middle of the pane's own rectangle. The handlers read
@@ -64,8 +66,11 @@ test.describe('the second 3-D pane', () => {
     // now B alone goes back to contours over a slab; A must not move
     await page.click('#v3pseg button[data-p="1"]');
     await page.click('#m3seg button[data-r="contour"]');
-    await page.locator('#v3a').fill('20');
-    await page.locator('#v3a').dispatchEvent('input');
+    // the slab ends are range inputs, so the value is set and the event sent by hand
+    await page.evaluate(() => {
+      const s = document.getElementById('v3a');
+      s.value = '20'; s.dispatchEvent(new Event('input', { bubbles: true }));
+    });
     p = await panes(page);
     expect(p[0].mode).toBe('volume');
     expect(p[0].a).toBe(0);
