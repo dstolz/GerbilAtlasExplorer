@@ -3041,16 +3041,30 @@ let gl=null, v3ready=false, v3busy=false, v3fail='';
    extents by tools/build_volumes.py (METHODS, "The third dimension") and fetched here on
    first use -- 20 MB, so never part of the page. Six planes in seven of them are
    interpolated, which the note says every time they are shown. */
-let v3m=false, MESH=null, meshBusy=false, meshFail='';
+let MESH=null, meshBusy=false, meshFail='';
 const MESHC={};                                  /* abbr -> {va, n, type} on the GPU */
-let v3mode='contour', v3op=.42, v3a=0, v3b=61, v3half=false;
-/* the tissue window and the curve across it -- Floor, Ceiling and Gamma in the toolbar.
-   0, 1 and 1 is the identity, which is what this view drew before they existed. */
-let v3t0=0, v3t1=1, v3gam=1;
-let v3ortho=false;                 /* parallel vs perspective projection */
-let v3sk=false, v3sko=.32;             /* the skull shell: off by default, opacity 0..1 */
-let v3az=-.82, v3el=.30, v3dist=26, v3tx=0, v3ty=0;   /* orbit + screen-space pan */
-let v3view='obl';                  /* the named viewpoint in force, '' once dragged off it */
+
+/* ---------- the panes ----------
+   Everything the 3-D toolbar sets belongs to a pane and not to the app: what is drawn
+   (mode, density, the tissue curve, the slab, the midline cut, the projection, the skull,
+   the meshes) and where it is drawn from (orbit, distance, pan, named viewpoint). One
+   pane is the whole view, which is what this was. A second is the same brain rendered a
+   second way, or seen from a second angle, beside it -- the pair of pictures the printed
+   atlas cannot give you at all, and the reason for splitting rather than switching.
+
+   Both panes read the one volume texture, the one label cloud and the one mesh cache, so
+   a second pane costs pixels and nothing else: no second context, no second 24 MB upload.
+
+   A pane opens as a copy of the one it was split from. A split that changed the picture
+   would be a split you had to undo before you could compare anything. */
+const v3pane=()=>({mode:'contour', op:.42, t0:0, t1:1, gam:1, a:0, b:61,
+                   half:false, ortho:false, sk:false, sko:.32, m:false, ms:false,
+                   az:-.82, el:.30, dist:26, tx:0, ty:0, view:'obl'});
+const V3P=[v3pane(), v3pane()];
+let v3two=false;                   /* the second pane is drawn */
+let v3ed=0;                        /* which pane the toolbar sets and the keys drive */
+let v3lock=true;                   /* the two cameras move together */
+const v3E=()=>V3P[v3ed];           /* the pane the toolbar is on */
 let v3hot=null, v3raf=null, v3col={};
 
 /* ---------- the small amount of matrix algebra this needs ---------- */
@@ -3074,9 +3088,9 @@ function m3look(e,c,u){
   return new Float32Array([x[0],y[0],z[0],0, x[1],y[1],z[1],0, x[2],y[2],z[2],0,
                            -d(x,e),-d(y,e),-d(z,e),1]);
 }
-function v3cam(){
-  const ce=Math.cos(v3el);
-  return [v3dist*ce*Math.sin(v3az), v3dist*Math.sin(v3el), v3dist*ce*Math.cos(v3az)];
+function v3cam(Q){
+  const ce=Math.cos(Q.el);
+  return [Q.dist*ce*Math.sin(Q.az), Q.dist*Math.sin(Q.el), Q.dist*ce*Math.cos(Q.az)];
 }
 /* the pan is applied after the view matrix, so dragging always tracks the screen */
 
@@ -3106,17 +3120,19 @@ const v3unmod=(M,p)=> M ? [M[0]*p[0]+M[1]*p[1]+M[2]*p[2],
    divide by, an orthographic projection has to measure depth along the view axis. It is
    in model space, because that is where every point the shaders and the picker see is. */
 let v3dep=null;
-function v3mvp(){
-  const w=V3CV.width||1, h=V3CV.height||1;
-  const c=v3cam(), L=Math.hypot(c[0],c[1],c[2])||1;
+/* One pane's matrix, at that pane's own aspect ratio. v3mo, v3camM and v3dep are left
+   holding what this last built, which is what the shell, the mesh pass and the picker
+   read immediately afterwards -- so it is always the pane just asked for. */
+function v3mvp(Q,w,h){
+  const c=v3cam(Q), L=Math.hypot(c[0],c[1],c[2])||1;
   v3mo=v3mod();
   v3camM=v3unmod(v3mo,c);
   v3dep=v3unmod(v3mo,[c[0]/L,c[1]/L,c[2]/L]);
   const V=m3look(c,[0,0,0],[0,1,0]);
-  V[12]+=v3tx; V[13]+=v3ty;
+  V[12]+=Q.tx; V[13]+=Q.ty;
   /* the parallel view is framed to match the perspective one at the pivot plane, so
      switching between them neither jumps nor rescales and the wheel still zooms */
-  const P = v3ortho ? m3ortho(v3dist*Math.tan(.36), w/h, -400, 400)
+  const P = Q.ortho ? m3ortho(Q.dist*Math.tan(.36), w/h, -400, 400)
                     : m3persp(.72, w/h, .4, 400);
   const M=m3mul(P, V);
   return v3mo ? m3mul(M, v3mo) : M;
@@ -3270,7 +3286,7 @@ void main(){
    to be seen through 62 of them; a ray is composited at 288 samples along its length, and
    at anything near the slice weight a section this dark goes opaque a fifth of the way in.
    Both are still a starting point: Density is the control that moves them. */
-const v3ink = () => psrc==='drawing' ? .30 : (v3mode==='volume' ? .10 : 1.0);
+const v3ink = Q => psrc==='drawing' ? .30 : (Q.mode==='volume' ? .10 : 1.0);
 let pSlice,pVol,pPts,pLine,pSkull, vaoQ,vaoB,vaoP, texV, bufF, nPT=0;
 let vaoS=null, nSK=0;                      /* skull mesh, built on first use */
 const v3box=new Array(V3D).fill(null);   /* section bounds per plate, set during the build */
@@ -3619,27 +3635,78 @@ function v3flags(){
   v3note(); v3frame();
 }
 
+/* ---------- where the panes sit ----------
+   Side by side while the view is wider than it is tall, stacked while it is not, which is
+   what a phone held upright and a maximised window respectively get. In CSS pixels of the
+   wrap with the origin top left, the way the pointer arrives; GL's own upward y is flipped
+   back at the one point it is used. The two rectangles tile the wrap exactly, so the
+   rounding of an odd width lands inside a pane rather than as a seam between them. */
+function v3rects(){
+  const w=Math.max(1,V3WRAP.clientWidth), h=Math.max(1,V3WRAP.clientHeight);
+  if(!v3two) return [[0,0,w,h]];
+  if(w>=h){ const a=Math.round(w/2); return [[0,0,a,h],[a,0,w-a,h]]; }
+  const a=Math.round(h/2); return [[0,0,w,a],[0,a,w,h-a]];
+}
+/* The divider, the pane letters and the frame round the pane the toolbar is on. Laid over
+   the canvas as elements rather than drawn into it: they then take the sheet's own colours
+   the way the rest of the chrome does, and stay crisp at any device pixel ratio. */
+function v3chrome(R){
+  const box=$('v3pn');
+  box.hidden=!v3two;
+  if(!v3two) return;
+  const a=R[0], b=R[1], side=a[1]===b[1];
+  const d=$('v3dv').style;
+  if(side){ d.left=b[0]+'px'; d.top='0px'; d.width='1px'; d.height=a[3]+'px'; }
+  else    { d.left='0px'; d.top=b[1]+'px'; d.width=a[2]+'px'; d.height='1px'; }
+  R.forEach((r,i)=>{
+    const el=$('v3lb'+i);
+    el.style.left=(r[0]+8)+'px'; el.style.top=(r[1]+7)+'px';
+    el.classList.toggle('on',i===v3ed);
+  });
+  const r=R[v3ed], o=$('v3on').style;
+  o.left=(r[0]+1)+'px'; o.top=(r[1]+1)+'px';
+  o.width=Math.max(0,r[2]-2)+'px'; o.height=Math.max(0,r[3]-2)+'px';
+}
+
 function v3render(){
   if(!v3ready) return;
   const dpr=Math.min(devicePixelRatio||1,2);
   const w=Math.max(1,Math.round(V3WRAP.clientWidth*dpr)),
         h=Math.max(1,Math.round(V3WRAP.clientHeight*dpr));
   if(V3CV.width!==w||V3CV.height!==h){ V3CV.width=w; V3CV.height=h; }
+  gl.disable(gl.SCISSOR_TEST);
   gl.viewport(0,0,w,h);
   gl.clearColor(v3col.bg[0],v3col.bg[1],v3col.bg[2],1);
   gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+  /* One clear of the whole canvas, then a pass per pane. The scissor is what keeps a pane
+     inside its own rectangle: the ray-marched box, the depth clear the meshes take and
+     both of the shell's passes all cover whatever the viewport will let them. */
+  const R=v3rects(), CH=Math.max(1,V3WRAP.clientHeight);
+  gl.enable(gl.SCISSOR_TEST);
+  R.forEach((r,i)=>{
+    const x=Math.round(r[0]*dpr), y=Math.round((CH-r[1]-r[3])*dpr),
+          pw=Math.max(1,Math.round(r[2]*dpr)), ph=Math.max(1,Math.round(r[3]*dpr));
+    gl.viewport(x,y,pw,ph); gl.scissor(x,y,pw,ph);
+    v3draw(V3P[i],pw,ph,dpr);
+  });
+  gl.disable(gl.SCISSOR_TEST);
+  v3chrome(R);
+}
+
+/* one pane, into the viewport already set for it */
+function v3draw(Q,w,h,dpr){
   gl.disable(gl.DEPTH_TEST);
   gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);
 
   /* v3mvp() is what puts the model matrix in, so it also leaves the camera restated in
      model space -- which is the space the box, the shell and the slice order live in */
-  const M=v3mvp(), cam=v3camM;
-  const z0=v3a/(V3D-1), z1=v3b/(V3D-1);
+  const M=v3mvp(Q,w,h), cam=v3camM;
+  const z0=Q.a/(V3D-1), z1=Q.b/(V3D-1);
   const U=(p,n)=>gl.getUniformLocation(p,n);
   /* the tissue curve goes to whichever raster program is about to draw: one field, read
      one way, whether the stack or the ray-march is the thing reading it */
-  const tone=p=>{ gl.uniform1f(U(p,'u_t0'),v3t0); gl.uniform1f(U(p,'u_t1'),v3t1);
-                  gl.uniform1f(U(p,'u_gam'),v3gam); };
+  const tone=p=>{ gl.uniform1f(U(p,'u_t0'),Q.t0); gl.uniform1f(U(p,'u_t1'),Q.t1);
+                  gl.uniform1f(U(p,'u_gam'),Q.gam); };
 
   /* Translucent bone: the far side of the skull goes down before the brain content and
      the near side after it, so the stack shows through the shell instead of being pasted
@@ -3648,28 +3715,28 @@ function v3render(){
      what splits near from far, so the opaque pass does without it: the decimated mesh
      has a few triangles wound inside out, and culling would drop them from the near
      side and leave brain content showing through the pinholes. */
-  const solid=v3sko>0.97;
+  const solid=Q.sko>0.97;
   const skull=side=>{
-    if(!v3sk||!vaoS||(solid&&!side)) return;
+    if(!Q.sk||!vaoS||(solid&&!side)) return;
     gl.useProgram(pSkull); gl.bindVertexArray(vaoS);
     if(solid){ gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL); }
     else { gl.enable(gl.CULL_FACE); gl.cullFace(side?gl.BACK:gl.FRONT); }
     gl.uniformMatrix4fv(U(pSkull,'u_mvp'),false,M);
     gl.uniform3fv(U(pSkull,'u_cam'),new Float32Array(cam));
     gl.uniform3fv(U(pSkull,'u_c'),v3col.bone);
-    gl.uniform1f(U(pSkull,'u_op'),v3sko);
-    gl.uniform1f(U(pSkull,'u_half'),v3half?1:0);
+    gl.uniform1f(U(pSkull,'u_op'),Q.sko);
+    gl.uniform1f(U(pSkull,'u_half'),Q.half?1:0);
     gl.drawElements(gl.TRIANGLES,nSK,gl.UNSIGNED_SHORT,0);
     if(solid) gl.disable(gl.DEPTH_TEST); else gl.disable(gl.CULL_FACE);
   };
   skull(false);
 
-  if(v3mode==='contour'){
+  if(Q.mode==='contour'){
     gl.useProgram(pSlice); gl.bindVertexArray(vaoQ);
     gl.uniformMatrix4fv(U(pSlice,'u_mvp'),false,M);
-    gl.uniform1f(U(pSlice,'u_op'),v3op);
-    gl.uniform1f(U(pSlice,'u_half'),v3half?1:0);
-    gl.uniform1f(U(pSlice,'u_ink'),v3ink());
+    gl.uniform1f(U(pSlice,'u_op'),Q.op);
+    gl.uniform1f(U(pSlice,'u_half'),Q.half?1:0);
+    gl.uniform1f(U(pSlice,'u_ink'),v3ink(Q));
     tone(pSlice);
     gl.uniform3fv(U(pSlice,'u_ce'),v3col.ce);
     gl.uniform3fv(U(pSlice,'u_ti'),v3col.ti);
@@ -3680,13 +3747,13 @@ function v3render(){
     const uo=U(pSlice,'u_o'), uz=U(pSlice,'u_z');
     /* back to front, or the near slices erase what is behind them */
     const near = cam[2] < w3z(P[0].bregma);
-    for(let n=0;n<=v3b-v3a;n++){
-      const k = near ? v3a+n : v3b-n;
+    for(let n=0;n<=Q.b-Q.a;n++){
+      const k = near ? Q.a+n : Q.b-n;
       gl.uniform3f(uo,V3X0,w3y(V3Y0),w3z(P[k].bregma));
       gl.uniform1f(uz,k/(V3D-1));
       gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
     }
-  } else if(v3mode==='volume'){
+  } else if(Q.mode==='volume'){
     gl.useProgram(pVol); gl.bindVertexArray(vaoB);
     gl.enable(gl.CULL_FACE); gl.cullFace(gl.FRONT);
     gl.uniformMatrix4fv(U(pVol,'u_mvp'),false,M);
@@ -3694,15 +3761,15 @@ function v3render(){
     /* a parallel view has one ray direction for the whole box: the way the eye looks,
        which is the depth axis the picker already keeps, reversed */
     gl.uniform3f(U(pVol,'u_vdir'),-v3dep[0],-v3dep[1],-v3dep[2]);
-    gl.uniform1f(U(pVol,'u_ortho'),v3ortho?1:0);
+    gl.uniform1f(U(pVol,'u_ortho'),Q.ortho?1:0);
     gl.uniform3f(U(pVol,'u_lo'),V3X0,w3y(V3Y0),w3z(V3Z0));
     gl.uniform3f(U(pVol,'u_hi'),V3X1,w3y(V3Y1),w3z(V3Z1));
     gl.uniform3fv(U(pVol,'u_ce'),v3col.ce);
     gl.uniform3fv(U(pVol,'u_ti'),v3col.ti);
-    gl.uniform1f(U(pVol,'u_op'),v3op);
-    gl.uniform1f(U(pVol,'u_ink'),v3ink());
+    gl.uniform1f(U(pVol,'u_op'),Q.op);
+    gl.uniform1f(U(pVol,'u_ink'),v3ink(Q));
     tone(pVol);
-    gl.uniform1f(U(pVol,'u_half'),v3half?1:0);
+    gl.uniform1f(U(pVol,'u_half'),Q.half?1:0);
     gl.uniform1f(U(pVol,'u_z0'),z0); gl.uniform1f(U(pVol,'u_z1'),z1);
     gl.uniform1i(U(pVol,'u_vol'),0);
     gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_3D,texV);
@@ -3712,12 +3779,12 @@ function v3render(){
 
   /* the plate the rest of the app is showing, traced where its section actually sits */
   const bx=v3box[cur-1];
-  if(v3mode!=='points' && bx && cur-1>=v3a && cur-1<=v3b){
+  if(Q.mode!=='points' && bx && cur-1>=Q.a && cur-1<=Q.b){
     const zc=w3z(plateOf[cur].bregma), m=.18;      /* a little air around the section */
     const lx=V3X0+(V3X1-V3X0)*Math.max(0,bx[0]-.01), hx=V3X0+(V3X1-V3X0)*Math.min(1,bx[2]+.01);
     const ly=w3y(V3Y0)+(w3y(V3Y1)-w3y(V3Y0))*Math.max(0,bx[1]-.01),
           hy=w3y(V3Y0)+(w3y(V3Y1)-w3y(V3Y0))*Math.min(1,bx[3]+.01);
-    const x0=v3half?Math.max(lx-m,0):lx-m;
+    const x0=Q.half?Math.max(lx-m,0):lx-m;
     gl.useProgram(pLine);
     const lv=[x0,ly-m,zc, hx+m,ly-m,zc, hx+m,hy+m,zc, x0,hy+m,zc];
     const vb=gl.createBuffer();
@@ -3766,7 +3833,7 @@ function v3render(){
     gl.deleteBuffer(vb); gl.deleteVertexArray(va);
   }
 
-  meshDraw(M);
+  meshDraw(Q,M);
   if(anShow && NOTES.length){                  /* the notes, each as a small cross */
     const r=.3, lv=[];
     for(const n of NOTES){ const c=[n.ml,w3y(n.dv),w3z(n.ap)];
@@ -3788,44 +3855,61 @@ function v3render(){
   /* the labels ride along in every mode; alone, they are the mode */
   gl.useProgram(pPts); gl.bindVertexArray(vaoP);
   gl.uniformMatrix4fv(U(pPts,'u_mvp'),false,M);
-  gl.uniform1f(U(pPts,'u_size'), (v3mode==='points'?4.6:3.4)*dpr);
-  gl.uniform1f(U(pPts,'u_half'),v3half?1:0);
-  gl.uniform1f(U(pPts,'u_zl'),w3z(P[v3a].bregma)-.02);
-  gl.uniform1f(U(pPts,'u_zh'),w3z(P[v3b].bregma)+.02);
-  gl.uniform1f(U(pPts,'u_only'),v3mode==='points'?0:1);
-  gl.uniform1f(U(pPts,'u_ow'), v3ortho ? v3dist : 0);
+  gl.uniform1f(U(pPts,'u_size'), (Q.mode==='points'?4.6:3.4)*dpr);
+  gl.uniform1f(U(pPts,'u_half'),Q.half?1:0);
+  gl.uniform1f(U(pPts,'u_zl'),w3z(P[Q.a].bregma)-.02);
+  gl.uniform1f(U(pPts,'u_zh'),w3z(P[Q.b].bregma)+.02);
+  gl.uniform1f(U(pPts,'u_only'),Q.mode==='points'?0:1);
+  gl.uniform1f(U(pPts,'u_ow'), Q.ortho ? Q.dist : 0);
   gl.uniform3fv(U(pPts,'u_c0'),v3col.c0);
   gl.uniform3fv(U(pPts,'u_c1'),v3col.c1);
   gl.uniform3fv(U(pPts,'u_c2'),isGrp(sel)?v3col.cg:v3col.c2);
   gl.drawArrays(gl.POINTS,0,nPT);
   gl.bindVertexArray(null);
 }
-function v3frame(){ if(v3raf||!v3ready) return;
+/* The pane chrome is elements and not pixels, so it is put right here rather than only in
+   the draw: a rebuild leaves the last frame on the canvas with nothing scheduled to
+   replace it, and the letters and the frame would otherwise sit at the size and on the
+   pane they had before the source changed. */
+function v3frame(){
+  v3chrome(v3rects());
+  if(v3raf||!v3ready) return;
   v3raf=requestAnimationFrame(()=>{ v3raf=null; v3render(); }); }
 
 /* ---------- picking: 6,220 points is nothing to project on the CPU ---------- */
-function v3proj(M,p){
+/* a point projected into its pane, and the answer given in the wrap's own pixels, so a
+   hit test and a tooltip both read the same coordinates whichever pane they are in */
+function v3proj(Q,r,M,p){
   const x=M[0]*p[0]+M[4]*p[1]+M[8]*p[2]+M[12],
         y=M[1]*p[0]+M[5]*p[1]+M[9]*p[2]+M[13],
         w=M[3]*p[0]+M[7]*p[1]+M[11]*p[2]+M[15];
   if(w<=0) return null;
-  const b=V3WRAP.getBoundingClientRect();
   /* w is the eye distance under perspective and a constant 1 under a parallel one, so
      ties there are broken along the view axis instead -- smaller is still nearer */
-  const d = (v3ortho&&v3dep) ? -(p[0]*v3dep[0]+p[1]*v3dep[1]+p[2]*v3dep[2]) : w;
-  return [(x/w*.5+.5)*b.width, (.5-y/w*.5)*b.height, d];
+  const d = (Q.ortho&&v3dep) ? -(p[0]*v3dep[0]+p[1]*v3dep[1]+p[2]*v3dep[2]) : w;
+  return [r[0]+(x/w*.5+.5)*r[2], r[1]+(.5-y/w*.5)*r[3], d];
 }
-function v3near(e){
+/* which pane the pointer is in, that pane's rectangle, and where in the wrap it landed.
+   Everything that reads the pointer starts here, so nothing has to know how many panes
+   there are: with one, this is the whole view and the answer is always pane 0. */
+function v3at(e){
+  const b=V3WRAP.getBoundingClientRect(), R=v3rects();
+  const x=e.clientX-b.left, y=e.clientY-b.top;
+  for(let i=R.length-1;i>=0;i--){ const r=R[i];
+    if(x>=r[0]&&y>=r[1]&&x<r[0]+r[2]&&y<r[1]+r[3]) return {i,r,x,y}; }
+  return {i:0,r:R[0],x,y};
+}
+function v3near(h){
   if(!v3ready) return -1;
-  const M=v3mvp(), b=V3WRAP.getBoundingClientRect();
-  const mx=e.clientX-b.left, my=e.clientY-b.top;
+  const Q=V3P[h.i], M=v3mvp(Q,h.r[2],h.r[3]);
+  const mx=h.x, my=h.y;
   const R2=17*17;
   let best=-1, bd=Infinity, bw=Infinity;
   for(let i=0;i<nPT;i++){
     const q=PTS[i];
-    if(v3half && q.ml<0) continue;
-    const k=q.p-1; if(k<v3a||k>v3b) continue;
-    const s=v3proj(M,[q.ml,w3y(q.dv),w3z(q.ap)]); if(!s) continue;
+    if(Q.half && q.ml<0) continue;
+    const k=q.p-1; if(k<Q.a||k>Q.b) continue;
+    const s=v3proj(Q,h.r,M,[q.ml,w3y(q.dv),w3z(q.ap)]); if(!s) continue;
     const d=(s[0]-mx)*(s[0]-mx)+(s[1]-my)*(s[1]-my);
     if(d>R2) continue;
     /* nearest to the pointer wins; where two are as good, the one nearer the eye,
@@ -3835,54 +3919,82 @@ function v3near(e){
   return best;
 }
 function v3hide(){ V3TIP.hidden=true; V3WRAP.classList.remove('hot'); v3hot=null; }
-function v3show(i){
+function v3show(i,h){
   const q=PTS[i], r=byAb[q.ab];
   V3TIP.innerHTML=`<span class="ta">${esc(q.ab)}</span>`+
     `<span class="tn">${esc(r?r.name:'not in the published index')}</span>`+
     `<span class="tx">plate ${q.p} · ${dotTxt(q)}</span>`;
   V3TIP.hidden=false; V3WRAP.classList.add('hot');
-  const s=v3proj(v3mvp(),[q.ml,w3y(q.dv),w3z(q.ap)]); if(!s) return;
+  const Q=V3P[h.i];
+  const s=v3proj(Q,h.r,v3mvp(Q,h.r[2],h.r[3]),[q.ml,w3y(q.dv),w3z(q.ap)]); if(!s) return;
   const b=V3WRAP.getBoundingClientRect(), tw=V3TIP.offsetWidth, th=V3TIP.offsetHeight;
   let x=s[0]-tw/2; x=Math.max(2,Math.min(b.width-tw-2,x));
   let y=s[1]-th-12; if(y<2) y=s[1]+14;
   V3TIP.style.left=x.toFixed(1)+'px'; V3TIP.style.top=y.toFixed(1)+'px';
 }
 
-/* ---------- orbit, pan, zoom ---------- */
+/* ---------- orbit, pan, zoom ----------
+   A camera change goes to the pane it was made in. While the two are locked the other
+   takes the same change -- the same turn, the same zoom factor, the same pan -- so a pair
+   set at an angle apart holds that angle instead of collapsing onto one view. Dragging,
+   the wheel, a pinch, the zoom keys and a named viewpoint all come through here, so they
+   all mean the same thing. Reset is the one that does not, and says so: it is "back to the
+   default", the default is one camera, and a locked pair going back to it is how a pair
+   that has been turned apart is brought onto the same angle again. */
+function v3move(i,f){
+  const A=V3P[i];
+  if(!(v3lock&&v3two)){ f(A); return; }
+  const was={az:A.az, el:A.el, dist:A.dist, tx:A.tx, ty:A.ty};
+  f(A);
+  const B=V3P[1-i];
+  if(A.az!==was.az||A.el!==was.el) B.view='';
+  B.az+=A.az-was.az;
+  /* each pane clamps its own elevation, so a locked pair driven into the pole closes up
+     rather than one of them flipping over: the poles are where the up vector gives out */
+  B.el=Math.max(-V3POLE,Math.min(V3POLE,B.el+(A.el-was.el)));
+  B.dist=Math.max(9,Math.min(90,B.dist*(A.dist/(was.dist||1))));
+  B.tx+=A.tx-was.tx; B.ty+=A.ty-was.ty;
+}
 const v3p=new Map();
 let v3drag=null, v3pinch=null, v3moved=0, v3noclick=false;
 V3CV.addEventListener('pointerdown',e=>{
   v3p.set(e.pointerId,{x:e.clientX,y:e.clientY});
   if(v3p.size===1){
-    v3drag={x:e.clientX,y:e.clientY,pan:e.button===2||e.shiftKey}; v3moved=0;
+    const h=v3at(e);
+    /* the pane you reach into is the pane the toolbar is about. A control that set the
+       other one would be a control you had to aim twice. */
+    if(v3two&&h.i!==v3ed) v3edit(h.i);
+    v3drag={x:e.clientX,y:e.clientY,pan:e.button===2||e.shiftKey,i:h.i}; v3moved=0;
     try{ V3CV.setPointerCapture(e.pointerId); }catch(_){}
     V3WRAP.classList.add('drag'); v3hide();
   } else if(v3p.size===2){
-    const [a,b]=[...v3p.values()];
-    v3pinch={d:Math.hypot(a.x-b.x,a.y-b.y),z:v3dist}; v3drag=null;
+    const [a,b]=[...v3p.values()], i=v3drag?v3drag.i:v3ed;
+    v3pinch={d:Math.hypot(a.x-b.x,a.y-b.y), z:V3P[i].dist, i}; v3drag=null;
   }
 });
 V3CV.addEventListener('pointermove',e=>{
   if(v3p.has(e.pointerId)) v3p.set(e.pointerId,{x:e.clientX,y:e.clientY});
   if(v3p.size===2&&v3pinch){
-    const [a,b]=[...v3p.values()], d=Math.hypot(a.x-b.x,a.y-b.y);
-    if(d){ v3dist=Math.max(9,Math.min(90,v3pinch.z*v3pinch.d/d)); v3moved=99; v3frame(); }
+    const [a,b]=[...v3p.values()], d=Math.hypot(a.x-b.x,a.y-b.y), z=v3pinch.z*v3pinch.d;
+    if(d){ v3move(v3pinch.i,Q=>{ Q.dist=Math.max(9,Math.min(90,z/d)); });
+           v3moved=99; v3frame(); }
     return;
   }
   if(v3drag){
     const dx=e.clientX-v3drag.x, dy=e.clientY-v3drag.y;
     v3moved+=Math.abs(dx)+Math.abs(dy);
     v3drag.x=e.clientX; v3drag.y=e.clientY;
-    if(v3drag.pan){ const s=v3dist*.0022; v3tx+=dx*s; v3ty-=dy*s; }
-    else { v3az-=dx*.0062; v3el=Math.max(-V3POLE,Math.min(V3POLE,v3el+dy*.0062));
-           v3view=''; $('v3v').value=''; }
+    if(v3drag.pan) v3move(v3drag.i,Q=>{ const s=Q.dist*.0022; Q.tx+=dx*s; Q.ty-=dy*s; });
+    else { v3move(v3drag.i,Q=>{ Q.az-=dx*.0062;
+             Q.el=Math.max(-V3POLE,Math.min(V3POLE,Q.el+dy*.0062)); Q.view=''; });
+           $('v3v').value=v3E().view; }
     v3frame();
     return;
   }
   if(e.pointerType==='touch') return;
-  const i=v3near(e);
-  if(i===v3hot) { if(i>=0) v3show(i); return; }
-  v3hot=i; if(i>=0) v3show(i); else v3hide();
+  const h=v3at(e), i=v3near(h);
+  if(i===v3hot) { if(i>=0) v3show(i,h); return; }
+  v3hot=i; if(i>=0) v3show(i,h); else v3hide();
 });
 function v3end(e){
   v3p.delete(e.pointerId);
@@ -3897,15 +4009,17 @@ V3CV.addEventListener('pointerup',v3end);
 V3CV.addEventListener('pointercancel',v3end);
 V3CV.addEventListener('pointerleave',()=>{ if(!v3p.size) v3hide(); });
 V3CV.addEventListener('contextmenu',e=>e.preventDefault());
+/* the wheel zooms the pane under the pointer without making it the pane the toolbar is
+   on: a drag is a deliberate grab and may retarget, a wheel over something should not */
 V3CV.addEventListener('wheel',e=>{
   e.preventDefault();
-  v3dist=Math.max(9,Math.min(90,v3dist*Math.exp(e.deltaY*.0012)));
+  v3move(v3at(e).i,Q=>{ Q.dist=Math.max(9,Math.min(90,Q.dist*Math.exp(e.deltaY*.0012))); });
   v3hide(); v3frame();
 },{passive:false});
 /* a tap opens the label under it, the way a dot in the projection does */
 V3CV.addEventListener('click',e=>{
   if(v3noclick){ v3noclick=false; return; }
-  const i=v3near(e); if(i<0) return;
+  const i=v3near(v3at(e)); if(i<0) return;
   const q=PTS[i];
   if(byAb[q.ab]) select(q.ab);
   go(q.p);
@@ -3913,53 +4027,97 @@ V3CV.addEventListener('click',e=>{
 
 /* ---------- controls ---------- */
 [...$('m3seg').children].forEach(b=>b.onclick=()=>{
-  v3mode=b.dataset.r;
+  v3E().mode=b.dataset.r;
   [...$('m3seg').children].forEach(x=>x.classList.toggle('on',x===b));
   v3note(); v3frame(); queueHash();
 });
+
+/* ---- the second pane ----
+   Split opens it, A and B choose which one every control below is about, and Lock decides
+   whether the two cameras move together. All three live at the head of the toolbar,
+   because which pane you are setting is what the rest of the toolbar means. */
+function v3edit(i){ v3ed=i; v3ui(); v3note(); v3frame(); queueHash(); }
+function v3split(on){
+  if(on&&!v3two) V3P[1]={...V3P[0]};
+  v3two=!!on;
+  if(!v3two) v3ed=0;
+  /* a pane copied from one that was already showing bone or meshes needs neither built
+     nor fetched again -- both are shared -- but a deep link may open one before either is */
+  else { if(V3P[1].sk) v3skullBuild(); if(V3P[1].m) meshLoad(); }
+  v3ui(); v3note(); v3frame(); queueHash();
+}
+$('v3sp').onchange=e=>v3split(e.target.checked);
+[...$('v3pseg').children].forEach(b=>b.onclick=()=>v3edit(+b.dataset.p));
+$('v3lk').onchange=e=>{ v3lock=e.target.checked; v3note(); queueHash(); };
+
+/* The toolbar shows the pane it is on, so every control has to be read back from that pane
+   whenever which pane it is changes: on A or B, on a split, on a click into the other
+   pane, on a deep link. One function does it, so none of them can be forgotten. */
+function v3ui(){
+  const Q=v3E();
+  [...$('m3seg').children].forEach(b=>b.classList.toggle('on',b.dataset.r===Q.mode));
+  v3tui();
+  $('v3a').value=Q.a+1; $('v3al').textContent=Q.a+1;
+  $('v3b').value=Q.b+1; $('v3bl').textContent=Q.b+1;
+  $('v3s').checked=Q.sk; $('v3sol').hidden=!Q.sk; $('v3so').value=Math.round(Q.sko*100);
+  $('v3h').checked=Q.half;
+  $('v3o').checked=Q.ortho;
+  $('v3m').checked=Q.m; $('v3msw').hidden=!Q.m; $('v3ms').checked=Q.ms;
+  $('v3v').value=Q.view;
+  $('v3sp').checked=v3two; $('v3lk').checked=v3lock;
+  $('v3pseg').hidden=!v3two; $('v3lkw').hidden=!v3two;
+  [...$('v3pseg').children].forEach(b=>b.classList.toggle('on',+b.dataset.p===v3ed));
+}
 /* Density, and the three that decide what a sample was worth before it scales it. Floor
    and ceiling hold each other in order the way the slab's two ends do -- the dragged one
    stops at the other rather than pushing it -- and meeting is allowed, because a window
    with no width is a hard threshold and that is a picture somebody may want. */
-$('v3op').oninput=e=>{ v3op=+e.target.value/100; v3tr(); v3frame(); queueHash(); };
+$('v3op').oninput=e=>{ v3E().op=+e.target.value/100; v3tr(); v3frame(); queueHash(); };
 $('v3t0').oninput=e=>{ const v=Math.min(+e.target.value,+$('v3t1').value);
-  e.target.value=v; v3t0=v/100; $('v3t0l').textContent=v+'%';
+  e.target.value=v; v3E().t0=v/100; $('v3t0l').textContent=v+'%';
   v3tr(); v3note(); v3frame(); queueHash(); };
 $('v3t1').oninput=e=>{ const v=Math.max(+e.target.value,+$('v3t0').value);
-  e.target.value=v; v3t1=v/100; $('v3t1l').textContent=v+'%';
+  e.target.value=v; v3E().t1=v/100; $('v3t1l').textContent=v+'%';
   v3tr(); v3note(); v3frame(); queueHash(); };
-$('v3gm').oninput=e=>{ v3gam=+e.target.value/100; $('v3gml').textContent=v3gam.toFixed(2);
+$('v3gm').oninput=e=>{ const Q=v3E(); Q.gam=+e.target.value/100;
+  $('v3gml').textContent=Q.gam.toFixed(2);
   v3tr(); v3note(); v3frame(); queueHash(); };
-/* one place writes the four of them, so the sliders, their readouts and a deep link
-   cannot drift apart -- and the reset that puts them back is the same call with the
-   defaults. The button only exists while it has something to undo. */
-function v3tone(op,t0,t1,gm){
+/* one place writes the four of them into a pane, so the pane, the sliders, their readouts
+   and a deep link cannot drift apart -- and the reset that puts them back is the same call
+   with the defaults. The button only exists while it has something to undo. */
+function v3tone(Q,op,t0,t1,gm){
   const cl=(v,lo,hi)=>Math.max(lo,Math.min(hi,Math.round(v)));
   op=cl(op,4,100); t1=cl(t1,0,100); t0=Math.min(cl(t0,0,100),t1); gm=cl(gm/5,8,50)*5;
-  v3op=op/100; v3t0=t0/100; v3t1=t1/100; v3gam=gm/100;
-  $('v3op').value=op;
-  $('v3t0').value=t0; $('v3t0l').textContent=t0+'%';
-  $('v3t1').value=t1; $('v3t1l').textContent=t1+'%';
-  $('v3gm').value=gm; $('v3gml').textContent=v3gam.toFixed(2);
+  Q.op=op/100; Q.t0=t0/100; Q.t1=t1/100; Q.gam=gm/100;
+  if(Q===v3E()) v3tui();
+}
+/* the four sliders and their readouts, read back off whichever pane the toolbar is on */
+function v3tui(){
+  const Q=v3E(), pc=v=>Math.round(v*100);
+  $('v3op').value=pc(Q.op);
+  $('v3t0').value=pc(Q.t0); $('v3t0l').textContent=pc(Q.t0)+'%';
+  $('v3t1').value=pc(Q.t1); $('v3t1l').textContent=pc(Q.t1)+'%';
+  $('v3gm').value=pc(Q.gam); $('v3gml').textContent=Q.gam.toFixed(2);
   v3tr();
 }
-const v3tdef=()=>v3op===.42&&v3t0===0&&v3t1===1&&v3gam===1;
-const v3tr=()=>{ $('v3tr').hidden=v3tdef(); };
-$('v3tr').onclick=()=>{ v3tone(42,0,100,100); v3note(); v3frame(); queueHash(); };
-$('v3s').onchange=e=>{ v3sk=e.target.checked;
-  if(v3sk) v3skullBuild();
+const v3tdef=Q=>Q.op===.42&&Q.t0===0&&Q.t1===1&&Q.gam===1;
+const v3tr=()=>{ $('v3tr').hidden=v3tdef(v3E()); };
+$('v3tr').onclick=()=>{ v3tone(v3E(),42,0,100,100); v3note(); v3frame(); queueHash(); };
+$('v3s').onchange=e=>{ const Q=v3E(); Q.sk=e.target.checked;
+  if(Q.sk) v3skullBuild();
   /* the default distance frames the brain; the skull is half again bigger, so the
      first sight of it should not be a clipped close-up. Only an untouched camera is
-     moved -- a viewpoint the user has set is theirs. */
-  if(v3sk&&v3dist<34) v3dist=38;
-  $('v3sol').hidden=!v3sk; v3note(); v3frame(); queueHash(); };
-$('v3so').oninput=e=>{ v3sko=+e.target.value/100; v3frame(); };
-$('v3a').oninput=e=>{ v3a=Math.min(+e.target.value-1,v3b); e.target.value=v3a+1;
-  $('v3al').textContent=v3a+1; v3note(); v3frame(); queueHash(); };
-$('v3b').oninput=e=>{ v3b=Math.max(+e.target.value-1,v3a); e.target.value=v3b+1;
-  $('v3bl').textContent=v3b+1; v3note(); v3frame(); queueHash(); };
-$('v3h').onchange=e=>{ v3half=e.target.checked; v3note(); v3frame(); queueHash(); };
-$('v3o').onchange=e=>{ v3ortho=e.target.checked; v3note(); v3frame(); queueHash(); };
+     moved -- a viewpoint the user has set is theirs. Through v3move, so a locked pair
+     pulls back together rather than one of them quietly sitting closer than the other. */
+  if(Q.sk&&Q.dist<34) v3move(v3ed,q=>{ q.dist=38; });
+  $('v3sol').hidden=!Q.sk; v3note(); v3frame(); queueHash(); };
+$('v3so').oninput=e=>{ v3E().sko=+e.target.value/100; v3frame(); };
+$('v3a').oninput=e=>{ const Q=v3E(); Q.a=Math.min(+e.target.value-1,Q.b); e.target.value=Q.a+1;
+  $('v3al').textContent=Q.a+1; v3note(); v3frame(); queueHash(); };
+$('v3b').oninput=e=>{ const Q=v3E(); Q.b=Math.max(+e.target.value-1,Q.a); e.target.value=Q.b+1;
+  $('v3bl').textContent=Q.b+1; v3note(); v3frame(); queueHash(); };
+$('v3h').onchange=e=>{ v3E().half=e.target.checked; v3note(); v3frame(); queueHash(); };
+$('v3o').onchange=e=>{ v3E().ortho=e.target.checked; v3note(); v3frame(); queueHash(); };
 /* Named viewpoints. World x is the animal's right, y dorsal, z posterior, so each view
    is just the azimuth and elevation that put the eye on the matching axis. Dorsal and
    ventral stop a degree short of the pole: a camera exactly there is parallel to the up
@@ -3969,14 +4127,24 @@ $('v3o').onchange=e=>{ v3ortho=e.target.checked; v3note(); v3frame(); queueHash(
 const V3POLE=1.553;
 const V3VIEW={ obl:[-.82,.30], left:[-Math.PI/2,0], right:[Math.PI/2,0],
                rost:[Math.PI,0], caud:[0,0], dors:[0,V3POLE], vent:[Math.PI,-V3POLE] };
+/* one pane's camera put on a named axis, with nothing else moved and nothing written */
+function v3put(Q,k){ const v=V3VIEW[k]; if(!v) return; Q.view=k; Q.az=v[0]; Q.el=v[1]; Q.tx=Q.ty=0; }
 function v3setView(k){
-  const v=V3VIEW[k]; if(!v) return;
-  v3view=k; v3az=v[0]; v3el=v[1]; v3tx=v3ty=0;
-  $('v3v').value=k; v3frame(); queueHash();
+  if(!V3VIEW[k]) return;
+  v3move(v3ed,Q=>v3put(Q,k));
+  $('v3v').value=v3E().view; v3frame(); queueHash();
 }
 $('v3v').onchange=e=>v3setView(e.target.value);
-/* the reset is the viewpoint plus the framing: distance and pan come back too */
-$('v3r').onclick=()=>{ v3dist=v3sk?38:26; v3setView('obl'); };
+/* The reset is the viewpoint plus the framing: distance and pan come back too. It is the
+   one camera control that does not go through v3move, because "back to the default" of a
+   locked pair is one default and not two: this is how a pair turned apart is brought back
+   onto the same angle. An unlocked pair keeps its other pane exactly where it was. */
+$('v3r').onclick=()=>{
+  const back=Q=>{ Q.dist=Q.sk?38:26; v3put(Q,'obl'); };
+  back(v3E());
+  if(v3lock&&v3two) back(V3P[1-v3ed]);
+  $('v3v').value='obl'; v3frame(); queueHash();
+};
 
 /* ---- the meshes ---- */
 const MESHURL='data/gerbil_atlas_volumes.json';
@@ -4087,8 +4255,8 @@ function meshList(){
     for(const r of results) add(r.abbr);
   return out;
 }
-function meshDraw(M){
-  if(!v3m||!MESH||!gl) return;
+function meshDraw(Q,M){
+  if(!Q.m||!MESH||!gl) return;
   /* pSkull shades from dot(N, cam - p) with p a model-space vertex, so the camera has to
      be the one v3mvp() restated in model space -- the same one the shell is given. The
      mesh geometry itself needs nothing: the model matrix is already folded into u_mvp. */
@@ -4097,12 +4265,12 @@ function meshDraw(M){
   gl.enable(gl.DEPTH_TEST); gl.depthMask(true); gl.clear(gl.DEPTH_BUFFER_BIT);
   gl.uniformMatrix4fv(U(pSkull,'u_mvp'),false,M);
   gl.uniform3fv(U(pSkull,'u_cam'),cam);
-  gl.uniform1f(U(pSkull,'u_half'),v3half?1:0);
+  gl.uniform1f(U(pSkull,'u_half'),Q.half?1:0);
   const draw=(key,m,col,op)=>{ const g=meshGPU(key,m); gl.bindVertexArray(g.va);
     gl.uniform3fv(U(pSkull,'u_c'),col); gl.uniform1f(U(pSkull,'u_op'),op);
     gl.drawElements(gl.TRIANGLES,g.n,g.type,0); };
   for(const ab of list) draw('s:'+ab, MESH.data[ab].mesh, meshColor(ab), .92);
-  if($('v3ms').checked){ gl.depthMask(false); draw('surface', MESH.surface.mesh, v3col.ti, .16); gl.depthMask(true); }
+  if(Q.ms){ gl.depthMask(false); draw('surface', MESH.surface.mesh, v3col.ti, .16); gl.depthMask(true); }
   gl.disable(gl.DEPTH_TEST); gl.bindVertexArray(null);
 }
 /* the selection's mesh as a binary STL, in atlas millimetres (ML, DV, AP). A
@@ -4138,38 +4306,48 @@ function meshSTL(){
   const u=URL.createObjectURL(new Blob([buf],{type:'model/stl'}));
   dl(`mesh_${name.replace(/[^A-Za-z0-9]/g,'')}.stl`,u,u);
 }
-$('v3m').onchange=e=>{ v3m=e.target.checked; if(v3m) meshLoad(); $('v3msw').hidden=!v3m; v3flags(); v3note(); v3frame(); queueHash(); };
-$('v3ms').onchange=()=>v3frame();
+$('v3m').onchange=e=>{ const Q=v3E(); Q.m=e.target.checked; if(Q.m) meshLoad();
+  $('v3msw').hidden=!Q.m; v3flags(); v3note(); v3frame(); queueHash(); };
+$('v3ms').onchange=e=>{ v3E().ms=e.target.checked; v3frame(); };
 $('v3stl').onclick=meshSTL;
 $('v3mfb').onclick=()=>$('v3mfile').click();
 
 function v3note(){
   const N=$('v3n');
   if(v3fail){ N.textContent=''; return; }
-  $('v3stl').hidden=!(v3m&&MESH&&(isGrp(sel)?meshList().length:meshKey(sel)));
+  /* with two panes on screen the note is about the one the toolbar is on, and has to say
+     which -- every number in it, from the slab's millimetres to the mesh volumes, is that
+     pane's and not the other's */
+  const Q=v3E();
+  const who = v3two ? `<b>Pane ${v3ed?'B':'A'}.</b> ` : '';
+  const pair = v3two
+    ? (v3lock ? ` The two panes are locked: they turn, zoom and pan together, holding whatever`+
+                ` angle apart they were set to. Reset view brings both back onto the default.`
+              : ` The two panes turn independently.`) : '';
+  $('v3stl').hidden=!(Q.m&&MESH&&(isGrp(sel)?meshList().length:meshKey(sel)));
   /* the slab's own AP bounds, quoted from wherever zero is -- a re-zero does not move the
      plates, only what their APs are called, and this line is the only place the 3-D view
      names one */
-  const slab = (v3a>0||v3b<61)
-    ? ` Plates ${v3a+1}–${v3b+1} only (${shifted()&&FRAME.org?esc(orgName()):'bregma'}`+
-      ` ${sgn(axTo('ap',P[v3a].bregma))} to ${sgn(axTo('ap',P[v3b].bregma))} mm).` : '';
-  const half = v3half ? ' Cut at the midline.' : '';
-  const bone = v3sk ? ' Skull fit is experimental and approximate.' : '';
-  const proj = v3ortho ? ' Parallel projection: equal lengths read equally at any depth.' : '';
+  const slab = (Q.a>0||Q.b<61)
+    ? ` Plates ${Q.a+1}–${Q.b+1} only (${shifted()&&FRAME.org?esc(orgName()):'bregma'}`+
+      ` ${sgn(axTo('ap',P[Q.a].bregma))} to ${sgn(axTo('ap',P[Q.b].bregma))} mm).` : '';
+  const half = Q.half ? ' Cut at the midline.' : '';
+  const bone = Q.sk ? ' Skull fit is experimental and approximate.' : '';
+  const proj = Q.ortho ? ' Parallel projection: equal lengths read equally at any depth.' : '';
   /* a windowed render is a picture of the tissue after something was done to it, and this
      is the line where the view says what. Quoted whenever the curve is off the identity --
      including a curve that arrived in somebody else's link, which is the case where the
      reader has no other way of knowing the render was tuned. */
-  const tone = (v3t0>0||v3t1<1||v3gam!==1)
-    ? ` Tissue windowed ${Math.round(v3t0*100)}–${Math.round(v3t1*100)}%`+
-      (v3gam!==1 ? ` at γ ${v3gam.toFixed(2)}` : '')+
+  const tone = (Q.t0>0||Q.t1<1||Q.gam!==1)
+    ? ` Tissue windowed ${Math.round(Q.t0*100)}–${Math.round(Q.t1*100)}%`+
+      (Q.gam!==1 ? ` at γ ${Q.gam.toFixed(2)}` : '')+
       `: a contrast setting, not a threshold on anything measured.` : '';
   /* the rotation is on the picture rather than on the numbers, so the caveat is about
      what a turned stack is not: still 62 coronal sections, just stood up in your frame */
   const turn = fvOn() ? ` Standing in your frame (${frameTxt()}): up is your frame's DV.`+
     ` The stack is turned, not recut \u2014 these are the same 62 coronal sections.` : '';
   let mesh='';
-  if(v3m){
+  if(Q.m){
     if(meshBusy) mesh=' Fetching the meshes (20 MB, once)…';
     else if(meshFail) mesh=' '+meshFail;
     else if(MESH){
@@ -4203,24 +4381,24 @@ function v3note(){
         ' Six planes in seven are arithmetic between sections 350 µm apart; nothing here is a segmentation.';
     }
   }
-  if(v3mode==='points'){
+  if(Q.mode==='points'){
     const q=(sel&&ptsOf[sel])||[];
-    N.innerHTML = (sel&&q.length
+    N.innerHTML = who + (sel&&q.length
       ? `<b>${esc(selName())}</b> in ${selHue()}: ${q.length} label${q.length>1?'s':''} on `+
         `${new Set(q.map(t=>t.p)).size} plate${new Set(q.map(t=>t.p)).size>1?'s':''}, against all 6,220. `
       : `All 6,220 printed labels at their stereotaxic positions. `)+
       `A dot is where an abbreviation is <em>printed</em> — close to its structure, not its centre. `+
-      `Hover to read one, click to open its plate.`+slab+half+proj+turn+bone+mesh;
+      `Hover to read one, click to open its plate.`+slab+half+proj+turn+bone+mesh+pair;
     return;
   }
   const q=(sel&&ptsOf[sel])||[];
   const on = sel&&q.length ? ` <b>${esc(selName())}</b> is picked out in ${selHue()}.`
            : (results.length<S.length ? ` The current filter is picked out in it.` : '');
   const what = psrc==='drawing' ? `The atlas's own drawn contours` : `The 62 ${SRCN[psrc]}s`;
-  N.innerHTML = (v3mode==='contour'
+  N.innerHTML = who + (Q.mode==='contour'
     ? `${what}, each at its true bregma. It reads as a stack because that is what it is — 62 sections, 350 µm apart.`
     : `The same field ray-marched. Sampling along the brain is 20× coarser than across it, so the streaks are interpolation, not anatomy.`)+
-    on+` The ring marks plate ${cur}.`+tone+slab+half+proj+turn+bone+mesh;
+    on+` The ring marks plate ${cur}.`+tone+slab+half+proj+turn+bone+mesh+pair;
 }
 
 /* changing the plate source changes what the stack is made of, so it is read again from
@@ -4247,7 +4425,7 @@ function v3open(){
       if(!v3init()) throw new Error(v3fail);
       const vol=await v3build(f=>{ if(pg) pg.style.width=(f*100).toFixed(0)+'%'; });
       v3upload(vol);
-      if(v3sk) v3skullBuild();       /* a deep link can ask for the skull before GL exists */
+      if(V3P.some(q=>q.sk)) v3skullBuild();   /* a deep link can ask for bone before GL exists */
       v3ready=true; V3MSG.hidden=true;
       v3flags(); v3frame();
     }catch(err){
@@ -4291,18 +4469,27 @@ function writeHash(){
     if(tgProbe) h+=','+tgProbe;
   }
   if(smode==='targ'&&sel&&tgFoot) h+='&ft='+tgFoot;
-  if(v3mode!=='contour') h+='&r='+v3mode;
-  /* the tissue curve, as density, floor, ceiling and gamma in hundredths -- four numbers
-     because they are one setting, and a render tuned to show a nucleus is worth sending
-     with the viewpoint that shows it. Written only when one of them is off its default,
-     so nothing changes about a link written before there was a curve to carry. */
-  if(!v3tdef()) h+='&tf='+[v3op,v3t0,v3t1,v3gam].map(v=>Math.round(v*100)).join(',');
-  if(v3a>0||v3b<61) h+='&sl='+(v3a+1)+','+(v3b+1);
-  if(v3half) h+='&hf=1';
-  if(v3ortho) h+='&or=1';
-  if(v3view&&v3view!=='obl') h+='&vp='+v3view;
-  if(v3sk) h+='&sk='+Math.round(v3sko*100);
-  if(v3m) h+='&mh=1';
+  /* The 3-D view's own state, once per pane: the second pane's under the same keys with a
+     2 on the end, and written at all only while there is a second pane. So every link ever
+     written is still exactly one pane, and a one-pane link written now still is.
+     sp carries both that there are two and which one the toolbar was on. */
+  V3P.forEach((Q,i)=>{
+    if(i&&!v3two) return;
+    const x=i?'2':'';
+    if(Q.mode!=='contour') h+='&r'+x+'='+Q.mode;
+    /* the tissue curve, as density, floor, ceiling and gamma in hundredths -- four numbers
+       because they are one setting, and a render tuned to show a nucleus is worth sending
+       with the viewpoint that shows it. Written only when one of them is off its default,
+       so nothing changes about a link written before there was a curve to carry. */
+    if(!v3tdef(Q)) h+='&tf'+x+'='+[Q.op,Q.t0,Q.t1,Q.gam].map(v=>Math.round(v*100)).join(',');
+    if(Q.a>0||Q.b<61) h+='&sl'+x+'='+(Q.a+1)+','+(Q.b+1);
+    if(Q.half) h+='&hf'+x+'=1';
+    if(Q.ortho) h+='&or'+x+'=1';
+    if(Q.view&&Q.view!=='obl') h+='&vp'+x+'='+Q.view;
+    if(Q.sk) h+='&sk'+x+'='+Math.round(Q.sko*100);
+    if(Q.m) h+='&mh'+x+'=1';
+  });
+  if(v3two){ h+='&sp='+(1+v3ed); if(!v3lock) h+='&lk=0'; }
   /* fo used to be a bare 1 for "an origin is set". It now carries the landmark as 1 + its
      index, so bregma is still 1 and every link ever written still reads correctly. */
   if(FRAME.on){ h+='&fr='+FKEYS.map(k=>FRAME[k]).join(','); if(FRAME.org) h+='&fo='+(1+FRAME.oref); }
@@ -4354,37 +4541,44 @@ function readHash(){
   setPView(par.pj==='ml'?'ml':'dv');
   if(CMPWHAT.includes(par.cmp)!==cmpOn || (par.cmp&&par.cmp!==cmpWhat)) setCmp(CMPWHAT.includes(par.cmp), par.cmp);
 
-  const r=par.r==='volume'||par.r==='points'?par.r:'contour';
-  v3mode=r;
-  [...$('m3seg').children].forEach(b=>b.classList.toggle('on',b.dataset.r===r));
-  /* read positionally and a short list forgiven, the way fr and tg are: a link carrying
-     only a density still sets one. Missing altogether, all four go back to the values
-     this view has always drawn with, so a bare #p30 arriving by hashchange clears a
-     curve rather than leaving the last one on top of somebody else's link. */
-  /* split only a parameter that is there: ''.split(',') is [''], and Number('') is 0,
-     not NaN, so the absent case would read as a curve of zeros rather than as no curve */
-  const tf=par.tf?par.tf.split(',').map(Number):[], tfn=(i,d)=>Number.isFinite(tf[i])?tf[i]:d;
-  v3tone(tfn(0,42), tfn(1,0), tfn(2,100), tfn(3,100));
-  const sl=(par.sl||'').split(',').map(Number);
-  if(sl.length===2&&sl.every(n=>Number.isFinite(n)&&n>=1&&n<=62)&&sl[0]<=sl[1]){
-    v3a=sl[0]-1; v3b=sl[1]-1;
-  } else { v3a=0; v3b=61; }
-  $('v3a').value=v3a+1; $('v3al').textContent=v3a+1;
-  $('v3b').value=v3b+1; $('v3bl').textContent=v3b+1;
-  v3half = par.hf==='1';
-  $('v3h').checked=v3half;
-  v3ortho = par.or==='1';
-  $('v3o').checked=v3ortho;
-  /* only a link that names a viewpoint moves the camera; a bare #p30 arriving by
-     hashchange should not throw away the angle the user is looking from */
-  if(par.vp&&V3VIEW[par.vp]) v3setView(par.vp);
-  const sk=parseInt(par.sk,10);
-  v3sk = Number.isFinite(sk)&&sk>=6&&sk<=100;
-  if(v3sk){ v3sko=sk/100; $('v3so').value=sk; if(gl) v3skullBuild();
-            if(v3dist<34) v3dist=38; }
-  $('v3s').checked=v3sk; $('v3sol').hidden=!v3sk;
-  v3m = par.mh==='1'; $('v3m').checked=v3m; $('v3msw').hidden=!v3m;
-  if(v3m) meshLoad();
+  /* two panes, and which one the toolbar was on. A link without sp is the one pane it has
+     always been, and the second is left holding whatever this browser had -- it is not
+     being drawn, so there is nothing for a stale value in it to be wrong about. */
+  const sp=parseInt(par.sp,10);
+  v3two = sp===1||sp===2;
+  v3ed = sp===2 ? 1 : 0;
+  v3lock = par.lk!=='0';
+  V3P.forEach((Q,i)=>{
+    if(i&&!v3two) return;
+    const x=i?'2':'';
+    Q.mode = par['r'+x]==='volume'||par['r'+x]==='points' ? par['r'+x] : 'contour';
+    /* read positionally and a short list forgiven, the way fr and tg are: a link carrying
+       only a density still sets one. Missing altogether, all four go back to the values
+       this view has always drawn with, so a bare #p30 arriving by hashchange clears a
+       curve rather than leaving the last one on top of somebody else's link. */
+    /* split only a parameter that is there: ''.split(',') is [''], and Number('') is 0,
+       not NaN, so the absent case would read as a curve of zeros rather than as no curve */
+    const tf=par['tf'+x]?par['tf'+x].split(',').map(Number):[],
+          tfn=(j,d)=>Number.isFinite(tf[j])?tf[j]:d;
+    v3tone(Q, tfn(0,42), tfn(1,0), tfn(2,100), tfn(3,100));
+    const sl=(par['sl'+x]||'').split(',').map(Number);
+    if(sl.length===2&&sl.every(n=>Number.isFinite(n)&&n>=1&&n<=62)&&sl[0]<=sl[1]){
+      Q.a=sl[0]-1; Q.b=sl[1]-1;
+    } else { Q.a=0; Q.b=61; }
+    Q.half = par['hf'+x]==='1';
+    Q.ortho = par['or'+x]==='1';
+    /* only a link that names a viewpoint moves the camera; a bare #p30 arriving by
+       hashchange should not throw away the angle the user is looking from. Straight onto
+       the pane rather than through v3setView, which would put the lock's delta on the
+       other pane -- a link sets both panes itself and needs no help carrying one over. */
+    if(par['vp'+x]&&V3VIEW[par['vp'+x]]) v3put(Q,par['vp'+x]);
+    const sk=parseInt(par['sk'+x],10);
+    Q.sk = Number.isFinite(sk)&&sk>=6&&sk<=100;
+    if(Q.sk){ Q.sko=sk/100; if(gl) v3skullBuild(); if(Q.dist<34) Q.dist=38; }
+    Q.m = par['mh'+x]==='1';
+    if(Q.m) meshLoad();
+  });
+  v3ui(); v3frame();
 
   /* the frame is sticky: a link carrying one sets it, a link without one leaves whatever
      this browser had stored. Wiping a lab's calibration because somebody opened a bare
@@ -4581,9 +4775,11 @@ addEventListener('keydown',e=>{
   if(e.key==='ArrowLeft')  go(cur-1);
   if(e.key==='ArrowRight') go(cur+1);
   /* the zoom keys follow whichever view is open */
-  if(e.key==='+'||e.key==='='){ if(tab==='v3d'){ v3dist=Math.max(9,v3dist/1.3); v3frame(); }
+  /* the zoom keys drive the pane the toolbar is on, since there is no pointer to say
+     which pane they meant -- and the lock, if it is set, carries them to the other */
+  if(e.key==='+'||e.key==='='){ if(tab==='v3d'){ v3move(v3ed,Q=>{ Q.dist=Math.max(9,Q.dist/1.3); }); v3frame(); }
                                 else zoomCentre(zoom*1.6); }
-  if(e.key==='-'||e.key==='_'){ if(tab==='v3d'){ v3dist=Math.min(90,v3dist*1.3); v3frame(); }
+  if(e.key==='-'||e.key==='_'){ if(tab==='v3d'){ v3move(v3ed,Q=>{ Q.dist=Math.min(90,Q.dist*1.3); }); v3frame(); }
                                 else zoomCentre(zoom/1.6); }
   if(e.key==='0'){ if(tab==='v3d') $('v3r').click();
                    else { zoom=1; tx=ty=0; hideTip(); applyView(); } }
@@ -5102,6 +5298,7 @@ fit(); applyView(); revRun();
 window.__gae={toFrame,fromFrame,writeHash,readHash,tgSolve,tgPath,tgFootprint,plan:()=>tgPlan,
   select,go,clear,frameSet,frameApply,FRAME,frmBuild,BUILD,S,P,byAb,ptsOf,regBuild,plateAt,inBrain,
   coordsOf,tgJSON,tgNotes,meshList,setCmp,anMake,notes:()=>NOTES,mesh:()=>MESH,
+  v3split,v3edit,v3rects,panes:()=>V3P.map(q=>({...q})),
   GRP,isGrp,regIn,grpsOf,
   setMax,
-  state:()=>({cur,sel,zoom,tab,smode,psrc,tgProbe,tgFoot,cmpOn,anShow,maxed,targSide,tgTilt,tgRoll,tgYaw,tgPlate,tgOff,fview,fvOn:fvOn()})};
+  state:()=>({cur,sel,zoom,tab,smode,psrc,tgProbe,tgFoot,cmpOn,anShow,maxed,targSide,tgTilt,tgRoll,tgYaw,tgPlate,tgOff,fview,fvOn:fvOn(),v3two,v3ed,v3lock})};

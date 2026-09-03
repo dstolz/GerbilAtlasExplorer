@@ -6,6 +6,32 @@ carries a `version` block naming the release its derived fields were built for.
 ## [Unreleased]
 
 ### Added
+- **Two 3-D views at once.** **Split** puts a second pane beside the first, and everything the
+  3-D toolbar sets belongs to a pane rather than to the view: mode, density, the tissue curve,
+  the slab, the midline cut, the projection, the skull, the meshes and the camera. **A** and
+  **B** choose which pane the toolbar is on, and clicking into a pane makes it that one. So the
+  contours can stand beside the volume they came from, a whole brain beside a slab of it, a
+  structure's mesh beside the sections it was interpolated from — the pair of pictures the
+  printed atlas cannot give you at all, and the reason for splitting rather than switching.
+  **Lock** turns, zooms and pans both panes together, holding whatever angle apart they were
+  set to, so a lateral and a dorsal view of one brain move as one; untick it and they turn
+  separately. Every camera move goes through the one rule — a drag, the wheel, a pinch, the
+  zoom keys and a named viewpoint all mean the same thing — except **Reset view**, which is
+  "back to the default", and the default is one camera: a locked pair resets onto it together,
+  which is how a pair turned apart is brought back onto the same angle.
+
+  One canvas, one WebGL context, one 24 MB volume texture, one label cloud and one mesh cache,
+  with a pane drawn as a `viewport` and `scissor` over it — so the second view costs pixels and
+  nothing else: nothing is downloaded, decoded or uploaded twice. Side by side while the view is
+  wider than it is tall and stacked while it is not, which is what a phone held upright gets.
+  The divider, the pane letters and the frame on the pane being set are elements laid over the
+  canvas rather than lines drawn into it, so they take the sheet's colours and stay a hairline
+  at any pixel ratio — and they are put right on their own, so a rebuild after a source change
+  cannot leave them on the pane they were on before. A deep link carries the second pane under
+  the same keys with a `2` on the end (`r2`, `tf2`, `sl2`, `hf2`, `or2`, `vp2`, `sk2`, `mh2`)
+  plus `sp` for which pane the toolbar was on and `lk=0` for an unlocked pair, and writes none
+  of them while there is one pane — so every link ever written still reads as exactly the view
+  it was written from.
 - **Contrast controls for the 3-D render.** **Floor**, **Ceiling** and **Gamma** join Density
   in the 3-D toolbar and window the tissue channel before Density decides how opaque what
   survives is drawn: tissue at or below the floor counts for nothing, tissue at or above the
