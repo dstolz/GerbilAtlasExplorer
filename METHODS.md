@@ -513,6 +513,15 @@ The geometry is kept and still partitions the section, because a track and a vol
 be read off something; it is a best guess at where one name gives way to the next, and not a
 boundary to show anyone.
 
+**`w` is not the same claim as being no region at all, and the two are encoded apart on
+purpose.** Both end in no outline being drawn, which is the whole of what they share. A `w`
+entry *has* ground: `Crus2` on plate 52 is 7.57 mm² of section, with a mesh, a volume and a
+share of every track read through it — what it lacks is a boundary of its own to draw there.
+A name that is no region has no ground anywhere, so it has no entry in `region_extents` at
+all, no area, no volume and no mesh. Collapsing the second into the first would give `cbw`
+back the 170 mm² of cerebellum step 7 exists to take off it. Plate 52 carries one of each,
+and `tests/js/smoke.spec.js` tests them separately for that reason.
+
 End to end, in the app: pointing at each of the 6,292 printed labels in turn resolves to a
 structure every time, and to the right one 6,288 times. **5,329 of them are answered with an
 outline.** 542 are answered with the printed name because the entry carries `w` and there is
