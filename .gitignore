@@ -6,3 +6,8 @@ node_modules/
 test-results/
 playwright-report/
 *.tmp
+
+# The atlas MRI, until its redistribution terms are settled (tools/build_mri.py).
+# The app builds and behaves identically without these.
+data/plates/mri/
+data/mri_volume.jpg
