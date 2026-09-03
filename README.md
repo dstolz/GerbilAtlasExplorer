@@ -137,7 +137,10 @@ your browser; export them as JSON to keep or share them, and a link carries a ha
 - **3D** stacks the 62 plates where they actually sit: as contours — or as the Nissl or
   myelin sections themselves — as a ray-marched volume, or as a point cloud of all 6,266
   labels you can orbit. Clip to a slab or cut
-  it in half at the midline. **Skull** (experimental) wraps the stack in a CT skull
+  it in half at the midline. **Floor**, **Ceiling** and **Gamma** window the tissue before
+  **Density** decides how opaque it is drawn — the difference between a grey fog and a
+  render you can see a nucleus in, and on the labelled drawing a high floor takes the wash
+  away and leaves the contours alone. All four ride in the link. **Skull** (experimental) wraps the stack in a CT skull
   surface at any transparency from a faint shell to solid bone. **Ortho** switches to a
   parallel projection, so nothing is foreshortened. **View** puts the camera on an
   anatomical axis — left, right, rostral, caudal, dorsal or ventral — and the link you
@@ -270,6 +273,7 @@ plate range is malformed, and which are printed on one plate more than it gives 
 | `data/vec.json`, `data/skull.json` | The traced outlines with their per-plate registration, and the CT skull surface: the two assets no script here regenerates. |
 | `data/index_raw.txt` | The authors' Index of abbreviations as extracted. Source of truth for the rest. |
 | `data/index_structures_raw.txt` | The authors' Index of structures, the second of the two the atlas prints. Read against the first by `tools/check_indexes.py`, which is what says the 723 entries arrived intact. |
+| `data/index_published.csv` | The published index as a table: one row per structure, both printed plate fields side by side, the range expanded to a plate list, and a note on every entry whose reading took a decision. Written by `tools/check_indexes.py --write` from the two above and verified against them on every run — the ground truth the database is answerable to. |
 | `data/gerbil_atlas_volumes.json` | The brain surface and one mesh per structure, built by stacking the 62 plates and interpolating between them. Fetched by the 3D view on demand; `tools/build_volumes.py --stl` writes the same meshes as STL. See [METHODS](METHODS.md#the-third-dimension) before trusting the third axis. |
 | `svg/` | The traced regional outlines, one SVG per plate, in the published page frame. |
 | `qc/` | Verification renders kept from the build; [`qc/README.md`](qc/README.md) says which script writes each. Not used by the app. |

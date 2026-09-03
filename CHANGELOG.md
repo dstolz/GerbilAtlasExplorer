@@ -6,6 +6,25 @@ carries a `version` block naming the release its derived fields were built for.
 ## [Unreleased]
 
 ### Added
+- **Contrast controls for the 3-D render.** **Floor**, **Ceiling** and **Gamma** join Density
+  in the 3-D toolbar and window the tissue channel before Density decides how opaque what
+  survives is drawn: tissue at or below the floor counts for nothing, tissue at or above the
+  ceiling counts for all, what falls between is stretched across the full range, and gamma
+  bends that stretch — under 1 lifting faint tissue, over 1 keeping only the dense. Density
+  alone could only turn the whole render up, fog included, which is what a Nissl or myelin
+  stack of 62 pale sections mostly is; a floor around 40 % at γ 1.8 turns that fog into a
+  volume with the folia and the cortical band visible in it. The same curve serves the slice
+  stack and the ray-march, so a section reads the same either way, and on the labelled drawing
+  a high floor takes the grey wash away and leaves the atlas's own contours standing alone.
+  The two ends hold each other in order the way the slab's do, and meeting is allowed —
+  a window with no width is a hard threshold. **Reset contrast** appears once there is
+  something to undo. At 0, 100 and 1 the curve is the identity and the shader skips the `pow`,
+  so an untouched view costs nothing and draws exactly what it always did. Carried in a deep
+  link as `&tf=<density>,<floor>,<ceiling>,<gamma>` in hundredths and written only off the
+  defaults, so no link written before this changes meaning; density now rides in a link too.
+  The note under the view quotes the window whenever one is set — a windowed render is a
+  picture of the tissue after something was done to it, and the reader of somebody else's
+  link has no other way of knowing. See [METHODS](METHODS.md#the-tissue-curve).
 - **Maximise.** A corners button beside Copy link, and <kbd>F</kbd>, give the whole window to
   whichever view is open — the plate, the projection or the 3-D stack. The search column, the
   header, the footer and the card's own frame step out; what drives the view stays, because it

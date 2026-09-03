@@ -26,10 +26,18 @@ Of the four `N-N`, all four have the abbreviation printed on plate N+1 as well;
 the database takes their range as N to N+1. Of the three `N-`, none does, and
 the database leaves them at the single plate. See METHODS.
 
-Usage:  python3 tools/check_indexes.py [--json data/gerbil_atlas.json]
+The comparison is also written out, as `data/index_published.csv`: one row per
+published entry, both printed plate fields side by side, the range expanded to a
+plate list, and a note on every entry where reading the atlas took a decision.
+That file is the ground truth the rest of the database is answerable to, so it is
+verified on every plain run and rewritten only by `--write`.
+
+Usage:  python3 tools/check_indexes.py [--json data/gerbil_atlas.json] [--write]
 """
 
 import argparse
+import csv
+import io
 import os
 import re
 import sys
@@ -39,6 +47,7 @@ import atlaslib as A  # noqa: E402
 
 ABBR = os.path.join(A.DATA, 'index_raw.txt')
 STRUC = os.path.join(A.DATA, 'index_structures_raw.txt')
+CSVOUT = os.path.join(A.DATA, 'index_published.csv')
 
 # The four the database extends by one plate, and the word read on that plate.
 EXTENDED = {'AngT': 29, 'ZIC': 35, 'Su3C': 37, 'RLi': 36}
@@ -94,11 +103,61 @@ def spread(plates):
     return int(lo), int(hi)
 
 
+def table(AB, S):
+    """The published index as rows, in the order the Index of abbreviations sets it.
+
+    Both printed plate fields are kept verbatim, because where they disagree the
+    disagreement is the evidence -- three entries the Index of structures leaves
+    open as `N-` are a plain `N` in the Index of abbreviations, and nothing else
+    in the paper says the range was ever meant to go further. `plates` is the
+    reading, and `note` says wherever that reading is not simply the print.
+    """
+    rows = []
+    for ab in sorted(AB, key=lambda k: (k.lower(), k)):
+        name, printed = S[ab]
+        want = spread(printed)
+        if want is None:
+            lo = int(printed.split('–')[0])
+            want = (lo, EXTENDED.get(ab, lo))
+        lo, hi = want
+        notes = []
+        if spread(printed) is None:
+            notes.append('printed with a dash and no second plate; '
+                         + ('read as %d-%d, the abbreviation being printed on plate %d too'
+                            % (lo, hi, hi) if ab in EXTENDED else
+                            'left at plate %d, nothing being printed past it' % lo))
+        if AB[ab][1] != printed:
+            notes.append(EXPECTED_RANGE.get(ab, 'the two indexes print different plates'))
+        if AB[ab][0] != name:
+            notes.append(EXPECTED_NAME.get(ab, 'the two indexes print different names'))
+        rows.append([ab, AB[ab][0], printed, AB[ab][1], lo, hi, hi - lo + 1,
+                     ' '.join(str(p) for p in range(lo, hi + 1)),
+                     '; '.join(notes)])
+    return rows
+
+
+HEADER = ['abbreviation', 'structure', 'plates_index_of_structures',
+          'plates_index_of_abbreviations', 'first_plate', 'last_plate',
+          'n_plates', 'plates', 'note']
+
+
+def csv_text(rows):
+    """CSV as the repository keeps it: CRLF, minimal quoting, no BOM."""
+    buf = io.StringIO()
+    w = csv.writer(buf, lineterminator='\r\n')
+    w.writerow(HEADER)
+    for r in rows:
+        w.writerow(r)
+    return buf.getvalue()
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split('\n')[0])
     ap.add_argument('--json', default=A.JSON, metavar='PATH',
                     help='the database to read the indexes against '
                          '(default: data/gerbil_atlas.json)')
+    ap.add_argument('--write', action='store_true',
+                    help='rewrite data/index_published.csv instead of verifying it')
     args = ap.parse_args()
 
     AB, S = read(ABBR, 'an'), read(STRUC, 'na')
@@ -151,6 +210,26 @@ def main():
             n += 1
     print('  every range matches' if not n else '  %d disagree' % n)
     bad += n
+
+    want = csv_text(table(AB, S))
+    rel = os.path.relpath(CSVOUT, A.ROOT).replace(os.sep, '/')
+    print('\n%s:' % rel)
+    if args.write:
+        with open(CSVOUT, 'w', encoding='utf-8', newline='') as f:
+            f.write(want)
+        print('  written, %d entries' % len(S))
+    else:
+        try:
+            with open(CSVOUT, encoding='utf-8', newline='') as f:
+                have = f.read()
+        except FileNotFoundError:
+            have = None
+        if have == want:
+            print('  is what the two indexes say, %d entries' % len(S))
+        else:
+            print('  is %s; run with --write'
+                  % ('missing' if have is None else 'not what the two indexes say'))
+            bad += 1
 
     print('\n%s' % ('every check passes' if not bad
                     else '%d problem%s' % (bad, '' if bad == 1 else 's')))

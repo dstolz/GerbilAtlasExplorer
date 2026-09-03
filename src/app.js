@@ -3044,6 +3044,9 @@ let gl=null, v3ready=false, v3busy=false, v3fail='';
 let v3m=false, MESH=null, meshBusy=false, meshFail='';
 const MESHC={};                                  /* abbr -> {va, n, type} on the GPU */
 let v3mode='contour', v3op=.42, v3a=0, v3b=61, v3half=false;
+/* the tissue window and the curve across it -- Floor, Ceiling and Gamma in the toolbar.
+   0, 1 and 1 is the identity, which is what this view drew before they existed. */
+let v3t0=0, v3t1=1, v3gam=1;
 let v3ortho=false;                 /* parallel vs perspective projection */
 let v3sk=false, v3sko=.32;             /* the skull shell: off by default, opacity 0..1 */
 let v3az=-.82, v3el=.30, v3dist=26, v3tx=0, v3ty=0;   /* orbit + screen-space pan */
@@ -3136,16 +3139,35 @@ uniform mat4 u_mvp; uniform vec3 u_o,u_u,u_v;
 out vec2 v_uv;
 void main(){ v_uv=a_p; gl_Position=u_mvp*vec4(u_o+u_u*a_p.x+u_v*a_p.y,1.0); }`;
 
+/* The tissue channel's response curve, shared by both raster renderers so that a section
+   reads the same way whether it is drawn as one of 62 quads or sampled by a ray. Tissue at
+   or below u_t0 counts for nothing, u_t1 and above counts for all, and u_gam bends what
+   lies between: under 1 it lifts faint tissue, over 1 it keeps only the dense. Density
+   scales the alpha this ends up with; these three decide what the sample was worth in the
+   first place, which is the difference between turning the whole render up and pulling one
+   band of tissue out of it. At 0, 1 and 1 the curve is the identity, so an untouched view
+   -- and every link written before there was anything to set -- draws exactly what it did.
+   The contour channel is left alone: it is a drawn line, already there or absent, and it
+   also picks the colour, so windowing it would recolour the render rather than stretch it. */
+const V3_TONE=`
+float tone(float v){
+  float t=clamp((v-u_t0)/max(u_t1-u_t0,0.004),0.0,1.0);
+  /* the exponent is one uniform for the whole draw, so this test is wave-wide and saves
+     a pow at 288 samples a ray whenever the curve is left straight */
+  return u_gam==1.0 ? t : pow(t,u_gam);
+}`;
+
 /* one plate: the contour in the accent, the tissue as a faint wash behind it */
 const V3_SLICE=`#version 300 es
 precision highp float; precision highp sampler3D;
 in vec2 v_uv; out vec4 o;
 uniform sampler3D u_vol; uniform vec3 u_ce,u_ti;
-uniform float u_z,u_op,u_half,u_ink;
+uniform float u_z,u_op,u_half,u_ink,u_t0,u_t1,u_gam;
+${V3_TONE}
 void main(){
   if(u_half>0.5 && v_uv.x<0.5) discard;
   vec2 s=texture(u_vol, vec3(v_uv.x, 1.0-v_uv.y, u_z)).rg;
-  float a=(s.g + s.r*u_ink)*u_op;
+  float a=(s.g + tone(s.r)*u_ink)*u_op;
   if(a<0.004) discard;
   o=vec4(mix(u_ti,u_ce,smoothstep(0.03,0.30,s.g)), min(a,1.0));
 }`;
@@ -3158,7 +3180,8 @@ const V3_VOL=`#version 300 es
 precision highp float; precision highp sampler3D;
 in vec3 v_p; out vec4 o;
 uniform sampler3D u_vol; uniform vec3 u_cam,u_lo,u_hi,u_ce,u_ti,u_vdir;
-uniform float u_op,u_half,u_z0,u_z1,u_ink,u_ortho;
+uniform float u_op,u_half,u_z0,u_z1,u_ink,u_ortho,u_t0,u_t1,u_gam;
+${V3_TONE}
 void main(){
   /* under a parallel projection every ray shares the view direction, and starts far
      enough back that the box-entry clamp below still finds the front face */
@@ -3178,7 +3201,7 @@ void main(){
        the DV axis runs the other way to the world's -- the same flip the slice
        shader applies. Miss it here and the brain renders upside down. */
     vec2 s=texture(u_vol, vec3(uvw.x, 1.0-uvw.y, uvw.z)).rg;
-    float a=clamp((s.g + s.r*u_ink)*u_op*dt*7.0,0.0,1.0);
+    float a=clamp((s.g + tone(s.r)*u_ink)*u_op*dt*7.0,0.0,1.0);
     acc.rgb+=(1.0-acc.a)*a*mix(u_ti,u_ce,smoothstep(0.03,0.30,s.g));
     acc.a  +=(1.0-acc.a)*a;
     if(acc.a>0.985) break;
@@ -3613,6 +3636,10 @@ function v3render(){
   const M=v3mvp(), cam=v3camM;
   const z0=v3a/(V3D-1), z1=v3b/(V3D-1);
   const U=(p,n)=>gl.getUniformLocation(p,n);
+  /* the tissue curve goes to whichever raster program is about to draw: one field, read
+     one way, whether the stack or the ray-march is the thing reading it */
+  const tone=p=>{ gl.uniform1f(U(p,'u_t0'),v3t0); gl.uniform1f(U(p,'u_t1'),v3t1);
+                  gl.uniform1f(U(p,'u_gam'),v3gam); };
 
   /* Translucent bone: the far side of the skull goes down before the brain content and
      the near side after it, so the stack shows through the shell instead of being pasted
@@ -3643,6 +3670,7 @@ function v3render(){
     gl.uniform1f(U(pSlice,'u_op'),v3op);
     gl.uniform1f(U(pSlice,'u_half'),v3half?1:0);
     gl.uniform1f(U(pSlice,'u_ink'),v3ink());
+    tone(pSlice);
     gl.uniform3fv(U(pSlice,'u_ce'),v3col.ce);
     gl.uniform3fv(U(pSlice,'u_ti'),v3col.ti);
     gl.uniform1i(U(pSlice,'u_vol'),0);
@@ -3673,6 +3701,7 @@ function v3render(){
     gl.uniform3fv(U(pVol,'u_ti'),v3col.ti);
     gl.uniform1f(U(pVol,'u_op'),v3op);
     gl.uniform1f(U(pVol,'u_ink'),v3ink());
+    tone(pVol);
     gl.uniform1f(U(pVol,'u_half'),v3half?1:0);
     gl.uniform1f(U(pVol,'u_z0'),z0); gl.uniform1f(U(pVol,'u_z1'),z1);
     gl.uniform1i(U(pVol,'u_vol'),0);
@@ -3888,7 +3917,35 @@ V3CV.addEventListener('click',e=>{
   [...$('m3seg').children].forEach(x=>x.classList.toggle('on',x===b));
   v3note(); v3frame(); queueHash();
 });
-$('v3op').oninput=e=>{ v3op=+e.target.value/100; v3frame(); };
+/* Density, and the three that decide what a sample was worth before it scales it. Floor
+   and ceiling hold each other in order the way the slab's two ends do -- the dragged one
+   stops at the other rather than pushing it -- and meeting is allowed, because a window
+   with no width is a hard threshold and that is a picture somebody may want. */
+$('v3op').oninput=e=>{ v3op=+e.target.value/100; v3tr(); v3frame(); queueHash(); };
+$('v3t0').oninput=e=>{ const v=Math.min(+e.target.value,+$('v3t1').value);
+  e.target.value=v; v3t0=v/100; $('v3t0l').textContent=v+'%';
+  v3tr(); v3note(); v3frame(); queueHash(); };
+$('v3t1').oninput=e=>{ const v=Math.max(+e.target.value,+$('v3t0').value);
+  e.target.value=v; v3t1=v/100; $('v3t1l').textContent=v+'%';
+  v3tr(); v3note(); v3frame(); queueHash(); };
+$('v3gm').oninput=e=>{ v3gam=+e.target.value/100; $('v3gml').textContent=v3gam.toFixed(2);
+  v3tr(); v3note(); v3frame(); queueHash(); };
+/* one place writes the four of them, so the sliders, their readouts and a deep link
+   cannot drift apart -- and the reset that puts them back is the same call with the
+   defaults. The button only exists while it has something to undo. */
+function v3tone(op,t0,t1,gm){
+  const cl=(v,lo,hi)=>Math.max(lo,Math.min(hi,Math.round(v)));
+  op=cl(op,4,100); t1=cl(t1,0,100); t0=Math.min(cl(t0,0,100),t1); gm=cl(gm/5,8,50)*5;
+  v3op=op/100; v3t0=t0/100; v3t1=t1/100; v3gam=gm/100;
+  $('v3op').value=op;
+  $('v3t0').value=t0; $('v3t0l').textContent=t0+'%';
+  $('v3t1').value=t1; $('v3t1l').textContent=t1+'%';
+  $('v3gm').value=gm; $('v3gml').textContent=v3gam.toFixed(2);
+  v3tr();
+}
+const v3tdef=()=>v3op===.42&&v3t0===0&&v3t1===1&&v3gam===1;
+const v3tr=()=>{ $('v3tr').hidden=v3tdef(); };
+$('v3tr').onclick=()=>{ v3tone(42,0,100,100); v3note(); v3frame(); queueHash(); };
 $('v3s').onchange=e=>{ v3sk=e.target.checked;
   if(v3sk) v3skullBuild();
   /* the default distance frames the brain; the skull is half again bigger, so the
@@ -4099,6 +4156,14 @@ function v3note(){
   const half = v3half ? ' Cut at the midline.' : '';
   const bone = v3sk ? ' Skull fit is experimental and approximate.' : '';
   const proj = v3ortho ? ' Parallel projection: equal lengths read equally at any depth.' : '';
+  /* a windowed render is a picture of the tissue after something was done to it, and this
+     is the line where the view says what. Quoted whenever the curve is off the identity --
+     including a curve that arrived in somebody else's link, which is the case where the
+     reader has no other way of knowing the render was tuned. */
+  const tone = (v3t0>0||v3t1<1||v3gam!==1)
+    ? ` Tissue windowed ${Math.round(v3t0*100)}–${Math.round(v3t1*100)}%`+
+      (v3gam!==1 ? ` at γ ${v3gam.toFixed(2)}` : '')+
+      `: a contrast setting, not a threshold on anything measured.` : '';
   /* the rotation is on the picture rather than on the numbers, so the caveat is about
      what a turned stack is not: still 62 coronal sections, just stood up in your frame */
   const turn = fvOn() ? ` Standing in your frame (${frameTxt()}): up is your frame's DV.`+
@@ -4155,7 +4220,7 @@ function v3note(){
   N.innerHTML = (v3mode==='contour'
     ? `${what}, each at its true bregma. It reads as a stack because that is what it is — 62 sections, 350 µm apart.`
     : `The same field ray-marched. Sampling along the brain is 20× coarser than across it, so the streaks are interpolation, not anatomy.`)+
-    on+` The ring marks plate ${cur}.`+slab+half+proj+turn+bone+mesh;
+    on+` The ring marks plate ${cur}.`+tone+slab+half+proj+turn+bone+mesh;
 }
 
 /* changing the plate source changes what the stack is made of, so it is read again from
@@ -4227,6 +4292,11 @@ function writeHash(){
   }
   if(smode==='targ'&&sel&&tgFoot) h+='&ft='+tgFoot;
   if(v3mode!=='contour') h+='&r='+v3mode;
+  /* the tissue curve, as density, floor, ceiling and gamma in hundredths -- four numbers
+     because they are one setting, and a render tuned to show a nucleus is worth sending
+     with the viewpoint that shows it. Written only when one of them is off its default,
+     so nothing changes about a link written before there was a curve to carry. */
+  if(!v3tdef()) h+='&tf='+[v3op,v3t0,v3t1,v3gam].map(v=>Math.round(v*100)).join(',');
   if(v3a>0||v3b<61) h+='&sl='+(v3a+1)+','+(v3b+1);
   if(v3half) h+='&hf=1';
   if(v3ortho) h+='&or=1';
@@ -4287,6 +4357,14 @@ function readHash(){
   const r=par.r==='volume'||par.r==='points'?par.r:'contour';
   v3mode=r;
   [...$('m3seg').children].forEach(b=>b.classList.toggle('on',b.dataset.r===r));
+  /* read positionally and a short list forgiven, the way fr and tg are: a link carrying
+     only a density still sets one. Missing altogether, all four go back to the values
+     this view has always drawn with, so a bare #p30 arriving by hashchange clears a
+     curve rather than leaving the last one on top of somebody else's link. */
+  /* split only a parameter that is there: ''.split(',') is [''], and Number('') is 0,
+     not NaN, so the absent case would read as a curve of zeros rather than as no curve */
+  const tf=par.tf?par.tf.split(',').map(Number):[], tfn=(i,d)=>Number.isFinite(tf[i])?tf[i]:d;
+  v3tone(tfn(0,42), tfn(1,0), tfn(2,100), tfn(3,100));
   const sl=(par.sl||'').split(',').map(Number);
   if(sl.length===2&&sl.every(n=>Number.isFinite(n)&&n>=1&&n<=62)&&sl[0]<=sl[1]){
     v3a=sl[0]-1; v3b=sl[1]-1;
