@@ -107,6 +107,21 @@ REJECT = {
     (46, 'MSO'): "MVPO's line, cut by the ventral border it runs along until "
                  'the only piece left starts under an over-tall MSO box',
     (47, 'MSO'): "a piece of MVPO's line, as on plate 45",
+    # These three were found from the other end, by their effect. Each seeds its
+    # structure inside a face another name owns, and each went unnoticed while
+    # that name had no label of its own: the mis-seeded region simply held its
+    # neighbour's face and looked right. When RPO, MnA and SolC were located,
+    # each neighbour claimed its own ground and the mis-seeded region was left
+    # with a sliver the small-area cull then removed, so ALPO, CC and pyx lost
+    # their entries outright. The tip landing inside another abbreviation's
+    # printed box is the tell, and it is now a test -- see tests/python.
+    (44, 'ALPO'): "runs past the shell it names and ends on RPO's word, inside "
+                  "the oval RPO is printed in",
+    (60, 'CC'): 'CC is printed inside the canal it names and the atlas draws it '
+                "no line; this is a march up the canal's own outline that ends "
+                "on MnA's word",
+    (62, 'pyx'): 'pyx is printed where it is, at the ventral midline, and draws '
+                 "no line; this ends on SolC's word two structures away",
 }
 
 

@@ -4410,7 +4410,7 @@ vVNLL,"ventral nucleus of the lateral lemniscus, ventral part",42,1,-6.55,1.76,1
 3Cb,3rd cerebellar lobule,43,0,-6.9,0.01,0.01,-2.45,label box,0.4731,0.3344,0.0145,0.0119,,
 3Cb,3rd cerebellar lobule,43,1,-6.9,0.01,0.01,-3.27,label box,0.4733,0.4006,0.0145,0.0119,,
 4Cb,4th cerebellar lobule,43,0,-6.9,-0.02,0.02,-1.8,label box,0.4718,0.2815,0.0142,0.0119,,
-4V,4th ventricle,43,0,-6.9,-0.04,0.04,-5.05,leader tip,0.4702,0.517,0.0094,0.0114,0.4707,0.5441
+4V,4th ventricle,43,0,-6.9,-0.05,0.05,-4.71,label box,0.4702,0.517,0.0094,0.0114,,
 4n,trochlear nerve,43,0,-6.9,2.28,2.28,-4.26,label box,0.591,0.4801,0.0084,0.0114,,
 4n,trochlear nerve,43,1,-6.9,0.45,0.45,-4.61,label box,0.4962,0.5089,0.0087,0.0114,,
 5Cb,5th cerebellar lobule,43,0,-6.9,-0.01,0.01,-1.06,label box,0.4722,0.2216,0.0142,0.0114,,
@@ -4547,7 +4547,7 @@ vsc,ventral spinocerebellar tract,43,1,-6.9,-1.95,1.95,-4.4,label box,0.3715,0.4
 5Tr,trigeminal transition zone,44,0,-7.25,-1.99,1.99,-5.73,label box,0.3697,0.5989,0.0113,0.0114,,
 A5,A5 noradrenaline cells,44,0,-7.25,-1.82,1.82,-7.27,label box,0.3786,0.7233,0.0094,0.0114,,
 A5,A5 noradrenaline cells,44,1,-7.25,1.73,1.73,-7.26,label box,0.5625,0.7228,0.0098,0.0119,,
-ALPO,anterolateral periolivary nucleus,44,0,-7.25,-1.96,1.96,-7.6,leader tip,0.3392,0.7702,0.02,0.0119,0.3713,0.7507
+ALPO,anterolateral periolivary nucleus,44,0,-7.25,-2.58,2.58,-7.85,label box,0.3392,0.7702,0.02,0.0119,,
 Bar,Barrington’s nucleus,44,0,-7.25,-1.03,1.03,-5.53,label box,0.4194,0.583,0.012,0.0119,,
 Bar,Barrington’s nucleus,44,1,-7.25,0.98,0.98,-5.56,label box,0.5236,0.5853,0.012,0.0119,,
 CGB,"central gray, beta part",44,0,-7.25,0.52,0.52,-5.72,label box,0.4995,0.5986,0.0152,0.0125,,
@@ -5589,10 +5589,10 @@ vsc,ventral spinocerebellar tract,51,1,-9.7,1.68,1.68,-7.99,label box,0.5599,0.7
 9aCb,"9th cerebellar lobule, a",52,0,-10.05,0.01,0.01,-3.75,label box,0.4732,0.439,0.0258,0.0125,,
 9bCb,"9th cerebellar lobule, b",52,0,-10.05,0.01,0.01,-3.75,label box,0.4732,0.439,0.0258,0.0125,,
 9cCb,"9th cerebellar lobule, c",52,0,-10.05,0,0,-4.08,label box,0.4727,0.4659,0.0189,0.0125,,
-AmbC,"ambiguus nucleus, compact part",52,0,-10.05,-1.64,1.64,-7.84,leader tip,0.3875,0.7349,0.0222,0.0119,0.388,0.7697
+AmbC,"ambiguus nucleus, compact part",52,0,-10.05,-1.64,1.64,-7.41,label box,0.3875,0.7349,0.0222,0.0119,,
 AmbC,"ambiguus nucleus, compact part",52,1,-10.05,1.63,1.63,-7.34,label box,0.557,0.7293,0.0218,0.0119,,
 Bo,Bötzinger complex,52,0,-10.05,1.71,1.71,-7.56,label box,0.5612,0.7475,0.0087,0.0114,,
-Bo,Bötzinger complex,52,1,-10.05,-1.71,1.71,-7.62,label box,0.384,0.752,0.0087,0.0114,,
+Bo,Bötzinger complex,52,1,-10.05,-1.64,1.64,-7.84,leader tip,0.384,0.752,0.0087,0.0114,0.388,0.7697
 Cop,copula of the pyramis,52,0,-10.05,-2.14,2.14,-4.41,label box,0.3617,0.4929,0.0193,0.0244,,
 Cop,copula of the pyramis,52,1,-10.05,2.03,2.03,-4.46,label box,0.5778,0.4966,0.0138,0.0148,,
 Crus1,crus 1 of the ansiform lobule,52,0,-10.05,2.77,2.77,-1.82,label box,0.6165,0.2832,0.02,0.0119,,
@@ -5879,7 +5879,7 @@ rs,rubrospinal tract,54,0,-10.75,2.37,2.37,-7.26,label box,0.5957,0.7227,0.0062,
 rs,rubrospinal tract,54,1,-10.75,-2.16,2.16,-7.35,label box,0.3606,0.7305,0.0062,0.0091,,
 sf,secondary fissure,54,0,-10.75,-0.32,0.32,-1.83,label box,0.4563,0.2842,0.0065,0.0119,,
 sf,secondary fissure,54,1,-10.75,-0.56,0.56,-3.46,label box,0.4436,0.4157,0.0065,0.0159,,
-sol,solitary tract,54,0,-10.75,1.08,1.08,-5.37,leader tip,0.5245,0.5912,0.0098,0.0119,0.5288,0.5702
+sol,solitary tract,54,0,-10.75,1,1,-5.63,label box,0.5245,0.5912,0.0098,0.0119,,
 sol,solitary tract,54,1,-10.75,-0.91,0.91,-5.32,leader tip,0.4268,0.5957,0.0098,0.0119,0.4258,0.5663
 sol,solitary tract,54,2,-10.75,-0.53,0.53,-5.46,leader tip,0.4408,0.5974,0.0109,0.0119,0.4454,0.5776
 sp5,spinal trigeminal tract,54,0,-10.75,2.96,2.96,-6.42,label box,0.6262,0.6552,0.0131,0.0142,,
@@ -5937,7 +5937,7 @@ Mx,matrix region of the medulla,55,0,-11.1,-1.04,1.04,-5.75,label box,0.419,0.60
 Mx,matrix region of the medulla,55,1,-11.1,1.17,1.17,-5.76,label box,0.5333,0.6018,0.0102,0.0119,,
 PM,paramedian lobule,55,0,-11.1,-1.77,1.77,-2.9,label box,0.3812,0.3702,0.0109,0.0119,,
 PM,paramedian lobule,55,1,-11.1,1.74,1.74,-2.88,label box,0.5629,0.3688,0.0109,0.0114,,
-PSol,parasolitary nucleus,55,0,-11.1,0.82,0.82,-5.63,label box,0.5153,0.591,0.0156,0.0119,,
+PSol,parasolitary nucleus,55,0,-11.1,0.94,0.94,-5.97,leader tip,0.5153,0.591,0.0156,0.0119,0.5212,0.6185
 PSol,parasolitary nucleus,55,1,-11.1,-0.65,0.65,-5.62,label box,0.439,0.5904,0.0156,0.0119,,
 Pa5,paratrigeminal nucleus,55,0,-11.1,1.95,1.95,-5.62,label box,0.5738,0.5906,0.0131,0.0119,,
 Pa5,paratrigeminal nucleus,55,1,-11.1,-1.82,1.82,-5.7,label box,0.3786,0.5972,0.0131,0.0119,,
@@ -6195,7 +6195,7 @@ MdD,"medullary reticular nucleus, dorsal part",59,0,-12.5,-0.87,0.87,-6.37,label
 MdD,"medullary reticular nucleus, dorsal part",59,1,-12.5,1.02,1.02,-6.38,label box,0.5254,0.6518,0.0163,0.0119,,
 MdV,"medullary reticular nucleus, ventral part",59,0,-12.5,-0.92,0.92,-7.12,label box,0.4251,0.7114,0.016,0.0114,,
 MdV,"medullary reticular nucleus, ventral part",59,1,-12.5,0.83,0.83,-7.1,label box,0.5156,0.7102,0.016,0.0114,,
-MnA,median accessory nucleus of the medulla,59,0,-12.5,0.04,0.04,-5.62,label box,0.4746,0.5907,0.0156,0.0114,,
+MnA,median accessory nucleus of the medulla,59,0,-12.5,-0.01,0.01,-5.96,leader tip,0.4746,0.5907,0.0156,0.0114,0.4722,0.618
 Mx,matrix region of the medulla,59,0,-12.5,-0.83,0.83,-6.15,label box,0.4295,0.6335,0.0102,0.0114,,
 Mx,matrix region of the medulla,59,1,-12.5,0.8,0.8,-6.18,label box,0.5142,0.6356,0.0105,0.0114,,
 Sp5C,"spinal trigeminal nucleus, caudal part",59,0,-12.5,-1.42,1.42,-6.2,label box,0.3993,0.6372,0.0247,0.0244,,
@@ -6219,8 +6219,8 @@ vsc,ventral spinocerebellar tract,59,0,-12.5,1.6,1.6,-7.43,label box,0.5556,0.73
 vsc,ventral spinocerebellar tract,59,1,-12.5,-1.55,1.55,-7.48,label box,0.3922,0.7407,0.012,0.0091,,
 11N,accessory nerve nucleus,60,0,-12.85,0.38,0.38,-7.19,label box,0.4924,0.7171,0.0142,0.0119,,
 11N,accessory nerve nucleus,60,1,-12.85,-0.48,0.48,-7.2,label box,0.4481,0.7177,0.0142,0.0119,,
-CC,central canal,60,0,-12.85,-0.02,0.02,-6.43,leader tip,0.4704,0.6756,0.0102,0.0119,0.4719,0.6555
-Cu,cuneate nucleus,60,0,-12.85,0.43,0.43,-6.45,leader tip,0.4977,0.6364,0.0094,0.0119,0.4951,0.6572
+CC,central canal,60,0,-12.85,-0.04,0.04,-6.67,label box,0.4704,0.6756,0.0102,0.0119,,
+Cu,cuneate nucleus,60,0,-12.85,0.48,0.48,-6.19,label box,0.4977,0.6364,0.0094,0.0119,,
 Cu,cuneate nucleus,60,1,-12.85,-0.52,0.52,-6.22,label box,0.4459,0.6387,0.0091,0.0119,,
 Ge5,gelatinous layer of the caudal spinal trigeminal nucleus,60,0,-12.85,-1.61,1.61,-6.25,label box,0.3895,0.6412,0.0138,0.0119,,
 Ge5,gelatinous layer of the caudal spinal trigeminal nucleus,60,1,-12.85,1.6,1.6,-6.28,label box,0.5558,0.6435,0.0142,0.0119,,
@@ -6231,7 +6231,7 @@ MdD,"medullary reticular nucleus, dorsal part",60,0,-12.85,0.92,0.92,-6.53,label
 MdD,"medullary reticular nucleus, dorsal part",60,1,-12.85,-0.94,0.94,-6.53,label box,0.4238,0.6637,0.0163,0.0119,,
 MdV,"medullary reticular nucleus, ventral part",60,0,-12.85,0.78,0.78,-7.16,label box,0.5134,0.7145,0.016,0.0119,,
 MdV,"medullary reticular nucleus, ventral part",60,1,-12.85,-0.9,0.9,-7.15,label box,0.4263,0.7137,0.0163,0.0119,,
-MnA,median accessory nucleus of the medulla,60,0,-12.85,-0.03,0.03,-6.36,label box,0.4713,0.6498,0.0156,0.0114,,
+MnA,median accessory nucleus of the medulla,60,0,-12.85,-0.09,0.09,-6,leader tip,0.4713,0.6498,0.0156,0.0114,0.4679,0.6208
 SolC,"nucleus of the solitary tract, commissural part",60,0,-12.85,-0.05,0.05,-6.51,label box,0.4699,0.662,0.0156,0.0119,,
 Sp5C,"spinal trigeminal nucleus, caudal part",60,0,-12.85,-1.52,1.52,-6.53,label box,0.394,0.664,0.0192,0.0148,,
 cu,cuneate fasciculus,60,0,-12.85,0.62,0.62,-6.01,label box,0.5049,0.6217,0.008,0.0097,,
@@ -6314,7 +6314,7 @@ dsc,dorsal spinocerebellar tract,62,1,-13.55,1.18,1.18,-7.39,label box,0.5338,0.
 gr,gracile fasciculus,62,0,-13.55,-0.08,0.08,-6.24,label box,0.4686,0.6404,0.0073,0.0119,,
 mlf,medial longitudinal fasciculus,62,0,-13.55,0.15,0.15,-7.54,label box,0.4806,0.7455,0.0113,0.0114,,
 mlf,medial longitudinal fasciculus,62,1,-13.55,-0.18,0.18,-7.54,label box,0.4634,0.7455,0.0113,0.0119,,
-pyx,pyramidal decussation,62,0,-13.55,-0.15,0.15,-6.8,leader tip,0.472,0.7188,0.0124,0.0114,0.4648,0.6857
+pyx,pyramidal decussation,62,0,-13.55,-0.01,0.01,-7.21,label box,0.472,0.7188,0.0124,0.0114,,
 rs,rubrospinal tract,62,0,-13.55,-1.39,1.39,-7.12,label box,0.4006,0.7114,0.0062,0.0091,,
 rs,rubrospinal tract,62,1,-13.55,1.25,1.25,-7.18,label box,0.5376,0.7165,0.0062,0.0091,,
 sp5,spinal trigeminal tract,62,0,-13.55,1.53,1.53,-6.43,label box,0.5521,0.6557,0.0131,0.0142,,
