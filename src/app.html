@@ -85,9 +85,9 @@
       <label class="rvf" id="tplatew" hidden title="An abbreviation printed on several plates has a label on each, and the target is the median of all of them. Name one plate to read that section's labels alone. Picking a plate also turns the viewer to it."><span>Take the label from</span><select id="tplate"></select></label>
       <p class="tlbl"><b>Approach</b> &mdash; the angles to set on the arm</p>
       <div class="tgrid">
-        <label class="rvf" title="Tilt about the mediolateral axis. Positive drives the tip anterior, so the entry is behind the target."><span>Tilt &deg; &middot; tip fwd +</span><input type="number" id="ttilt" step="1" value="0"></label>
-        <label class="rvf" title="Roll about the anteroposterior axis. Positive drives the tip to the right, so the entry is left of the target."><span>Roll &deg; &middot; tip right +</span><input type="number" id="troll" step="1" value="0"></label>
-        <label class="rvf" id="tyaww" title="Turns the heading the tilt and roll point in. With both of those at 0 the track is vertical and there is nothing for a yaw to turn."><span>Yaw &deg; &middot; heading</span><input type="number" id="tyaw" step="1" value="0"></label>
+        <label class="rvf" title="Tilt about the mediolateral axis. Positive drives the tip anterior, so the entry is behind the target."><span>Tilt &deg; &middot; tip fwd +</span><input type="number" id="ttilt" step="1" min="-89" max="89" value="0"></label>
+        <label class="rvf" title="Roll about the anteroposterior axis. Positive drives the tip to the right, so the entry is left of the target."><span>Roll &deg; &middot; tip right +</span><input type="number" id="troll" step="1" min="-89" max="89" value="0"></label>
+        <label class="rvf" id="tyaww" title="Turns the heading the tilt and roll point in. With both of those at 0 the track is vertical and there is nothing for a yaw to turn."><span>Yaw &deg; &middot; heading</span><input type="number" id="tyaw" step="1" min="-89" max="89" value="0"></label>
       </div>
       <p class="tnote" id="tyawn" hidden>The track is vertical, so yaw has nothing to turn.</p>
       <p class="tlbl"><b>Offset</b> &mdash; where to aim relative to the label</p>
@@ -376,7 +376,7 @@
     <p>They are registered to each other by construction, not by fitting. Every one of the
       186 pages carries the atlas&rsquo;s own printed ML/DV coordinate box, and each was
       cropped to its own box, so all three land in the same coordinate space &mdash; the same
-      space the 6,220 label positions are recorded in. That is what makes the switch worth
+      space the 6,315 label positions are recorded in. That is what makes the switch worth
       having rather than decorative: the grid, the scale bar, the measure tool, the
       coordinate lookup and the outlined structure are all still in the right place on a
       section with no labels printed on it, and hovering where the drawing prints an
@@ -533,7 +533,7 @@
     <p>The plates are already in one common coordinate frame, so they can simply be stacked
       where they belong: each section is drawn at its own bregma. <em>Contours</em> shows the
       atlas&rsquo;s own drawn boundaries as a stack, <em>Volume</em> ray-marches the same field, and
-      <em>Labels</em> plots all 6,220 printed abbreviations as a stereotaxic point cloud &mdash; the
+      <em>Labels</em> plots all 6,315 printed abbreviations as a stereotaxic point cloud &mdash; the
       projection views with the third axis put back. Nothing extra is downloaded; it is built
       from the plate images already on the page, once, the first time you open it.
       <em>Ortho</em> swaps the perspective camera for a parallel one: nothing is
@@ -575,7 +575,7 @@
       whatever overlays were showing and the same caption. Every part is a named group
       &mdash; <code>outlines-solid</code>, <code>outlines-dashed</code>, <code>grid</code>,
       <code>skull</code>, <code>landmarks</code>, <code>highlight</code>,
-      <code>measure</code>, <code>track</code>, <code>query</code>,
+      <code>measure</code>, <code>track</code>, <code>query</code>, <code>notes</code>,
       <code>caption</code> &mdash; so a figure can
       be restyled or cut down without redrawing anything. About 10&ndash;80&nbsp;kB.</p>
     <p>The tracing was done on the published pages at 3296&nbsp;&times;&nbsp;2481&nbsp;px and

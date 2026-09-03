@@ -364,4 +364,16 @@ test('the lean page registers its service worker', async ({ page }) => {
     return r && r.active ? 'active' : 'none';
   });
   expect(state).toBe('active');
+  // the cache is named for the build, and what the page fetches lands in it
+  const build = (await page.getAttribute('meta[name="gae-build"]', 'content')).split(' ')[0];
+  const cache = await page.evaluate(async () => {
+    await (await fetch('LICENSE')).text();
+    await new Promise(r => setTimeout(r, 500));
+    const names = await caches.keys();
+    const c = await caches.open(names[0]);
+    return { names, shell: !!(await c.match('index.html')), file: !!(await c.match('LICENSE')) };
+  });
+  expect(cache.names).toEqual(['gae-' + build]);
+  expect(cache.shell).toBe(true);
+  expect(cache.file).toBe(true);
 });

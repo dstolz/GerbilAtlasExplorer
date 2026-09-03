@@ -77,6 +77,10 @@ def test_build_renders_every_blob():
     lean = B.render(db, lean=True)
     assert 'data/plates/nissl/01.jpg' in lean and 'serviceWorker' in lean
     assert 'serviceWorker' not in page
+    # the worker is registered under the build, so each build gets a cache of its own
+    assert 'register("sw.js?v={{BUILD_HASH}}")' in lean
+    stamped = B.render(db, lean=True, commit='abc1234')
+    assert 'register("sw.js?v=abc1234")' in stamped and B.unstamp(stamped) == lean
 
 
 def test_unstamp_idempotent():

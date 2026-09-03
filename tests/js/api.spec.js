@@ -32,7 +32,7 @@ test('the frame is the identity when it is off', async ({ page }) => {
 });
 
 test('writeHash and readHash round-trip a full state', async ({ page }) => {
-  const hash = '#p44/MSO&z=2.50&c=0.5200,0.6100&v=rgsky&ps=nissl&ct=140&pj=ml&tg=MSO,L,12,-5,7,46,0.1,0,0.2,3.84&ft=0.25&cmp=next&fr=17,0,0,0,0,0,0,0,0,1,0,0,0,0&fo=2';
+  const hash = '#p44/MSO&z=2.50&c=0.5200,0.6100&v=rgsky&ps=nissl&ct=140&pj=ml&tg=MSO,L,12,-5,7,46,0.1,0,0.2,3.84&ft=0.25&cmp=next&fr=17,0,0,0,0,0,0,0,0,1,0,0&fo=2';
   await page.goto(BUNDLE + hash);
   await page.waitForTimeout(400);
   const first = await page.evaluate(() => { window.__gae.writeHash(); return location.hash; });
@@ -44,6 +44,9 @@ test('writeHash and readHash round-trip a full state', async ({ page }) => {
   expect(st.cur).toBe(44); expect(st.sel).toBe('MSO'); expect(st.psrc).toBe('nissl');
   expect(st.tgProbe).toBe(3.84); expect(st.tgFoot).toBe(0.25); expect(st.targSide).toBe(-1);
   expect(st.tgTilt).toBe(12); expect(st.cmpOn).toBe(true);
+  // the frame rode along: twelve values, pitch first, and the origin on lambda
+  const fr = await page.evaluate(() => ({ ...window.__gae.FRAME }));
+  expect(fr.on).toBe(true); expect(fr.pitch).toBe(17); expect(fr.org).toBe(true); expect(fr.oref).toBe(1);
 });
 
 test('every structure solves to a bounded plan or to no entry', async ({ page }) => {
