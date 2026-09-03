@@ -37,8 +37,8 @@ and running out of a located label. So:
   5. Run the same march forwards from the far end for the tip, and take that as
      the structure's position. Drop a tip that lands outside the section: a
      leader points into the brain, never out of it.
-  6. Then read all 228 against the printed plate, because the shape tests cannot
-     settle every one of them -- see REJECT.
+  6. Then read every one against the printed plate, because the shape tests
+     cannot settle all of them -- see REJECT.
 
 Reads:  the source PDF (--pdf), svg/*.svg, data/gerbil_atlas.json, data/vec.json
 Writes: data/gerbil_atlas.json (`label_leaders`); the app is rebuilt from it by
@@ -80,9 +80,10 @@ JOIN_PAD = 6        # a label's punctuation reaches this far past its words
 DEC = 4             # fraction decimals, as label_positions already uses
 
 # The shape tests propose and the page disposes, as the label pass itself does:
-# every one of the 228 lines below was put beside the printed plate and read.
-# These are the ten that were not the label's own line, with what they turned
-# out to be. Nine of the ten are one failure: a line drawn past a label on its
+# every line they proposed was put beside the printed plate and read. These are
+# the ones that were not the label's own line, with what each turned out to be:
+# ten read off the page, and three more found from the other end, by their
+# effect. Nine of the ten are one failure: a line drawn past a label on its
 # way somewhere else, close enough and straight enough to be that label's. There
 # is no picture-level test that separates those from the real ones -- `VMHC` on
 # plate 30 stops four pixels under `VMHDM` and is real -- so they are listed

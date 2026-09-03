@@ -77,6 +77,10 @@ def test_build_renders_every_blob():
     lean = B.render(db, lean=True)
     assert 'data/plates/nissl/01.jpg' in lean and 'serviceWorker' in lean
     assert 'serviceWorker' not in page
+    # the worker is registered under the build, so each build gets a cache of its own
+    assert 'register("sw.js?v={{BUILD_HASH}}")' in lean
+    stamped = B.render(db, lean=True, commit='abc1234')
+    assert 'register("sw.js?v=abc1234")' in stamped and B.unstamp(stamped) == lean
 
 
 def test_unstamp_idempotent():
@@ -114,6 +118,6 @@ def test_labels_table_rows():
     text = E.labels_csv(db)
     rows = text.split('\r\n')
     assert rows[0].startswith('abbr,name,plate,label_index,ap_bregma_mm,ml_mm')
-    assert len([r for r in rows[1:] if r]) == 6323
+    assert len([r for r in rows[1:] if r]) == 6315
     mso = [r for r in rows if r.startswith('MSO,')]
     assert len(mso) == 7

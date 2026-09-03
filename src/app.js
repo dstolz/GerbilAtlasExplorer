@@ -117,7 +117,8 @@ const sgn = v => (v<0?'':'+')+v.toFixed(2);
 /* The AP landmarks the atlas prints, taken off the plate table rather than copied out of
    the prose. Every plate carries its own bregma, lambda, interaural and occipital-crest
    coordinate, and the constant offset is just the difference, so this stays in step with
-   the data the way plate_frame does. Each entry is [name, mm anterior of bregma]. */
+   the data the way plate_frame does. Each entry is [name, what to add to a bregma AP to
+   read it from that landmark] -- the landmark's distance behind bregma, so lambda is +4.45. */
 const LM=[['Bregma','bregma'],['Lambda','lambda_'],
           ['Interaural','interaural'],['Occipital crest','occipital_crest']]
   .map(([n,k])=>[n, +(P[0][k]-P[0].bregma).toFixed(2)]);
@@ -441,8 +442,8 @@ function refine(){
 function run(){
   gfilter=null;
   const raw=$('q').value.trim();
-  // "plate 30" / "p30"
-  const mp = raw.match(/^(?:plate\s*|p)(\d{1,2})$/i);
+  // "plate 30" / "p30" -- unless it is an abbreviation the index has, as P5 and P7 are
+  const mp = !byAb[raw] && raw.match(/^(?:plate\s*|p)(\d{1,2})$/i);
   if(mp){ const k=+mp[1]; if(k>=1&&k<=62){ go(k); } }
   // "bregma -2.3"
   const mb = raw.match(/bregma\s*(-?\d+(?:[.,]\d+)?)/i);
@@ -463,6 +464,8 @@ function draw(){
         : results.length+' of '+S.length+' structures')
       + (GOK&&gresults.length ? ' · '+gresults.length+' division'+(gresults.length>1?'s':'') : ''));
   if($('gunf')) $('gunf').onclick=()=>{ gfilter=null; refine(); };
+  /* the card's own button says whether the division's members are what the list shows */
+  const glb=$('glist'); if(glb&&isGrp(sel)) glb.textContent = gfilter===byAb[sel].key ? 'listed below' : 'List them';
   $('sortl').textContent = results.length? 'plates '+Math.min(...results.map(r=>r.first_plate))+'–'+Math.max(...results.map(r=>r.last_plate)) : '';
   $('ecsv').disabled = !results.length; $('elab').disabled = !results.length;
   recentDraw();
@@ -799,8 +802,10 @@ function markSel(){
   if(rg){
     ov.innerHTML=`<path d="${regD(rg)}"${regEst(rg)?' class="est"':''}></path>`;
     vh.innerHTML=`<b>${esc(sel)}</b> outlined${blkTxt(rg)} \u00b7 ${regTxt(rg)}`;
-    ensureVisible(bs.length?bs:[[(rg.x0+rg.x1)/2/NW,(rg.y0+rg.y1)/2/NH,
-                                 (rg.x1-rg.x0)/NW,(rg.y1-rg.y0)/NH]]);
+    /* what has to be in view is the outline, so it is the outline's centre and the ends of
+       the labels' lines that count: a label set outside its region with a line drawn back
+       in would otherwise centre the view on the paper beside the section */
+    ensureVisible([[(rg.x0+rg.x1)/2/NW,(rg.y0+rg.y1)/2/NH,(rg.x1-rg.x0)/NW,(rg.y1-rg.y0)/NH],...at]);
     return;
   }
   if(bs.length){
@@ -1017,8 +1022,13 @@ IW2.addEventListener('pointermove',e=>{
 });
 let cmpDrag=null;
 IW2.addEventListener('pointerdown',e=>{ if(zoom>1.01){ cmpDrag={x:e.clientX,y:e.clientY,moved:false}; try{ IW2.setPointerCapture(e.pointerId); }catch(_){} } });
-IW2.addEventListener('pointerup',e=>{ const d=cmpDrag; cmpDrag=null;
-  if(d&&d.moved) return;
+let cmpMoved=false;
+IW2.addEventListener('pointerup',()=>{ cmpMoved=!!(cmpDrag&&cmpDrag.moved); cmpDrag=null; });
+/* on the click rather than the pointerup: a double-click zooms and must not step two
+   plates on its way, and a middle or right button is not a request to go anywhere */
+IW2.addEventListener('click',e=>{
+  if(cmpMoved){ cmpMoved=false; return; }
+  if(e.detail>1) return;
   if(cmpWhat==='prev'||cmpWhat==='next') go(cmpPlate()); });
 IW2.addEventListener('pointercancel',()=>{ cmpDrag=null; });
 IW2.addEventListener('pointerleave',()=>{ $('xh2').innerHTML=''; if(hot2) { hr2Hide(); cmpMirror1(null); } });
@@ -1038,6 +1048,9 @@ IW.addEventListener('pointerdown',e=>{
   ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
   if(ptrs.size===1){
     moved=0; startXY=lastXY={x:e.clientX,y:e.clientY};
+    /* a pinch or a cancelled drag ends with no click to consume the flag, so a fresh
+       press clears it, or the next tap would be the one swallowed */
+    noClick=false;
     try{ IW.setPointerCapture(e.pointerId); }catch(_){}
     if(zoom>1.01) IW.classList.add('grab');
     if(e.pointerType==='touch') hover(e);        /* tap to read on touch */
@@ -1554,7 +1567,8 @@ $('anclr').onclick=()=>{
 /* a link carries the notes while they fit: plate, the two fractions and the text */
 function anHash(){
   if(!anShow||!NOTES.length||NOTES.length>8) return '';
-  return '&an='+NOTES.map(n=>`${n.p}~${n.x}~${n.y}~${encodeURIComponent(n.t)}`).join('~~');
+  /* encodeURIComponent leaves ~ alone, and ~ is the separator here */
+  return '&an='+NOTES.map(n=>`${n.p}~${n.x}~${n.y}~${encodeURIComponent(n.t).replace(/~/g,'%7E')}`).join('~~');
 }
 function anFromHash(v){
   if(!v) return;
@@ -1565,7 +1579,7 @@ function anFromHash(v){
     if(!plateOf[p]||!(x>=0&&x<=1&&y>=0&&y<=1)) continue;
     if(!have.has(`${p}|${x}|${y}|${t}`)){ NOTES.push(anMake(p,x,y,t)); k++; }
   }
-  if(k) anSave();
+  if(k){ anSave(); anList(); }
   anShowSet(true);
 }
 
@@ -1625,7 +1639,7 @@ function drawMeas(){
   const d=Math.hypot(dml,ddv), ang=Math.atan2(dml,-ddv)*180/Math.PI;
   out.hidden=false;
   out.innerHTML=`<b>${d.toFixed(2)} mm</b> in plane · ΔML ${sgn(dml)} · ΔDV ${sgn(ddv)}`+
-    ` · ${Math.abs(ang).toFixed(1)}° from vertical`+
+    ` · ${Math.min(Math.abs(ang),180-Math.abs(ang)).toFixed(1)}° from vertical`+
     /* a rotation preserves length, so the millimetres hold in any frame; the angle does
        not, and this tool was scoped to stay in the atlas, so it says which frame it is in.
        A re-zero changes neither -- both readings are differences -- so it says nothing. */
@@ -1639,13 +1653,13 @@ function drawMeas(){
 function setMeas(on){
   measMode=on; IW.classList.toggle('meas',on);
   if(!on){ mA=mB=mHover=null; }
-  if(on) setPick(false);            /* both want the next click; measuring just took it */
+  if(on){ setPick(false); anArmSet(false); }   /* all three want the next click; measuring just took it */
   drawMeas(); hideTip(); fit(); queueHash();
 }
 
 const RDHINT='Move the pointer over the plate to read its coordinates.';
 $('ckc').onchange=e=>{ showXY=e.target.checked; $('rd').hidden=!showXY;
-  if(!showXY) $('xh').innerHTML='';
+  if(!showXY){ $('xh').innerHTML=''; $('xh2').innerHTML=''; }
   else if(lastPt) drawXH(lastPt); else $('rd').textContent=RDHINT;
   fit(); queueHash(); };
 $('ckg').onchange=e=>{ showGrid=e.target.checked; drawGrid(); queueHash(); };
@@ -2039,7 +2053,13 @@ function tgPanel(){
     N.textContent='This build carries no brain outline, so a depth from the surface cannot be measured.';
     return;
   }
-  if(!o){ D.innerHTML=''; N.hidden=true; $('tpath').hidden=true; tgFootHTML(null); return; }
+  if(!o){
+    /* a structure with no located label anywhere has nothing to aim at, and the pane
+       should say so rather than go blank under a selected row */
+    if(sel&&!tgTarget()) $('ttgt').textContent='No located label to aim at: the label pass '+
+      'found this name printed on none of its plates, so it has no coordinate here.';
+    D.innerHTML=''; N.hidden=true; $('tpath').hidden=true; tgFootHTML(null); return;
+  }
   $('ttgt').innerHTML=`<b style="color:var(--targ)">${esc(tgName(o))}</b> · `+
     `${o.side>0?'right':'left'} · ${o.plate?'plate '+o.plate:'off the series'}`+
     ` · ${o.T.n} label${o.T.n===1?'':'s'}${o.pick?' on it':''}`;
@@ -2403,7 +2423,7 @@ $('tdl').onclick=()=>{
   const o=tgPlan; if(!o) return;
   const b=new Blob([tgNotes()],{type:'text/plain;charset=utf-8'});
   const u=URL.createObjectURL(b);
-  dl(`track_${o.abbr.replace(/[^A-Za-z0-9]/g,'')}_${o.side>0?'R':'L'}.txt`,u,u);
+  dl(`track_${tgName(o).replace(/[^A-Za-z0-9]/g,'')}_${o.side>0?'R':'L'}.txt`,u,u);
 };
 
 /* ---------- export ---------- */
@@ -2478,6 +2498,12 @@ function exportPNG(){
     g.beginPath(); g.moveTo(mA[0],mA[1]); g.lineTo(mB[0],mB[1]); g.stroke();
     [mA,mB].forEach(p=>{ g.beginPath(); g.arc(p[0],p[1],4,0,6.2832); g.stroke(); });
   }
+  /* the notes, where they are showing: the same bubble the plate draws on the point */
+  if(anShow) for(const n of NOTES.filter(n=>n.p===cur)){
+    g.save(); g.translate(n.x*NW,n.y*NH);
+    const p=new Path2D(ANPIN); g.fillStyle='rgba(217,112,11,.18)'; g.strokeStyle='#d9700b';
+    g.lineWidth=1.6; g.fill(p); g.stroke(p); g.restore();
+  }
   /* the planned track, dashed where it is only the projection of a track that passes in
      front of or behind this plane -- the same distinction the screen draws */
   if(tgPlan && tgPlan.len!==undefined && smode==='targ'){
@@ -2534,8 +2560,9 @@ function exportPNG(){
   if(mA&&mB){ const dml=toML(mB[0])-toML(mA[0]), ddv=toDV(mB[1])-toDV(mA[1]);
     notes.push(`Measured ${Math.hypot(dml,ddv).toFixed(2)} mm (ΔML ${sgn(dml)}, ΔDV ${sgn(ddv)})`); }
   if(qOn) notes.push(`Query point ML ${sgn(qa.ml)}, DV ${sgn(qa.dv)}`);
+  { const k=anShow?NOTES.filter(n=>n.p===cur).length:0; if(k) notes.push(`${k} note${k>1?'s':''} marked`); }
   if(tgPlan&&tgPlan.len!==undefined&&smode==='targ')
-    notes.push(`Track to ${tgPlan.abbr} (${tgPlan.side>0?'right':'left'})`+
+    notes.push(`Track to ${tgName(tgPlan)} (${tgPlan.side>0?'right':'left'})`+
       `${tgOffOn()?`, ${tgOffTxt()} from its label`:''}`+
       `${tgPlan.pick?`${tgOffOn()?'':', from its label'} on plate ${tgPlan.pick}`:''} — `+
       `${tgPlan.len.toFixed(2)} mm from the surface at tilt ${tgTilt}°, roll ${tgRoll}°, `+
@@ -2641,12 +2668,16 @@ function exportSVG(){
     ` stroke="${markC()}" stroke-width="1.5"${regEst(rgS)?' stroke-dasharray="6 4"':''}>`+
     `<path d="${regD(rgS)}"/></g>`);
   else if(bs.length) o.push(`<g id="highlight" fill="none" stroke="${markC()}" stroke-width="1.8">`+
-    bs.map(([cx,cy,w,h])=>{ const R=Math.max(w*NW,h*NH);
+    bs.map((b,i)=>{ const [cx,cy]=ptAt(cur,sel,i,b), R=Math.max(b[2]*NW,b[3]*NH);
       return `<ellipse cx="${n2(cx*NW)}" cy="${n2(cy*NH)}" `+
              `rx="${n2(R*0.85+7)}" ry="${n2(R*0.55+6)}"/>`; }).join('')+'</g>');
   if(mA&&mB) o.push('<g id="measure" fill="none" stroke="#00875a" stroke-width="2.2">'+
     `<line x1="${n2(mA[0])}" y1="${n2(mA[1])}" x2="${n2(mB[0])}" y2="${n2(mB[1])}"/>`+
     [mA,mB].map(p=>`<circle cx="${n2(p[0])}" cy="${n2(p[1])}" r="4"/>`).join('')+'</g>');
+  const an=anShow?NOTES.filter(n=>n.p===cur):[];
+  if(an.length) o.push('<g id="notes" fill="#d9700b" fill-opacity=".18" stroke="#d9700b" stroke-width="1.6">'+
+    an.map(n=>`<path transform="translate(${n2(n.x*NW)} ${n2(n.y*NH)})" d="${ANPIN}">`+
+      `<title>${xml(n.t||'Untitled note')}</title></path>`).join('')+'</g>');
   /* the planned track, dashed where it is only the projection of a track that passes in
      front of or behind this plane -- the same distinction the screen and the PNG draw */
   if(tgPlan && tgPlan.len!==undefined && smode==='targ'){
@@ -2693,8 +2724,9 @@ function exportSVG(){
   if(mA&&mB){ const dml=toML(mB[0])-toML(mA[0]), ddv=toDV(mB[1])-toDV(mA[1]);
     notes.push(`Measured ${Math.hypot(dml,ddv).toFixed(2)} mm (ΔML ${sgn(dml)}, ΔDV ${sgn(ddv)})`); }
   if(qOn) notes.push(`Query point ML ${sgn(qa.ml)}, DV ${sgn(qa.dv)}`);
+  { const k=anShow?NOTES.filter(n=>n.p===cur).length:0; if(k) notes.push(`${k} note${k>1?'s':''} marked`); }
   if(tgPlan&&tgPlan.len!==undefined&&smode==='targ')
-    notes.push(`Track to ${tgPlan.abbr} (${tgPlan.side>0?'right':'left'}) — `+
+    notes.push(`Track to ${tgName(tgPlan)} (${tgPlan.side>0?'right':'left'}) — `+
       `${tgPlan.len.toFixed(2)} mm from the surface at tilt ${tgTilt}°, roll ${tgRoll}°, `+
       `yaw ${tgYaw}° — experimental`);
   if(showSK) notes.push('Skull outline — experimental, approximate fit');
@@ -2856,7 +2888,7 @@ function pjAxes(){
   PJS.setAttribute('viewBox',`0 0 ${PM.l+PWv+PM.r} ${PM.t+H+PM.b}`);
   $('pjttl').textContent='Every printed label in the atlas as a '+V.nm+
     (fvOn()?', turned into the working frame.':'.');
-  for(const d of pjTicks('ap',8+fvP.ap[1],-12-fvP.ap[0])){
+  for(const d of pjTicks('ap',pA0,AP1-fvP.ap[0])){
     const x=pjx(axFrom('ap',d)).toFixed(1);
     g.push(`<line class="${d?'':'zero'}" x1="${x}" y1="${PM.t}" x2="${x}" y2="${y1}"></line>`,
            `<text x="${x}" y="${y1+16}" text-anchor="middle">${tick(d)}</text>`);
@@ -3160,7 +3192,7 @@ function v3cam(Q){
 /* the pan is applied after the view matrix, so dragging always tracks the screen */
 
 /* ---------- turning the scene into the working frame ----------
-   Everything here -- the section stack, the 6,220 labels, the skull shell, the plate ring
+   Everything here -- the section stack, the printed labels, the skull shell, the plate ring
    and the planned track -- is held in one world built affinely out of atlas millimetres
    (x = ML, y = DV about the centre, z = bregma minus AP). So a frame rotation is a model
    matrix in front of the camera rather than a rebuild of any of it, and three transformed
@@ -3281,7 +3313,10 @@ void main(){
     /* the volume was filled row 0 first, which is the dorsal edge of the plate, so
        the DV axis runs the other way to the world's -- the same flip the slice
        shader applies. Miss it here and the brain renders upside down. */
-    vec2 s=texture(u_vol, vec3(uvw.x, 1.0-uvw.y, uvw.z)).rg;
+    /* plate k is layer k, whose centre is (k+0.5)/62. The box runs from the first
+       plate's plane to the last's, so its z is rescaled onto the layer centres, or a
+       mid-stack sample blends a quarter of the neighbouring plate in */
+    vec2 s=texture(u_vol, vec3(uvw.x, 1.0-uvw.y, (uvw.z*${V3D-1}.0+0.5)/${V3D}.0)).rg;
     float a=clamp((s.g + tone(s.r)*u_ink)*u_op*dt*7.0,0.0,1.0);
     acc.rgb+=(1.0-acc.a)*a*mix(u_ti,u_ce,smoothstep(0.03,0.30,s.g));
     acc.a  +=(1.0-acc.a)*a;
@@ -3448,6 +3483,7 @@ function v3colours(){
 }
 
 function v3init(){
+  if(gl) return true;                       /* a source switch reuses the context and its objects */
   gl=V3CV.getContext('webgl2',{antialias:true,alpha:false,premultipliedAlpha:false});
   if(!gl){ v3fail='This browser does not support WebGL 2, which the 3-D view needs.'; return false; }
   pSlice=v3prog(V3_QUAD,V3_SLICE);
@@ -3810,12 +3846,14 @@ function v3draw(Q,w,h,dpr){
     gl.uniform3f(U(pSlice,'u_u'),V3X1-V3X0,0,0);
     gl.uniform3f(U(pSlice,'u_v'),0,w3y(V3Y1)-w3y(V3Y0),0);
     const uo=U(pSlice,'u_o'), uz=U(pSlice,'u_z');
-    /* back to front, or the near slices erase what is behind them */
-    const near = cam[2] < w3z(P[0].bregma);
+    /* back to front, or the near slices erase what is behind them. The world is centred
+       on the stack and z runs caudally, so a camera at negative z is on the rostral side,
+       where plate a is nearest: that side draws from b down to a, the other from a up */
+    const rostral = cam[2] < 0;
     for(let n=0;n<=Q.b-Q.a;n++){
-      const k = near ? Q.a+n : Q.b-n;
+      const k = rostral ? Q.b-n : Q.a+n;
       gl.uniform3f(uo,V3X0,w3y(V3Y0),w3z(P[k].bregma));
-      gl.uniform1f(uz,k/(V3D-1));
+      gl.uniform1f(uz,(k+.5)/V3D);             /* the centre of layer k, not a point between two */
       gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
     }
   } else if(Q.mode==='volume'){
@@ -4030,6 +4068,7 @@ V3CV.addEventListener('pointerdown',e=>{
        other one would be a control you had to aim twice. */
     if(v3two&&h.i!==v3ed) v3edit(h.i);
     v3drag={x:e.clientX,y:e.clientY,pan:e.button===2||e.shiftKey,i:h.i}; v3moved=0;
+    v3noclick=false;                          /* a pinch or a cancelled drag left no click to clear it */
     try{ V3CV.setPointerCapture(e.pointerId); }catch(_){}
     V3WRAP.classList.add('drag'); v3hide();
   } else if(v3p.size===2){
@@ -4176,7 +4215,7 @@ $('v3s').onchange=e=>{ const Q=v3E(); Q.sk=e.target.checked;
      pulls back together rather than one of them quietly sitting closer than the other. */
   if(Q.sk&&Q.dist<34) v3move(v3ed,q=>{ q.dist=38; });
   $('v3sol').hidden=!Q.sk; v3note(); v3frame(); queueHash(); };
-$('v3so').oninput=e=>{ v3E().sko=+e.target.value/100; v3frame(); };
+$('v3so').oninput=e=>{ v3E().sko=+e.target.value/100; v3frame(); queueHash(); };
 $('v3a').oninput=e=>{ const Q=v3E(); Q.a=Math.min(+e.target.value-1,Q.b); e.target.value=Q.a+1;
   $('v3al').textContent=Q.a+1; v3note(); v3frame(); queueHash(); };
 $('v3b').oninput=e=>{ const Q=v3E(); Q.b=Math.max(+e.target.value-1,Q.a); e.target.value=Q.b+1;
@@ -4546,7 +4585,7 @@ function v3note(){
          largest ones, so the shape on screen is short of the division by a stated amount. */
       const G = isGrp(sel) ? byAb[sel] : null;
       const vol = G && list.reduce((t,k)=>t+(MESH.data[k].volume_mm3||0),0);
-      const cut = G && list.length<G.members.filter(m=>meshKey(m)).length;
+      const cut = G && list.length<new Set(G.members.map(meshKey).filter(Boolean)).size;
       mesh = (G ? ` <b>${esc(G.name)}</b> as ${list.length} mesh${list.length===1?'':'es'}`+
                `, one per structure — there is no mesh of a division, only its members'`+
                ` standing together: ${vol.toFixed(2)} mm³ in all, of its ${G.n_members} structures`+
@@ -4599,10 +4638,13 @@ function v3open(){
     '<span>Reading the 62 plates already loaded. This happens once.</span>'+
     '<span class="v3bar"><i id="v3pg"></i></span>';
   const pg=$('v3pg');
+  /* the source the stack is read from is the one showing when the read starts; the
+     buttons stay live while it runs, so it can have changed by the time it is done */
+  const src=psrc;
   setTimeout(async()=>{
     try{
       if(!v3init()) throw new Error(v3fail);
-      const vol=await v3build(f=>{ if(pg) pg.style.width=(f*100).toFixed(0)+'%'; });
+      const vol=await v3build(f=>{ if(pg) pg.style.width=(f*100).toFixed(0)+'%'; }, src);
       v3upload(vol);
       if(V3P.some(q=>q.sk)) v3skullBuild();   /* a deep link can ask for bone before GL exists */
       v3ready=true; V3MSG.hidden=true;
@@ -4611,6 +4653,7 @@ function v3open(){
       v3fail=String(err&&err.message||err);
       V3MSG.innerHTML=`<b>3-D could not start</b><span>${esc(v3fail)}</span>`;
     }finally{ v3busy=false; }
+    if(v3ready&&psrc!==src) v3resrc();       /* it changed under the build: read it again */
   },30);
 }
 new ResizeObserver(()=>{ if(tab==='v3d') v3frame(); }).observe(V3WRAP);
@@ -4620,7 +4663,9 @@ let hashT=null, lastWritten='';
 function queueHash(){ clearTimeout(hashT); hashT=setTimeout(writeHash,180); }
 function writeHash(){
   let h='p'+cur; if(sel) h+='/'+encodeURIComponent(sel);
-  const b=iwRect();
+  /* the plate is display:none behind the other tabs and measures nothing then; its
+     fitted width is what the pan was set against, so it stands in */
+  let b=iwRect(); if(!b.width&&fitW) b={width:fitW,height:fitW*NH/NW};
   if(zoom>1.01 && b.width) h+=`&z=${zoom.toFixed(2)}`+
     `&c=${(((b.width/2-tx)/zoom)/b.width).toFixed(4)},${(((b.height/2-ty)/zoom)/b.height).toFixed(4)}`;
   const f=[showXY&&'r',showGrid&&'g',showSB&&'s',measMode&&'m',showSK&&'k',pjsk&&'K',
@@ -4701,8 +4746,9 @@ function readHash(){
   const ct=Math.round(+par.ct);
   pctr = Number.isFinite(ct) ? Math.min(260,Math.max(60,ct)) : 100;
   pgrey = v.includes('y');
+  const was=psrc;
   psrc = srcOK(par.ps) ? par.ps : 'drawing';
-  if(v3ready) v3resrc();
+  if(v3ready&&psrc!==was) v3resrc();
   $('ckm').checked=v.includes('m'); $('rd').hidden=!showXY;
   if(showXY && !lastPt) $('rd').textContent=RDHINT;
   setMeas(v.includes('m')); drawGrid();
@@ -4843,8 +4889,10 @@ $('elink').onclick=e=>copyLink(e.currentTarget);
    occipital crest are AP landmarks with no DV or ML recorded anywhere in the database,
    so their position in a tilted frame cannot be worked out honestly. Without a frame
    nothing changes and the dropdown is the plain AP offset it always was. */
+/* an emptied number field reads as '' and coerces to 0, which is a coordinate; not here */
+const revNum=id=>{ const v=$(id).value.trim(); return v===''?NaN:+v; };
 function revAtlas(){
-  const ap=+$('rap').value, ml=+$('rml').value, dv=+$('rdv').value;
+  const ap=revNum('rap'), ml=revNum('rml'), dv=revNum('rdv');
   if(![ap,ml,dv].every(Number.isFinite)) return null;
   return FRAME.on ? fromFrame(ap,ml,dv) : {ap:ap-(+$('rref').value),ml,dv};
 }
@@ -4859,7 +4907,7 @@ function apPlate(){
 /* solid on the plate the AP resolves to, faint on any other, so a result found on a
    neighbouring plate can still be read against the ML and DV that were asked for */
 function drawPick(){
-  const g=$('pk'), ml0=+$('rml').value, dv0=+$('rdv').value;
+  const g=$('pk'), ml0=revNum('rml'), dv0=revNum('rdv');
   /* off the frame this is a plain ML/DV mark and AP need not be filled in; on it the
      point's place on the plate depends on AP too, so all three have to be there */
   const pt = smode!=='coord' ? null
@@ -4926,6 +4974,7 @@ function setPick(on){
   b.textContent=on?'Click the plate…':'Pick on the plate';
   b.setAttribute('aria-pressed',on?'true':'false');
   if(on&&measMode){ $('ckm').checked=false; setMeas(false); }
+  if(on) anArmSet(false);           /* likewise a note waiting for its point */
   if(on) setTab('plate');
   hideTip(); mark(); fit();
 }
@@ -4951,6 +5000,9 @@ $('q').oninput=run;
 addEventListener('keydown',e=>{
   const t=document.activeElement;
   if(t&&(t.tagName==='INPUT'||t.tagName==='SELECT'||t.tagName==='TEXTAREA')) return;
+  /* a dialog has the keyboard while it is open: Esc closes it, and nothing here should
+     act on the plate behind it */
+  if(document.querySelector('dialog[open]')) return;
   if(e.key==='ArrowLeft')  go(cur-1);
   if(e.key==='ArrowRight') go(cur+1);
   /* the zoom keys follow whichever view is open */
@@ -5518,15 +5570,23 @@ function repNote(){
     'is worth reporting; if you meant it on another plate, go there first and open this again.';
   return '';
 }
-function repBody(){
-  const d=$('repmsg').value.trim();
+function repBody(short){
+  const d=short ? '_The description was too long to carry in a link: paste it in here, from '+
+                  '**Copy the report**._'
+                : $('repmsg').value.trim();
   return '### '+(repMode==='draw'?'What is wrong':'What would help')+'\n\n'+
     (d||'_Not described yet._')+'\n\n### From the Explorer\n\n'+
     repRows().map(r=>'- **'+r[0]+':** '+r[1]).join('\n')+'\n';
 }
+/* GitHub answers a URL past about 8 KB with an error page rather than the compose form,
+   and a description encodes to three bytes a space and more a character in most scripts.
+   Past this the link carries the rows and asks for the text to be pasted, which Copy the
+   report still has in full. */
+const REP_MAXURL=7000;
 function repHref(){
-  return REPO+'/issues/new?title='+encodeURIComponent($('repsum').value.trim()||repAuto)+
-    '&body='+encodeURIComponent(repBody());
+  const t='/issues/new?title='+encodeURIComponent($('repsum').value.trim()||repAuto)+'&body=';
+  const h=REPO+t+encodeURIComponent(repBody());
+  return h.length<=REP_MAXURL ? h : REPO+t+encodeURIComponent(repBody(true));
 }
 /* kept live rather than built on click, so the middle-click and the copy-link-address any
    browser offers on an anchor carry the same report the button does */

@@ -145,6 +145,10 @@ carries a `version` block naming the release its derived fields were built for.
 - The footer says when the page was last updated, beside the build it was made from. The
   stamp is UTC and reads off one instant — the commit's own, or the moment of the build
   when it was built from a dirty tree — so its date and its time cannot disagree.
+- **Notes go into the PNG and the SVG.** A sheet saved with notes showing now carries their
+  markers — a `notes` group in the SVG, each with the note's text as its title — and the
+  caption counts them. The exports draw whatever the plate is showing, and the notes were
+  the one thing they left out.
 
 ### Changed
 - **A note on the plate is a marker, not its own text across the drawing.** Every note used
@@ -210,6 +214,62 @@ carries a `version` block naming the release its derived fields were built for.
   `no_drawn_outline` carries the same flag into the per-plate GeoJSON.
 
 ### Fixed
+- **The lean page never refreshed its offline copy, and a rebuilt data file never reached a
+  returning visitor.** The service worker took its copy for the cache after handing the
+  response back, when the browser already held the body, so the copy threw and the shell in
+  the cache stayed the one cached at install. And the cache was named `gae-v1` for good:
+  `data/` is served cache-first, so a visitor who had opened the meshes once kept that
+  build's meshes for ever. The copy is now taken first, and the build registers the worker
+  as `sw.js?v=<commit>`, so each build has a cache of its own and activating it drops the
+  last one. The browser test checks both.
+- **One printed word was two labels, eight times.** `find_compounds.py` gave every member of
+  a compound token the token's box — including the member the reader had already located
+  from the same ink, which then carried its own box and the token's: `S1J` on plate 20 and
+  `RSGb` on 36, both hemispheres, `InG` on 41, `4Cb` on 49 and `11N` on 62. `GrA` on plate 8
+  had the same from the label passes, a loose box beside a tight one. The eight second boxes
+  are gone (6,323 labels become 6,315), the script leaves a member's own box alone, and the
+  extents were rebuilt from the result: no region moved by any amount, only the label counts
+  the six entries carry.
+- **The 3-D contour stack was drawn near plate first.** The test for which end of the stack
+  the camera was on had its branches crossed, so the slices went down front to back and the
+  far plates were painted over the near ones — inside out, and visibly so at high density.
+  And each slice sampled the volume at `k/61` rather than the centre of layer `k`, which
+  mid-stack blends a quarter of the neighbouring plate into the section shown; the ray-march
+  did the same. Both read at layer centres now.
+- Smaller things in the app, each found on review: typing `P5` or `P7` — both are structures
+  — jumped to plate 5 or 7; a tap on the plate or in the 3-D view after a pinch was
+  swallowed, because the flag a drag leaves for the click that follows it was never cleared
+  when no click followed; a double-click to zoom the Compare pane stepped the viewer two
+  plates first; the arrow, zoom, `F` and Esc keys acted on the plate behind an open dialog,
+  so Esc from About dropped the selection; the projection's AP ticks were ruled from a fixed
+  8 to −12 rather than from the axis, and lost a gridline once an origin moved it; the bone
+  opacity slider did not ride into the link; a source switched during the first 3-D build
+  was never read, and every hashchange rebuilt the stack whether the source had changed or
+  not; the SVG export circled the word rather than the end of its line for the labels the
+  atlas sets outside their region; a note whose text held `~` broke the link that carried
+  it; a track to a division was captioned by its key (`@hipp`) rather than its label; the
+  measure tool could read 170° from vertical when the two points were clicked the other way
+  round; an emptied field in the coordinate lookup searched at 0; the plan pane went blank
+  for a structure with no located label instead of saying so; a report too long for a URL
+  opened an error page rather than GitHub's form; the mesh note counted a division's
+  members rather than the meshes they resolve to; Coords off left a crosshair in the
+  Compare pane; arming a note was not cleared by Measure or Pick; the tilt boxes accepted
+  100 while planning at 89; notes arriving by link did not reach the Notes list; and a link
+  copied from the projection or 3-D tab dropped the plate's zoom.
+- In the pipeline: `build_volumes.py` laid the plates 0.35 mm apart whatever `--plates` or
+  `--res` said, so `--plates 5,30,45` or `--res 0.1` wrote meshes and a NIfTI with the wrong
+  AP; it now refuses plates that are not consecutive and a voxel that does not divide the
+  step. Its verification figures are written as numbers (`checks`) beside the prose that had
+  been their only copy, and two of its notes described an opening it does not run and a
+  decimation it does not do. The pons note and the README put the pons–medulla boundary at
+  bregma −9.35; plate 49 is −9.00. The GeoJSON closed every ring twice. `export_tables.py
+  --check` skipped `version.note`, and `--refresh-db` now recomputes the two label totals in
+  `verification` as well. `check_indexes.py` crashed on an abbreviation only one index
+  carried instead of reporting it, and `find_unlettered.py` ignored `$GERBIL_ATLAS_PDF`.
+- The figures the README, METHODS and the app quote had fallen behind the data by a few
+  passes — 6,266 labels for what is now 6,315, 215 leaders for 212, 3,298 located entries
+  for 3,338, "20 of the 723 structures have no located label" for 7, 3,055 extents for 3,065
+  — and are what the data says again, `verification.note` in the JSON included.
 - **`PtP` was joined to `S1` on plate 30's left hemisphere.** The atlas prints `PtP` once per
   hemisphere, and the label pass had located only the right one — the left instance never made
   it into `label_positions`, so the extraction had nothing to seed that side's face with and

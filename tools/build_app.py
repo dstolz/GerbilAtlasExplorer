@@ -52,11 +52,14 @@ DEV = os.path.join(A.ROOT, 'build', 'dev.html')
 REPO = 'https://github.com/dstolz/GerbilAtlasExplorer'
 
 # what a lean page adds to the head: the manifest, and the worker that caches the shell
-# and each plate the first time it is shown, so the page works offline after one visit
+# and each plate the first time it is shown, so the page works offline after one visit.
+# The worker is registered under the build's own hash: a new build is then a new worker
+# with a cache of its own, and its activation drops the cache the old build filled.
 LEAN_EXTRAS = (
     '<link rel="manifest" href="manifest.webmanifest">\n'
     '<script>if("serviceWorker" in navigator && /^https?:$/.test(location.protocol))'
-    'addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));</script>'
+    'addEventListener("load",()=>navigator.serviceWorker.register("sw.js?v={{BUILD_HASH}}")'
+    '.catch(()=>{}));</script>'
 )
 
 SITE_FILES = ['gerbil_atlas_explorer.html', 'index.html', 'sw.js', 'manifest.webmanifest',
@@ -170,6 +173,7 @@ def unstamp(text):
     text = re.sub(r'(<meta name="gae-build" content=")[^"]*(")', r'\1{{BUILD_HASH}} {{BUILD_DATE}}\2', text)
     text = re.sub(r'(/commit/)[0-9a-zA-Z-]+(")', r'\1{{BUILD_HASH}}\2', text)
     text = re.sub(r'(/commit/\{\{BUILD_HASH\}\}"[^>]*><code>)[0-9a-zA-Z-]+(</code>)', r'\1{{BUILD_HASH}}\2', text)
+    text = re.sub(r'(register\("sw\.js\?v=)[0-9a-zA-Z-]+(")', r'\1{{BUILD_HASH}}\2', text)
     # both stamps are a <time>: the instant is its attribute, the text is what it shows
     text = re.sub(r'(<time class="bwhen"[^>]*datetime=")[^"]*(")', r'\1{{BUILD_ISO}}\2', text)
     text = re.sub(r'(class="fstamp">Updated <time[^>]*>)[^<]*(</time>)', r'\1{{BUILD_DATE}} {{BUILD_TIME}}\2', text)

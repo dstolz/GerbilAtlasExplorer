@@ -113,7 +113,8 @@ def table(AB, S):
     reading, and `note` says wherever that reading is not simply the print.
     """
     rows = []
-    for ab in sorted(AB, key=lambda k: (k.lower(), k)):
+    # an abbreviation only one index carries is reported above; it has no row to make
+    for ab in sorted(set(AB) & set(S), key=lambda k: (k.lower(), k)):
         name, printed = S[ab]
         want = spread(printed)
         if want is None:
@@ -215,8 +216,9 @@ def main():
     rel = os.path.relpath(CSVOUT, A.ROOT).replace(os.sep, '/')
     print('\n%s:' % rel)
     if args.write:
-        with open(CSVOUT, 'w', encoding='utf-8', newline='') as f:
+        with open(CSVOUT + '.tmp', 'w', encoding='utf-8', newline='') as f:
             f.write(want)
+        os.replace(CSVOUT + '.tmp', CSVOUT)
         print('  written, %d entries' % len(S))
     else:
         try:

@@ -73,14 +73,26 @@ class Grid:
     and only the six planes between two plates are interpolated, which is the whole of
     the inaccuracy this module introduces and all of it is in one place."""
 
-    def __init__(self, ml0, ml1, dv0, dv1, aps, res=RES, sub=SUB, cap=CAP):
-        self.res, self.sub, self.cap = res, sub, cap
+    def __init__(self, ml0, ml1, dv0, dv1, aps, res=RES, sub=None, cap=CAP):
+        self.res, self.cap = res, cap
         self.ml0 = float(np.floor(ml0 / res) * res)
         self.dv0 = float(np.floor(dv0 / res) * res)
         self.nx = int(np.ceil((ml1 - self.ml0) / res)) + 1
         self.ny = int(np.ceil((dv1 - self.dv0) / res)) + 1
         self.aps = np.asarray(aps, float)
+        # The lattice puts plate k at index cap + k*sub, so it can only hold plates that
+        # are evenly spaced, and only at a voxel that divides that spacing. Both used to
+        # be assumed: a run over `--plates 5,30,45` or at `--res 0.1` laid the plates out
+        # 0.35 mm apart regardless, and wrote the wrong AP into every mesh and the NIfTI.
         self.step = abs(float(self.aps[1] - self.aps[0]))
+        if not np.allclose(np.diff(self.aps), self.aps[1] - self.aps[0], atol=1e-6):
+            raise ValueError('the plates must be consecutive: the lattice holds one step')
+        want = self.step / res
+        if sub is None:
+            sub = int(round(want))
+        if abs(want - sub) > 1e-6:
+            raise ValueError('a %g mm voxel does not divide the %g mm plate step' % (res, self.step))
+        self.sub = sub
         self.nz = cap * 2 + (len(aps) - 1) * sub + 1
         self.x = self.ml0 + np.arange(self.nx) * res
         self.y = self.dv0 + np.arange(self.ny) * res
@@ -102,7 +114,7 @@ class Grid:
                 'ap_mm': [round(float(self.z[-1]), 3), round(float(self.z[0]), 3)]}
 
 
-def grid_for(frame, outline, aps, res=RES, sub=SUB, cap=CAP, margin=0.3):
+def grid_for(frame, outline, aps, res=RES, sub=None, cap=CAP, margin=0.3):
     """A lattice sized to hold every section outline, with a margin for the taper."""
     xs, ys = [], []
     for gs in outline.values():

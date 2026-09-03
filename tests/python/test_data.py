@@ -61,7 +61,7 @@ def test_label_positions(db):
             for b in boxes:
                 assert len(b) == 4 and all(0 <= v <= 1 for v in b)
                 n += 1
-    assert n == db['verification']['label_positions_located'] == 6323
+    assert n == db['verification']['label_positions_located'] == 6315
     assert sum(len(d) for d in LP.values()) == db['verification']['ocr_confirmed'] == 3338
 
 
@@ -201,7 +201,7 @@ def test_brain_outline(db):
 
 
 def test_labels_inside_outline(db):
-    """97.8% of printed labels fall inside their plate's outline (METHODS)."""
+    """98.7% of printed labels fall inside their plate's outline (METHODS)."""
     fr = A.Frame(db['plate_frame'])
     O = db['brain_outline']['data']
     inside = total = 0
