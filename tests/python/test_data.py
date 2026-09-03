@@ -195,10 +195,14 @@ def test_volumes_consistent(db):
     R = db['region_extents']['data']
     have = {ab for d in R.values() for ab in d}
     assert set(V['data']) == have
-    # 685: one mesh per abbreviation with an extent somewhere. The 20 names that are
+    # 687: one mesh per abbreviation with an extent somewhere. The 20 names that are
     # no region -- the fissures, `cbw`, the vessels; see `features` -- have no extent
-    # anywhere and so no mesh, which is the point of them.
-    assert V['summary']['structures'] == len(V['data']) == 685
+    # anywhere and so no mesh, which is the point of them. 9N and 9aCb are the two
+    # that joined: both are named only inside a compound label (`9/11N`, `9a,bCb`),
+    # so until that label was split they had no position anywhere, hence no extent
+    # and no mesh. 9bCb and 11N still have none of their own -- they share the
+    # entry filed under the name their label leads with.
+    assert V['summary']['structures'] == len(V['data']) == 687
     assert not (have & set(db['features']['data']))
     assert 'little-endian' in V['note']
     for ab, e in V['data'].items():

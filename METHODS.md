@@ -372,9 +372,9 @@ out, and the 90th percentile 0.20 mm.
 *names*: the area of each structure on each plate, as a list of closed polygons of `[x, y]`
 fractions of the frame-cropped image — the same frame and the same convention
 `brain_outline` uses, so the app's existing point-in-polygon test reads them unchanged.
-**3,055 structure-plate entries carry an area**, 96% of the 3,182 the label pass located
+**3,062 structure-plate entries carry an area**, 96% of the 3,203 the label pass located
 and 91% of the 3,365 the published index lists — both counted over the structures that are
-regions — as 5,618 polygons over 77,346 points. Where
+regions — as 5,625 polygons over 77,419 points. Where
 the atlas prints two names as one label the two share an entry, so a name having no entry of
 its own does not mean it has no area — see step 8. Twenty of the 723 names have no entry
 anywhere, and never could: they name no region — see step 7.
@@ -490,7 +490,7 @@ pages bound with faint or dashed print, if at all. Step 7 took this figure down 
 polygons to 3%: a lobule cut back to a wedge of itself by `cbw` was mostly boundary the
 extraction had invented, and it is now mostly the fissure line the atlas draws.
 
-**And 309 entries have no boundary of their own at all, which `w` says outright.** A face
+**And 311 entries have no boundary of their own at all, which `w` says outright.** A face
 carrying several abbreviations was split in step 6, and that split is one of two quite
 different things. Either the atlas *does* print the boundary and the tracing missed it —
 two faces merged through a gap, the ridge on the distance transform found the ink again,
@@ -502,10 +502,14 @@ structure can have a drawn rim and an invented inner wall. So the split itself i
 the share of the wall the watershed put *inside* a face that lands on traced ink. Below
 half, nobody drew it — and an entry that sits only in faces like that, and whose own border
 is under three-quarters drawn, carries `w`. That is the cerebellar lobules against each
-other, the mediodorsal thalamus, the lateral hypothalamic zones, and little else: **309 of
-3,055 entries**, against 1,551 that share a face at all. It used to be 372, and the 63 that
-left are lobules: with `cbw` out of the way in step 7, a lobule's outline is the fissure
-lines the atlas draws rather than a split against the white matter inside it. The app draws
+other, the mediodorsal thalamus, the lateral hypothalamic zones, and little else: **311 of
+3,062 entries**, against 1,551 that share a face at all. It used to be 372: 63 left and 2
+arrived. The 63 are lobules — with `cbw` out of the way in step 7, a lobule's outline is the
+fissure lines the atlas draws rather than a split against the white matter inside it. The 2
+are the far side of splitting a compound label: `9aCb` and `9N` are named only inside
+`9a,bCb` and `9/11N`, so each now seeds a face it shares with its neighbours and takes a `w`
+where before it had no entry at all — and where the name it shares the label with, `9bCb`
+and `11N`, keeps none of its own. The app draws
 no outline for the ones that remain. It highlights every place
 the name is printed instead, which is the whole of what the plate says about where the
 structure is, and a dashed outline would still read as a boundary this atlas does not have.
