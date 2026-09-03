@@ -14,7 +14,7 @@ const SRC={drawing:IMG, nissl:window.__NISSL__, myelin:window.__MYELIN__};
 const SRCN={drawing:'labelled drawing', nissl:'Nissl section', myelin:'myelin section'};
 let psrc='drawing', pgrey=false, pctr=100;
 const srcOK = k => !!(SRC[k] && SRC[k][1]);
-const plateImg = n => ((srcOK(psrc)?SRC[psrc]:IMG)[n])||'';
+const plateImg = (n,k=psrc) => ((srcOK(k)?SRC[k]:IMG)[n])||'';
 /* grey and contrast are a display filter, not a second copy of the image: the same string
    goes on the <img> and on the canvas the PNG export draws through, so what is saved is
    what was on screen. */
@@ -39,6 +39,29 @@ const NW=1100, NH=703;
 const byAb = Object.fromEntries(S.map(r=>[r.abbr,r]));
 const plateOf = {}; P.forEach(p=>plateOf[p.plate]=p);
 const SYSLIST = [...new Set(S.flatMap(r=>r.systems))].sort();
+
+/* ---------- the names the atlas prints that name no region ----------
+   A fissure or a sulcus is the cleft *between* two regions and is drawn as the line
+   between them; `cbw` is the white matter core of whichever lobule it runs through and
+   not a lobule beside them; a vessel is not brain. Twenty of the 723 names are one of
+   those, and none of them has ground of its own. What they were being given was the
+   lobule's -- `cbw` alone held 170 mm2 of cerebellum, which left `Crus2` a wedge of its
+   own lobule -- so the extraction hands it back to the regions around them; see
+   `features` and tools/build_region_extents.py.
+
+   They are otherwise structures like any other: indexed, searched, filtered by system,
+   located on every plate that prints them, plotted in the projection and in the label
+   cloud, and written into the label table. What they have no claim on is area, so there
+   is no outline to draw, no area to quote, no volume and no mesh, and hovering or
+   selecting one marks every place the plate prints the name -- which is the whole of
+   what the atlas says about where it is. */
+const FEAT = DB.features||{}, FEATK = DB.feature_kinds||{};
+const isFeat = a => !!FEAT[a];
+/* the sentence one is read by: "a cleft between regions, not a region" */
+const featTxt = a => FEATK[FEAT[a]]||'';
+/* how many of the 723 are regions at all, which is the denominator every count of what
+   has an outline, a volume or a mesh belongs over */
+const NREG = S.length - S.filter(r=>isFeat(r.abbr)).length;
 
 /* ---------- superstructures ----------
    The published atlas names structures and no containers for them: there is no
@@ -446,8 +469,10 @@ function draw(){
   /* one row shape for both, so a division reads as a thing you can pick and not as a
      control: the same three columns, with the label where an abbreviation goes and the
      count of what it is made of where the plate range goes for a structure. */
+  /* a name that is no region says so on hover, because the row is otherwise identical to
+     one that will outline itself on the plate and this one never will */
   const row=(r,k)=>
-    `<div class="row${r.grp?' grp':''}${sel===k?' sel':''}" data-a="${esc(k)}" role="option" tabindex="0" aria-selected="${sel===k?'true':'false'}">
+    `<div class="row${r.grp?' grp':''}${sel===k?' sel':''}" data-a="${esc(k)}" role="option" tabindex="0" aria-selected="${sel===k?'true':'false'}"${isFeat(k)?` title="${esc(featTxt(k))} \u2014 no outline, no mesh"`:''}>
        <span class="ab">${esc(r.abbr)}</span>
        <span class="nm">${esc(r.name)}${via[k]?` <span class="via">via ${esc(via[k])}</span>`:''}</span>
        <span class="pl">${r.grp?r.n_members+' str':
@@ -549,7 +574,10 @@ function select(a){
   const c=coordsOf(a), x=extentOf(a);
   const fc=FRAME.on?coordsOf(a,1):null, fx=FRAME.on?extentOf(a,1):null;
   D.innerHTML=`<p class="dn">${esc(r.name)}</p><span class="da${g?' dg':''}">${esc(r.abbr)}</span>
-   ${g?`<p class="gnote">${esc(g.note)}</p>`:''}
+   ${g?`<p class="gnote">${esc(g.note)}</p>`
+      :isFeat(a)?`<p class="gnote">${esc(featTxt(a))}. The atlas draws it no boundary of its own, so `+
+        `it has no outline, no area and no mesh here \u2014 the ground it lies in belongs to the `+
+        `regions around it. Every plate that prints the name still says where.</p>`:''}
    <dl class="kv">
      <dt>Plates</dt><dd>${r.first_plate}–${r.last_plate} <span style="color:var(--muted)">(${r.n_plates})</span></dd>
      <dt>Bregma</dt><dd>${r.bregma_anterior.toFixed(2)} to ${r.bregma_posterior.toFixed(2)} mm</dd>
@@ -759,7 +787,9 @@ function markSel(){
      circle round the word would be a circle round white paper beside the section, which
      is where the atlas sets a name it cannot fit inside the region. The circle is also
      the answer where there is an extent but no boundary the atlas draws round it -- see
-     regUnd() -- because there the outline would be a line this atlas does not have. */
+     regUnd() -- because there the outline would be a line this atlas does not have, and
+     for the names that are no region -- see isFeat() -- where it would be a line round
+     ground that is somebody else's. */
   const rg=regOut(sel), und=regBy[sel];
   const at=bs.map((b,i)=>{ const [x,y]=ptAt(cur,sel,i,b); return [x,y,b[2],b[3]]; });
   const ell=at.map(([cx,cy,w,h])=>{
@@ -779,6 +809,8 @@ function markSel(){
     const how=led===bs.length?(bs.length>1?'each ':''):`${led} of them `;
     vh.innerHTML=`<b>${esc(sel)}</b> circled \u00b7 ${bs.length} label${bs.length>1?'s':''} printed on plate ${cur}`
       +(led?` \u00b7 ${how}circled at the end of the line the atlas draws from the word`:'')
+      +(isFeat(sel)?` \u00b7 ${featTxt(sel)}, so the atlas draws it no boundary and none is `+
+            `drawn here \u2014 the ground it lies in belongs to the regions around it`:'')
       +(und?` \u00b7 ${und.mm2.toFixed(und.mm2<1?3:2)} mm\u00b2 of section here, but every label of it `+
             `is printed inside a boundary the atlas draws round more than one name, so it has `+
             `no outline of its own to draw`:'');
@@ -1211,9 +1243,11 @@ function regTxt(o){
 const regEst = o => o.tf < RGRD.estimated;
 /* ---- the names the atlas draws no boundary around ----
    `w` marks an entry that lies only inside bounds the atlas draws around more than one
-   name and prints nothing within: the cerebellar lobules and the white matter that runs
-   between them are the whole of the cerebellum, and the mediodorsal thalamus and the
-   lateral hypothalamic zones are most of the rest. The extraction still cuts those apart,
+   name and prints nothing within: the cerebellar lobules against each other are the
+   largest of them, and the mediodorsal thalamus and the lateral hypothalamic zones most
+   of the rest. Not a lobule against `cbw` any more -- that is not a boundary the atlas
+   omits, it is a name that is no region, and isFeat() above is where it is answered.
+   The extraction still cuts these apart,
    because a section has to be partitioned before a track or a volume can be read off it,
    but the cut is its own. Drawing it would put a line on the plate this atlas does not
    have, and a dashed one still reads as a boundary. So none is drawn: what is highlighted
@@ -1284,10 +1318,13 @@ function pick(px,py,tol){
    Highlighting the word instead answers "where is this printed", which is not the question
    anyone asks of a brain atlas. Failing a hit on a name, the region answers by containment,
    which is what the extents were extracted for. The box is the answer only where there is
-   no area to give it: a name printed outside the section -- `rf` on the rhinal fissure
-   among them -- and the structures no extent could be cut for. Those stay live, and they
+   no area to give it: the names that are no region -- `cbw`, the fissures, the vessels;
+   see isFeat() -- and the structures no extent could be cut for. Those stay live, and they
    are the ones that most need the tip, since nothing about them is otherwise readable off
-   the plate. The near-miss slop stays last for the same reason. */
+   the plate. `cbw` is the case to keep in mind: point at the word and it answers `cbw`,
+   move a few pixels off it and the answer is the lobule whose white matter that is, which
+   is exactly the two questions being asked. The near-miss slop stays last for the same
+   reason. */
 function pickAny(px,py){
   const at = L => L && (regBy[L.ab] ? {k:'r',ab:L.ab,o:regBy[L.ab]} : {k:'l',ab:L.ab,L});
   return at(pick(px,py,0)) || (o => o && {k:'r',ab:o.ab,o})(regAt(px,py))
@@ -1323,8 +1360,12 @@ function showTipR(o,ab){
   let y=y0-th-7;        if(y<2) y=Math.min(y1+7,b.height-th-2);
   TIP.style.left=x.toFixed(1)+'px'; TIP.style.top=y.toFixed(1)+'px';
 }
+/* the box is the answer: either the name is no region -- and then the tip says which kind
+   of thing it is, because "cbw has no outline" is not an answer, "cbw is the white matter
+   of the lobules it runs through" is -- or no extent could be cut, and there is nothing
+   more to say than the name and its plates */
 function showTip(L){
-  tipBody(L.ab,'');
+  tipBody(L.ab, featTxt(L.ab));
   HL.setAttribute('x',(L.x0-2).toFixed(1));
   HL.setAttribute('y',(L.y0-2).toFixed(1));
   HL.setAttribute('width',(L.x1-L.x0+4).toFixed(1));
@@ -3292,7 +3333,7 @@ let vaoS=null, nSK=0;                      /* skull mesh, built on first use */
 const v3box=new Array(V3D).fill(null);   /* section bounds per plate, set during the build */
 
 /* ---------- build the volume from the plate images ---------- */
-async function v3build(onp){
+async function v3build(onp, src=psrc, box=v3box){
   const vol=new Uint8Array(V3W*V3H*V3D*2);
   const cvs=document.createElement('canvas'); cvs.width=V3W; cvs.height=V3H;
   const g=cvs.getContext('2d',{willReadFrequently:true});
@@ -3301,7 +3342,7 @@ async function v3build(onp){
         bg=new Uint8Array(N), comp=new Int32Array(N), stack=new Int32Array(N);
   for(let k=0;k<V3D;k++){
     const n=P[k].plate;
-    const im=new Image(); im.src=plateImg(n);
+    const im=new Image(); im.src=plateImg(n,src);
     try{ await im.decode(); }catch(_){ continue; }
     g.clearRect(0,0,V3W,V3H);
     g.drawImage(im, V3C[0],V3C[1], V3C[2]-V3C[0],V3C[3]-V3C[1], 0,0, V3W,V3H);
@@ -3360,7 +3401,7 @@ async function v3build(onp){
     }
     /* where the section actually sits on this plate, so the current-plate marker can
        trace the section rather than float around the whole coordinate box */
-    v3box[k] = x1<0 ? null
+    if(box) box[k] = x1<0 ? null
       : [x0/V3W, 1-y1/V3H, (x1+1)/V3W, 1-y0/V3H];
     if(onp) onp((k+1)/V3D);
     if((k&3)===3) await new Promise(r=>setTimeout(r));   /* let the bar paint */
@@ -4312,6 +4353,112 @@ $('v3ms').onchange=e=>{ v3E().ms=e.target.checked; v3frame(); };
 $('v3stl').onclick=meshSTL;
 $('v3mfb').onclick=()=>$('v3mfile').click();
 
+/* ---------- the stack as a NIfTI ----------
+   The same 62 plates the renderer marches through, written out as a gzipped NIfTI-1
+   volume: the reconstruction itself rather than a picture of it, so it opens in ITK-SNAP,
+   FSLeyes, Slicer or nibabel and can be measured, resliced or registered against. The
+   header is 348 bytes of DataView and needs no library, which is how tools/volume.py
+   writes the label volume beside it -- voxels x fastest in (ML, AP, DV) order so the file
+   reads as RAS, with an sform putting each voxel centre at its atlas millimetres.
+
+   Millimetres are the atlas's own, from bregma as the plates print it, which is the frame
+   the STL export writes in too. A re-zero renames coordinates in the app; it does not move
+   the sections, and a file carrying a private origin would be the one thing about it a
+   reader could not check.
+
+   Nothing the toolbar sets is written in: not the slab, not the midline cut, not the
+   tissue curve. Those say what is drawn, and this is what they are drawn from.
+
+   Read again from the plates rather than kept from the build. The stack is 24 MB and the
+   view hands its only copy to the GPU; holding a second one in the page for every visit,
+   against an export most of them never run, is the wrong side of that trade. So it costs
+   the few seconds the view itself cost, and the note says so while it runs. */
+let niiBusy='', niiFail='';
+const NIIMSG='Reading the 62 plates again to write the volume';
+function v3niiBuf(vol,src){
+  /* On the labelled drawing the red contour ink is a picture in its own right, so it goes
+     out as a second volume beside the tissue. A photographed section has no contour
+     channel at all -- it is tissue the whole way through -- so there one volume is the
+     whole of what was read. */
+  const nt = src==='drawing' ? 2 : 1;
+  const N=V3W*V3H, nv=N*V3D, HDR=352;
+  const buf=new ArrayBuffer(HDR+nv*nt), out=new Uint8Array(buf,HDR), v=new DataView(buf);
+  /* (ML, AP ascending, DV ascending), x fastest. The plate rows were filled dorsal edge
+     first and the plates anterior first, so both of those axes are read backwards here --
+     the same two flips the volume shader applies to get the brain the right way up. */
+  for(let c=0;c<nt;c++){
+    const co=c*nv;
+    for(let l=0;l<V3H;l++){
+      const y=V3H-1-l;
+      for(let j=0;j<V3D;j++){
+        let z=((V3D-1-j)*N+y*V3W)*2+c;
+        const d=co+(j+V3D*l)*V3W;
+        for(let x=0;x<V3W;x++,z+=2) out[d+x]=vol[z];
+      }
+    }
+  }
+  /* the voxel, and where its first centre sits. Across a plate that is the printed
+     coordinate box divided by the texture, 32.4 um; through the stack it is the plate
+     spacing, 350 um. The eleven-fold anisotropy goes into the file rather than being
+     resampled away: a reader that interpolates it can say so, and one that does not is
+     not misled about what was sampled. */
+  const fx=(V3C[2]-V3C[0])/V3W, fy=(V3C[3]-V3C[1])/V3H;
+  const dx=fx/ML_PXMM, dz=fy/DV_PXMM, dy=Math.abs(P[1].bregma-P[0].bregma);
+  const x0=toML(V3C[0]+fx/2), y0=P[V3D-1].bregma, z0=toDV(V3C[1]+(V3H-.5)*fy);
+  const i16=(o,n)=>v.setInt16(o,n,true), f32=(o,n)=>v.setFloat32(o,n,true);
+  v.setInt32(0,348,true);                                    /* sizeof_hdr */
+  i16(40,nt>1?4:3); i16(42,V3W); i16(44,V3D); i16(46,V3H);   /* dim */
+  i16(48,nt); i16(50,1); i16(52,1); i16(54,1);
+  i16(70,2); i16(72,8);                                      /* datatype uint8, bitpix */
+  f32(76,1); f32(80,dx); f32(84,dy); f32(88,dz);             /* pixdim */
+  for(let i=4;i<8;i++) f32(76+i*4,1);
+  f32(108,HDR);                                              /* vox_offset */
+  f32(112,1); f32(116,0);                                    /* scl_slope, scl_inter */
+  v.setUint8(123,2);                                         /* xyzt_units: mm */
+  f32(124,255); f32(128,0);                                  /* cal_max, cal_min */
+  const d=('Gerbil atlas stack, '+(nt>1?'ink then drawn contour':SRCN[src]+' ink')+
+           '; mm from bregma').slice(0,79);
+  for(let i=0;i<d.length;i++) v.setUint8(148+i,d.charCodeAt(i)&127);
+  i16(252,0); i16(254,1);                                    /* qform_code, sform_code */
+  f32(280,dx); f32(292,x0);                                  /* srow_x */
+  f32(300,dy); f32(308,y0);                                  /* srow_y */
+  f32(320,dz); f32(324,z0);                                  /* srow_z */
+  for(let i=0;i<3;i++) v.setUint8(344+i,'n+1'.charCodeAt(i));   /* magic */
+  return buf;
+}
+async function v3niiSave(){
+  if(niiBusy||v3busy||!v3ready) return;
+  const b=$('v3nii'), src=psrc;          /* the source it was asked for, not whichever is
+                                            current when the last plate finally decodes */
+  /* the button is what the eye is on right after the click, so the state goes on its own
+     label first -- disabled and dimmed like any other busy control here, but also saying
+     what it is doing, the way the plate-count label already does while the stack itself
+     is first built. The longer form still goes into the note beside it, for whichever of
+     the two a given reader actually looks at. */
+  const lbl=t=>{ b.textContent=t; };
+  niiFail=''; niiBusy=NIIMSG+'\u2026 0%'; b.disabled=true; lbl('Reading 0%'); v3note();
+  try{
+    const vol=await v3build(f=>{ const pc=Math.round(f*100);
+      niiBusy=NIIMSG+'\u2026 '+pc+'%'; lbl('Reading '+pc+'%'); v3note(); }, src, null);
+    niiBusy='Writing the volume\u2026'; lbl('Writing\u2026'); v3note();
+    await new Promise(r=>setTimeout(r,20));      /* let that line paint before the loop */
+    let blob=new Blob([v3niiBuf(vol,src)],{type:'application/octet-stream'}), ext='.nii';
+    /* gzipped where the browser can and plain where it cannot: a .nii every reader takes
+       is better than no file at all */
+    if(typeof CompressionStream==='function'){
+      niiBusy='Compressing the volume\u2026'; lbl('Zipping\u2026'); v3note();
+      await new Promise(r=>setTimeout(r,20));
+      blob=await new Response(blob.stream().pipeThrough(new CompressionStream('gzip'))).blob();
+      ext='.nii.gz';
+    }
+    const u=URL.createObjectURL(blob);
+    dl('gerbil_atlas_stack_'+src+ext,u,u);
+  }catch(err){
+    niiFail='The volume could not be written ('+(err&&err.message||err)+').';
+  }finally{ niiBusy=''; lbl('NIfTI'); b.disabled=false; v3note(); }
+}
+$('v3nii').onclick=v3niiSave;
+
 function v3note(){
   const N=$('v3n');
   if(v3fail){ N.textContent=''; return; }
@@ -4325,6 +4472,10 @@ function v3note(){
                 ` angle apart they were set to. Reset view brings both back onto the default.`
               : ` The two panes turn independently.`) : '';
   $('v3stl').hidden=!(Q.m&&MESH&&(isGrp(sel)?meshList().length:meshKey(sel)));
+  /* the export writes the stack, so it appears with the stack and not with a pane: there
+     is one volume behind both, and only one file to write from it */
+  $('v3nii').hidden=!v3ready;
+  const nii = niiBusy ? ' '+niiBusy : (niiFail ? ' '+niiFail : '');
   /* the slab's own AP bounds, quoted from wherever zero is -- a re-zero does not move the
      plates, only what their APs are called, and this line is the only place the 3-D view
      names one */
@@ -4352,11 +4503,14 @@ function v3note(){
     else if(meshFail) mesh=' '+meshFail;
     else if(MESH){
       const list=meshList(), key=sel&&meshKey(sel), e=key&&MESH.data[key];
-      /* three things can be true of a selection here and the reader cannot tell them
+      /* four things can be true of a selection here and the reader cannot tell them
          apart from the picture: it has its own mesh; it shares a printed region and the
-         mesh is filed under the name that region is filed under; or the atlas names it
-         and draws it no region anywhere, so there is nothing to build one from and the
-         view is empty on purpose. The last one is what an unexplained blank looks like. */
+         mesh is filed under the name that region is filed under; the atlas names it
+         and draws it no region anywhere, so there is nothing to build one from; or it
+         names no region at all -- a fissure, a vessel -- and never could have one. The
+         last two are what an unexplained blank looks like, and they are not the same
+         blank: one is a gap in what could be cut, the other is the atlas being read
+         correctly. */
       const blk = key&&key!==sel ? meshBlk(sel) : null;
       const how = e && (e.grade==='slab'
         ? 'a hull, not a shape — the structure is on one or two plates only'
@@ -4376,7 +4530,8 @@ function v3note(){
                 list.length<G.n_members ? ` (the rest the atlas draws no region for)` : '')+'.'
              : blk ? ` <b>${esc(sel)}</b> is printed <b>${esc(blk.join('/'))}</b>, one region, so its mesh is the one filed under <b>${esc(key)}</b>: ${how}, ${e.volume_mm3.toFixed(2)} mm³.`
              : e ? ` <b>${esc(sel)}</b> as a mesh: ${how}, ${e.volume_mm3.toFixed(2)} mm³.`
-             : sel ? ` <b>${esc(sel)}</b> has no mesh: the atlas names it but draws it no region of its own on any plate, so there is nothing to build one from — as for ${S.length-Object.keys(MESH.data).length} of the ${S.length} structures.`
+             : isFeat(sel) ? ` <b>${esc(sel)}</b> has no mesh and no volume: ${featTxt(sel)}, so the atlas draws it no boundary anywhere and there is no shape to build. It is in the label cloud, where every plate that prints it puts a dot.`
+             : sel ? ` <b>${esc(sel)}</b> has no mesh: the atlas names it but draws it no region of its own on any plate, so there is nothing to build one from — as for ${NREG-Object.keys(MESH.data).length} of the ${NREG} structures that are regions.`
              : list.length ? ` ${list.length} structures of the filter as meshes.` : ' Select a structure, or filter to a few, to see its mesh.')+
         ' Six planes in seven are arithmetic between sections 350 µm apart; nothing here is a segmentation.';
     }
@@ -4388,7 +4543,7 @@ function v3note(){
         `${new Set(q.map(t=>t.p)).size} plate${new Set(q.map(t=>t.p)).size>1?'s':''}, against all 6,220. `
       : `All 6,220 printed labels at their stereotaxic positions. `)+
       `A dot is where an abbreviation is <em>printed</em> — close to its structure, not its centre. `+
-      `Hover to read one, click to open its plate.`+slab+half+proj+turn+bone+mesh+pair;
+      `Hover to read one, click to open its plate.`+slab+half+proj+turn+bone+mesh+pair+nii;
     return;
   }
   const q=(sel&&ptsOf[sel])||[];
@@ -4398,7 +4553,7 @@ function v3note(){
   N.innerHTML = who + (Q.mode==='contour'
     ? `${what}, each at its true bregma. It reads as a stack because that is what it is — 62 sections, 350 µm apart.`
     : `The same field ray-marched. Sampling along the brain is 20× coarser than across it, so the streaks are interpolation, not anatomy.`)+
-    on+` The ring marks plate ${cur}.`+tone+slab+half+proj+turn+bone+mesh+pair;
+    on+` The ring marks plate ${cur}.`+tone+slab+half+proj+turn+bone+mesh+pair+nii;
 }
 
 /* changing the plate source changes what the stack is made of, so it is read again from
@@ -5327,6 +5482,7 @@ window.__gae={toFrame,fromFrame,writeHash,readHash,tgSolve,tgPath,tgFootprint,pl
   select,go,clear,frameSet,frameApply,FRAME,frmBuild,BUILD,S,P,byAb,ptsOf,regBuild,plateAt,inBrain,
   coordsOf,tgJSON,tgNotes,meshList,setCmp,anMake,notes:()=>NOTES,mesh:()=>MESH,
   v3split,v3edit,v3rects,panes:()=>V3P.map(q=>({...q})),
+  v3build,v3niiBuf,
   GRP,isGrp,regIn,grpsOf,
   setMax,
   state:()=>({cur,sel,zoom,tab,smode,psrc,tgProbe,tgFoot,cmpOn,anShow,maxed,targSide,tgTilt,tgRoll,tgYaw,tgPlate,tgOff,fview,fvOn:fvOn(),v3two,v3ed,v3lock})};

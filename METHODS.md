@@ -372,10 +372,12 @@ out, and the 90th percentile 0.20 mm.
 *names*: the area of each structure on each plate, as a list of closed polygons of `[x, y]`
 fractions of the frame-cropped image — the same frame and the same convention
 `brain_outline` uses, so the app's existing point-in-polygon test reads them unchanged.
-**3,134 structure-plate entries carry an area**, 95% of the 3,298 the label pass located
-and 89% of the 3,510 the published index lists, as 5,798 polygons over 78,739 points. Where
+**3,055 structure-plate entries carry an area**, 96% of the 3,182 the label pass located
+and 91% of the 3,365 the published index lists — both counted over the structures that are
+regions — as 5,618 polygons over 77,346 points. Where
 the atlas prints two names as one label the two share an entry, so a name having no entry of
-its own does not mean it has no area — see step 7.
+its own does not mean it has no area — see step 8. Twenty of the 723 names have no entry
+anywhere, and never could: they name no region — see step 7.
 
 The atlas publishes no segmentation. What it does publish is a line drawing in which every
 region is a cell of a planar subdivision with one abbreviation printed inside it, and both
@@ -395,7 +397,7 @@ The steps, in order, run by `tools/build_region_extents.py`:
 3. **Close against `brain_outline`**, inverse-transformed into the page frame, and fill it
    for the section interior.
 4. **Cut the empty space into faces.** A face sealed by traced ink and holding exactly one
-   abbreviation is that structure's area *as drawn*, and that is 3,471 of the faces. A label
+   abbreviation is that structure's area *as drawn*, and that is 3,475 of the faces. A label
    the atlas set outside its region is seeded at the end of the line it draws rather than on
    the word — see [Where the name is not the place](#where-the-name-is-not-the-place). 215
    labels are, and seeding those on the word puts them in a neighbour's face.
@@ -418,7 +420,25 @@ The steps, in order, run by `tools/build_region_extents.py`:
    distance transform of the ink splits the face along the strongest evidence there is. The
    drawn lines themselves belong to no face and are in play, so the split falls down the
    middle of the printed line, where a boundary between two regions ought to fall.
-7. **Leave the unnamed faces alone.** A face holding no label is not absorbed by a
+7. **Take back the ground held by the names that are no region.** Not everything the atlas
+   letters is a structure with a territory. A fissure or a sulcus is the cleft *between*
+   two regions and is drawn as the line between them; `cbw` is the white matter core of
+   whichever lobule it runs through rather than a lobule beside them; a vessel is not
+   brain. `features` names the twenty, and step 6 hands each of them the ground on both
+   sides of a line that is a boundary rather than a region. `cbw` alone held **170 mm²** of
+   cerebellum, which left `Crus2` a wedge of its own lobule and, on plate 54, `PM` nothing
+   but its label box. So it is given back — **184 mm² over 297 printed labels** — each
+   pixel of it to whichever region is nearest measured around the atlas's own lines: flat
+   away from them and a step up on them, so the boundary lands on a line wherever one is
+   drawn, and past the tip of a fissure, where the atlas draws nothing because there the
+   two lobules really are continuous, on the midline between them. The step is on the same
+   sealed network the faces were cut from rather than on the raw ink, so a region the
+   drawing closes cannot be nearest to ground outside it through a gap in the tracing.
+   They are seeded in step 6 and emptied here rather than left out of the watershed
+   altogether: the flood runs deepest-first, so with no seed in the depth of the white
+   matter the lobule whose label happens to sit deepest takes the whole arbor and the
+   vermis with it. What the seed must not do is keep the ground, which is the lobule's.
+8. **Leave the unnamed faces alone.** A face holding no label is not absorbed by a
    neighbour. The atlas seals it and declines to name it, and the largest such class is the
    ventricles; calling a ventricle `CPu` would propagate into every readout downstream.
    These are written out separately as `region_extents.unassigned`, and they are a mean 6%
@@ -434,13 +454,13 @@ The steps, in order, run by `tools/build_region_extents.py`:
    the app answers for any of them with that label's one outline. **22 labels on 31 plates**
    are joined this way, over 37 printed occurrences.
 
-8. **Score each polygon** by the share of its border lying within 3 px of ink the tracing
+9. **Score each polygon** by the share of its border lying within 3 px of ink the tracing
    *actually drew*, as opposed to a ridge the watershed invented, walked at one pixel so it
    is length-weighted.
-9. **Trace and simplify on the crack lattice**, Douglas-Peucker at 2 px as `brain_outline`
-   already does.
+10. **Trace and simplify on the crack lattice**, Douglas-Peucker at 2 px as `brain_outline`
+    already does.
 
-**Step 9 is not the obvious thing, and the obvious thing is wrong.** Contouring each region
+**Step 10 is not the obvious thing, and the obvious thing is wrong.** Contouring each region
 on its own and simplifying its ring gives two different polylines for the same shared
 boundary, because Douglas-Peucker is global to the ring it is handed; at a 2 px tolerance
 they cross, and the regions then overlap and leave slivers. So the boundary is traced on the
@@ -456,46 +476,61 @@ Three checks, none of which the extraction was tuned to pass:
 | --- | --- |
 | Every boundary between two regions stored as one polyline, twice | **100%** of directed boundary edges have their reverse in exactly one neighbour, so the regions tile the section — a point is inside exactly one, or inside none |
 | Printed labels inside the region they name | **97%**, read at the end of the label's line where the atlas draws one |
-| Regions plus unassigned faces against the section area | within **2.1%** on the worst plate (an earlier figure of 4.5% omitted the closing edge of the outline rings, which `brain_outline` stores unclosed) |
+| Regions plus unassigned faces against the section area | within **2.5%** on the worst plate (an earlier figure of 4.5% omitted the closing edge of the outline rings, which `brain_outline` stores unclosed) |
 
 **What the numbers do not say is which boundaries are real, so every polygon carries that
-too.** `s` is the traced share of that polygon's border: median **0.98**, 77% at or above
-0.90, 88% at or above 0.75, **6% below 0.50**. A polygon at 0.98 is the boundary the atlas
+too.** `s` is the traced share of that polygon's border: median **0.98**, 78% at or above
+0.90, 89% at or above 0.75, **3% below 0.50**. A polygon at 0.98 is the boundary the atlas
 prints. A polygon at 0.16 is a split the extraction had to invent because the drawing does
 not separate those structures, and it should be read as an estimate — the app dashes those
 outlines and says so rather than presenting them as drawn. The weak ones are where a reader
-would expect them: `PM` on plates 51–54, `7Cb` on 51, `RRF` on 39, `imvc` on 29 — thin
-cerebellar and reticular subdivisions the pages bound with faint or dashed print, if at all.
+would expect them: `7Cb` on plate 51, `RRF` on 39, `imvc` on 29, the facial subnuclei
+`7DM`, `7DI` and `7VI` on 48–50 — thin cerebellar, reticular and motor subdivisions the
+pages bound with faint or dashed print, if at all. Step 7 took this figure down from 6% of
+polygons to 3%: a lobule cut back to a wedge of itself by `cbw` was mostly boundary the
+extraction had invented, and it is now mostly the fissure line the atlas draws.
 
-**And 372 entries have no boundary of their own at all, which `w` says outright.** A face
+**And 309 entries have no boundary of their own at all, which `w` says outright.** A face
 carrying several abbreviations was split in step 6, and that split is one of two quite
 different things. Either the atlas *does* print the boundary and the tracing missed it —
 two faces merged through a gap, the ridge on the distance transform found the ink again,
 and the split sits on a line somebody drew: `CPu` on plate 25 shares its face and keeps a
 rim 98% drawn. Or the atlas prints nothing between those names anywhere, as it does not
-between a cerebellar lobule and the white matter that runs through it, and the split is the
-extraction's invention end to end. The whole outline does not tell them apart, because a
+between two cerebellar lobules where the fissure line between them runs out, and the split
+is the extraction's invention end to end. The whole outline does not tell them apart, because a
 structure can have a drawn rim and an invented inner wall. So the split itself is measured:
 the share of the wall the watershed put *inside* a face that lands on traced ink. Below
 half, nobody drew it — and an entry that sits only in faces like that, and whose own border
-is under three-quarters drawn, carries `w`. That is the whole cerebellum, the mediodorsal
-thalamus, the lateral hypothalamic zones, and little else: **372 of 3,134 entries**, against
-1,062 that merely share a face. The app draws no outline for them. It highlights every place
+is under three-quarters drawn, carries `w`. That is the cerebellar lobules against each
+other, the mediodorsal thalamus, the lateral hypothalamic zones, and little else: **309 of
+3,055 entries**, against 1,551 that share a face at all. It used to be 372, and the 63 that
+left are lobules: with `cbw` out of the way in step 7, a lobule's outline is the fissure
+lines the atlas draws rather than a split against the white matter inside it. The app draws
+no outline for the ones that remain. It highlights every place
 the name is printed instead, which is the whole of what the plate says about where the
 structure is, and a dashed outline would still read as a boundary this atlas does not have.
 The geometry is kept and still partitions the section, because a track and a volume have to
 be read off something; it is a best guess at where one name gives way to the next, and not a
 boundary to show anyone.
 
-End to end, in the app: pointing at each of the 6,266 printed labels in turn resolves to a
-structure every time, and to the right one 6,263 times. **5,384 of them are answered with an
-outline.** 693 are answered with the printed name because the entry carries `w` and there is
-no boundary to draw, and 189 because no extent could be cut at all — which is the honest
-answer where the atlas prints a name outside the section it belongs to, `rf` on the rhinal
-fissure being 50 of the 189. The three misses are three places where one located
+**`w` is not the same claim as being no region at all, and the two are encoded apart on
+purpose.** Both end in no outline being drawn, which is the whole of what they share. A `w`
+entry *has* ground: `Crus2` on plate 52 is 7.57 mm² of section, with a mesh, a volume and a
+share of every track read through it — what it lacks is a boundary of its own to draw there.
+A name that is no region has no ground anywhere, so it has no entry in `region_extents` at
+all, no area, no volume and no mesh. Collapsing the second into the first would give `cbw`
+back the 170 mm² of cerebellum step 7 exists to take off it. Plate 52 carries one of each,
+and `tests/js/smoke.spec.js` tests them separately for that reason.
+
+End to end, in the app: pointing at each of the 6,292 printed labels in turn resolves to a
+structure every time, and to the right one 6,288 times. **5,329 of them are answered with an
+outline.** 542 are answered with the printed name because the entry carries `w` and there is
+no boundary to draw, and 421 because there is no extent to give — 297 of those being the
+names that are no region, which is not a shortfall but the point of step 7, and the other
+124 structures no extent could be cut for. The four misses are four places where one located
 box sits inside another (`StA` around `STMA` on plate 23, `PVP` around `VL` on 29, `psf`
-around `sf` on 53) and the smaller of the two wins the point, which is the right tie-break
-everywhere else.
+around `sf` on 53, `SolC` around `sol` on 55) and the smaller of the two wins the point,
+which is the right tie-break everywhere else.
 
 215 of the 6,263 printed labels are set outside their region with a line drawn back into
 it, and are seeded at the end of that line. A further 199 sit outside the face they name
@@ -508,6 +543,17 @@ labels could not be resolved at all and have no extent.
 `qc/chk_regions_NN.png` overlays the result on the plate for five levels, tinted green where
 the boundary is drawn and red where it is inferred, which is the check a reader can make by
 eye and the one that catches a leak the medians average away.
+
+**Where step 7 over-reaches is `IntDL` on plate 47**, which goes from 0.57 mm² to 3.70. The
+atlas draws the dorsolateral hump as an open crescent rather than a closed blob, so it
+genuinely borders the medullary body and takes a geometric share of it once `cbw` gives that
+ground up. Nothing measurable separates it from a lobule doing the same thing: the drawn
+share of its frontier with the vacated ground is 0.10, against 0.04 to 0.42 for the lobules
+on that plate. The entry carries `w`, so no outline is drawn for it, but its mesh is wider at
+that plane than the hump is. It is the only entry that moves that way. Everywhere else the
+step does what it says: the lobules gain between 1.5× and 2.9× — `Crus1` 45.9 to 72.9 mm²,
+`Crus2` 16.7 to 29.4, `PM` 8.4 to 19.7 — no region loses ground anywhere, the section area is
+preserved, and outside the cerebellum nothing changes by more than 0.25 mm².
 
 **This is still not a segmentation.** It is one animal's drawing, cut along the lines that
 drawing prints, and where it prints none the split is this extraction's guess rather than
@@ -1213,6 +1259,36 @@ in hundredths, written only when one of them is off its default — so no link w
 this changes meaning — and the note under the view quotes the window whenever one is set,
 because a windowed render is a picture of the tissue after something was done to it and the
 reader of somebody else's link has no other way of knowing.
+
+### The stack as a NIfTI
+
+**NIfTI** in the 3-D controls writes the stack out as a gzipped NIfTI-1 volume — the
+reconstruction itself rather than a picture of it, so it opens in ITK-SNAP, FSLeyes,
+Slicer or nibabel and can be resliced, measured, or registered against something else.
+The header is the same 348 bytes of struct `tools/volume.py` writes for the label volume,
+and the file is laid out the same way: voxels x fastest in (ML, AP, DV) order so it reads
+as RAS — x to the animal's right, y anterior, z dorsal — with an sform putting each voxel
+centre at its atlas millimetres. Across a plate the voxel is the printed coordinate box
+divided by the texture, 32.4 µm or a little under two plate pixels; through the stack it
+is the plate spacing, 350 µm. That anisotropy is written into the file rather than
+resampled away, which is the honest way to hand it on: a reader that interpolates it can
+say so, and one that does not is not misled about what was actually sampled.
+
+The labelled drawing writes two volumes, the ink and then the drawn contour, because on it
+the red contour is a picture in its own right; a Nissl or myelin stack writes one, because
+a photograph has no contour channel at all — it is tissue the whole way through. Nothing
+the toolbar sets goes into the file: not the slab, not the midline cut, not the tissue
+curve. Those say what is drawn, and this is what they are drawn from. The millimetres are
+the atlas's own, from bregma as the plates print it, which is the frame the STL export
+writes in too — a re-zero renames coordinates in the app and does not move the sections,
+and a file carrying a private origin would be the one thing about it a reader could not
+check.
+
+The stack is 24 MB and the view hands its only copy to the GPU, so the export reads the 62
+plates again rather than the page holding a second copy for the length of every visit
+against an export most of them never run. It costs the few seconds the view itself cost,
+and the note under the view says so while it runs. Where the browser has no
+`CompressionStream` the volume is written uncompressed as `.nii` rather than not at all.
 
 ### The skull
 

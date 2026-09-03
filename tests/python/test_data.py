@@ -61,8 +61,8 @@ def test_label_positions(db):
             for b in boxes:
                 assert len(b) == 4 and all(0 <= v <= 1 for v in b)
                 n += 1
-    assert n == db['verification']['label_positions_located'] == 6266
-    assert sum(len(d) for d in LP.values()) == db['verification']['ocr_confirmed'] == 3298
+    assert n == db['verification']['label_positions_located'] == 6322
+    assert sum(len(d) for d in LP.values()) == db['verification']['ocr_confirmed'] == 3338
 
 
 def test_leaders(db):
@@ -195,7 +195,11 @@ def test_volumes_consistent(db):
     R = db['region_extents']['data']
     have = {ab for d in R.values() for ab in d}
     assert set(V['data']) == have
-    assert V['summary']['structures'] == len(V['data']) == 698
+    # 685: one mesh per abbreviation with an extent somewhere. The 20 names that are
+    # no region -- the fissures, `cbw`, the vessels; see `features` -- have no extent
+    # anywhere and so no mesh, which is the point of them.
+    assert V['summary']['structures'] == len(V['data']) == 685
+    assert not (have & set(db['features']['data']))
     assert 'little-endian' in V['note']
     for ab, e in V['data'].items():
         assert e['grade'] in ('surface', 'slab')

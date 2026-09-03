@@ -324,7 +324,11 @@ def write_nifti(path, labels, grid, descrip='', unnamed=65000):
     written beside it. Nothing here needs nibabel: the header is 348 bytes of struct."""
     import gzip
     import struct
-    zyx = np.where(labels == UNASSIGNED, unnamed, labels).astype(np.uint16)   # (AP, DV, ML)
+    # cast before the where, not after: `unnamed` is 65000 and `labels` is int16, and
+    # numpy 2 refuses a Python int the array's dtype cannot hold rather than widening
+    # the result. The mask is read off the signed array, so UNASSIGNED still finds it.
+    zyx = np.where(labels == UNASSIGNED, np.uint16(unnamed),
+                   labels.astype(np.uint16))                              # (AP, DV, ML)
     arr = np.ascontiguousarray(zyx.transpose(2, 0, 1)[:, ::-1, :])        # (ML, AP asc, DV)
     nx, ny, nz = arr.shape
     res = float(grid.res)

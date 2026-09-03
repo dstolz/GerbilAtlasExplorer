@@ -6,6 +6,25 @@ carries a `version` block naming the release its derived fields were built for.
 ## [Unreleased]
 
 ### Added
+- **The 3-D stack as a NIfTI.** **NIfTI** in the 3-D controls writes the whole 62-plate stack
+  out as a gzipped NIfTI-1 volume — the reconstruction itself rather than a picture of it, so
+  it opens in ITK-SNAP, FSLeyes, Slicer or nibabel and can be resliced, measured or registered
+  against something else. The header is the 348 bytes of struct `tools/volume.py` already
+  writes for the label volume, and the file is laid out the same way: voxels x fastest in
+  (ML, AP, DV) order so it reads as RAS, with an sform putting each voxel centre at its atlas
+  millimetres — 32.4 µm across a plate, 350 µm through the stack, that anisotropy written into
+  the file rather than resampled away. The labelled drawing writes two volumes, the ink and
+  then the drawn contour, because on it the red contour is a picture in its own right; a Nissl
+  or myelin stack writes one, because a photograph has no contour channel at all. Nothing the
+  toolbar sets goes in — not the slab, not the midline cut, not the tissue curve: those say
+  what is drawn, and this is what they are drawn from. The millimetres are the atlas's own,
+  from bregma as the plates print it, the frame the STL export writes in too.
+
+  Read from the plates again rather than kept from the build: the stack is 24 MB and the view
+  hands its only copy to the GPU, so a second copy held in the page for every visit, against an
+  export most of them never run, is the wrong side of that trade. It costs the few seconds the
+  view itself cost and the note under the view says so while it runs. Written uncompressed as
+  `.nii` where the browser has no `CompressionStream`, rather than not written at all.
 - **Two 3-D views at once.** **Split** puts a second pane beside the first, and everything the
   3-D toolbar sets belongs to a pane rather than to the view: mode, density, the tissue curve,
   the slab, the midline cut, the projection, the skull, the meshes and the camera. **A** and
@@ -106,6 +125,37 @@ carries a `version` block naming the release its derived fields were built for.
   when it was built from a dirty tree — so its date and its time cannot disagree.
 
 ### Changed
+- **A fissure is not a region, and neither is `cbw`.** Twenty of the 723 names the atlas
+  prints name no ground of their own: the sixteen fissures, sulci and the rhinal incisure,
+  which are the clefts *between* regions and are drawn as the lines between them; `cbw`,
+  the white matter core of whichever lobule it runs through; and the three vessels `acer`,
+  `mcer` and `BV`. Seeding them against their neighbours handed each the ground on both
+  sides of a line that is a boundary rather than a region — `cbw` alone held 170 mm² of
+  cerebellum, which left `Crus2` a wedge of its own lobule and, on plate 54, `PM` nothing
+  but its label box. A new `features` block names the twenty and says what each is;
+  `build_region_extents.py` still seeds them, because a seed in the depth of the white
+  matter is what stops the lobules racing each other down it, and then empties them, giving
+  the 184 mm² back to whichever region is nearest measured around the atlas's own lines.
+  The lobules gain between 1.5× and 2.9× — `Crus1` 45.9 → 72.9 mm², `Crus2` 16.7 → 29.4,
+  `PM` 8.4 → 19.7, `Sim` 4.1 → 21.7 — and each is now the whole territory its fissures
+  bound, white matter included. No region loses ground; outside the cerebellum nothing moves
+  by more than 0.25 mm². `hif` and `dcw` are deliberately not in the list: the hippocampal
+  fissure is a space the atlas draws a boundary round, and the deep cerebral white matter is
+  a territory of its own rather than a name printed inside another structure.
+
+  The twenty stay searchable, listed, filtered by system, located on every plate that prints
+  them, and plotted in the projection and the label cloud. What they lose is geometry:
+  no entry in `region_extents`, no area, no volume, no mesh (685 structures carry one, down
+  from 698), and no outline on the plate. Hover or select one and every place the plate
+  prints its name is marked, with the tip saying which kind of thing it is — point at the
+  word `cbw` and it answers `cbw`, move a few pixels off and it answers the lobule whose
+  white matter that is. `region_extents` goes from 3,134 entries to 3,055, and the share of
+  polygons whose boundary is under half drawn falls from 6% to 3%: a lobule cut back to a
+  wedge was mostly invented boundary, and it is now mostly the fissure line the atlas draws.
+  `w` entries fall from 372 to 309 for the same reason. One place it over-reaches — `IntDL`
+  on plate 47, which the atlas draws as an open crescent, takes 3.7 mm² of the medullary
+  body where the hump itself is 0.6; it carries `w`, so no outline is drawn, but its mesh is
+  wide at that plane. See [METHODS](METHODS.md#region-extents).
 - The working frame no longer persists across visits by default: a new visit starts back
   at the atlas. A **Remember across visits** checkbox in the Frame dialog opts back in;
   that preference is what actually persists, and it is off until set.
@@ -119,16 +169,23 @@ carries a `version` block naming the release its derived fields were built for.
   a section that has a name rises from 93.6% to 94.3%; `df` gets its first extent, so 698
   structures now carry a mesh.
 - **No outline is drawn where the atlas draws no boundary.** The drawing sometimes seals
-  several names in one bound and prints nothing between them — the cerebellar lobules and
-  the white matter through them, the mediodorsal thalamus, the lateral hypothalamic zones —
+  several names in one bound and prints nothing between them — the cerebellar lobules
+  against each other, the mediodorsal thalamus, the lateral hypothalamic zones —
   and the extraction's split of those is an invention end to end. Entries like that now
-  carry `w` in `region_extents` (372 of 3,134), and the app draws no outline for them at
+  carry `w` in `region_extents` (309 of 3,055), and the app draws no outline for them at
   all: hovering or selecting one highlights every place the plate prints its name, and says
   why. The geometry is still stored and still partitions the section, so tracks, volumes,
   meshes and the CSVs are unchanged. A face that merely merged through a gap in the tracing
   is not affected — the test is how much of the wall the watershed put *inside* a face lands
   on ink, not how much of the whole outline does, so `CPu` and `Po` keep theirs.
   `no_drawn_outline` carries the same flag into the per-plate GeoJSON.
+
+### Fixed
+- `build_volumes.py --nifti` crashed on the pinned numpy rather than writing the label
+  volume: `volume.py` selected the sentinel 65000 against an `int16` label array, and numpy
+  2 refuses a Python int the array's dtype cannot hold instead of widening the result. The
+  cast now happens before the selection, so `data/gerbil_atlas_labels.nii.gz` and its lookup
+  table can be regenerated again.
 
 ## [0.9.0] — 2026-09-02
 

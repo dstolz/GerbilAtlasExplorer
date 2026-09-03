@@ -41,12 +41,25 @@ the whole atlas (all 186 plate images) lives inside it, 22 MB, most of that the 
   is, how much of the section it takes up, and how much of its outline the atlas actually
   draws. Either way it is the whole region that highlights, not the word. Click to select it
   and the region is outlined on both hemispheres, even where the atlas letters only one of
-  them. The few names the atlas prints *outside* the section, `rf` among them, have no
-  region to give and highlight as the label itself.
+  them. The names that are no region — the fissures and sulci, `cbw`, the vessels — have
+  none to give, and neither do the few structures no extent could be cut for; those
+  highlight as the printed name itself.
+- **A fissure is not a region, and neither is `cbw`.** Twenty of the 723 names the atlas
+  prints name no ground of their own: the sixteen fissures, sulci and the rhinal incisure,
+  which are the clefts *between* regions and are drawn as the lines between them; `cbw`,
+  the white matter core of whichever lobule it runs through rather than a lobule beside
+  them; and the three vessels. They are searched, listed, filtered, located on every plate
+  that prints them, and plotted in the projection and the label cloud like anything else —
+  hover or select one and every place the plate prints its name is marked, and the tip says
+  what it is. What they have no claim on is ground, so they have no outline, no area and no
+  mesh, and what they were being given belongs to the regions around them. On plate 54
+  `Crus2` is now the whole ansiform lobule between `icf` and `apmf`, white matter and all,
+  where `cbw` had been holding 11.8 mm² of that cerebellum and had left `Crus2` a wedge of
+  its own lobule and `PM` nothing but its label box.
 - **Where the atlas draws no boundary, none is drawn here.** Its drawing sometimes puts
   several names inside one boundary and prints nothing between them — the cerebellar
-  lobules and the white matter that runs through them, the mediodorsal thalamus, the
-  lateral hypothalamic zones. Those structures are still found, listed, measured and
+  lobules against each other, the mediodorsal thalamus, the lateral hypothalamic zones.
+  Those structures are still found, listed, measured and
   modelled, but they get no outline: hover or select one and every place the plate prints
   its name highlights instead, and the tip says why. An outline there would be a boundary
   this atlas does not have.
@@ -147,7 +160,12 @@ your browser; export them as JSON to keep or share them, and a link carries a ha
   copy carries it. **Meshes** fetches the closed surfaces built offline from the outlines
   (20 MB, once) and shows the selected structure — or a short filtered list — as a mesh,
   with **STL** to download it. Six planes in seven of a mesh are interpolated between
-  sections 350 µm apart; see [METHODS](METHODS.md#the-third-dimension). (Needs WebGL 2.)
+  sections 350 µm apart; see [METHODS](METHODS.md#the-third-dimension). **NIfTI** writes
+  the whole 62-plate stack out as a gzipped NIfTI-1 volume in the atlas's own millimetres
+  — RAS, 32.4 µm across a plate and 350 µm through it, two volumes on the labelled drawing
+  (the ink, then the drawn contour) and one on a photographed series — so it opens in
+  ITK-SNAP, FSLeyes, Slicer or nibabel; see
+  [METHODS](METHODS.md#the-stack-as-a-nifti). (Needs WebGL 2.)
 - **Split** puts a second 3D view beside the first, sharing the one stack, label cloud and
   set of meshes — so it costs pixels and nothing else. Everything above belongs to a pane
   rather than to the view: **A** and **B** choose which pane the toolbar sets, and each can
@@ -227,10 +245,17 @@ cannot be re-flattened at yours, are unavailable while it is on.
   spanning it is in both. Six structures are in no division: two arteries, a blood vessel and
   three surface fissures, which are landmarks on the section rather than parts of the brain.
 - The **region outlines** are cut from the atlas's own drawn lines, not from a published
-  segmentation — the atlas has none. 3,131 structure–plate entries have one, and each says
-  how much of its own boundary the atlas prints: the median is 98%, but **6% of regions are
+  segmentation — the atlas has none. 3,055 structure–plate entries have one, and each says
+  how much of its own boundary the atlas prints: the median is 98%, but **3% of regions are
   under half drawn**, and those outlines are dashed and labelled as inferred because that is
   what they are. Where the drawing seals a face and names nothing, nothing is claimed.
+- **A name that is no region has none of that**, and the twenty of them are named in
+  `features` in the JSON. The 184 mm² they used to be given goes to whichever region is
+  nearest around the atlas's own lines, which is how a lobule comes out whole. That split is
+  an estimate wherever the fissure line runs out, and one place it over-reaches: `IntDL` on
+  plate 47, drawn by the atlas as an open crescent, takes 3.7 mm² of the medullary body it
+  borders where the hump itself is 0.6. It carries no outline, but its mesh is wide at that
+  plane. See [METHODS](METHODS.md#region-extents).
 - Where the atlas typesets **two names into one label** — `S1Tr/ LPtA`, `Au1 (A1)` — they
   name one region between them, so both give the same outline and the app says which label
   it is. 22 labels on 31 plates are joined this way.

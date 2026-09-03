@@ -32,7 +32,12 @@ The pipeline, in order:
      no label at all are left unassigned: the atlas does not name them here,
      and growing a neighbour over them would invent a claim. Abbreviations
      the atlas typeset into one label are seeded as one, not against
-     each other -- see `label_blocks` and tools/label_blocks.py.
+     each other -- see `label_blocks` and tools/label_blocks.py. And the names
+     that are no region -- the fissures and sulci, the cerebellar white matter,
+     the vessels; atlaslib.FEATURES -- are located and then not seeded at all,
+     so the regions they were splitting keep the whole of what the atlas draws
+     a boundary round. A face lettered only with one of those still takes part:
+     the regions around it flood in rather than it becoming a hole.
   6. Score every polygon by the fraction of its border that lies on ink that
      was actually traced, as opposed to a ridge the watershed invented, and
      write that score out beside the geometry.
@@ -317,6 +322,46 @@ def build_plate(plate, DB, VECM, want_qc=False):
     byab = lut[terr]
     nreg = len(order)
 
+    # ---- give back the ground held by the names that are no region ----
+    #
+    # A fissure is the line *between* two lobules, not a lobule; `cbw` is the
+    # white matter core of whichever lobule it runs through; a vessel is not
+    # brain. None of them has ground of its own -- see atlaslib.FEATURES -- and
+    # what they were given is the lobule's: `cbw` alone held 170 mm2 of
+    # cerebellum, which left `Crus2` a wedge of its own lobule and `PM` no more
+    # than its label box.
+    #
+    # They are seeded above all the same, and deliberately. A seed on the medial
+    # axis of the white matter keeps the lobules from racing each other down it
+    # -- the watershed floods the deep first, so without one there the lobule
+    # whose label happens to sit deepest takes the whole arbor and the vermis
+    # with it -- so the ribbons either side come out split as the drawing has
+    # them. What is left is to hand that ground back, which is this: every pixel
+    # of it goes to whichever region is nearest around the atlas's own ink.
+    # Flat away from the lines and a step up on them, so the boundary lands on a
+    # line wherever one is drawn, and past the tip of a fissure -- where the
+    # atlas draws nothing, because there the two lobules really are continuous
+    # -- on the midline between them, measured around everything it does draw.
+    # No other boundary moves: a region's edge against another region is settled
+    # above and is not replayed here.
+    #
+    # The step is on `wall` rather than on the traced ink, which is the same
+    # network the faces were cut from: a region sealed into a face of its own
+    # cannot be nearest to ground outside it, however close it lies. Ink alone
+    # is not enough, because the tracing's gaps are exactly where a small
+    # nucleus would leak out -- `IntDL`, the dorsolateral hump, went from its
+    # drawn 0.57 mm2 to 3.68 of the medullary body through two of them. A step
+    # rather than a wall, all the same: ground the atlas closes and letters only
+    # with a vessel has to be reachable from the structure around it.
+    fgid = [order[ab] for ab in order if ab in A.FEATURES]
+    feat_mm2 = 0.0
+    if fgid:
+        give = np.isin(byab, fgid)
+        feat_mm2 = float(give.sum())
+        keep = np.where(give, 0, byab)
+        byab = watershed((dist <= SUPPORT_PX).astype(np.uint8), keep,
+                         mask=(keep > 0) | give)
+
     # A territory too small to be a published structure, and any face the atlas
     # left unnamed, become unassigned space rather than being handed to a
     # neighbour: the drawing closes them and does not name them, and absorbing
@@ -439,6 +484,8 @@ def build_plate(plate, DB, VECM, want_qc=False):
                  faces=int((fsize[1:] >= MIN_FACE_PX).sum()),
                  seeds=len(printed), snapped=snapped, dropped=dropped,
                  mirrored=mirrored, sole=sole, led=led,
+                 feat=sum(1 for pr in printed if pr[0] in A.FEATURES),
+                 feat_mm2=round(feat_mm2 * mm2, 3),
                  regions=len(out),
                  split=sum(1 for v in out.values() if v.get('w')),
                  polys=sum(len(v['g']) for v in out.values()),
@@ -585,10 +632,11 @@ def main():
             write_qc(p, qc)
         print('plate %2d: %3d regions %4d polys %6d pts | %3d seeds '
               '(%d snapped, %d dropped, %d mirrored) | %2d unassigned | '
-              '%2d split | %.0f%% covered'
+              '%2d split | %.0f%% covered | %d no region, %.1f mm2 back'
               % (p, st['regions'], st['polys'], st['pts'], st['seeds'],
                  st['snapped'], st['dropped'], st['mirrored'],
-                 st['unassigned'], st['split'], 100 * st['covered']), flush=True)
+                 st['unassigned'], st['split'], 100 * st['covered'],
+                 st['feat'], st['feat_mm2']), flush=True)
 
     sup = np.array([s for v in data.values() for r in v.values() for s in r['s']]
                    or [0.0])
@@ -603,6 +651,9 @@ def main():
         labels_relocated=sum(r['snapped'] for r in rows),
         labels_dropped=sum(r['dropped'] for r in rows),
         labels_mirrored=sum(r['mirrored'] for r in rows),
+        labels_naming_no_region=sum(r['feat'] for r in rows),
+        names_that_are_no_region=len(A.FEATURES),
+        mm2_returned_to_the_regions=round(sum(r['feat_mm2'] for r in rows), 1),
         entries_without_a_drawn_outline=sum(r['split'] for r in rows),
         traced_fraction_median=round(float(np.median(sup)), 3),
         traced_fraction_ge_90=round(float((sup >= .9).mean()), 3),
@@ -614,6 +665,7 @@ def main():
 
     if A.refuse_partial_write(a, 'region_extents'):
         return
+    write_features(DB)
     write_block(DB, dict(
         note=NOTE,
         derivation=DERIV,
@@ -622,6 +674,32 @@ def main():
         summary=summary,
         data={p: data[p] for p in sorted(data, key=int)},
         unassigned={p: unass[p] for p in sorted(unass, key=int)}))
+
+
+def write_features(DB):
+    """`features` into the database, from atlaslib.FEATURES.
+
+    It is written here rather than by a pass of its own because this is the
+    script whose behaviour it is: these are the names it declines to seed. Kept
+    next to `structures`, which is what it qualifies."""
+    block = A.features_block()
+    if DB.get('features') == block:
+        return
+    if 'features' in DB:
+        DB['features'] = block
+    else:                                       # a new block, in reading order
+        items = list(DB.items())
+        DB.clear()
+        for k, v in items:
+            DB[k] = v
+            if k == 'structures':
+                DB['features'] = block
+    n = {}
+    for kind in block['data'].values():
+        n[kind] = n.get(kind, 0) + 1
+    print('features: %d names the atlas draws no region for (%s)'
+          % (len(block['data']),
+             ', '.join('%d %s' % (v, k) for k, v in sorted(n.items()))))
 
 
 def write_block(DB, block):
@@ -655,6 +733,8 @@ def check_tiling(data, unass, DB):
             worst_gap = max(worst_gap, abs(abs(s) - o) / o)
         lead = DB.get('label_leaders', {}).get('data', {}).get(p, {})
         for ab, boxes in DB['label_positions']['data'].get(p, {}).items():
+            if ab in A.FEATURES:                # names no region, so has none to be in
+                continue
             v = regs.get(name_map(DB, int(p)).get(ab, ab))
             if not v:
                 continue
@@ -736,12 +816,18 @@ def validation_text(v, DB):
     denominators included: what the label pass located is the (plate, abbreviation)
     pairs in label_positions, what the index lists is the plates of every structure."""
     pc = lambda k: '%.0f%%' % (100 * v[k])
-    located = sum(len(d) for d in DB['label_positions']['data'].values())
-    indexed = sum(len(s['plates']) for s in DB['structures'])
+    # Both denominators leave out the names that are no region: they can never
+    # carry an area, so counting them would read as a shortfall in the
+    # extraction rather than as what the atlas draws.
+    located = sum(1 for d in DB['label_positions']['data'].values()
+                  for ab in d if ab not in A.FEATURES)
+    indexed = sum(len(s['plates']) for s in DB['structures']
+                  if s['abbr'] not in A.FEATURES)
     n = v['structure_plate_entries']
     return (
         "%(n)d structure-plate entries carry an area -- %(of_loc)s of the %(loc)s the "
-        "label pass located, %(of_idx)s of the %(idx)s the published index lists -- as "
+        "label pass located, %(of_idx)s of the %(idx)s the published index lists, both "
+        "counted over the structures that are regions -- as "
         "%(poly)d polygons over %(pts)d points. Of the %(seed)d printed labels "
         "seeded, %(led)d are printed outside their region with a line drawn "
         "back into it and were seeded at the end of that line rather than on "
@@ -750,7 +836,15 @@ def validation_text(v, DB):
         "largest face within a millimetre; %(drop)d could not be resolved at "
         "all. %(mir)d more seeds are not printed labels at all but mirrors of "
         "one about ML 0, filling a face the drawing seals on the hemisphere the "
-        "atlas did not letter. %(split)d entries carry `w`: they sit only inside "
+        "atlas did not letter. %(feat)d of the seeds name no region at all -- the "
+        "%(featn)d fissures, sulci, vessels and the cerebellar white matter that "
+        "`features` lists -- and the %(fmm)s mm2 they were holding is given back "
+        "at the end of the pass, each pixel of it to whichever region is nearest "
+        "around the ink the atlas drew. They are seeded and then emptied rather "
+        "than left out, because a seed in the depth of the white matter is what "
+        "stops the lobules racing each other down it; what it must not do is "
+        "keep the ground, which is the lobule's. It is why `Crus2` is its whole "
+        "lobule here rather than a wedge of it. %(split)d entries carry `w`: they sit only inside "
         "boundaries the atlas draws around more than one name and prints "
         "nothing within, and most of the border stored for them is the split "
         "rather than the ink. Three checks, "
@@ -771,6 +865,8 @@ def validation_text(v, DB):
              pts=v['points'], seed=v['labels_seeded'],
              led=v['labels_on_a_leader'], snap=v['labels_relocated'],
              drop=v['labels_dropped'], mir=v['labels_mirrored'],
+             feat=v['labels_naming_no_region'], featn=v['names_that_are_no_region'],
+             fmm='{:,.0f}'.format(v['mm2_returned_to_the_regions']),
              split=v['entries_without_a_drawn_outline'],
              share=pc('boundary_edges_shared_exactly'),
              inside=pc('label_inside_its_own_region'),
@@ -791,14 +887,17 @@ NOTE = ("Area of each structure on each plate, as a list of closed polygons of "
         "has no outline of its own on this plate: every one of its seeds fell "
         "inside a boundary the atlas draws around more than one name and prints "
         "nothing within, and most of the border stored here is that split "
-        "rather than ink. The cerebellar lobules and the white matter between "
-        "them are the whole of the cerebellum; the mediodorsal thalamus and the "
-        "lateral hypothalamic zones are the rest of it. Read the geometry of a "
-        "`w` entry as the extraction's best guess at where one name gives way "
-        "to the next, and not as a boundary to show anyone. Abbreviations the "
-        "atlas typesets into one label -- see `label_blocks` -- share one entry, "
-        "filed under the name the label leads with, because they name one "
-        "region between them.")
+        "rather than ink. The cerebellar lobules are the largest of them; the "
+        "mediodorsal thalamus and the lateral hypothalamic zones are most of "
+        "the rest. Read the geometry of a `w` entry as the extraction's best "
+        "guess at where one name gives way to the next, and not as a boundary "
+        "to show anyone. Abbreviations the atlas typesets into one label -- see "
+        "`label_blocks` -- share one entry, filed under the name the label leads "
+        "with, because they name one region between them. The names that are no "
+        "region -- see `features` -- have no entry here at all: a fissure is the "
+        "line between two regions rather than a region, so the ground either "
+        "side of it belongs to the regions it separates, and that is where it "
+        "is filed.")
 
 DERIV = ("Built by tools/build_region_extents.py from the traced outlines in "
          "svg/ and the located abbreviations in label_positions. The traced "
@@ -814,7 +913,11 @@ DERIV = ("Built by tools/build_region_extents.py from the traced outlines in "
          "abbreviation names, and where more than half of that face reflects "
          "into the faces the mirrors came from; what is printed in a face "
          "always wins, so nothing here renames anything. Faces still holding no "
-         "label are left unassigned rather than absorbed. "
+         "label are left unassigned rather than absorbed. The abbreviations "
+         "`features` lists are located as every label is and then not seeded: "
+         "they name a cleft, a white matter core or a vessel rather than a "
+         "territory, and a face lettered only with one of them is left in play "
+         "for the regions around it to flood rather than made a hole. "
          "Polygons are simplified by Douglas-Peucker at 2 px, as brain_outline "
          "is. See METHODS.md.")
 
