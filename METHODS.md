@@ -1264,6 +1264,36 @@ this changes meaning — and the note under the view quotes the window whenever 
 because a windowed render is a picture of the tissue after something was done to it and the
 reader of somebody else's link has no other way of knowing.
 
+### The stack as a NIfTI
+
+**NIfTI** in the 3-D controls writes the stack out as a gzipped NIfTI-1 volume — the
+reconstruction itself rather than a picture of it, so it opens in ITK-SNAP, FSLeyes,
+Slicer or nibabel and can be resliced, measured, or registered against something else.
+The header is the same 348 bytes of struct `tools/volume.py` writes for the label volume,
+and the file is laid out the same way: voxels x fastest in (ML, AP, DV) order so it reads
+as RAS — x to the animal's right, y anterior, z dorsal — with an sform putting each voxel
+centre at its atlas millimetres. Across a plate the voxel is the printed coordinate box
+divided by the texture, 32.4 µm or a little under two plate pixels; through the stack it
+is the plate spacing, 350 µm. That anisotropy is written into the file rather than
+resampled away, which is the honest way to hand it on: a reader that interpolates it can
+say so, and one that does not is not misled about what was actually sampled.
+
+The labelled drawing writes two volumes, the ink and then the drawn contour, because on it
+the red contour is a picture in its own right; a Nissl or myelin stack writes one, because
+a photograph has no contour channel at all — it is tissue the whole way through. Nothing
+the toolbar sets goes into the file: not the slab, not the midline cut, not the tissue
+curve. Those say what is drawn, and this is what they are drawn from. The millimetres are
+the atlas's own, from bregma as the plates print it, which is the frame the STL export
+writes in too — a re-zero renames coordinates in the app and does not move the sections,
+and a file carrying a private origin would be the one thing about it a reader could not
+check.
+
+The stack is 24 MB and the view hands its only copy to the GPU, so the export reads the 62
+plates again rather than the page holding a second copy for the length of every visit
+against an export most of them never run. It costs the few seconds the view itself cost,
+and the note under the view says so while it runs. Where the browser has no
+`CompressionStream` the volume is written uncompressed as `.nii` rather than not at all.
+
 ### The skull
 
 > **Experimental.** The skull overlay and its registration are new and not yet fully
