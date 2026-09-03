@@ -186,6 +186,13 @@
         <label class="tg" id="pjfw" hidden title="Draw this view in your working frame instead of the atlas’s — the rotation you set, put on the picture. Appears once a pitch, roll or yaw is set."><input type="checkbox" id="ckpf">In frame</label>
       </span>
       <span class="vctl" id="ctl3d" hidden>
+        <label class="tg" title="A second 3-D view beside this one, sharing the stack and the meshes: the same brain rendered a second way, or seen from a second angle. It opens as a copy of this one."><input type="checkbox" id="v3sp">Split</label>
+        <span class="seg" id="v3pseg" hidden aria-label="Which pane these controls set">
+          <button type="button" class="on" data-p="0" title="Set the left or upper pane">A</button>
+          <button type="button" data-p="1" title="Set the right or lower pane">B</button>
+        </span>
+        <label class="tg" id="v3lkw" hidden title="Turn, zoom and pan both panes together, holding whatever angle apart they were set to. Untick to rotate them independently; Reset view brings a locked pair back onto the one default."><input type="checkbox" id="v3lk" checked>Lock</label>
+        <span class="tsep"></span>
         <span class="seg" id="m3seg">
           <button type="button" class="on" data-r="contour">Contours</button>
           <button type="button" data-r="volume">Volume</button>
@@ -319,6 +326,7 @@
       <div class="view" id="v3dview">
         <div class="v3w" id="v3w">
           <canvas id="v3c"></canvas>
+          <div class="v3pn" id="v3pn" hidden aria-hidden="true"><span class="v3dv" id="v3dv"></span><span class="v3on" id="v3on"></span><span class="v3lb on" id="v3lb0">A</span><span class="v3lb" id="v3lb1">B</span></div>
           <div class="tip" id="v3t" hidden></div>
           <div class="v3msg" id="v3msg" hidden aria-live="polite"></div>
         </div>

@@ -60,6 +60,7 @@ h1{margin:0;font-size:clamp(15.5px,.3vw + 14px,18px);font-weight:650;letter-spac
 .side,.viewer{display:flex;flex-direction:column;min-height:0;overflow:hidden}
 
 /* ---------- segmented controls: sidebar mode, main view, list scope ---------- */
+.seg[hidden]{display:none}
 .seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;
   background:var(--panel2);flex:none}
 .seg button{border:0;border-left:1px solid var(--line);background:transparent;color:var(--muted);
@@ -482,7 +483,22 @@ label.z.anlab{display:inline-block;cursor:pointer}
 .v3w canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
 .v3w.drag canvas{cursor:grabbing}
 .v3w.hot canvas{cursor:pointer}
-.v3msg{position:absolute;inset:0;display:grid;place-content:center;justify-items:center;
+/* Two panes on the one canvas: the rule between them, the letter on each and the frame
+   round the one the toolbar is setting. Elements over the canvas rather than lines drawn
+   into it, so they take the sheet's colours and stay a hairline at any pixel ratio. They
+   sit under the tooltip and the build message, which are the things that must be readable
+   over anything. Positioned from the same rectangles the viewports are cut from. */
+.v3pn{position:absolute;inset:0;z-index:2;pointer-events:none}
+.v3pn[hidden]{display:none}
+.v3dv{position:absolute;background:var(--line)}
+/* the frame says which pane the toolbar is on and nothing else, so it is kept quiet: the
+   thing being compared is inside it, and a loud border reads as part of the picture */
+.v3on{position:absolute;box-sizing:border-box;border:1px solid var(--accent);
+  border-radius:3px;opacity:.38}
+.v3lb{position:absolute;font-size:11px;font-weight:600;line-height:1.4;padding:1px 6px;
+  border-radius:4px;background:var(--panel2);color:var(--muted);border:1px solid var(--line)}
+.v3lb.on{color:var(--accent);border-color:var(--accent)}
+.v3msg{position:absolute;inset:0;z-index:3;display:grid;place-content:center;justify-items:center;
   text-align:center;gap:8px;padding:22px;color:var(--muted);font-size:12.5px;line-height:1.55}
 .v3msg b{color:var(--ink);font-size:14px;font-weight:600}
 .v3msg[hidden]{display:none}

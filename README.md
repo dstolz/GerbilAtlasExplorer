@@ -161,6 +161,17 @@ your browser; export them as JSON to keep or share them, and a link carries a ha
   (20 MB, once) and shows the selected structure — or a short filtered list — as a mesh,
   with **STL** to download it. Six planes in seven of a mesh are interpolated between
   sections 350 µm apart; see [METHODS](METHODS.md#the-third-dimension). (Needs WebGL 2.)
+- **Split** puts a second 3D view beside the first, sharing the one stack, label cloud and
+  set of meshes — so it costs pixels and nothing else. Everything above belongs to a pane
+  rather than to the view: **A** and **B** choose which pane the toolbar sets, and each can
+  have its own mode, contrast, slab, midline cut, projection, skull and meshes. Contours
+  beside the volume they came from, a whole brain beside a slab, a structure's mesh beside
+  the section it was built from. Clicking into a pane makes it the one the toolbar is on.
+  **Lock** turns, zooms and pans both panes together, holding whatever angle apart they
+  were set to — so one pair can be a lateral and a dorsal view of the same brain, moving as
+  one. Untick it to rotate them separately; **Reset view** brings a locked pair back onto
+  the one default, which is also how a pair that has drifted apart is brought together. The
+  link carries both panes.
 
 **Take it with you**
 - **PNG** of the current plate with overlays, **SVG** of the same sheet with the regional
