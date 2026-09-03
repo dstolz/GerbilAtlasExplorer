@@ -160,7 +160,12 @@ your browser; export them as JSON to keep or share them, and a link carries a ha
   copy carries it. **Meshes** fetches the closed surfaces built offline from the outlines
   (20 MB, once) and shows the selected structure — or a short filtered list — as a mesh,
   with **STL** to download it. Six planes in seven of a mesh are interpolated between
-  sections 350 µm apart; see [METHODS](METHODS.md#the-third-dimension). (Needs WebGL 2.)
+  sections 350 µm apart; see [METHODS](METHODS.md#the-third-dimension). **NIfTI** writes
+  the whole 62-plate stack out as a gzipped NIfTI-1 volume in the atlas's own millimetres
+  — RAS, 32.4 µm across a plate and 350 µm through it, two volumes on the labelled drawing
+  (the ink, then the drawn contour) and one on a photographed series — so it opens in
+  ITK-SNAP, FSLeyes, Slicer or nibabel; see
+  [METHODS](METHODS.md#the-stack-as-a-nifti). (Needs WebGL 2.)
 - **Split** puts a second 3D view beside the first, sharing the one stack, label cloud and
   set of meshes — so it costs pixels and nothing else. Everything above belongs to a pane
   rather than to the view: **A** and **B** choose which pane the toolbar sets, and each can

@@ -46,6 +46,7 @@ for (const [name, url] of [['bundle', BUNDLE], ['lean', LEAN]]) {
       expect(await page.evaluate(() => document.querySelectorAll('#pjl circle').length)).toBeGreaterThan(0);
       await page.click('#vseg button[data-t="v3d"]');
       await page.waitForFunction(() => window.__gae && v3ready, null, { timeout: 60000 });
+      await expect(page.locator('#v3nii')).toBeVisible();   // the export appears with the stack
       expect(errors).toEqual([]);
     });
 
@@ -74,31 +75,165 @@ test('the SVG export carries one named group per region', async ({ page }) => {
   expect(svg).toContain('id="region-Mi"');
 });
 
-/* A name the atlas seals in a bound with other names and prints nothing between: no
-   outline is drawn for it, and every place the plate prints the name highlights instead.
-   `cbw` on plate 52 is the worst of them -- 11 labels through the whole cerebellum. */
-test('a name the atlas draws no boundary round highlights its labels, not a region',
+/* The NIfTI export, checked on a volume made up for the purpose rather than on the plates:
+   what can silently go wrong here is the geometry and the two axis flips, and neither of
+   them needs a real stack to catch. Building one takes a minute under swiftshader and the
+   test above already waits for one.
+
+   The header is asserted twice over: against the app's own calibration, so a recalibration
+   moves the file with it, and against the plate table's printed APs, so it cannot move
+   somewhere the atlas does not say. */
+test('the NIfTI export writes an RAS volume at the atlas\u2019s own millimetres', async ({ page }) => {
+  await page.goto(BUNDLE + '#p30');
+  const r = await page.evaluate(() => {
+    const N = V3W * V3H, nv = N * V3D;
+    // a pattern that differs in every voxel of the source, so a wrong index shows
+    const pat = (k, y, x, c) => (k * 7 + y * 3 + x * 5 + c * 11) & 255;
+    const vol = new Uint8Array(nv * 2);
+    for (let k = 0; k < V3D; k++) for (let y = 0; y < V3H; y++) for (let x = 0; x < V3W; x++)
+      for (let c = 0; c < 2; c++) vol[(k * N + y * V3W + x) * 2 + c] = pat(k, y, x, c);
+    const buf = window.__gae.v3niiBuf(vol, 'drawing'), v = new DataView(buf);
+    const out = new Uint8Array(buf, 352);
+    // a voxel of the file is the source voxel the (ML, AP up, DV up) mapping names
+    let wrong = 0;
+    for (const [x, j, l, c] of [[0, 0, 0, 0], [543, 61, 361, 1], [1, 0, 361, 0], [7, 13, 200, 1],
+                                [543, 0, 0, 1], [0, 61, 0, 0], [271, 30, 180, 0]])
+      if (out[c * nv + x + V3W * (j + V3D * l)] !== pat(V3D - 1 - j, V3H - 1 - l, x, c)) wrong++;
+    const f32 = o => v.getFloat32(o, true), i16 = o => v.getInt16(o, true);
+    const srow = o => [f32(o), f32(o + 4), f32(o + 8), f32(o + 12)];
+    const fx = (V3C[2] - V3C[0]) / V3W, fy = (V3C[3] - V3C[1]) / V3H;
+    const one = window.__gae.v3niiBuf(vol, 'nissl');
+    return {
+      wrong, bytes: buf.byteLength, magic: String.fromCharCode(...new Uint8Array(buf, 344, 3)),
+      hdr: v.getInt32(0, true), dim: [0, 1, 2, 3, 4].map(i => i16(40 + i * 2)),
+      datatype: i16(70), bitpix: i16(72), voxoff: f32(108), units: v.getUint8(123),
+      sform: i16(254), pixdim: [1, 2, 3].map(i => f32(76 + i * 4)),
+      x: srow(280), y: srow(296), z: srow(312),
+      want: { dx: fx / ML_PXMM, dz: fy / DV_PXMM, dy: 0.35,
+              x0: toML(V3C[0] + fx / 2), z0: toDV(V3C[1] + (V3H - 0.5) * fy) },
+      ap: [P[V3D - 1].bregma, P[0].bregma], V3W, V3H, V3D,
+      // one volume, not two, where the source has no drawn contour to put in a second
+      nissl: { dim0: new DataView(one).getInt16(40, true), bytes: one.byteLength },
+    };
+  });
+  expect(r.wrong).toBe(0);
+  expect(r.hdr).toBe(348);
+  expect(r.magic).toBe('n+1');
+  expect(r.datatype).toBe(2);          // uint8
+  expect(r.bitpix).toBe(8);
+  expect(r.voxoff).toBe(352);
+  expect(r.units).toBe(2);             // mm
+  expect(r.sform).toBe(1);
+  // (ML, AP, DV), with the drawing's two channels as two volumes and nothing else in it
+  expect(r.dim).toEqual([4, r.V3W, r.V3D, r.V3H, 2]);
+  expect(r.bytes).toBe(352 + r.V3W * r.V3H * r.V3D * 2);
+  expect(r.nissl.dim0).toBe(3);
+  expect(r.nissl.bytes).toBe(352 + r.V3W * r.V3H * r.V3D);
+  // the voxel and the sform are the app's own calibration, not a second copy of it
+  const near = (a, b) => expect(a).toBeCloseTo(b, 5);
+  near(r.pixdim[0], r.want.dx); near(r.pixdim[1], r.want.dy); near(r.pixdim[2], r.want.dz);
+  expect(r.x).toEqual([r.pixdim[0], 0, 0, r.x[3]]);   // diagonal: no rotation, no shear
+  expect(r.y).toEqual([0, r.pixdim[1], 0, r.y[3]]);
+  expect(r.z).toEqual([0, 0, r.pixdim[2], r.z[3]]);
+  near(r.x[3], r.want.x0); near(r.z[3], r.want.z0);
+  // and the AP axis runs from the last plate's printed bregma to the first plate's
+  near(r.y[3], r.ap[0]);
+  near(r.y[3] + (r.V3D - 1) * r.pixdim[1], r.ap[1]);
+});
+
+/* The export re-reads the 62 plates, which takes a couple of seconds -- long enough that
+   a click with no visible response would read as broken. The button is what the eye is on
+   right after the click, so the feedback goes there first: its own label counts the read
+   up to 100%, names the two short steps after it, and lands back on itself once the file
+   is handed to the browser -- never stuck on a stale percentage or silently re-enabled. */
+test('the NIfTI button shows its own progress while the file is written', async ({ page }) => {
+  await page.goto(BUNDLE + '#p30&t=v3d');
+  await page.waitForFunction(() => window.__gae && v3ready, null, { timeout: 60000 });
+  const btn = page.locator('#v3nii');
+  await expect(btn).toHaveText('NIfTI');
+  await page.evaluate(() => {
+    window.__labels = [];
+    const b = document.getElementById('v3nii');
+    window.__mo = new MutationObserver(() => window.__labels.push(b.textContent));
+    window.__mo.observe(b, { childList: true, characterData: true, subtree: true });
+  });
+  await btn.click();
+  await expect(btn).toBeDisabled();
+  await expect(btn).not.toHaveText('NIfTI');   // some busy label, before the file is ready
+  const dl = await page.waitForEvent('download');
+  expect(dl.suggestedFilename()).toBe('gerbil_atlas_stack_drawing.nii.gz');
+  const labels = await page.evaluate(() => { window.__mo.disconnect(); return window.__labels; });
+  expect(labels[0]).toBe('Reading 0%');
+  expect(labels).toContain('Reading 100%');
+  expect(labels).toContain('Writing…');
+  expect(labels).toContain('Zipping…');
+  expect(labels[labels.length - 1]).toBe('NIfTI');
+  await expect(btn).toBeEnabled();
+});
+
+/* Two different things end in no outline being drawn, and they are encoded differently
+   because they are not the same claim. Plate 52 carries one of each, which is why both
+   tests below sit on it.
+
+   `cbw` names no region at all -- see `features` -- so it has no entry in `region_extents`
+   anywhere, no area, no volume and no mesh. The 11 labels it prints through the cerebellum
+   are the whole of what the atlas says about where it is. */
+test('a name that is no region has no entry, and highlights the name it prints',
   async ({ page }) => {
     await page.goto(BUNDLE + '#p52');
-    const boxes = await page.evaluate(() => window.__REGION__.r['52'].cbw.w
-      && window.__BOX__['52'].cbw.length);
-    expect(boxes).toBe(11);
+    const d = await page.evaluate(() => ({
+      entry: window.__REGION__.r['52'].cbw === undefined,
+      kind: window.__ATLAS__.features.cbw,
+      labels: window.__BOX__['52'].cbw.length,
+      anywhere: Object.values(window.__REGION__.r).some(b => 'cbw' in b),
+    }));
+    expect(d).toEqual({ entry: true, kind: 'white matter', labels: 11, anywhere: false });
+    // hovering the printed word says what kind of thing it is, and marks that word alone
     const im = await page.locator('#ov').boundingBox();
     const at = await page.evaluate(() => window.__BOX__['52'].cbw[0].slice(0, 2));
+    await page.mouse.move(im.x + at[0] * im.width, im.y + at[1] * im.height);
+    await expect(page.locator('#tip')).toContainText('the white matter of the lobules it runs through');
+    await expect(page.locator('#hl')).toBeVisible();
+    await expect(page.locator('#hr')).toBeHidden();
+    // selecting it circles every label and outlines nothing
+    await page.goto(BUNDLE + '#p52/cbw');
+    await expect(page.locator('#vhint')).toContainText('the ground it lies in belongs to the regions around it');
+    expect(await page.evaluate(() => document.querySelectorAll('#om ellipse').length)).toBe(11);
+    expect(await page.evaluate(() => document.querySelectorAll('#om path').length)).toBe(0);
+    // and the lobule whose white matter that is holds the ground instead
+    await page.goto(BUNDLE + '#p52/Sp5I');
+    await expect(page.locator('#vhint')).toContainText('Sp5I outlined');
+  });
+
+/* `Crus2` on plate 52 is the other case: it *has* ground -- 7.57 mm2 of section, a mesh,
+   a share of every track and volume read off it -- but every label of it falls inside a
+   bound the atlas draws round more than one name and prints nothing within, so there is no
+   boundary of its own to draw. That is `w`, and 309 entries still carry it. */
+test('a name the atlas draws no boundary round keeps its area and highlights its labels',
+  async ({ page }) => {
+    await page.goto(BUNDLE + '#p52');
+    const d = await page.evaluate(() => ({
+      w: window.__REGION__.r['52'].Crus2.w,
+      area: window.__REGION__.r['52'].Crus2.a,
+      labels: window.__BOX__['52'].Crus2.length,
+    }));
+    expect(d.w).toBe(1);
+    expect(d.area).toBeGreaterThan(0);          // unlike a name that is no region
+    expect(d.labels).toBe(4);
+    const im = await page.locator('#ov').boundingBox();
+    const at = await page.evaluate(() => window.__BOX__['52'].Crus2[0].slice(0, 2));
     await page.mouse.move(im.x + at[0] * im.width, im.y + at[1] * im.height);
     await expect(page.locator('#tip')).toContainText('draws none of its own here');
     const hr = page.locator('#hr');
     await expect(hr).toHaveClass('lab');
     // one closed rectangle per printed label, and no region outline
-    expect(await hr.getAttribute('d')).toMatch(/^(M[\d.]+ [\d.]+H[\d.]+V[\d.]+H[\d.]+Z){11}$/);
-    // selecting it circles the labels instead of outlining anything
-    await page.goto(BUNDLE + '#p52/cbw');
+    expect(await hr.getAttribute('d')).toMatch(/^(M[\d.]+ [\d.]+H[\d.]+V[\d.]+H[\d.]+Z){4}$/);
+    // selecting it circles the labels, and still quotes the area it has
+    await page.goto(BUNDLE + '#p52/Crus2');
     await expect(page.locator('#vhint')).toContainText('no outline of its own to draw');
-    expect(await page.evaluate(() => document.querySelectorAll('#om ellipse').length)).toBe(11);
+    await expect(page.locator('#vhint')).toContainText('mm² of section here');
+    expect(await page.evaluate(() => document.querySelectorAll('#om ellipse').length)).toBe(4);
     expect(await page.evaluate(() => document.querySelectorAll('#om path').length)).toBe(0);
-    // a neighbour the atlas does bound is unaffected
-    await page.goto(BUNDLE + '#p52/Sp5I');
-    await expect(page.locator('#vhint')).toContainText('Sp5I outlined');
   });
 
 /* The atlas letters one hemisphere for some names; the other is named by mirroring. */

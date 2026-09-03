@@ -513,6 +513,15 @@ The geometry is kept and still partitions the section, because a track and a vol
 be read off something; it is a best guess at where one name gives way to the next, and not a
 boundary to show anyone.
 
+**`w` is not the same claim as being no region at all, and the two are encoded apart on
+purpose.** Both end in no outline being drawn, which is the whole of what they share. A `w`
+entry *has* ground: `Crus2` on plate 52 is 7.57 mm² of section, with a mesh, a volume and a
+share of every track read through it — what it lacks is a boundary of its own to draw there.
+A name that is no region has no ground anywhere, so it has no entry in `region_extents` at
+all, no area, no volume and no mesh. Collapsing the second into the first would give `cbw`
+back the 170 mm² of cerebellum step 7 exists to take off it. Plate 52 carries one of each,
+and `tests/js/smoke.spec.js` tests them separately for that reason.
+
 End to end, in the app: pointing at each of the 6,292 printed labels in turn resolves to a
 structure every time, and to the right one 6,288 times. **5,329 of them are answered with an
 outline.** 542 are answered with the printed name because the entry carries `w` and there is
@@ -1250,6 +1259,36 @@ in hundredths, written only when one of them is off its default — so no link w
 this changes meaning — and the note under the view quotes the window whenever one is set,
 because a windowed render is a picture of the tissue after something was done to it and the
 reader of somebody else's link has no other way of knowing.
+
+### The stack as a NIfTI
+
+**NIfTI** in the 3-D controls writes the stack out as a gzipped NIfTI-1 volume — the
+reconstruction itself rather than a picture of it, so it opens in ITK-SNAP, FSLeyes,
+Slicer or nibabel and can be resliced, measured, or registered against something else.
+The header is the same 348 bytes of struct `tools/volume.py` writes for the label volume,
+and the file is laid out the same way: voxels x fastest in (ML, AP, DV) order so it reads
+as RAS — x to the animal's right, y anterior, z dorsal — with an sform putting each voxel
+centre at its atlas millimetres. Across a plate the voxel is the printed coordinate box
+divided by the texture, 32.4 µm or a little under two plate pixels; through the stack it
+is the plate spacing, 350 µm. That anisotropy is written into the file rather than
+resampled away, which is the honest way to hand it on: a reader that interpolates it can
+say so, and one that does not is not misled about what was actually sampled.
+
+The labelled drawing writes two volumes, the ink and then the drawn contour, because on it
+the red contour is a picture in its own right; a Nissl or myelin stack writes one, because
+a photograph has no contour channel at all — it is tissue the whole way through. Nothing
+the toolbar sets goes into the file: not the slab, not the midline cut, not the tissue
+curve. Those say what is drawn, and this is what they are drawn from. The millimetres are
+the atlas's own, from bregma as the plates print it, which is the frame the STL export
+writes in too — a re-zero renames coordinates in the app and does not move the sections,
+and a file carrying a private origin would be the one thing about it a reader could not
+check.
+
+The stack is 24 MB and the view hands its only copy to the GPU, so the export reads the 62
+plates again rather than the page holding a second copy for the length of every visit
+against an export most of them never run. It costs the few seconds the view itself cost,
+and the note under the view says so while it runs. Where the browser has no
+`CompressionStream` the volume is written uncompressed as `.nii` rather than not at all.
 
 ### The skull
 
