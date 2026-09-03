@@ -1,9 +1,9 @@
 abbr,name,systems,first_plate,last_plate,n_plates,plates,n_labels,n_plates_labelled,label_ap_bregma_median_mm,label_ml_abs_median_mm,label_dv_median_mm,n_plates_with_extent,area_mm2_sum,area_mm2_max,traced_fraction_min,volume_mm3,mesh_grade,n_components,centre_ml_mm,centre_dv_mm,centre_ap_mm
 1,layer 1 of cortex,cortex,11,33,23,11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33,49,17,-0.6,3.91,-7.64,16,17.948,1.764,0.92,5.9473,surface,7,-1.1,-7.62,-0.08
-10Cb,10th cerebellar lobule (nodule),cerebellum,50,55,6,50 51 52 53 54 55,6,6,-10.23,0.04,-4.77,6,10.699,2.704,0.66,3.9824,surface,1,0.1,-4.71,-10.26
+10Cb,10th cerebellar lobule (nodule),cerebellum,50,55,6,50 51 52 53 54 55,6,6,-10.23,0.04,-4.77,6,10.112,2.61,0.7,3.9508,surface,1,0.08,-4.72,-10.26
 10N,dorsal motor nucleus of vagus,motor,53,58,6,53 54 55 56 57 58,10,6,-11.27,0.36,-6.01,6,0.71,0.151,0.94,0.2318,surface,3,0.45,-5.96,-10.95
 10n,vagus nerve,motor,52,52,1,52,3,1,-10.05,1.56,-6.64,1,0.607,0.607,0.75,0.2014,slab,3,-1.65,-6.77,-10.04
-11N,accessory nerve nucleus,motor,60,62,3,60 61 62,6,3,-13.2,0.42,-7.27,2,0.426,0.267,0.53,0.11,slab,2,0.44,-7.5,-13.33
+11N,accessory nerve nucleus,motor,60,62,3,60 61 62,6,3,-13.2,0.42,-7.27,1,0.267,0.267,0.91,0.0991,slab,2,0.36,-7.27,-13.21
 12GH,"hypoglossal nucleus, geniohyoid part",motor,57,58,2,57 58,2,2,-11.98,0.59,-6.61,2,0.129,0.08,0.68,0.0461,slab,1,0.62,-6.57,-11.94
 12n,hypoglossal nerve,motor,53,58,6,53 54 55 56 57 58,9,6,-11.45,0.5,-7.1,6,2.79,1.095,0.26,0.7334,surface,4,-0.62,-7.14,-11.55
 12N,hypoglossal nucleus,motor,51,58,8,51 52 53 54 55 56 57 58,17,8,-11.1,0.17,-6.18,8,2.146,0.463,0.36,0.8534,surface,2,0.04,-6.25,-11.23
@@ -11,27 +11,27 @@ abbr,name,systems,first_plate,last_plate,n_plates,plates,n_labels,n_plates_label
 2,layer 2 of cortex,cortex,11,33,23,11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33,79,23,0.8,2.66,-7.25,22,7.886,0.548,0.56,2.4019,surface,26,-0.76,-6.89,3.61
 2Cb,2nd cerebellar lobule,cerebellum,43,46,4,43 44 45 46,4,4,-7.42,0.07,-4.33,4,12.796,6.569,0.63,4.2615,surface,1,0.35,-4.2,-7.57
 3,layer 3 of cortex,cortex,11,33,23,11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33,68,23,0.1,3.58,-7.29,21,26.145,2.564,0.39,9.0708,surface,12,4.02,-7.3,-0.72
-3Cb,3rd cerebellar lobule,cerebellum,43,49,7,43 44 45 46 47 48 49,9,7,-7.6,0.09,-3.27,6,18.651,9.984,0.21,5.4713,surface,2,0.18,-3.39,-7.41
+3Cb,3rd cerebellar lobule,cerebellum,43,49,7,43 44 45 46 47 48 49,9,7,-7.6,0.09,-3.27,7,18.805,9.984,0.21,5.5666,surface,2,0.18,-3.39,-7.41
 3n,oculomotor nerve,motor,36,37,2,36 37,4,2,-4.62,1.08,-6.71,2,0.301,0.184,0.76,0.0775,slab,4,1.18,-6.44,-4.84
 3N,oculomotor nucleus,midbrain;motor,37,38,2,37 38,4,2,-4.97,0.18,-5.05,2,0.774,0.46,0.97,0.2619,slab,1,0,-5.01,-5.01
 3PC,"oculomotor nucleus, parvicellular part",midbrain;motor,36,36,1,36,2,1,-4.45,0.21,-5.02,1,0.297,0.297,0.96,0.1056,slab,2,0.2,-5.12,-4.46
 3V,3rd ventricle,ventricular,23,34,12,23 24 25 26 27 28 29 30 31 32 33 34,21,12,-2,0.04,-5.68,11,4.07,0.869,0.71,1.2975,surface,6,0.03,-3.58,-1.94
 4,layer 4 of cortex,cortex,14,16,3,14 15 16,2,2,3.08,0.78,-6.45,2,0.229,0.117,0.79,0.052,slab,2,-0.87,-6.51,3.34
-4Cb,4th cerebellar lobule,cerebellum,41,49,9,41 42 43 44 45 46 47 48 49,10,9,-7.78,0.1,-2.18,9,21.122,5.96,0.28,8.1323,surface,1,-0.04,-2.5,-7.73
+4Cb,4th cerebellar lobule,cerebellum,41,49,9,41 42 43 44 45 46 47 48 49,10,9,-7.78,0.1,-2.18,8,21.022,5.96,0.3,7.966,surface,1,-0.04,-2.47,-7.71
 4n,trochlear nerve,motor,41,44,4,41 42 43 44,7,4,-6.55,0.97,-4.64,4,1.374,0.676,0.88,0.4978,surface,3,-0.06,-4.61,-6.64
 4N,trochlear nucleus,midbrain;motor,39,40,2,39 40,4,2,-5.67,0.28,-4.93,2,0.409,0.258,1,0.1518,slab,1,-0.04,-4.93,-5.71
 4Sh,trochlear nuclues shell region,motor,39,40,2,39 40,2,1,-5.5,0.28,-4.62,1,0.223,0.223,1,0.0713,slab,2,0.28,-4.66,-5.47
-4V,4th ventricle,ventricular,43,54,12,43 44 45 46 47 48 49 50 51 52 53 54,12,12,-8.82,0.05,-5.56,12,6.944,2.224,0.87,2.4108,surface,1,0.08,-5.28,-8.53
+4V,4th ventricle,ventricular,43,54,12,43 44 45 46 47 48 49 50 51 52 53 54,12,12,-8.82,0.05,-5.56,12,6.943,2.222,0.87,2.423,surface,1,0.08,-5.27,-8.53
 5ADi,"motor trigeminal nucleus, anterior digastric part",motor;somatosensory,45,46,2,45 46,3,2,-7.95,1.32,-6.73,2,0.105,0.068,0.97,0.0424,slab,2,1.34,-6.6,-7.79
-5Cb,5th cerebellar lobule,cerebellum,42,50,9,42 43 44 45 46 47 48 49 50,13,9,-7.25,0.12,-2.18,9,26.608,10.831,0.28,8.3991,surface,1,0.03,-2.48,-7.82
+5Cb,5th cerebellar lobule,cerebellum,42,50,9,42 43 44 45 46 47 48 49 50,13,9,-7.25,0.12,-2.18,9,26.556,10.831,0.28,8.4193,surface,1,0.03,-2.48,-7.82
 5N,motor trigeminal nucleus,motor;somatosensory,44,45,2,44 45,4,2,-7.42,1.69,-6.29,2,1.26,0.839,0.92,0.4278,slab,2,1.68,-6.28,-7.45
 5Sol,trigeminal-solitary transition zone,brainstem;somatosensory,48,55,8,48 49 50 51 52 53 54 55,12,7,-10.23,1.42,-6.06,7,1.867,0.521,0.37,0.6509,surface,3,1.47,-6.12,-10.27
 5Tr,trigeminal transition zone,somatosensory,44,46,3,44 45 46,4,3,-7.78,1.93,-5.84,3,0.72,0.355,0.8,0.2706,surface,2,-2.11,-5.75,-7.53
 5TT,"motor trigeminal nucleus, tensor tympani part",motor;somatosensory,43,44,2,43 44,3,2,-7.25,1.89,-6.57,2,0.172,0.124,0.98,0.0431,slab,2,-1.96,-6.45,-7.32
-6Cb,6th cerebellar lobule,cerebellum,46,54,9,46 47 48 49 50 51 52 53 54,9,8,-9.35,0.04,-1.52,8,20.014,5.474,0.32,7.3755,surface,1,0.07,-1.76,-9.26
+6Cb,6th cerebellar lobule,cerebellum,46,54,9,46 47 48 49 50 51 52 53 54,9,8,-9.35,0.04,-1.52,8,20.014,5.474,0.32,7.3841,surface,1,0.07,-1.76,-9.27
 6n,abducens nerve,motor,46,47,2,46 47,3,2,-7.95,0.63,-7.33,2,0.478,0.328,0.95,0.2188,slab,2,0.6,-7.27,-8.1
 6N,abducens nucleus,motor,47,47,1,47,2,1,-8.3,0.39,-6.38,1,0.2,0.2,0.86,0.0679,slab,2,0.43,-6.33,-8.3
-7Cb,7th cerebellar lobule,cerebellum,51,56,6,51 52 53 54 55 56,6,6,-10.57,0.02,-2.12,6,6.881,2.092,0.03,2.3086,surface,1,0.03,-2.19,-10.62
+7Cb,7th cerebellar lobule,cerebellum,51,56,6,51 52 53 54 55 56,6,6,-10.57,0.02,-2.12,6,6.881,2.092,0.03,2.377,surface,1,0.03,-2.21,-10.61
 7DI,"facial nucleus, dorsal intermediate subnucleus",motor,48,50,3,48 49 50,4,3,-9,1.53,-7.36,3,0.435,0.247,0.21,0.1294,surface,2,1.58,-7.45,-8.69
 7DL,"facial nucleus, dorsolateral subnucleus",motor,48,50,3,48 49 50,6,3,-9,1.79,-7.29,3,0.521,0.196,0.4,0.2038,surface,2,-1.8,-7.24,-8.95
 7DM,"facial nucleus, dorsomedial subnucleus",motor,48,50,3,48 49 50,6,3,-9,1.25,-7.6,3,0.788,0.464,0.26,0.2464,surface,2,1.22,-7.66,-8.79
@@ -39,13 +39,13 @@ abbr,name,systems,first_plate,last_plate,n_plates,plates,n_labels,n_plates_label
 7n,facial nerve,motor,45,47,3,45 46 47,6,3,-7.95,1.99,-7.11,3,1.207,0.456,0.88,0.3811,surface,2,-1.82,-6.92,-8.09
 7VI,"facial nucleus, ventral intermediate subnucleus",motor,48,50,3,48 49 50,6,3,-9,1.75,-7.62,3,1.563,0.883,0.23,0.5431,surface,2,1.65,-7.6,-9.18
 7VM,"facial nucleus, ventromedial subnucleus",motor,48,50,3,48 49 50,6,3,-9,1.21,-7.96,3,0.558,0.209,0.41,0.2209,surface,2,1.21,-8.02,-8.98
-8Cb,8th cerebellar lobule,cerebellum,51,58,8,51 52 53 54 55 56 57 58,8,8,-10.93,0.04,-2.75,8,32.841,16.667,0.51,10.0004,surface,1,-0.04,-2.99,-10.59
+8Cb,8th cerebellar lobule,cerebellum,51,58,8,51 52 53 54 55 56 57 58,8,8,-10.93,0.04,-2.75,8,28.481,16.667,0.23,7.9876,surface,1,-0.03,-2.9,-10.51
 8n,vestibulocochlear nerve,auditory;vestibular,46,48,3,46 47 48,12,3,-8.3,3.05,-6.28,3,4.832,2.311,0.95,1.6018,surface,2,-3.15,-6.47,-8.2
-9aCb,"9th cerebellar lobule, a",cerebellum,52,59,8,52 53 54 55 56 57 58 59,8,8,-11.27,0.04,-3.59,0,,,,,,,,,
+9aCb,"9th cerebellar lobule, a",cerebellum,52,59,8,52 53 54 55 56 57 58 59,8,8,-11.27,0.04,-3.59,8,14.664,3.678,0.4,4.8401,surface,1,-0.03,-3.66,-11.34
 9bCb,"9th cerebellar lobule, b",cerebellum,52,59,8,52 53 54 55 56 57 58 59,8,8,-11.27,0.04,-3.59,0,,,,,,,,,
-9Cb,9th cerebellar lobule,cerebellum,50,51,2,50 51,2,2,-9.52,0.07,-4.03,2,0.864,0.771,0.28,0.3084,slab,1,0.05,-4.19,-9.38
-9cCb,"9th cerebellar lobule, c",cerebellum,52,59,8,52 53 54 55 56 57 58 59,8,8,-11.27,0.02,-4.49,8,21.896,5.293,0.36,7.77,surface,1,-0.05,-4.19,-11.39
-9N,glossopharyngeal nerve nucleus,motor,62,62,1,62,1,1,-13.55,0.45,-7.82,0,,,,,,,,,
+9Cb,9th cerebellar lobule,cerebellum,50,51,2,50 51,2,2,-9.52,0.07,-4.03,2,0.864,0.771,0.28,0.3223,slab,1,0.05,-4.17,-9.4
+9cCb,"9th cerebellar lobule, c",cerebellum,52,59,8,52 53 54 55 56 57 58 59,8,8,-11.27,0.02,-4.49,8,13.611,3.278,0.37,4.7039,surface,1,-0.05,-4.44,-11.41
+9N,glossopharyngeal nerve nucleus,motor,62,62,1,62,1,1,-13.55,0.45,-7.82,1,0.252,0.252,0.57,0.0513,slab,1,0.45,-7.8,-13.5
 A1,primary auditory field,auditory,29,33,5,29 30 31 32 33,8,5,-2.7,6.57,-4.59,0,,,,,,,,,
 A11,A11 dopamine cells,monoaminergic,30,31,2,30 31,4,2,-2.53,0.68,-6.41,2,0.728,0.398,0.87,0.3379,slab,2,0.66,-6.4,-2.51
 A13,A13 dopamine cells,monoaminergic,28,29,2,28 29,2,1,-2,0.86,-6.44,1,0.81,0.81,0.51,0.2189,slab,2,-1.01,-6.64,-1.99
@@ -104,7 +104,7 @@ B,basal nucleus (Meynert),basal_forebrain,24,29,6,24 25 26 27 28 29,15,6,-0.95,2
 BAC,bed nucleus of the anterior commissure,basal_forebrain;fiber_tract,24,24,1,24,2,1,-0.25,0.67,-5.94,1,0.136,0.136,1,0.0641,slab,2,-0.68,-6,-0.26
 BAOT,bed nucleus of the accessory olfactory tract,amygdala;fiber_tract;olfactory,27,27,1,27,2,1,-1.3,2.52,-7.97,1,0.394,0.394,0.94,0.1859,slab,2,-2.56,-8.07,-1.28
 Bar,Barrington’s nucleus,brainstem,43,44,2,43 44,2,1,-7.25,1.01,-5.54,1,0.094,0.094,0.95,0.0434,slab,2,-1.02,-5.52,-7.25
-bic,brachium of the inferior colliculus,auditory;fiber_tract;midbrain,36,40,5,36 37 38 39 40,10,5,-5.15,2.67,-3.37,5,2.198,0.684,0.61,0.81,surface,2,2.75,-3.94,-5.13
+bic,brachium of the inferior colliculus,auditory;fiber_tract;midbrain,36,40,5,36 37 38 39 40,10,5,-5.15,2.67,-3.37,5,2.198,0.684,0.61,0.8105,surface,2,2.75,-3.94,-5.13
 BIC,nucleus of the brachium of the inferior colliculus,auditory;midbrain,36,37,2,36 37,4,2,-4.62,2.8,-4.42,2,0.929,0.521,0.77,0.3448,slab,2,-2.81,-4.37,-4.67
 BLA,"basolateral amygdaloid nucleus, anterior part",amygdala,25,29,5,25 26 27 28 29,10,5,-1.3,4.09,-7.04,5,5.551,1.586,0.74,2.0284,surface,2,4.09,-7,-1.39
 BLP,"basolateral amygdaloid nucleus, posterior part",amygdala,27,32,6,27 28 29 30 31 32,12,6,-2.17,4.62,-7.35,6,2.196,0.646,0.96,0.7999,surface,2,-4.71,-7.34,-2.18
@@ -136,7 +136,7 @@ CGB,"central gray, beta part",brainstem,44,45,2,44 45,3,2,-7.6,0.53,-5.93,2,0.34
 CGG,"central gray, gamma part",brainstem,46,46,1,46,2,1,-7.95,0.73,-5.98,1,0.123,0.123,0.66,0.0508,slab,2,0.75,-6.01,-7.92
 CGO,"central gray, nucleus O",brainstem,44,45,2,44 45,1,1,-7.6,0.12,-6.32,1,0.063,0.063,1,0.0244,slab,1,0.21,-6.32,-7.64
 CGPn,central gray of the pons,brainstem,45,45,1,45,2,1,-7.6,0.69,-5.54,1,0.51,0.51,0.98,0.1425,slab,2,0.7,-5.6,-7.6
-chp,choroid plexus,ventricular,24,54,31,24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54,44,20,-5.5,2.55,-5.04,20,14,2.234,0.71,4.0711,surface,14,-0.32,-5.2,-9.81
+chp,choroid plexus,ventricular,24,54,31,24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54,44,20,-5.5,2.55,-5.04,20,13.999,2.233,0.71,4.0819,surface,14,-0.32,-5.2,-9.81
 CIC,central nucleus of the inferior colliculus,auditory;midbrain,39,42,4,39 40 41 42,8,4,-6.03,2.02,-3.62,4,8.46,3.631,0.93,2.8151,surface,2,1.86,-3.46,-6.21
 cic,commissure of the inferior colliculus,auditory;fiber_tract;midbrain,42,43,2,42 43,3,2,-6.9,1.44,-3.13,2,1.633,1.481,0.98,0.3975,slab,3,1.44,-3.2,-6.94
 CL,centrolateral thalamic nucleus,thalamus,28,31,4,28 29 30 31,8,4,-2.17,1.25,-4.06,4,1.158,0.406,0.86,0.4888,surface,2,-1.22,-4.17,-2.26
@@ -145,16 +145,16 @@ CLi,caudal linear nucleus of the raphe,brainstem;monoaminergic,37,39,3,37 38 39,
 cll,commissure of the lateral lemniscus,auditory;fiber_tract,41,42,2,41 42,3,2,-6.2,2.15,-5.32,2,0.323,0.228,0.58,0.1044,slab,2,-2.09,-5.33,-6.38
 CM,central medial thalamic nucleus,thalamus,26,31,6,26 27 28 29 30 31,6,6,-1.82,0.03,-5.16,6,1.336,0.436,0.46,0.4726,surface,1,0.01,-5.15,-1.81
 CnF,cuneiform nucleus,midbrain,41,43,3,41 42 43,6,3,-6.55,1.63,-4.66,3,2.177,1.191,0.85,0.731,surface,2,-1.65,-4.45,-6.69
-Cop,copula of the pyramis,cerebellum,49,57,9,49 50 51 52 53 54 55 56 57,18,9,-10.4,1.93,-4.26,8,14.401,2.822,0.51,5.3074,surface,2,-1.79,-4.06,-10.69
+Cop,copula of the pyramis,cerebellum,49,57,9,49 50 51 52 53 54 55 56 57,18,9,-10.4,1.93,-4.26,8,13.487,2.831,0.54,5.1556,surface,2,-1.82,-4.07,-10.68
 cp,cerebral peduncle,fiber_tract,28,39,12,28 29 30 31 32 33 34 35 36 37 38 39,23,12,-3.4,1.88,-6.88,12,12.86,2.111,0.93,4.7824,surface,3,-2.2,-6.56,-3.26
 CPO,caudal periolivary nucleus,auditory,48,48,1,48,2,1,-8.65,1.41,-8.32,1,0.704,0.704,0.98,0.235,slab,2,-1.33,-8.41,-8.65
 CPu,caudate putamen (striatum),motor,17,30,14,17 18 19 20 21 22 23 24 25 26 27 28 29 30,28,14,-0.07,2.88,-4.76,14,136.24,17.275,0.87,49.8098,surface,2,2.85,-4.73,0.03
-Crus1,crus 1 of the ansiform lobule,cerebellum,43,54,12,43 44 45 46 47 48 49 50 51 52 53 54,34,12,-9,3.14,-1.85,12,72.886,14.938,0.22,26.97,surface,2,-2.81,-2.34,-8.73
-Crus2,crus 2 of the ansiform lobule,cerebellum,49,55,7,49 50 51 52 53 54 55,17,7,-10.05,2.88,-2.56,7,29.442,7.574,0.23,10.1453,surface,2,2.54,-2.62,-10.08
+Crus1,crus 1 of the ansiform lobule,cerebellum,43,54,12,43 44 45 46 47 48 49 50 51 52 53 54,34,12,-9,3.14,-1.85,12,72.885,14.938,0.22,27.0108,surface,2,-2.81,-2.34,-8.73
+Crus2,crus 2 of the ansiform lobule,cerebellum,49,55,7,49 50 51 52 53 54 55,17,7,-10.05,2.88,-2.56,7,29.413,7.545,0.23,10.3755,surface,2,2.53,-2.63,-10.08
 csc,commissure of the superior colliculus,fiber_tract;midbrain;visual,34,36,3,34 35 36,3,3,-4.1,0.04,-3.64,3,0.694,0.33,0.6,0.2274,surface,1,-0.09,-3.58,-4.09
 cst,commissural stria terminalis,basal_forebrain;fiber_tract,26,27,2,26 27,3,2,-0.95,2.86,-7.47,2,0.092,0.061,0.99,0.0273,slab,3,3.1,-7.07,-1.38
-cu,cuneate fasciculus,fiber_tract;somatosensory,53,62,10,53 54 55 56 57 58 59 60 61 62,19,9,-12.15,0.72,-5.74,9,3.177,0.566,0.66,1.0743,surface,5,-0.71,-5.86,-12.45
-Cu,cuneate nucleus,somatosensory,52,62,11,52 53 54 55 56 57 58 59 60 61 62,18,10,-11.8,0.76,-5.68,10,1.664,0.455,0.72,0.5739,surface,5,1.47,-5.45,-10.74
+cu,cuneate fasciculus,fiber_tract;somatosensory,53,62,10,53 54 55 56 57 58 59 60 61 62,19,9,-12.15,0.72,-5.74,9,3.177,0.566,0.66,1.076,surface,5,-0.71,-5.86,-12.45
+Cu,cuneate nucleus,somatosensory,52,62,11,52 53 54 55 56 57 58 59 60 61 62,18,10,-11.8,0.76,-5.68,9,1.639,0.455,0.72,0.5698,surface,5,1.47,-5.45,-10.74
 CuR,"cuneate nucleus, rotundus part",somatosensory,55,56,2,55 56,4,2,-11.27,0.89,-5.55,2,0.65,0.372,0.78,0.2308,slab,2,1,-5.57,-11.32
 CVL,caudoventrolateral reticular nucleus,brainstem,52,53,2,52 53,1,1,-10.4,1.68,-7.52,1,0.07,0.07,0.67,0.04,slab,1,1.65,-7.55,-10.44
 CxA,cortex-amygdala transition zone,amygdala;cortex,24,26,3,24 25 26,6,3,-0.6,4,-8.34,3,0.489,0.174,0.85,0.1933,surface,3,3.9,-8.34,-0.71
@@ -165,7 +165,7 @@ DCFu,"dorsal cochlear nucleus, fusiform layer",auditory,48,50,3,48 49 50,6,3,-9,
 DCIC,dorsal cortex of the inferior colliculus,auditory;cortex;midbrain,40,43,4,40 41 42 43,8,4,-6.38,1.36,-2.6,4,5.609,2.578,0.76,2.0184,surface,2,1.14,-2.54,-6.53
 DCl,dorsal part of claustrum,claustrum,16,26,11,16 17 18 19 20 21 22 23 24 25 26,22,11,0.8,3.21,-5.53,11,0.969,0.117,0.71,0.2324,surface,14,-2.46,-5.47,1.85
 DCMo,"dorsal cochlear nucleus, molecular layer",auditory,48,50,3,48 49 50,6,3,-9,2.79,-5.16,3,1.06,0.53,0.81,0.3398,surface,2,2.94,-5.24,-9.12
-dcs,dorsal corticospinal tract,fiber_tract;motor,60,62,3,60 61 62,6,3,-13.2,0.27,-6.42,3,0.344,0.13,0.97,0.1213,surface,2,0.27,-6.41,-13.12
+dcs,dorsal corticospinal tract,fiber_tract;motor,60,62,3,60 61 62,6,3,-13.2,0.27,-6.42,3,0.344,0.129,0.97,0.1219,surface,2,0.27,-6.41,-13.12
 dcw,deep cerebral white matter,fiber_tract,29,39,11,29 30 31 32 33 34 35 36 37 38 39,24,11,-3.58,4.19,-2.48,11,17.229,2.633,0.8,5.9124,surface,8,4.46,-3.31,-2.54
 DEn,dorsal endopiriform nucleus,olfactory,12,32,21,12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32,41,21,0.45,3.29,-6.63,21,6.747,0.614,0.85,2.4571,surface,2,-3.58,-6.72,0.1
 df,dorsal fornix,fiber_tract;hippocampal,26,27,2,26 27,2,2,-1.12,0.31,-3.15,1,0.02,0.02,0.98,0.0111,slab,1,-0.43,-3.19,-0.92
@@ -198,7 +198,7 @@ DRD,"dorsal raphe nucleus, dorsal part",brainstem;monoaminergic,39,42,4,39 40 41
 DRL,"dorsal raphe nucleus, lateral part",brainstem;monoaminergic,39,41,3,39 40 41,6,3,-5.85,0.65,-4.51,3,0.815,0.413,0.9,0.2853,surface,2,0.57,-4.64,-5.85
 DRV,"dorsal raphe nucleus, ventral part",brainstem;monoaminergic,39,42,4,39 40 41 42,3,3,-6.2,0.02,-5.2,3,0.298,0.139,0.82,0.1041,surface,1,-0.03,-5.2,-6.14
 DS,dorsal subiculum,hippocampal,33,36,4,33 34 35 36,8,4,-3.92,2.4,-2.23,4,4.115,1.213,0.97,1.2891,surface,2,2.43,-2.29,-3.95
-dsc,dorsal spinocerebellar tract,cerebellum;fiber_tract,52,62,11,52 53 54 55 56 57 58 59 60 61 62,21,11,-11.8,2.29,-7.19,9,2.112,0.389,0.63,0.6764,surface,8,-1.32,-7.4,-13
+dsc,dorsal spinocerebellar tract,cerebellum;fiber_tract,52,62,11,52 53 54 55 56 57 58 59 60 61 62,21,11,-11.8,2.29,-7.19,9,2.112,0.389,0.63,0.6758,surface,8,-1.32,-7.4,-13
 DTg,dorsal tegmental nucleus,midbrain,44,44,1,44,1,1,-7.25,0.29,-5.51,1,0.235,0.235,0.99,0.0961,slab,2,-0.33,-5.47,-7.24
 DTgC,"dorsal tegmental nucleus, central part",midbrain,43,43,1,43,1,1,-6.9,0.2,-5.29,1,0.039,0.039,0.97,0.0173,slab,1,0.13,-5.28,-6.94
 DTgP,"dorsal tegmental nucleus, pericentral part",midbrain,43,43,1,43,2,1,-6.9,0.33,-5.12,1,0.203,0.203,0.88,0.0706,slab,2,-0.47,-5.16,-6.92
@@ -212,7 +212,7 @@ EAC,"sublenticular extended amygdala, central part",amygdala,25,25,1,25,2,1,-0.6
 ec,external capsule,fiber_tract,19,30,12,19 20 21 22 23 24 25 26 27 28 29 30,24,12,-0.42,3.85,-3.58,12,14.065,2.182,0.91,4.0411,surface,4,-3.35,-3.59,-0.66
 ECIC,external cortex of the inferior colliculus,auditory;cortex;midbrain,38,44,7,38 39 40 41 42 43 44,13,7,-6.2,2.58,-3.44,7,11.303,2.697,0.94,4.3295,surface,2,2.34,-3.25,-6.17
 Ect,ectorhinal cortex,cortex;hippocampal,28,42,15,28 29 30 31 32 33 34 35 36 37 38 39 40 41 42,30,15,-4.1,6.31,-5.14,14,21.607,2.396,0.92,7.8188,surface,2,6.35,-5.06,-3.86
-ECu,external cuneate nucleus,somatosensory,52,56,5,52 53 54 55 56,9,5,-10.75,1.56,-5.34,5,1.119,0.36,0.76,0.4048,surface,2,1.57,-5.33,-10.88
+ECu,external cuneate nucleus,somatosensory,52,56,5,52 53 54 55 56,9,5,-10.75,1.56,-5.34,5,1.119,0.36,0.77,0.4046,surface,2,1.57,-5.33,-10.88
 eml,external medullary lamina,brainstem;thalamus,28,30,3,28 29 30,6,3,-2,3.31,-4.37,2,0.775,0.608,0.97,0.2526,slab,2,3.21,-4.78,-2.25
 Ent,entorhinal cortex,cortex;hippocampal,42,42,1,42,2,1,-6.55,4.59,-4.13,1,3.481,3.481,1,1.1705,slab,2,-4.5,-4.07,-6.56
 EP,entopeduncular nucleus,motor,27,28,2,27 28,4,2,-1.48,2.49,-6.26,2,1.237,0.958,0.96,0.4324,slab,2,-2.46,-6.33,-1.36
@@ -232,11 +232,11 @@ fr,fasciculus retroflexus,fiber_tract,27,36,10,27 28 29 30 31 32 33 34 35 36,20,
 Fr3,"frontal cortex, area 3",cortex,11,17,7,11 12 13 14 15 16 17,14,7,3.25,2.65,-3,7,6.529,1.257,0.99,2.1354,surface,3,-2.56,-3.57,3.3
 FrA,frontal association cortex,cortex,7,9,3,7 8 9,5,3,5.35,1.31,-3.98,3,7.472,3.935,0.84,2.784,surface,2,-1.34,-4.26,5.25
 Fu,"bed nucleus of stria terminalis, fusiform part",basal_forebrain;fiber_tract,23,23,1,23,2,1,0.1,1.36,-6.75,1,0.178,0.178,0.95,0.0659,slab,2,-1.41,-6.82,0.1
-FVe,F cell group of the vestibular complex,vestibular,52,52,1,52,2,1,-10.05,1.54,-5.32,1,0.132,0.132,0.53,0.0534,slab,2,-1.56,-5.33,-10.14
+FVe,F cell group of the vestibular complex,vestibular,52,52,1,52,2,1,-10.05,1.54,-5.32,1,0.132,0.132,0.53,0.0533,slab,2,-1.56,-5.33,-10.14
 g7,genu of the facial nerve,fiber_tract;motor,46,48,3,46 47 48,6,3,-8.3,0.74,-6.21,3,0.891,0.347,0.88,0.3456,surface,2,0.91,-6.31,-8.24
 Gca,"globular cell area, ventral cochlear nucleus",auditory,46,49,4,46 47 48 49,8,4,-8.48,3.25,-6.17,4,2.01,0.647,0.74,0.7109,surface,2,-3.27,-6.21,-8.47
 gcc,genu of the corpus callosum,fiber_tract,19,19,1,19,1,1,1.5,0.01,-4.62,1,0.971,0.971,0.82,0.3244,slab,1,0.61,-4.22,1.51
-Ge5,gelatinous layer of the caudal spinal trigeminal nucleus,somatosensory,57,62,6,57 58 59 60 61 62,12,6,-12.68,1.55,-6.22,6,2.58,0.678,0.26,0.827,surface,2,-1.68,-6.42,-12.49
+Ge5,gelatinous layer of the caudal spinal trigeminal nucleus,somatosensory,57,62,6,57 58 59 60 61 62,12,6,-12.68,1.55,-6.22,6,2.574,0.672,0.26,0.8244,surface,2,-1.68,-6.42,-12.49
 Gi,gigantocellular reticular nucleus,brainstem,47,54,8,47 48 49 50 51 52 53 54,15,8,-9.7,0.56,-7.16,7,17,3.067,0.59,5.9374,surface,1,-0.05,-7.26,-9.63
 GI,granular insular cortex,cortex,13,27,15,13 14 15 16 17 18 19 20 21 22 23 24 25 26 27,30,15,1.15,3.85,-5.43,15,11.589,1.178,0.94,4.232,surface,2,4.33,-5.33,0.79
 GiA,"gigantocellular reticular nucleus, alpha part",brainstem,48,51,4,48 49 50 51,5,4,-9.35,0.07,-7.92,4,0.937,0.338,0.97,0.3289,surface,1,0,-8.02,-9.12
@@ -256,7 +256,7 @@ hif,hippocampal fissure,cerebellum;hippocampal,30,34,5,30 31 32 33 34,10,5,-3.05
 I,intercalated nuclei of the amygdala,amygdala,23,29,7,23 24 25 26 27 28 29,18,5,-0.6,3.54,-6.84,3,0.55,0.216,0.94,0.1546,surface,7,-3.3,-7.28,-0.31
 IAD,interanterodorsal thalamic nucleus,thalamus,26,27,2,26 27,4,2,-1.12,0.79,-4.89,2,0.711,0.4,0.97,0.2591,slab,2,0.82,-4.88,-1.11
 IAM,interanteromedial thalamic nucleus,thalamus,27,27,1,27,2,1,-1.3,0.26,-5.26,1,0.193,0.193,0.95,0.0658,slab,2,-0.28,-5.29,-1.29
-IB,interstitial nucleus of the medulla,brainstem,57,62,6,57 58 59 60 61 62,11,6,-12.5,0.45,-6.34,4,0.395,0.21,0.9,0.1214,surface,3,-0.42,-6.5,-12.98
+IB,interstitial nucleus of the medulla,brainstem,57,62,6,57 58 59 60 61 62,11,6,-12.5,0.45,-6.34,4,0.396,0.21,0.9,0.1225,surface,3,-0.42,-6.5,-12.98
 ic,internal capsule,fiber_tract,23,30,8,23 24 25 26 27 28 29 30,18,8,-1.3,3.18,-5.05,8,12.28,2.76,0.96,4.5393,surface,2,-3.35,-5.09,-1.6
 icf,intercrural fissure,cerebellum,49,54,6,49 50 51 52 53 54,10,6,-9.7,3.22,-2.37,0,,,,,,,,,
 ICj,islands of Calleja,basal_forebrain;olfactory,16,22,7,16 17 18 19 20 21 22,17,6,1.15,1.27,-7.57,4,1.245,0.424,0.42,0.5101,slab,5,-1.01,-7.52,2
@@ -285,9 +285,9 @@ IOB,"inferior olive, subnucleus B of medial nucleus",brainstem,56,58,3,56 57 58,
 IOBe,"inferior olive, beta subnucleus",brainstem,56,58,3,56 57 58,5,3,-11.8,0.27,-7.61,3,0.645,0.406,0.46,0.25,surface,1,0.22,-7.58,-12.01
 IOC,"inferior olive, subnucleus C of medial nucleus",brainstem,56,58,3,56 57 58,4,3,-11.8,0.23,-7.79,3,0.559,0.336,0.53,0.2064,surface,1,-0.04,-7.77,-11.62
 IOD,"inferior olive, dorsal nucleus",brainstem,52,56,5,52 53 54 55 56,9,5,-10.75,0.87,-8.11,3,1.189,0.593,0.94,0.5221,surface,2,0.76,-8,-10.68
-IODM,"inferior olive, dorsomedial cell group",brainstem,52,55,4,52 53 54 55,6,3,-10.4,0.25,-7.85,2,0.581,0.357,0.89,0.2451,surface,2,0.23,-8.06,-10.43
+IODM,"inferior olive, dorsomedial cell group",brainstem,52,55,4,52 53 54 55,6,3,-10.4,0.25,-7.85,2,0.581,0.357,0.89,0.2444,surface,2,0.23,-8.06,-10.43
 IOK,"inferior olive, cap of Kooy of the medial nucleus",brainstem,56,57,2,56 57,2,2,-11.62,0.21,-7.41,1,0.042,0.042,0.71,0.0206,slab,1,0.18,-7.4,-11.77
-IOM,"inferior olive, medial nucleus",brainstem,52,55,4,52 53 54 55,7,4,-10.75,0.2,-8.2,4,0.733,0.336,0.99,0.2429,surface,2,-0.29,-8.16,-10.75
+IOM,"inferior olive, medial nucleus",brainstem,52,55,4,52 53 54 55,7,4,-10.75,0.2,-8.2,4,0.733,0.336,0.99,0.2451,surface,2,-0.29,-8.16,-10.74
 IOPr,"inferior olive, principal nucleus",brainstem,52,56,5,52 53 54 55 56,5,3,-10.75,0.83,-8.41,3,0.589,0.345,0.79,0.2014,surface,5,-0.68,-8.35,-10.46
 IPAC,interstitial nucleus of the posterior limb of the anterior commissure,basal_forebrain;fiber_tract,22,25,4,22 23 24 25,12,4,-0.07,2.61,-6.78,4,2.661,0.927,0.64,1.0171,surface,2,-2.56,-6.94,0.07
 IPC,"interpeduncular nucleus, caudal subnucleus",midbrain,37,40,4,37 38 39 40,4,4,-5.33,0.03,-7.11,4,0.713,0.251,0.57,0.2481,surface,1,-0.02,-7.11,-5.29
@@ -339,7 +339,7 @@ LPLC,"lateral posterior thalamic nucleus, laterocaudal part",thalamus,32,33,2,32
 LPLR,"lateral posterior thalamic nucleus, laterorostral part",thalamus,29,31,3,29 30 31,6,3,-2.35,2.84,-3.7,3,2.936,1.102,0.93,0.9499,surface,2,-2.75,-3.79,-2.27
 LPMC,"lateral posterior thalamic nucleus, mediocaudal part",thalamus,32,34,3,32 33 34,6,3,-3.4,2.73,-3.66,3,2.089,0.766,0.96,0.7236,surface,2,-2.71,-3.74,-3.37
 LPMR,"lateral posterior thalamic nucleus, mediorostral part",thalamus,29,32,4,29 30 31 32,8,4,-2.53,2,-3.74,4,3.491,1.422,0.95,1.208,surface,2,-1.93,-3.72,-2.46
-LPO,lateral preoptic area,hypothalamus;visual,22,25,4,22 23 24 25,8,4,-0.07,0.96,-7.09,4,4.79,2.053,0.14,1.7599,surface,2,0.96,-7.26,-0.06
+LPO,lateral preoptic area,hypothalamus;visual,22,25,4,22 23 24 25,8,4,-0.07,0.96,-7.09,4,4.79,2.053,0.14,1.76,surface,2,0.96,-7.26,-0.06
 LPtA,lateral parietal association cortex,cortex,28,30,3,28 29 30,4,3,-1.82,2.95,-1.65,2,4.657,2.86,0.99,1.3815,slab,2,-3.56,-1.56,-2.2
 LR4V,lateral recess of the 4th ventricle,ventricular,45,51,7,45 46 47 48 49 50 51,9,7,-9,2.89,-4.9,5,1.567,0.867,0.57,0.5671,surface,4,-2.34,-4.76,-9.21
 LRt,lateral reticular nucleus,brainstem,54,59,6,54 55 56 57 58 59,14,6,-11.45,1.4,-7.54,6,2.996,0.814,0.8,1.1393,surface,4,1.34,-7.52,-11.44
@@ -368,32 +368,32 @@ MCPC,magnocellular nucleus of the posterior commissure,fiber_tract,33,34,2,33 34
 MCPO,magnocellular preoptic nucleus,basal_forebrain;hypothalamus;visual,23,25,3,23 24 25,6,3,-0.25,1.94,-7.77,2,1.199,0.745,0.99,0.4415,slab,2,-2.2,-7.86,-0.11
 MD,mediodorsal thalamic nucleus,thalamus,27,27,1,27,2,1,-1.3,0.38,-4.53,1,0.452,0.452,1,0.1521,slab,2,0.39,-4.52,-1.3
 MDC,"mediodorsal thalamic nucleus, central part",thalamus,28,30,3,28 29 30,6,3,-2,0.66,-4.49,3,4.537,1.758,0.63,1.6071,surface,1,-0.03,-4.59,-2.04
-MdD,"medullary reticular nucleus, dorsal part",brainstem,55,62,8,55 56 57 58 59 60 61 62,16,8,-12.32,0.98,-6.43,8,6.67,1.249,0.61,2.4334,surface,2,-1.17,-6.52,-12.04
+MdD,"medullary reticular nucleus, dorsal part",brainstem,55,62,8,55 56 57 58 59 60 61 62,16,8,-12.32,0.98,-6.43,8,6.67,1.249,0.61,2.4341,surface,2,-1.17,-6.52,-12.04
 MDL,"mediodorsal thalamic nucleus, lateral part",thalamus,28,30,3,28 29 30,6,3,-2,1.04,-4.35,3,0.836,0.337,0.45,0.206,surface,6,-1.19,-4.28,-2.4
 MDM,"mediodorsal thalamic nucleus, medial part",thalamus,28,30,3,28 29 30,6,3,-2,0.42,-4.25,3,0.566,0.207,0.45,0.227,surface,2,-0.45,-4.23,-1.97
-MdV,"medullary reticular nucleus, ventral part",brainstem,55,62,8,55 56 57 58 59 60 61 62,15,8,-12.5,0.81,-7.12,8,8.08,1.627,0.5,2.8876,surface,2,0.55,-7.07,-11.97
+MdV,"medullary reticular nucleus, ventral part",brainstem,55,62,8,55 56 57 58 59 60 61 62,15,8,-12.5,0.81,-7.12,8,8.08,1.627,0.5,2.8804,surface,2,0.55,-7.07,-11.97
 ME,median eminence,hypothalamus;ventricular,30,32,3,30 31 32,3,3,-2.7,0.18,-8.61,3,0.209,0.104,0.68,0.0713,surface,1,0.16,-8.6,-2.65
 Me5,mesencephalic trigeminal nucleus,midbrain;somatosensory,38,45,8,38 39 40 41 42 43 44 45,14,8,-6.2,1.21,-4.09,8,2.487,0.656,0.54,0.7236,surface,2,0.03,-4.35,-6.44
 me5,mesencephalic trigeminal tract,fiber_tract;somatosensory,43,45,3,43 44 45,2,2,-7.42,1.25,-5.48,2,0.658,0.589,0.96,0.1469,slab,2,-1.46,-5.44,-7.36
 MeAD,"medial amygdaloid nucleus, anterodorsal part",amygdala,26,27,2,26 27,4,2,-1.12,2.48,-7.42,2,1.123,0.585,0.8,0.4235,slab,2,2.47,-7.39,-1.11
 MeAV,"medial amygdaloid nucleus, anteroventral part",amygdala,27,27,1,27,2,1,-1.3,2.72,-7.57,1,0.87,0.87,0.95,0.2661,slab,2,-2.74,-7.61,-1.31
-Med,medial (fastigial) cerebellar nucleus,cerebellum,47,50,4,47 48 49 50,8,4,-8.82,0.83,-4.26,4,1.476,0.61,0.78,0.7444,surface,2,-0.71,-4.21,-8.89
-MedDL,"medial cerebellar nucleus, dorsolateral protuberance",cerebellum,49,50,2,49 50,4,2,-9.18,1.04,-3.69,2,0.687,0.488,0.79,0.369,slab,2,1.14,-3.66,-9.26
-MedL,"medial cerebellar nucleus, lateral part",cerebellum,49,50,2,49 50,4,2,-9.18,1.2,-4.33,2,0.761,0.417,0.83,0.3139,slab,2,-1.26,-4.36,-9.18
+Med,medial (fastigial) cerebellar nucleus,cerebellum,47,50,4,47 48 49 50,8,4,-8.82,0.83,-4.26,4,1.476,0.61,0.78,0.7744,surface,2,-0.71,-4.2,-8.89
+MedDL,"medial cerebellar nucleus, dorsolateral protuberance",cerebellum,49,50,2,49 50,4,2,-9.18,1.04,-3.69,2,0.687,0.488,0.79,0.3715,slab,2,1.13,-3.66,-9.25
+MedL,"medial cerebellar nucleus, lateral part",cerebellum,49,50,2,49 50,4,2,-9.18,1.2,-4.33,2,0.758,0.414,0.83,0.3139,slab,2,-1.26,-4.36,-9.18
 MEnt,medial entorhinal cortex,cortex;hippocampal,34,41,8,34 35 36 37 38 39 40 41,14,8,-4.97,4.76,-6.52,8,9.84,3.218,0.29,3.3208,surface,4,-4.21,-6.92,-4.08
 MePD,"medial amygdaloid nucleus, posterodorsal part",amygdala,27,29,3,27 28 29,6,3,-1.65,2.96,-6.86,3,2.734,1.353,0.89,1.1261,surface,2,2.94,-6.8,-1.68
 MePV,"medial amygdaloid nucleus, posteroventral part",amygdala,28,29,2,28 29,4,2,-1.82,2.51,-7.56,2,1.608,1.17,0.98,0.5405,slab,2,-2.65,-7.74,-1.75
 mfb,medial forebrain bundle,fiber_tract,19,32,14,19 20 21 22 23 24 25 26 27 28 29 30 31 32,13,7,0.45,1.18,-7.53,6,3.065,1.467,0.52,0.9293,surface,5,-1.41,-7.57,0.83
 MGD,"medial geniculate nucleus, dorsal part",auditory;thalamus;visual,33,36,4,33 34 35 36,8,4,-3.92,2.91,-4.26,4,2.562,1.18,0.93,0.9483,surface,2,-3.01,-4.31,-3.97
-MGM,"medial geniculate nucleus, medial part",auditory;thalamus;visual,33,36,4,33 34 35 36,8,4,-3.92,2.48,-5.19,4,1.22,0.433,0.95,0.4485,surface,2,2.54,-5.16,-3.99
-MGV,"medial geniculate nucleus, ventral part",auditory;thalamus;visual,33,36,4,33 34 35 36,8,4,-3.92,3.2,-4.81,4,5.7,2.056,0.84,2.0295,surface,2,3.12,-4.79,-3.89
+MGM,"medial geniculate nucleus, medial part",auditory;thalamus;visual,33,36,4,33 34 35 36,8,4,-3.92,2.48,-5.19,4,1.22,0.433,0.95,0.4475,surface,2,2.54,-5.16,-3.99
+MGV,"medial geniculate nucleus, ventral part",auditory;thalamus;visual,33,36,4,33 34 35 36,8,4,-3.92,3.2,-4.81,4,5.7,2.056,0.84,2.0294,surface,2,3.12,-4.79,-3.89
 MHb,medial habenular nucleus,thalamus,27,31,5,27 28 29 30 31,10,5,-2,0.33,-3.66,5,1.186,0.3,0.5,0.4443,surface,3,-0.37,-3.68,-1.86
 Mi,mitral cell layer of the olfactory bulb,olfactory,1,10,10,1 2 3 4 5 6 7 8 9 10,16,10,6.58,1.6,-4.86,10,2.258,0.659,0.81,0.5224,surface,11,-0.93,-5.62,6.62
 MiA,mitral cell layer of the accessory olfactory bulb,olfactory,5,9,5,5 6 7 8 9,9,5,5.7,1.37,-5.34,5,1.324,0.389,0.94,0.407,surface,4,-1.23,-5.44,5.34
 MiTg,microcellular tegmental nucleus,midbrain,38,39,2,38 39,4,2,-5.33,2.18,-4.94,2,2.763,2.057,0.57,0.874,slab,2,1.97,-4.94,-5.25
 ml,medial lemniscus,fiber_tract,28,54,27,28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54,48,25,-5.67,0.77,-6.89,25,9.691,1.827,0.63,3.532,surface,4,-0.05,-8.23,-7.57
 ML,"medial mammillary nucleus, lateral part",hypothalamus,34,36,3,34 35 36,5,3,-4.1,0.58,-7.61,2,1.978,1.158,0.97,0.6589,slab,2,-0.55,-7.64,-3.88
-mlf,medial longitudinal fasciculus,fiber_tract,37,62,26,37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62,39,24,-9.35,0.23,-6.41,24,5.011,0.474,0.25,1.9246,surface,3,0,-6.81,-10.66
+mlf,medial longitudinal fasciculus,fiber_tract,37,62,26,37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62,39,24,-9.35,0.23,-6.41,24,5.011,0.474,0.25,1.9264,surface,3,0,-6.81,-10.66
 mlx,medial lemniscal decussation,fiber_tract,56,56,1,56,1,1,-11.45,0.04,-6.85,1,0.46,0.46,0.94,0.1251,slab,1,0.31,-7.32,-11.46
 MM,"medial mammillary nucleus, medial part",hypothalamus,34,35,2,34 35,2,2,-3.92,0.1,-7.5,2,0.507,0.341,0.96,0.1743,slab,1,-0.07,-7.51,-3.94
 MnA,median accessory nucleus of the medulla,brainstem,59,62,4,59 60 61 62,4,4,-13.02,0.03,-6.46,3,0.166,0.088,0.46,0.0434,surface,1,0.04,-6.46,-13.24
@@ -405,7 +405,7 @@ MO,medial orbital cortex,cortex,8,14,7,8 9 10 11 12 13 14,13,7,4.3,0.46,-5,6,6.0
 MoDG,molecular layer of the dentate gyrus,hippocampal,27,37,11,27 28 29 30 31 32 33 34 35 36 37,27,11,-3.05,2.99,-3.53,10,24.834,4.61,0.89,8.9485,surface,2,3.34,-4.06,-3.53
 MoS,molecular layer of the subiculum,hippocampal,37,37,1,37,2,1,-4.8,4.67,-3.94,1,3.285,3.285,1,0.9504,slab,2,4.58,-4.21,-4.8
 mp,mammillary peduncle,fiber_tract;hypothalamus,35,36,2,35 36,4,2,-4.28,0.63,-7.08,2,0.223,0.123,0.99,0.0991,slab,2,-0.71,-7.09,-4.32
-MPA,medial preoptic area,hypothalamus;visual,22,25,4,22 23 24 25,7,4,-0.25,0.59,-7.12,4,2.447,1.134,0.19,0.7938,surface,2,0.13,-7.46,0.18
+MPA,medial preoptic area,hypothalamus;visual,22,25,4,22 23 24 25,7,4,-0.25,0.59,-7.12,4,2.448,1.134,0.19,0.7954,surface,2,0.13,-7.46,0.18
 MPB,medial parabrachial nucleus,brainstem,43,45,3,43 44 45,3,2,-6.9,1.7,-5.38,2,0.785,0.55,0.98,0.3364,surface,2,1.56,-5.37,-7.24
 MPBE,"medial parabrachial nucleus, external part",brainstem,44,44,1,44,2,1,-7.25,1.92,-5.47,1,0.123,0.123,0.95,0.0471,slab,2,2.1,-5.45,-7.23
 MPL,"paralemniscal nucleus, medial part",auditory,41,42,2,41 42,4,2,-6.38,1.93,-6.08,2,1.09,0.704,0.71,0.3758,slab,2,-1.97,-5.93,-6.4
@@ -432,7 +432,7 @@ Obex,obex,brainstem,57,57,1,57,1,1,-11.8,0.04,-5.59,0,,,,,,,,,
 oc,olivocerebellar tract,cerebellum;fiber_tract,50,54,5,50 51 52 53 54,7,5,-9.7,2.91,-6.85,4,0.663,0.486,0.9,0.1665,surface,3,2.7,-7.15,-9.67
 Oca,"octopus cell area, ventral cochlear nucleus",auditory,47,49,3,47 48 49,6,3,-8.65,2.97,-5.74,3,1.087,0.572,0.84,0.3331,surface,2,-2.94,-5.93,-8.69
 ocb,olivocochlear bundle,auditory;fiber_tract,46,47,2,46 47,3,2,-7.95,2.13,-5.83,2,0.245,0.206,0.79,0.045,slab,3,-2.15,-5.74,-7.88
-och,optic chiasm,fiber_tract;visual,21,25,5,21 22 23 24 25,5,5,0.1,0.07,-8.3,4,3.163,0.967,0.97,1.058,surface,2,0.1,-8.27,-0.26
+och,optic chiasm,fiber_tract;visual,21,25,5,21 22 23 24 25,5,5,0.1,0.07,-8.3,4,3.162,0.967,0.97,1.0559,surface,2,0.09,-8.27,-0.26
 ON,olfactory nerve layer,olfactory,1,8,8,1 2 3 4 5 6 7 8,18,8,6.75,0.46,-7.18,8,11.053,2.312,0.96,3.5664,surface,1,0.03,-6.53,6.78
 Op,optic nerve layer of the superior colliculus,midbrain;visual,33,40,8,33 34 35 36 37 38 39 40,17,8,-4.45,0.98,-2.18,8,11.674,1.953,0.98,4.1979,surface,3,1.16,-2.55,-4.59
 OPC,oval paracentral thalamic nucleus,thalamus,29,31,3,29 30 31,6,3,-2.35,1.25,-5.24,3,0.447,0.162,0.73,0.1903,surface,2,-1.26,-5.22,-2.43
@@ -485,7 +485,7 @@ plf,posterolateral fissure,cerebellum,43,55,13,43 44 45 46 47 48 49 50 51 52 53 
 PLH,peduncular part of lateral hypothalamus,hypothalamus;thalamus,26,33,8,26 27 28 29 30 31 32 33,11,8,-2.35,1.48,-7.05,8,10.962,5.1,0.68,3.2513,surface,3,-1.46,-6.87,-1.69
 PLi,posterior limitans thalamic nucleus,thalamus,33,35,3,33 34 35,5,3,-3.75,2.32,-4.31,3,0.528,0.24,0.96,0.196,surface,3,-2.26,-4.58,-3.78
 PLV,"perilemniscal nucleus, ventral part",auditory,41,43,3,41 42 43,5,3,-6.55,1.36,-7.23,3,1.093,0.625,0.91,0.384,surface,2,1.44,-7.08,-6.5
-PM,paramedian lobule,cerebellum,49,56,8,49 50 51 52 53 54 55 56,15,8,-10.05,2.82,-3.62,8,19.699,5.066,0.18,7.1125,surface,2,2.45,-3.42,-10.46
+PM,paramedian lobule,cerebellum,49,56,8,49 50 51 52 53 54 55 56,15,8,-10.05,2.82,-3.62,8,19.685,5.065,0.18,7.1994,surface,2,2.44,-3.42,-10.46
 pm,principal mammillary tract,fiber_tract;hypothalamus,33,34,2,33 34,4,2,-3.58,0.58,-7.22,2,1.046,0.988,0.94,0.293,slab,1,-0.05,-7.45,-3.4
 PMCo,posteromedial cortical amygdaloid nucleus,amygdala,29,33,5,29 30 31 32 33,9,5,-2.7,3.84,-7.86,5,6.282,2.053,0.96,2.195,surface,2,-3.8,-7.96,-2.6
 PMD,"premammillary nucleus, dorsal part",hypothalamus,33,33,1,33,2,1,-3.4,0.44,-7.37,1,0.456,0.456,1,0.163,slab,2,-0.41,-7.44,-3.41
@@ -503,7 +503,7 @@ PoDG,polymorph layer of the dentate gyrus,hippocampal,28,35,8,28 29 30 31 32 33 
 PoMn,posteromedian thalamic nucleus,thalamus,31,31,1,31,1,1,-2.7,0.02,-5.02,1,0.113,0.113,0.72,0.037,slab,1,-0.06,-4.99,-2.67
 Post,postsubiculum,hippocampal,35,40,6,35 36 37 38 39 40,12,6,-4.97,3.19,-2.43,6,12.094,4.098,0.97,4.3495,surface,2,-3.35,-2.72,-5.19
 PoT,"posterior thalamic nuclear group, triangular part",thalamus,33,35,3,33 34 35,6,3,-3.75,2,-5.29,3,1.207,0.597,0.83,0.4775,surface,2,-2.08,-5.25,-3.69
-PP,peripeduncular nucleus,midbrain,33,35,3,33 34 35,6,3,-3.75,2.88,-5.62,3,0.963,0.453,0.94,0.3746,surface,2,2.97,-5.56,-3.83
+PP,peripeduncular nucleus,midbrain,33,35,3,33 34 35,6,3,-3.75,2.88,-5.62,3,0.963,0.453,0.94,0.3748,surface,2,2.97,-5.56,-3.83
 ppf,prepyramidal fissure,cerebellum,51,56,6,51 52 53 54 55 56,10,5,-10.23,2.74,-4.31,0,,,,,,,,,
 PPT,posterior pretectal nucleus,visual,33,35,3,33 34 35,5,3,-3.75,2.08,-3.92,3,0.982,0.635,0.83,0.2883,surface,2,1.94,-3.88,-3.78
 PPy,parapyramidal nucleus,brainstem,49,50,2,49 50,4,2,-9.18,0.84,-8.57,2,0.182,0.147,0.98,0.0684,slab,2,0.96,-8.54,-9.03
@@ -532,7 +532,7 @@ PVA,"paraventricular thalamic nucleus, anterior part",thalamus,25,26,2,25 26,3,2
 PVP,"paraventricular thalamic nucleus, posterior part",thalamus,29,31,3,29 30 31,3,3,-2.35,0.01,-4.39,3,1.004,0.513,0.62,0.389,surface,1,-0.01,-4.33,-2.48
 Py,pyramidal cell layer of the hippocampus,hippocampal,27,36,10,27 28 29 30 31 32 33 34 35 36,31,10,-3.05,4.45,-4.05,10,9.265,1.779,0.82,3.0275,surface,9,4.38,-3.98,-3.43
 py,pyramidal tract,fiber_tract;motor,43,58,16,43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58,32,16,-9.35,0.44,-8.58,16,5.523,0.937,0.32,2.0528,surface,2,-0.09,-8.55,-9.26
-pyx,pyramidal decussation,fiber_tract;motor,57,62,6,57 58 59 60 61 62,6,6,-12.68,0.04,-7.24,4,1.216,0.5,0.69,0.4046,surface,1,-0.04,-7.24,-12.73
+pyx,pyramidal decussation,fiber_tract;motor,57,62,6,57 58 59 60 61 62,6,6,-12.68,0.04,-7.24,4,1.216,0.5,0.69,0.4043,surface,1,-0.04,-7.24,-12.73
 Rad,radiatum layer of the hippocampus,hippocampal,28,36,9,28 29 30 31 32 33 34 35 36,26,9,-3.05,4.58,-4.26,9,28.02,9.302,0.85,9.8888,surface,2,-3.86,-4.19,-3.04
 RAmb,retroambiguus nucleus,brainstem,56,58,3,56 57 58,6,3,-11.8,1.34,-7.05,3,0.361,0.152,0.87,0.1418,surface,2,-1.27,-7.12,-11.77
 RAPir,rostral amygdalopiriform area,amygdala;olfactory,28,30,3,28 29 30,6,3,-2,4.65,-8.17,3,1.26,0.836,0.92,0.4396,surface,3,-4.87,-8.08,-2.22
@@ -551,13 +551,13 @@ RMC,"red nucleus, magnocellular part",midbrain;motor,35,38,4,35 36 37 38,7,4,-4.
 RMg,raphe magnus nucleus,brainstem;monoaminergic,44,51,8,44 45 46 47 48 49 50 51,8,8,-8.48,0.02,-8.09,8,0.965,0.179,0.95,0.3893,surface,1,-0.02,-8.12,-8.54
 Ro,nucleus of Roller,brainstem,52,56,5,52 53 54 55 56,10,5,-10.75,0.28,-6.53,4,0.229,0.107,0.91,0.0963,surface,3,0.36,-6.54,-10.64
 ROb,raphe obscurus nucleus,brainstem;monoaminergic,50,58,9,50 51 52 53 54 55 56 57 58,7,7,-10.4,0.06,-7.17,6,0.601,0.179,0.64,0.2049,surface,1,0.01,-7.35,-10.36
-RPa,raphe pallidus nucleus,brainstem;monoaminergic,43,58,16,43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58,15,15,-9.7,0.04,-8.23,12,0.597,0.09,0.55,0.2134,surface,4,0.03,-8.01,-11.09
+RPa,raphe pallidus nucleus,brainstem;monoaminergic,43,58,16,43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58,15,15,-9.7,0.04,-8.23,12,0.597,0.09,0.55,0.2119,surface,4,0.03,-8.01,-11.1
 RPC,"red nucleus, parvicellular part",midbrain;motor,35,36,2,35 36,4,2,-4.28,0.68,-5.64,2,0.405,0.221,0.94,0.1341,slab,4,0.64,-5.67,-4.18
 RPO,rostral periolivary nucleus,auditory,44,44,1,44,2,1,-7.25,1.76,-7.62,1,0.135,0.135,0.9,0.0394,slab,2,1.71,-7.62,-7.27
 RR,retrorubral nucleus,midbrain;monoaminergic,39,40,2,39 40,4,2,-5.67,2.12,-5.63,2,0.491,0.298,0.85,0.2104,slab,2,2.1,-5.61,-5.68
 RRe,retrouniens area,thalamus,31,31,1,31,1,1,-2.7,0.01,-5.56,1,0.308,0.308,0.99,0.1041,slab,1,0.01,-5.67,-2.73
 RRF,retrorubral field,midbrain;monoaminergic,37,39,3,37 38 39,6,3,-5.15,1.41,-5.82,3,2.81,2.072,0.04,0.8876,surface,2,1.22,-5.9,-5.09
-rs,rubrospinal tract,fiber_tract;motor,41,62,22,41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62,41,22,-10.05,2.06,-7.29,21,4.748,0.575,0.5,1.5503,surface,8,-2.14,-7.24,-10.05
+rs,rubrospinal tract,fiber_tract;motor,41,62,22,41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62,41,22,-10.05,2.06,-7.29,21,4.748,0.575,0.5,1.551,surface,8,-2.14,-7.24,-10.05
 RSD,retrosplenial dysgranular cortex,cortex,27,42,16,27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42,31,16,-3.75,1.24,-0.83,15,21.031,2.064,0.94,7.197,surface,1,0.15,-0.97,-3.66
 RSG,retrosplenial granular cortex,cortex,40,40,1,40,2,1,-5.85,2.36,-1.67,0,,,,,,,,,
 RSGa,"retrosplenial granular cortex, a region",cortex,35,39,5,35 36 37 38 39,10,5,-4.8,2.15,-1.6,5,4.748,1.256,0.9,1.6039,surface,2,-1.95,-1.6,-4.87
@@ -569,10 +569,10 @@ RtTg,reticulotegmental nucleus of the pons,brainstem;midbrain,41,45,5,41 42 43 4
 RtTgP,"reticulotegmental nucleus of the pons, pericentral part",brainstem;midbrain,41,42,2,41 42,4,2,-6.38,0.79,-7.11,2,0.693,0.438,0.86,0.2446,slab,1,-0.02,-7.12,-6.37
 RVRG,rostral ventral respiratory group,brainstem,53,53,1,53,2,1,-10.4,1.67,-7.35,1,0.475,0.475,0.63,0.1609,slab,2,1.7,-7.22,-10.38
 S1,primary somatosensory cortex,cortex;somatosensory,24,30,7,24 25 26 27 28 29 30,12,7,-1.3,5.71,-3.84,7,13.512,2.468,0.96,4.0004,surface,4,-4.66,-2.24,-2.05
-S1BF,"primary somatosensory cortex, barrel field",cortex;somatosensory,20,28,9,20 21 22 23 24 25 26 27 28,18,9,-0.25,4.31,-2.58,8,36.917,6.628,0.89,13.1376,surface,2,4.3,-2.46,-0.65
-S1DZ,"primary somatosensory cortex, dysgranular zone",cortex;somatosensory,16,28,13,16 17 18 19 20 21 22 23 24 25 26 27 28,26,13,0.45,3.37,-3.13,13,7.133,0.978,0.29,2.3063,surface,6,3.17,-1.86,-1.17
+S1BF,"primary somatosensory cortex, barrel field",cortex;somatosensory,20,28,9,20 21 22 23 24 25 26 27 28,18,9,-0.25,4.31,-2.58,8,36.678,6.628,0.89,13.0565,surface,2,4.3,-2.46,-0.66
+S1DZ,"primary somatosensory cortex, dysgranular zone",cortex;somatosensory,16,28,13,16 17 18 19 20 21 22 23 24 25 26 27 28,26,13,0.45,3.37,-3.13,13,7.357,0.978,0.29,2.3743,surface,6,3.18,-1.85,-1.17
 S1DZO,"primary somatosensory cortex, oral dysgranular zone",cortex;somatosensory,18,19,2,18 19,4,2,1.68,4.59,-3.95,2,1.562,0.956,1,0.5833,slab,2,-4.07,-4.05,1.79
-S1FL,"primary somatosensory cortex, forelimb region",cortex;somatosensory,15,24,10,15 16 17 18 19 20 21 22 23 24,20,10,1.32,3.44,-2.62,10,33.173,5.385,0.89,11.9005,surface,2,3.36,-2.88,1.51
+S1FL,"primary somatosensory cortex, forelimb region",cortex;somatosensory,15,24,10,15 16 17 18 19 20 21 22 23 24,20,10,1.32,3.44,-2.62,10,33.188,5.385,0.89,11.9126,surface,2,3.36,-2.88,1.51
 S1HL,"primary somatosensory cortex, hindlimb region",cortex;somatosensory,20,26,7,20 21 22 23 24 25 26,14,7,0.1,2.54,-1.99,7,20.32,4.018,0.99,7.1575,surface,2,2.51,-2.05,0.14
 S1J,"primary somatosensory cortex, jaw region",cortex;somatosensory,13,20,8,13 14 15 16 17 18 19 20,16,8,2.2,3.5,-3.83,8,24.666,4.982,0.9,8.6599,surface,4,-3.07,-4.34,2.88
 S1Sh,"primary somatosensory cortex, shoulder region",cortex;somatosensory,25,26,2,25 26,4,2,-0.77,2.72,-1.86,2,5.19,2.709,1,1.6966,slab,2,2.68,-1.82,-0.77
@@ -588,7 +588,7 @@ SCh,suprachiasmatic nucleus,hypothalamus,25,25,1,25,2,1,-0.6,0.44,-8.05,1,0.3,0.
 SChDL,"suprachiasmatic nucleus, dorsolateral part",hypothalamus,26,26,1,26,1,1,-0.95,0.01,-7.98,1,0.151,0.151,0.97,0.0641,slab,1,-0.03,-7.5,-0.95
 SChVM,"suprachiasmatic nucleus, ventromedial part",hypothalamus,26,26,1,26,1,1,-0.95,0.02,-8.19,0,,,,,,,,,
 SCO,subcommissural organ,ventricular,32,34,3,32 33 34,2,2,-3.22,0.05,-4.08,2,0.094,0.054,0.92,0.032,slab,2,-0.05,-4.34,-3.47
-scp,superior cerebellar peduncle,cerebellum;fiber_tract,41,49,9,41 42 43 44 45 46 47 48 49,17,9,-7.6,1.6,-5.06,9,3.073,0.553,0.69,1.2263,surface,4,-1.61,-4.79,-7.87
+scp,superior cerebellar peduncle,cerebellum;fiber_tract,41,49,9,41 42 43 44 45 46 47 48 49,17,9,-7.6,1.6,-5.06,9,3.076,0.553,0.69,1.2263,surface,4,-1.61,-4.79,-7.87
 sf,secondary fissure,cerebellum,53,58,6,53 54 55 56 57 58,7,6,-11.1,0.63,-2.89,0,,,,,,,,,
 SFi,septofimbrial nucleus,fiber_tract;hippocampal,22,25,4,22 23 24 25,6,4,-0.07,0.44,-4.59,4,2.226,1.384,0.88,0.574,surface,2,0.48,-4.64,-0.03
 SFO,subfornical organ,ventricular,25,25,1,25,1,1,-0.6,0.01,-4.38,1,0.072,0.072,1,0.054,slab,1,-0.02,-4.35,-0.68
@@ -606,14 +606,14 @@ SNR,"substantia nigra, reticular part",midbrain;motor,33,38,6,33 34 35 36 37 38,
 SO,supraoptic nucleus,hypothalamus;visual,23,27,5,23 24 25 26 27,8,5,-0.6,1.22,-7.97,3,0.26,0.195,0.99,0.0585,surface,4,1.75,-7.8,-0.89
 Sol,nucleus of the solitary tract,brainstem;fiber_tract,49,50,2,49 50,3,2,-9,1.45,-6.07,2,0.193,0.116,0.95,0.0788,slab,2,-1.45,-6.09,-9.2
 sol,solitary tract,brainstem;fiber_tract,50,57,8,50 51 52 53 54 55 56 57,16,6,-10.4,0.9,-5.89,6,3.252,0.669,0.87,1.2149,surface,2,-0.52,-5.84,-10.86
-SolC,"nucleus of the solitary tract, commissural part",brainstem;fiber_tract,55,62,8,55 56 57 58 59 60 61 62,4,4,-13.02,0.05,-6.6,4,0.959,0.506,0.56,0.295,surface,2,0.01,-6.79,-13.31
+SolC,"nucleus of the solitary tract, commissural part",brainstem;fiber_tract,55,62,8,55 56 57 58 59 60 61 62,4,4,-13.02,0.05,-6.6,4,0.959,0.506,0.56,0.2911,surface,2,0.01,-6.79,-13.31
 SolDL,"solitary nucleus, dorsolateral part",brainstem,55,57,3,55 56 57,0,0,,,,0,,,,,,,,,
 SolM,"nucleus of the solitary tract, medial part",brainstem;fiber_tract,55,59,5,55 56 57 58 59,0,0,,,,0,,,,,,,,,
 SolV,"solitary nucleus, ventral part",brainstem,55,57,3,55 56 57,0,0,,,,0,,,,,,,,,
 SolVL,"nucleus of the solitary tract, ventrolateral part",brainstem;fiber_tract,55,57,3,55 56 57,0,0,,,,0,,,,,,,,,
 sox,supraoptic decussation,fiber_tract;hypothalamus;visual,26,32,7,26 27 28 29 30 31 32,11,7,-2.35,2.71,-6.32,7,1.75,0.488,0.88,0.4138,surface,6,0.29,-8.04,-1.28
-sp5,spinal trigeminal tract,fiber_tract;somatosensory,48,62,15,48 49 50 51 52 53 54 55 56 57 58 59 60 61 62,31,15,-11.1,2.44,-6.42,15,9.007,0.974,0.94,3.4589,surface,2,2.31,-6.37,-10.69
-Sp5C,"spinal trigeminal nucleus, caudal part",somatosensory,55,62,8,55 56 57 58 59 60 61 62,15,8,-12.15,1.53,-6.2,8,6.589,1.273,0.62,2.358,surface,2,1.49,-6.28,-12.3
+sp5,spinal trigeminal tract,fiber_tract;somatosensory,48,62,15,48 49 50 51 52 53 54 55 56 57 58 59 60 61 62,31,15,-11.1,2.44,-6.42,15,9.007,0.974,0.94,3.4588,surface,2,2.31,-6.37,-10.69
+Sp5C,"spinal trigeminal nucleus, caudal part",somatosensory,55,62,8,55 56 57 58 59 60 61 62,15,8,-12.15,1.53,-6.2,8,6.595,1.273,0.62,2.3604,surface,2,1.5,-6.28,-12.3
 Sp5I,"spinal trigeminal nucleus, interpolar part",somatosensory,49,56,8,49 50 51 52 53 54 55 56,16,8,-10.23,2.23,-6.6,8,8.54,1.95,0.76,3.0561,surface,2,-2.12,-6.58,-10.54
 Sp5O,"spinal trigeminal nucleus, oral part",somatosensory,48,51,4,48 49 50 51,8,4,-9.18,2.09,-6.54,4,2.124,0.699,0.82,0.7264,surface,2,-2.03,-6.49,-9.19
 SPa,subparaventricular zone of the hypothalamus,hypothalamus;thalamus,27,28,2,27 28,2,2,-1.48,0.39,-7.15,2,0.459,0.403,0.21,0.1778,slab,1,-0.63,-7.07,-1.56
@@ -639,7 +639,7 @@ Su3,supraoculomotor periaqueductal gray,midbrain;motor;ventricular,36,39,4,36 37
 Su3C,supraoculomotor cap,midbrain;motor,36,37,2,36 37,4,2,-4.62,0.43,-4.49,2,0.267,0.148,0.99,0.1064,slab,2,0.49,-4.48,-4.55
 Su5,supratrigeminal nucleus,somatosensory,43,45,3,43 44 45,6,3,-7.25,1.65,-5.72,3,0.831,0.323,0.93,0.3424,surface,2,-1.72,-5.72,-7.19
 Sub,submedius thalamic nucleus,thalamus,30,30,1,30,2,1,-2.35,0.43,-5.67,1,0.298,0.298,0.97,0.1151,slab,2,-0.51,-5.69,-2.35
-SubB,subbrachial nucleus,midbrain,36,38,3,36 37 38,6,3,-4.8,2.56,-5.1,3,1.116,0.615,0.37,0.4541,surface,2,2.62,-5.25,-4.74
+SubB,subbrachial nucleus,midbrain,36,38,3,36 37 38,6,3,-4.8,2.56,-5.1,3,1.116,0.615,0.37,0.4546,surface,2,2.62,-5.25,-4.74
 SubCA,"subcoeruleus nucleus, alpha part",monoaminergic,44,44,1,44,2,1,-7.25,1.07,-5.75,1,0.069,0.069,0.97,0.0323,slab,2,-1.12,-5.71,-7.27
 SubCD,"subcoeruleus nucleus, dorsal part",monoaminergic,43,45,3,43 44 45,6,3,-7.25,1.17,-5.95,3,1.732,0.736,0.84,0.6655,surface,2,-1.28,-5.98,-7.28
 SubCV,"subcoeruleus nucleus, ventral part",monoaminergic,43,45,3,43 44 45,6,3,-7.25,1.61,-6.87,3,1.774,0.778,0.73,0.768,surface,2,-1.74,-6.75,-7.16
@@ -656,7 +656,7 @@ Te,terete hypothalamic nucleus,hypothalamus;thalamus,31,31,1,31,2,1,-2.7,1.53,-7
 TeA,temporal association cortex,auditory;cortex,37,39,3,37 38 39,6,3,-5.15,6.23,-3.59,3,9.055,3.782,0.97,2.9925,surface,2,-6.1,-3.5,-5.11
 tfp,transverse fibers of the pons,fiber_tract,39,39,1,39,1,1,-5.5,0.02,-7.2,1,0.978,0.978,0.95,0.2919,slab,1,0.07,-7.19,-5.5
 TG,tectal gray,midbrain,33,35,3,33 34 35,6,3,-3.75,1.38,-4.15,3,4.792,3.321,0.74,1.5245,surface,2,-1.21,-4.94,-3.65
-ts,tectospinal tract,fiber_tract;motor,39,62,24,39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62,49,24,-9,0.32,-7.01,23,11.558,3.092,0.21,3.7633,surface,9,-0.38,-7.26,-7.75
+ts,tectospinal tract,fiber_tract;motor,39,62,24,39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62,49,24,-9,0.32,-7.01,23,11.46,3.092,0.21,3.7395,surface,9,-0.38,-7.26,-7.75
 TS,triangular septal nucleus,basal_forebrain,24,25,2,24 25,2,2,-0.42,0.04,-4.23,2,2.017,1.466,0.98,0.577,slab,1,-0.09,-4.36,-0.36
 tth,trigeminothalamic tract,fiber_tract;somatosensory;thalamus,43,45,3,43 44 45,6,3,-7.25,0.33,-8.04,3,0.288,0.111,0.34,0.115,surface,3,-0.4,-7.99,-7.31
 Tu,olfactory tubercle,basal_forebrain;olfactory,16,23,8,16 17 18 19 20 21 22 23,15,8,1.15,1.57,-7.76,8,2.461,0.591,0.93,1.0375,surface,5,-2.08,-8.11,0.46
@@ -674,7 +674,7 @@ VCA,"ventral cochlear nucleus, anterior part",auditory,43,47,5,43 44 45 46 47,10
 VCl,ventral part of claustrum,claustrum,16,26,11,16 17 18 19 20 21 22 23 24 25 26,22,11,0.8,2.97,-6.02,11,2.094,0.491,0.82,0.5909,surface,4,2.59,-5.8,1.31
 VCP,"ventral cochlear nucleus, posterior part",auditory,47,49,3,47 48 49,6,3,-8.65,2.95,-5.98,2,0.405,0.225,0.6,0.1451,surface,3,2.89,-5.91,-8.71
 VDB,nucleus of the vertical limb of the diagonal band,basal_forebrain,19,21,3,19 20 21,4,3,1.32,0.1,-6.9,3,1.184,0.509,0.89,0.4893,surface,1,0.02,-6.81,1.16
-VeCb,vestibulocerebellar nucleus,cerebellum;vestibular,46,49,4,46 47 48 49,8,4,-8.48,1.16,-4.68,4,1.89,0.847,0.9,0.7925,surface,2,-1.1,-4.65,-8.61
+VeCb,vestibulocerebellar nucleus,cerebellum;vestibular,46,49,4,46 47 48 49,8,4,-8.48,1.16,-4.68,4,1.89,0.847,0.9,0.7929,surface,2,-1.1,-4.65,-8.61
 veme,vestibulomesencephalic tract,fiber_tract;vestibular,46,48,3,46 47 48,6,3,-8.3,1.32,-6.16,3,1.054,0.575,0.87,0.3703,surface,2,-1.32,-6.21,-8.37
 VEn,ventral endopiriform nucleus,olfactory,24,29,6,24 25 26 27 28 29,12,6,-1.12,4.68,-7.55,6,2.087,0.637,0.61,0.6713,surface,3,-4.76,-7.76,-1.32
 vesp,vestibulospinal tract,fiber_tract;vestibular,49,49,1,49,2,1,-9,0.74,-6.17,1,0.202,0.202,0.97,0.0668,slab,2,-0.84,-6.16,-8.99
@@ -687,14 +687,14 @@ VLH,ventrolateral hypothalamic nucleus,hypothalamus;thalamus,27,27,1,27,2,1,-1.3
 vlh,ventrolateral hypothalamic tract,fiber_tract;hypothalamus;thalamus,27,27,1,27,2,1,-1.3,0.98,-7.54,1,0.158,0.158,0.99,0.1074,slab,2,0.88,-7.45,-1.22
 VLi,ventral linear nucleus of the thalamus,thalamus,33,33,1,33,2,1,-3.4,1.74,-5.54,1,0.156,0.156,0.91,0.0554,slab,2,1.85,-5.46,-3.42
 VLPAG,ventrolateral periaqueductal gray,midbrain;ventricular,37,42,6,37 38 39 40 41 42,7,5,-5.85,0.54,-4.32,5,3.156,0.852,0.94,1.0911,surface,1,-0.02,-4.34,-5.64
-VLPO,ventrolateral preoptic nucleus,hypothalamus;visual,23,24,2,23 24,3,2,-0.25,0.77,-7.95,2,0.56,0.3,0.47,0.2033,slab,3,-0.96,-8.08,0.02
+VLPO,ventrolateral preoptic nucleus,hypothalamus;visual,23,24,2,23 24,3,2,-0.25,0.77,-7.95,2,0.56,0.3,0.47,0.2034,slab,3,-0.96,-8.08,0.02
 VM,ventromedial thalamic nucleus,thalamus,27,30,4,27 28 29 30,8,4,-1.82,1.06,-5.73,4,2.988,1.174,0.94,1.107,surface,2,-1.11,-5.8,-1.84
 VMH,ventromedial hypothalamic nucleus,hypothalamus;thalamus,28,31,4,28 29 30 31,3,2,-2.7,0.63,-8.08,2,0.238,0.199,0.94,0.1093,slab,3,-0.61,-8.19,-2.72
 VMHC,"ventromedial hypothalamic nucleus, central part",hypothalamus;thalamus,29,30,2,29 30,3,2,-2.35,0.67,-7.71,2,0.292,0.188,0.95,0.0909,slab,2,-0.59,-7.75,-2.18
 VMHDM,"ventromedial hypothalamic nucleus, dorsomedial part",hypothalamus;thalamus,29,30,2,29 30,3,2,-2.35,0.38,-7.62,2,0.807,0.429,0.94,0.2723,slab,1,0.05,-7.63,-2.19
 VMHSh,ventromedial nucleus of the hypothalamus shell,hypothalamus;thalamus,28,31,4,28 29 30 31,5,4,-2.35,0.81,-8.03,3,1.77,1.179,0.86,0.6929,surface,2,-0.73,-7.85,-1.82
 VMHVL,"ventromedial hypothalamic nucleus, ventrolateral part",hypothalamus;thalamus,29,30,2,29 30,3,2,-2.35,0.8,-7.98,2,0.674,0.485,0.82,0.1154,slab,4,-0.89,-8.03,-2.17
-VMPO,ventromedial preoptic nucleus,hypothalamus;visual,23,24,2,23 24,2,1,-0.25,0.32,-7.72,1,0.532,0.532,0.4,0.1894,slab,2,0.52,-7.77,-0.26
+VMPO,ventromedial preoptic nucleus,hypothalamus;visual,23,24,2,23 24,2,1,-0.25,0.32,-7.72,1,0.532,0.532,0.4,0.1895,slab,2,0.52,-7.77,-0.26
 VNLL,ventral nucleus of the lateral lemniscus,auditory;fiber_tract,40,40,1,40,2,1,-5.85,1.72,-6.19,1,0.322,0.322,0.99,0.1149,slab,2,-2.01,-5.92,-5.87
 VNTB,ventral nucleus of the trapezoid body,auditory,43,47,5,43 44 45 46 47,8,5,-7.6,1.13,-8.66,5,1.143,0.377,0.97,0.4098,surface,3,-1.33,-8.48,-7.21
 VO,ventral orbital cortex,cortex,9,16,8,9 10 11 12 13 14 15 16,16,8,3.78,1.08,-5.55,8,8.431,1.407,0.57,2.9288,surface,2,-1.22,-5.53,3.68
@@ -704,7 +704,7 @@ VPM,ventral posteromedial thalamic nucleus,somatosensory;thalamus,28,32,5,28 29 
 VPPC,"ventral posterior nucleus of the thalamus, parvicellular part",somatosensory;thalamus,31,31,1,31,2,1,-2.7,1.37,-5.58,1,0.6,0.6,0.96,0.1913,slab,2,1.54,-5.43,-2.72
 VRe,ventral reuniens thalamic nucleus,thalamus,27,30,4,27 28 29 30,7,4,-2,0.37,-6.08,4,0.84,0.28,0.76,0.3088,surface,3,0.33,-6.02,-1.77
 VS,ventral subiculum,hippocampal,31,36,6,31 32 33 34 35 36,12,6,-3.58,4.17,-6.94,6,9.416,2.65,0.73,3.6993,surface,2,4.22,-6.59,-3.71
-vsc,ventral spinocerebellar tract,cerebellum;fiber_tract,43,62,20,43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62,41,20,-10.05,1.86,-7.63,19,7.075,0.672,0.5,2.4978,surface,9,-1.73,-7.86,-10.21
+vsc,ventral spinocerebellar tract,cerebellum;fiber_tract,43,62,20,43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62,41,20,-10.05,1.86,-7.63,19,7.075,0.672,0.5,2.4991,surface,9,-1.73,-7.86,-10.21
 VTA,ventral tegmental area,midbrain;monoaminergic,37,38,2,37 38,4,2,-4.97,0.49,-6.42,2,0.979,0.542,0.81,0.3659,slab,2,0.51,-6.4,-4.94
 VTAR,"ventral tegmental area, rostral part",midbrain;monoaminergic,34,35,2,34 35,4,2,-3.92,0.62,-6.86,2,1.213,0.755,0.54,0.427,slab,1,-0.25,-6.67,-3.91
 VTg,ventral tegmental nucleus,midbrain;monoaminergic,42,42,1,42,2,1,-6.55,0.38,-5.78,1,0.412,0.412,1,0.1339,slab,2,0.29,-5.76,-6.56

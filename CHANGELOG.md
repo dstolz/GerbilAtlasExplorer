@@ -181,6 +181,27 @@ carries a `version` block naming the release its derived fields were built for.
   `no_drawn_outline` carries the same flag into the per-plate GeoJSON.
 
 ### Fixed
+- **`S1DZ` had lost its strip on plate 23, and `S1BF` was standing in it.** The atlas draws
+  the dysgranular zone as a narrow band between two dashed lines running from the pia to the
+  white matter, `S1BF` one side of it and `S1FL` the other. On the left hemisphere both lines
+  are traced through and the band is a region 96% of whose border is on drawn ink. On the
+  right it was a fragment of 0.13 mm² at 48%, and `S1BF`'s outline ran straight across where
+  the band belongs — 4.07 mm² against the left side's 3.83. Two holes in the same traced line
+  in `svg/GerbilAtlas_Plate_23.svg`, and only the first is the obvious kind: 45 page units
+  between two subpaths, against the 20 `build_region_extents.py` bridges across, so the face
+  never closed. Closing it stopped `S1BF` over-claiming and left the band belonging to nobody.
+  The second is a gap the bridging step does not fail to close but closes to the wrong line:
+  the dashed boundary's upper run ends 25.2 units from its own continuation and 18.0 from an
+  unrelated dash beside it, so a rule that joins a dangling end to the nearest point on any
+  other path welds the boundary sideways, and that weld was the wall cutting the band off from
+  the small face holding the `S1DZ` label — which is why the label seeded a fragment while the
+  band stayed unassigned. A wider tolerance makes that worse rather than better, the wrong
+  line being nearer at every tolerance; telling the two apart wants direction, which
+  nearest-point bridging has not got. Both holes are now traced, as cubics, because the
+  flattener in `build_region_extents.py` reads `M`, `C` and `Z` and drops anything else
+  without saying so. `S1DZ` is 0.486 mm² with its two hemispheres at 0.86 of each other
+  rather than 0.16, its right-hand border 97% drawn rather than 48%, and `S1BF` gives back
+  5.9%. Nothing else on the plate moves by more than 1%.
 - `build_volumes.py --nifti` crashed on the pinned numpy rather than writing the label
   volume: `volume.py` selected the sentinel 65000 against an `int16` label array, and numpy
   2 refuses a Python int the array's dtype cannot hold instead of widening the result. The
