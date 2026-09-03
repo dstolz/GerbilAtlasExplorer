@@ -85,6 +85,19 @@ def test_unstamp_idempotent():
     assert 'abc1234' in stamped and B.unstamp(stamped) == B.render(db)
 
 
+def test_build_stamp_carries_the_moment():
+    """The page ships the stamp as UTC text plus the instant behind it, which is what
+    lets the browser show it on the reader's own clock."""
+    db = A.load_db()
+    page = B.render(db, commit='abc1234', date='2026-09-02', time='21:07 UTC')
+    assert page.count('datetime="2026-09-02T21:07:00Z"') == 2       # the footer and About
+    assert ('Updated <time class="bwhen" datetime="2026-09-02T21:07:00Z">'
+            '2026-09-02 21:07 UTC</time>') in page
+    assert B.unstamp(page) == B.render(db)
+    # no moment to give: no instant, and the page keeps the text it was stamped with
+    assert 'datetime=""' in B.render(db, commit='abc1234', date='undated', time='')
+
+
 def test_committed_pages_current():
     assert B.check(A.load_db()) == 0
 
