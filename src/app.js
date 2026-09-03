@@ -9,9 +9,20 @@ const DB = window.__ATLAS__, IMG = window.__IMG__;
    in the right place on a plate with no labels printed on it at all.
 
    A build without the histology falls back to the drawing rather than showing a blank,
-   and the buttons for the missing sources take themselves out of the toolbar. */
-const SRC={drawing:IMG, nissl:window.__NISSL__, myelin:window.__MYELIN__};
-const SRCN={drawing:'labelled drawing', nissl:'Nissl section', myelin:'myelin section'};
+   and the buttons for the missing sources take themselves out of the toolbar.
+
+   The MRI is a fourth source and the only one the build does not carry. Its images are an
+   optional download whose terms are unsettled, and deliberately not a `@blob`: the two
+   pages are checked byte for byte, so a blob filled here from files CI has not got is
+   stale the moment it is committed. Nor could the lean build's URLs stand in for the
+   files -- `images_payload` writes them whether or not anything is behind them, which
+   would light the button up on a site where every plate is a 404. So this map starts
+   empty and `mriLoad` fills it only once a plate has actually loaded, which is what keeps
+   `srcOK('mri')` meaning what it says everywhere else in the file. */
+const MRIS={};
+const SRC={drawing:IMG, nissl:window.__NISSL__, myelin:window.__MYELIN__, mri:MRIS};
+const SRCN={drawing:'labelled drawing', nissl:'Nissl section', myelin:'myelin section',
+            mri:'MRI plane'};
 let psrc='drawing', pgrey=false, pctr=100;
 const srcOK = k => !!(SRC[k] && SRC[k][1]);
 const plateImg = (n,k=psrc) => ((srcOK(k)?SRC[k]:IMG)[n])||'';
@@ -940,7 +951,7 @@ IW.addEventListener('dblclick',e=>{
    before or after. The overlays stay on the left; the right carries the selection's
    outline where it is the same level, and the crosshair. */
 let cmpOn=false, cmpWhat='nissl';
-const CMPWHAT=['nissl','myelin','drawing','prev','next'];
+const CMPWHAT=['nissl','myelin','drawing','mri','prev','next'];
 function cmpPlate(){ return cmpWhat==='prev'?Math.max(1,cur-1):cmpWhat==='next'?Math.min(62,cur+1):cur; }
 function cmpSrc(){ return (cmpWhat==='prev'||cmpWhat==='next')?psrc:cmpWhat; }
 function cmpShow(){
@@ -3390,22 +3401,41 @@ const v3ink = Q => psrc==='drawing' ? .30 : (Q.mode==='volume' ? .10 : 1.0);
 let pSlice,pVol,pPts,pLine,pSkull, vaoQ,vaoB,vaoP, texV, bufF, nPT=0;
 let vaoS=null, nSK=0;                      /* skull mesh, built on first use */
 const v3box=new Array(V3D).fill(null);   /* section bounds per plate, set during the build */
+/* air on the MRI is not quite zero -- it carries the scanner's own noise floor, a few
+   counts of it -- so the surround is read off just above that rather than at nothing */
+const MRIAIR=24;
 
 /* ---------- build the volume from the plate images ---------- */
 async function v3build(onp, src=psrc, box=v3box){
+  /* The MRI is a photograph of tissue in air, not ink on paper, and every assumption
+     below is the wrong way round for it: it has no contour channel, its background is
+     black rather than white, and there is no marginalia to cull. Read straight off the
+     luminance instead and skip the two flood fills entirely -- which is less work, not
+     more. */
+  const mri = src==='mri';
   const vol=new Uint8Array(V3W*V3H*V3D*2);
   const cvs=document.createElement('canvas'); cvs.width=V3W; cvs.height=V3H;
   const g=cvs.getContext('2d',{willReadFrequently:true});
   const N=V3W*V3H;
   const ink=new Uint8Array(N), red=new Uint8Array(N), solid=new Uint8Array(N),
-        bg=new Uint8Array(N), comp=new Int32Array(N), stack=new Int32Array(N);
+        bg=new Uint8Array(N), comp=new Int32Array(N), stack=new Int32Array(N),
+        keep=new Uint8Array(N);
   for(let k=0;k<V3D;k++){
     const n=P[k].plate;
     const im=new Image(); im.src=plateImg(n,src);
     try{ await im.decode(); }catch(_){ continue; }
     g.clearRect(0,0,V3W,V3H);
-    g.drawImage(im, V3C[0],V3C[1], V3C[2]-V3C[0],V3C[3]-V3C[1], 0,0, V3W,V3H);
+    /* V3C is in the 1100-wide frame the published plates are stored at. A source may be
+       stored at another size in that same frame -- the MRI is, at 550, because its voxels
+       are 6.7 times coarser than the frame and storing it larger buys nothing -- so the
+       crop is taken in fractions of the image rather than in its pixels. */
+    const f=(im.naturalWidth||NW)/NW;
+    g.drawImage(im, V3C[0]*f,V3C[1]*f, (V3C[2]-V3C[0])*f,(V3C[3]-V3C[1])*f, 0,0, V3W,V3H);
     const px=g.getImageData(0,0,V3W,V3H).data;
+    if(mri){
+      /* stored grey, so one channel is the whole of it, and bright is tissue */
+      for(let i=0;i<N;i++){ ink[i]=px[i*4]; red[i]=0; }
+    } else
     for(let i=0;i<N;i++){
       const r=px[i*4], gg=px[i*4+1], b=px[i*4+2];
       const mn=r<gg?(r<b?r:b):(gg<b?gg:b);
@@ -3415,6 +3445,11 @@ async function v3build(onp, src=psrc, box=v3box){
       solid[i]= mn<236 ? 1 : 0;
       bg[i]=0; comp[i]=-1;
     }
+    /* Which pixels are section. On a plate that is what the paper flood did not reach,
+       less the marginalia. On the MRI it is simply what is not air: the head is one blob
+       against a black surround, with nothing else in the box to reject. */
+    if(mri){ for(let i=0;i<N;i++) keep[i] = ink[i]>MRIAIR?1:0; }
+    else {
     /* paper, flooded in from the border */
     let sp=0;
     for(let x=0;x<V3W;x++){ stack[sp++]=x; stack[sp++]=(V3H-1)*V3W+x; }
@@ -3449,13 +3484,16 @@ async function v3build(onp, src=psrc, box=v3box){
     /* the floor has to clear the plate number and the AP table, whose glyphs run to a
        few hundred pixels, while still keeping the smallest real section (plate 62 is
        about 1,300) -- so an absolute floor, not just a fraction of the largest blob */
-    const floor=Math.max(400,.02*amax), off=k*N*2;
+    const floor=Math.max(400,.02*amax);
+    for(let i=0;i<N;i++){ const c=comp[i]; keep[i] = (c>=0 && area[c]>floor)?1:0; }
+    }
+    const off=k*N*2;
     let x0=V3W, x1=-1, y0=V3H, y1=-1;
     for(let i=0;i<N;i++){
-      const c=comp[i], keep = c>=0 && area[c]>floor;
-      vol[off+i*2]   = keep?ink[i]:0;
-      vol[off+i*2+1] = keep?red[i]:0;
-      if(keep){ const x=i%V3W, y=(i/V3W)|0;
+      const kp=keep[i];
+      vol[off+i*2]   = kp?ink[i]:0;
+      vol[off+i*2+1] = kp?red[i]:0;
+      if(kp){ const x=i%V3W, y=(i/V3W)|0;
         if(x<x0)x0=x; if(x>x1)x1=x; if(y<y0)y0=y; if(y>y1)y1=y; }
     }
     /* where the section actually sits on this plate, so the current-plate marker can
@@ -4479,7 +4517,11 @@ function v3niiBuf(vol,src){
   f32(112,1); f32(116,0);                                    /* scl_slope, scl_inter */
   v.setUint8(123,2);                                         /* xyzt_units: mm */
   f32(124,255); f32(128,0);                                  /* cal_max, cal_min */
-  const d=('Gerbil atlas stack, '+(nt>1?'ink then drawn contour':SRCN[src]+' ink')+
+  /* the MRI is not ink, and what would go out is this app's 8-bit re-grid of it onto the
+     plate lattice rather than the volume as it was acquired -- so the description says so
+     rather than letting the file pass for the original */
+  const d=('Gerbil atlas stack, '+(nt>1?'ink then drawn contour'
+           :src==='mri'?'MRI resampled to this lattice, 8-bit':SRCN[src]+' ink')+
            '; mm from bregma').slice(0,79);
   for(let i=0;i<d.length;i++) v.setUint8(148+i,d.charCodeAt(i)&127);
   i16(252,0); i16(254,1);                                    /* qform_code, sform_code */
@@ -4747,6 +4789,10 @@ function readHash(){
   pctr = Number.isFinite(ct) ? Math.min(260,Math.max(60,ct)) : 100;
   pgrey = v.includes('y');
   const was=psrc;
+  /* a link can name the MRI before the probe that finds it has come back. Falling to the
+     drawing is still right for now -- the images may not be there at all -- so remember
+     the ask and let mriLoad honour it if they are. */
+  if(par.ps==='mri' && !srcOK('mri')) mriWant=true;
   psrc = srcOK(par.ps) ? par.ps : 'drawing';
   if(v3ready&&psrc!==was) v3resrc();
   $('ckm').checked=v.includes('m'); $('rd').hidden=!showXY;
@@ -5071,7 +5117,7 @@ function setTab(t){
   $('ctlProj').hidden  = t!=='proj';
   $('ctl3d').hidden    = t!=='v3d';
   /* the projection plots label positions, not pixels, so no image source applies to it */
-  if($('srcseg').children.length>1) $('ctlSrc').hidden = t==='proj';
+  srcCtl();
   /* contrast is a screen filter on the plate image; the stack has Density for the same job */
   $('ctrw').hidden = t!=='plate';
   hideTip(); pjHide(); v3hide();
@@ -5118,10 +5164,53 @@ function setSrc(k){
   psrc=k; srcShow(); markSel(); v3resrc(); v3note(); queueHash();
 }
 [...$('srcseg').children].forEach(b=>{
+  if(b.dataset.s==='mri') return;              /* decided at run time, not by the build */
   if(!srcOK(b.dataset.s)) b.remove();          /* a source this build does not carry */
   else b.onclick=()=>setSrc(b.dataset.s);
 });
-if($('srcseg').children.length<2) $('ctlSrc').hidden=true;
+/* The MRI button starts hidden rather than absent, so counting sources has to ask what is
+   on screen rather than what is in the markup; one source is not a choice worth a
+   control. The projection plots label positions rather than pixels, so no source applies
+   to it either. */
+const srcN = () => [...$('srcseg').children].filter(b=>!b.hidden).length;
+function srcCtl(){ $('ctlSrc').hidden = srcN()<2 || tab==='proj'; }
+
+/* ---------- the MRI, which arrives after the page does ----------
+   62 images under data/plates/mri, one per plate, resampled into this same coordinate box
+   by tools/build_mri.py -- so every overlay the app draws is already in the right place on
+   them, exactly as it is on the three published plates.
+
+   One probe decides whether this build has them, and it is an <img> rather than a fetch on
+   purpose: a page opened from disk beside its data folder can load an image and cannot
+   fetch one, so the offline bundle gets the MRI too when it is sitting in the repository.
+   Nothing else is downloaded until a plate is actually shown. If the probe fails the
+   button leaves the toolbar, which is what a missing source has always done.
+
+   Where the images are not there that costs one 404 in the console, and there is no way
+   round it worth having: what the page needs to know is whether the files exist, and the
+   build cannot tell it -- a flag written here from files CI has not got is exactly the
+   staleness the pages are checked for. So the request is the answer, and one image is the
+   cheapest form of the question. */
+const MRIURL = p => 'data/plates/mri/'+String(p).padStart(2,'0')+'.jpg';
+let mriWant=false;                 /* a deep link that asked for the MRI before it was here */
+function mriLoad(){
+  const btn=[...$('srcseg').children].find(b=>b.dataset.s==='mri'),
+        opt=$('cmpsel').querySelector('option[value="mri"]'), im=new Image();
+  im.onload=()=>{
+    for(let p=1;p<=62;p++) MRIS[p]=MRIURL(p);
+    if(btn){ btn.hidden=false; btn.onclick=()=>setSrc('mri'); }
+    if(opt) opt.hidden=false;
+    srcCtl();
+    if(mriWant){ mriWant=false; setSrc('mri'); }
+    else if(cmpWhat==='mri'&&cmpOn) cmpShow();
+  };
+  im.onerror=()=>{ if(btn) btn.remove(); if(opt) opt.remove();
+                   if(cmpWhat==='mri'){ cmpWhat='nissl'; $('cmpsel').value=cmpWhat;
+                                        if(cmpOn) cmpShow(); }
+                   srcCtl(); };
+  im.src=MRIURL(1);
+}
+srcCtl(); mriLoad();
 $('ckgy').onchange=e=>{ pgrey=e.target.checked; srcShow(); queueHash(); };
 $('ctrs').oninput=e=>{ pctr=+e.target.value||100; srcShow(); queueHash(); };
 $('ctrs').ondblclick=()=>{ pctr=100; srcShow(); queueHash(); };

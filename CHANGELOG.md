@@ -6,6 +6,17 @@ carries a `version` block naming the release its derived fields were built for.
 ## [Unreleased]
 
 ### Added
+- **The atlas's own MRI, as a fourth plate source.** The atlas is "CT/MRI-aided", and the
+  imaging half of that has never been in the app. Where `tools/build_mri.py` has been run,
+  **MRI** now sits beside *Labelled / Nissl / Myelin*, and because the volume is already in
+  the atlas's coordinates — one slice per plate — every overlay lands on it unchanged: the
+  region outlines, the coordinate readout, the grid, the measure tool, a planned track, and
+  the compare pane, which will now put the MRI beside the drawing at the same zoom and pan.
+  The 3-D stack reads it too. It is the whole head rather than a cut section, and its voxels
+  are 117 µm against the drawing's 18, so it is soft where the drawing is sharp; the About
+  dialog says so. The volume is not distributed here, and the button is simply absent
+  without it — the two committed pages are byte-identical either way.
+
 - **Reporting a region drawn wrong, and asking for a feature.** Two more links in the footer
   beside *Report an issue*, which has always pointed at the tracker's front page — the right
   place for "the page will not load" and the wrong one for "this boundary is drawn in the wrong

@@ -124,6 +124,34 @@ over them — on consecutive pages of the supplement, with a fourth page carryin
 level's abbreviation list and its CT/MRI reference. All 186 section pages are in the app,
 selected with **Labelled / Nissl / Myelin**.
 
+### The MRI, as a fourth source
+
+`mri_frame` in `data/gerbil_atlas.json` records how the atlas's own reference MRI volume
+maps to stereotaxic millimetres, and `tools/build_mri.py` resamples it into the same
+1100 × 703 coordinate box as the three published plates, writing `data/plates/mri/NN.jpg`.
+Where those files are present the app offers **MRI** beside the other three; where they are
+not, the button is absent and nothing else changes.
+
+The volume is 256 × 256 × 72 at 117 µm in plane. Its slice spacing is not recorded in the
+file and was recovered as 350 µm — the atlas's own plate spacing — so `plate = 62 − slice`
+falls out rather than being fitted, and reproduces all 62 plates' bregma exactly.
+`build_mri.py --verify` is the check: projecting `brain_outline` onto each slice, the
+median best shift over all 62 plates is 0.000 mm in both DV and ML, with about 0.39 mm of
+scatter. Slice 18, the only slice carrying a burned-in mark, is bregma −7.25, the atlas's
+interaural zero; neither that nor the plate correspondence was fitted for.
+
+Three things it is not, and the app says all three. It is a **whole head** — skull, scalp,
+eye and turbinate are in the picture, where the other three sources are cut sections on
+paper. It is **coarse**: 117 µm voxels against the 18 µm the frame is drawn at, so it is
+soft wherever the drawing is sharp. And it is the **only source whose registration to the
+frame was computed here** rather than published — the other three are registered by
+construction through the atlas's own printed coordinate box.
+
+It is also the only source the build does not carry, deliberately: the two pages are
+checked byte for byte, so a data blob filled from files CI has not got would be stale the
+moment it was committed. The app finds the images at run time instead, by loading one of
+them. See `LICENSE-DATA.md` for why the volume itself is not distributed here.
+
 Registration between them is by construction rather than by fitting. Every page carries
 the atlas's own printed ML/DV box, and each page is cropped to *its own* box by the same
 detector, so all three land in the coordinate frame above — the frame the 6,315 label

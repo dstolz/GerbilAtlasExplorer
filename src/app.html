@@ -144,6 +144,7 @@
           <button type="button" class="on" data-s="drawing" title="The atlas's own drawing: contours and printed abbreviations">Labelled</button>
           <button type="button" data-s="nissl" title="The unlabelled Nissl-stained section at this level, printed in the same coordinate box">Nissl</button>
           <button type="button" data-s="myelin" title="The unlabelled Gallyas myelin-stained section at this level, printed in the same coordinate box">Myelin</button>
+          <button type="button" data-s="mri" hidden title="The atlas's own MRI at this level, resampled into the same coordinate box. 117 µm in plane against the drawing's 18, so it is soft where the drawing is sharp — and it is the animal's head, not a cut section">MRI</button>
         </span>
         <label class="tg" title="Read every source the same way: the drawing loses its colour"><input type="checkbox" id="ckgy">Grey</label>
         <label class="lb3" id="ctrw" title="Stretch the contrast of whichever plate is showing. The 3-D view stretches its own tissue with Floor, Ceiling and Gamma, so this is left off it."
@@ -167,6 +168,7 @@
         <label class="tg" title="A second plate beside this one, sharing zoom, pan and crosshair: the other histology of this level, the drawing, or the plate before or after"><input type="checkbox" id="ckcmp">Compare</label>
         <select class="csel" id="cmpsel" hidden aria-label="What the second pane shows">
           <option value="nissl">Nissl</option><option value="myelin">Myelin</option><option value="drawing">Labelled</option>
+          <option value="mri" hidden>MRI</option>
           <option value="prev">Plate before</option><option value="next">Plate after</option>
         </select>
         <label class="tg" title="Your own markers on the plates"><input type="checkbox" id="ckan">Notes</label>
@@ -373,6 +375,14 @@
       <b>Gallyas</b> myelin-stained section from an adjacent section beside it, and the
       <b>labelled drawing</b> traced over them. All three are here, and <em>Labelled /
       Nissl / Myelin</em> above the plate switches between them.</p>
+    <p>A fourth button, <em>MRI</em>, appears only where the atlas&rsquo;s own reference MRI
+      has been put beside the app. That volume is the imaging half of the
+      &ldquo;CT/MRI-aided&rdquo; in the atlas&rsquo;s title, and it is already in the
+      atlas&rsquo;s coordinates &mdash; one slice per plate &mdash; so everything drawn over
+      a plate is in the right place on it too. Two things it is not: it is the whole head
+      rather than a cut section, so there is skull, scalp and eye in the picture; and its
+      voxels are 117&nbsp;&micro;m across against the drawing&rsquo;s 18, so it is soft
+      wherever the drawing is sharp. It is not distributed with the app.</p>
     <p>They are registered to each other by construction, not by fitting. Every one of the
       186 pages carries the atlas&rsquo;s own printed ML/DV coordinate box, and each was
       cropped to its own box, so all three land in the same coordinate space &mdash; the same
