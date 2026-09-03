@@ -61,8 +61,8 @@ def test_label_positions(db):
             for b in boxes:
                 assert len(b) == 4 and all(0 <= v <= 1 for v in b)
                 n += 1
-    assert n == db['verification']['label_positions_located'] == 6292
-    assert sum(len(d) for d in LP.values()) == db['verification']['ocr_confirmed'] == 3317
+    assert n == db['verification']['label_positions_located'] == 6322
+    assert sum(len(d) for d in LP.values()) == db['verification']['ocr_confirmed'] == 3338
 
 
 def test_leaders(db):
