@@ -101,6 +101,6 @@ def test_labels_table_rows():
     text = E.labels_csv(db)
     rows = text.split('\r\n')
     assert rows[0].startswith('abbr,name,plate,label_index,ap_bregma_mm,ml_mm')
-    assert len([r for r in rows[1:] if r]) == 6266
+    assert len([r for r in rows[1:] if r]) == 6292
     mso = [r for r in rows if r.startswith('MSO,')]
     assert len(mso) == 7

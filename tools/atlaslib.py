@@ -88,6 +88,77 @@ def bregma_of(db):
     return {p['plate']: p['bregma'] for p in db['plates']}
 
 
+# ---------- the names the atlas prints that name no region ----------
+#
+# Not everything the atlas letters is a structure with ground of its own. A
+# fissure or a sulcus is the cleft *between* two regions and is drawn as the
+# line between them; `cbw` is the white matter core of whichever lobule it runs
+# through rather than a lobule beside them; a vessel is not brain at all.
+# Seeding those against their neighbours in build_region_extents.py hands them
+# the ground either side of the line: `cbw` took 170 mm2 of cerebellum off the
+# lobules it splits, and left `Crus2` a wedge of its own lobule and `PM` its
+# label box. So they are not seeded, and the region whose boundary the atlas
+# does draw keeps the whole of what that boundary encloses.
+#
+# What they lose is area, and with it an outline, a volume and a mesh. They keep
+# everything the atlas actually says about them: they stay in the index, the
+# search, the systems, the label tables, the projections and the label cloud,
+# and hovering or selecting one marks every place the plate prints its name.
+#
+# `hif` is deliberately not here. The hippocampal fissure is a space the brain
+# holds open and the atlas draws a boundary round, so it is a region like any
+# other; and `dcw` is a territory in its own right between cortex and striatum
+# rather than a name printed inside another structure.
+FEATURE_KINDS = {
+    'fissure':     'a cleft between regions, not a region',
+    'sulcus':      'a groove between regions, not a region',
+    'incisure':    'a notch in the surface, not a region',
+    'white matter': 'the white matter of the lobules it runs through, '
+                    'not a lobule of its own',
+    'vessel':      'a vessel on the section, not part of the brain',
+}
+
+FEATURES = {
+    # the cerebellar fissures and sulci, which the atlas draws as the lines
+    # between the lobules
+    'apmf': 'fissure', 'icf': 'fissure', 'pcn': 'fissure', 'pcuf': 'fissure',
+    'plf': 'fissure', 'ppf': 'fissure', 'prf': 'fissure', 'psf': 'fissure',
+    'sf': 'fissure', 'simf': 'fissure', 'uf': 'fissure',
+    'pfs': 'sulcus', 'pms': 'sulcus',
+    # and the three the atlas names elsewhere on the surface
+    'af': 'fissure', 'rf': 'fissure', 'ri': 'incisure',
+    # white matter named for what it runs through
+    'cbw': 'white matter',
+    # vessels
+    'acer': 'vessel', 'mcer': 'vessel', 'BV': 'vessel',
+}
+
+FEATURE_NOTE = (
+    "The abbreviations the atlas prints that name no region: the fissures and "
+    "sulci, which are the clefts between regions and are drawn as the lines "
+    "between them; `cbw`, which is the white matter core of whichever lobule it "
+    "runs through and not a lobule of its own; and the vessels, which are not "
+    "brain. `kinds` gives the sentence each is read by. These are named, "
+    "indexed, searchable and located exactly as every other structure is, and "
+    "every place a plate prints one is in `label_positions`; what they have no "
+    "claim on is area, so build_region_extents.py does not seed them, they hold "
+    "no entry in `region_extents`, and they have no volume or mesh. The ground "
+    "they used to be given goes to the regions the atlas does draw a boundary "
+    "for -- a lobule now reaches across the white matter that splits it, as the "
+    "drawing has it. `hif` and `dcw` are not here: the hippocampal fissure is a "
+    "space the atlas draws a boundary round, and the deep cerebral white matter "
+    "is a territory of its own rather than a name printed inside another "
+    "structure."
+)
+
+
+def features_block():
+    """The `features` block of the database, from the table above."""
+    return {'note': FEATURE_NOTE,
+            'kinds': dict(FEATURE_KINDS),
+            'data': dict(FEATURES)}
+
+
 # ---------- the database ----------
 def load_db(path=JSON):
     with open(path, encoding='utf8') as f:
@@ -366,13 +437,21 @@ _ATLAS_STRUCT = ('abbr', 'name', 'plates', 'systems', 'first_plate', 'last_plate
 
 
 def atlas_payload(db):
-    """`window.__ATLAS__`: the calibration, aliases, plate table and structure list."""
+    """`window.__ATLAS__`: the calibration, aliases, plate table and structure list.
+
+    `features` and `feature_kinds` ride with the structures because that is what
+    they qualify: which of the 723 names the atlas prints name no region, and the
+    sentence each is read by. The app needs them wherever it would otherwise
+    promise an outline, an area or a mesh."""
+    f = db.get('features', {})
     return {
         'plate_frame': {k: db['plate_frame'][k] for k in _ATLAS_PF},
         'aliases': db['aliases'],
         'plates': [{k: p[k] for k in _ATLAS_PLATE} for p in db['plates']],
         'structures': [{k: s[k] for k in _ATLAS_STRUCT} for s in db['structures']],
         'groups': db.get('groups', {}).get('data', []),
+        'features': f.get('data', {}),
+        'feature_kinds': f.get('kinds', {}),
         'version': db.get('version', {}),
     }
 

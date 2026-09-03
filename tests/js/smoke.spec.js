@@ -171,31 +171,69 @@ test('the NIfTI button shows its own progress while the file is written', async 
   await expect(btn).toBeEnabled();
 });
 
-/* A name the atlas seals in a bound with other names and prints nothing between: no
-   outline is drawn for it, and every place the plate prints the name highlights instead.
-   `cbw` on plate 52 is the worst of them -- 11 labels through the whole cerebellum. */
-test('a name the atlas draws no boundary round highlights its labels, not a region',
+/* Two different things end in no outline being drawn, and they are encoded differently
+   because they are not the same claim. Plate 52 carries one of each, which is why both
+   tests below sit on it.
+
+   `cbw` names no region at all -- see `features` -- so it has no entry in `region_extents`
+   anywhere, no area, no volume and no mesh. The 11 labels it prints through the cerebellum
+   are the whole of what the atlas says about where it is. */
+test('a name that is no region has no entry, and highlights the name it prints',
   async ({ page }) => {
     await page.goto(BUNDLE + '#p52');
-    const boxes = await page.evaluate(() => window.__REGION__.r['52'].cbw.w
-      && window.__BOX__['52'].cbw.length);
-    expect(boxes).toBe(11);
+    const d = await page.evaluate(() => ({
+      entry: window.__REGION__.r['52'].cbw === undefined,
+      kind: window.__ATLAS__.features.cbw,
+      labels: window.__BOX__['52'].cbw.length,
+      anywhere: Object.values(window.__REGION__.r).some(b => 'cbw' in b),
+    }));
+    expect(d).toEqual({ entry: true, kind: 'white matter', labels: 11, anywhere: false });
+    // hovering the printed word says what kind of thing it is, and marks that word alone
     const im = await page.locator('#ov').boundingBox();
     const at = await page.evaluate(() => window.__BOX__['52'].cbw[0].slice(0, 2));
+    await page.mouse.move(im.x + at[0] * im.width, im.y + at[1] * im.height);
+    await expect(page.locator('#tip')).toContainText('the white matter of the lobules it runs through');
+    await expect(page.locator('#hl')).toBeVisible();
+    await expect(page.locator('#hr')).toBeHidden();
+    // selecting it circles every label and outlines nothing
+    await page.goto(BUNDLE + '#p52/cbw');
+    await expect(page.locator('#vhint')).toContainText('the ground it lies in belongs to the regions around it');
+    expect(await page.evaluate(() => document.querySelectorAll('#om ellipse').length)).toBe(11);
+    expect(await page.evaluate(() => document.querySelectorAll('#om path').length)).toBe(0);
+    // and the lobule whose white matter that is holds the ground instead
+    await page.goto(BUNDLE + '#p52/Sp5I');
+    await expect(page.locator('#vhint')).toContainText('Sp5I outlined');
+  });
+
+/* `Crus2` on plate 52 is the other case: it *has* ground -- 7.57 mm2 of section, a mesh,
+   a share of every track and volume read off it -- but every label of it falls inside a
+   bound the atlas draws round more than one name and prints nothing within, so there is no
+   boundary of its own to draw. That is `w`, and 309 entries still carry it. */
+test('a name the atlas draws no boundary round keeps its area and highlights its labels',
+  async ({ page }) => {
+    await page.goto(BUNDLE + '#p52');
+    const d = await page.evaluate(() => ({
+      w: window.__REGION__.r['52'].Crus2.w,
+      area: window.__REGION__.r['52'].Crus2.a,
+      labels: window.__BOX__['52'].Crus2.length,
+    }));
+    expect(d.w).toBe(1);
+    expect(d.area).toBeGreaterThan(0);          // unlike a name that is no region
+    expect(d.labels).toBe(4);
+    const im = await page.locator('#ov').boundingBox();
+    const at = await page.evaluate(() => window.__BOX__['52'].Crus2[0].slice(0, 2));
     await page.mouse.move(im.x + at[0] * im.width, im.y + at[1] * im.height);
     await expect(page.locator('#tip')).toContainText('draws none of its own here');
     const hr = page.locator('#hr');
     await expect(hr).toHaveClass('lab');
     // one closed rectangle per printed label, and no region outline
-    expect(await hr.getAttribute('d')).toMatch(/^(M[\d.]+ [\d.]+H[\d.]+V[\d.]+H[\d.]+Z){11}$/);
-    // selecting it circles the labels instead of outlining anything
-    await page.goto(BUNDLE + '#p52/cbw');
+    expect(await hr.getAttribute('d')).toMatch(/^(M[\d.]+ [\d.]+H[\d.]+V[\d.]+H[\d.]+Z){4}$/);
+    // selecting it circles the labels, and still quotes the area it has
+    await page.goto(BUNDLE + '#p52/Crus2');
     await expect(page.locator('#vhint')).toContainText('no outline of its own to draw');
-    expect(await page.evaluate(() => document.querySelectorAll('#om ellipse').length)).toBe(11);
+    await expect(page.locator('#vhint')).toContainText('mm² of section here');
+    expect(await page.evaluate(() => document.querySelectorAll('#om ellipse').length)).toBe(4);
     expect(await page.evaluate(() => document.querySelectorAll('#om path').length)).toBe(0);
-    // a neighbour the atlas does bound is unaffected
-    await page.goto(BUNDLE + '#p52/Sp5I');
-    await expect(page.locator('#vhint')).toContainText('Sp5I outlined');
   });
 
 /* The atlas letters one hemisphere for some names; the other is named by mirroring. */
