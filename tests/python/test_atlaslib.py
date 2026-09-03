@@ -1,4 +1,4 @@
-﻿"""The shared library: the renderer is byte-exact, the parsers agree, the payloads match."""
+"""The shared library: the renderer is byte-exact, the parsers agree, the payloads match."""
 import json
 import os
 

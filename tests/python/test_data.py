@@ -1,4 +1,4 @@
-﻿"""The database's own promises, as tests over the committed data/gerbil_atlas.json.
+"""The database's own promises, as tests over the committed data/gerbil_atlas.json.
 
 Every number here is one METHODS.md states in prose; a change that breaks one of them
 is either a regression or a change METHODS has to record.
