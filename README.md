@@ -137,7 +137,10 @@ your browser; export them as JSON to keep or share them, and a link carries a ha
 - **3D** stacks the 62 plates where they actually sit: as contours — or as the Nissl or
   myelin sections themselves — as a ray-marched volume, or as a point cloud of all 6,266
   labels you can orbit. Clip to a slab or cut
-  it in half at the midline. **Skull** (experimental) wraps the stack in a CT skull
+  it in half at the midline. **Floor**, **Ceiling** and **Gamma** window the tissue before
+  **Density** decides how opaque it is drawn — the difference between a grey fog and a
+  render you can see a nucleus in, and on the labelled drawing a high floor takes the wash
+  away and leaves the contours alone. All four ride in the link. **Skull** (experimental) wraps the stack in a CT skull
   surface at any transparency from a faint shell to solid bone. **Ortho** switches to a
   parallel projection, so nothing is foreshortened. **View** puts the camera on an
   anatomical axis — left, right, rostral, caudal, dorsal or ventral — and the link you

@@ -153,9 +153,10 @@ quality 65: 5.8 MB of Nissl and 5.1 MB of myelin, taking the single file from 7.
 18.2 MB. **Grey** and **Contrast** in the toolbar are a CSS filter on the image, and the
 same filter string is set on the canvas the PNG export draws through, so what is saved is
 what was on screen. The 3-D view reads whichever source is selected and rebuilds its volume
-when it changes; it is left out of the contrast control because Density already does that
-job there. A histology section has no contour channel, only tissue, so the weight given to
-the tissue channel differs by source and by mode — a slice is composited once and needs
+when it changes; it is left out of that filter because a filter on an `<img>` cannot reach
+a 3-D texture, and it stretches the same tissue in the renderer instead — see
+[the tissue curve](#the-tissue-curve) below. A histology section has no contour channel,
+only tissue, so the weight given to the tissue channel differs by source and by mode — a slice is composited once and needs
 enough to be seen through 62 of them, while a ray is composited at 288 samples and goes
 opaque a fifth of the way in at anything near that.
 
@@ -1182,6 +1183,36 @@ structure reads as a sparse arc rather than a shape. **None of this is a segment
 and no surface is fitted to those points. The surfaces that do exist are the separate,
 offline ones in [The third dimension](#the-third-dimension) above; the app does not carry
 them.
+
+### The tissue curve
+
+A photographed section is mostly pale tissue, and pale tissue is what a stack of 62 of them
+turns into fog. **Density** scales the alpha a sample ends up with, which raises the fog
+along with everything else; the three controls beside it decide what the sample was worth
+before that, which is what pulls one band of tissue out of the rest.
+
+**Floor**, **Ceiling** and **Gamma** window the tissue channel: tissue at or below the floor
+counts for nothing, tissue at or above the ceiling counts for all, whatever falls between is
+stretched across the full range, and gamma bends that stretch — under 1 lifting faint tissue,
+over 1 keeping only the dense. Bringing the ceiling down to the floor leaves a hard threshold,
+which is a picture worth having and so is allowed; the dragged one of the pair stops at the
+other rather than pushing it, the way the slab's two ends already do.
+
+One curve serves both raster renderers, so a section reads the same whether it is drawn as
+one of 62 quads or sampled by a ray, and the shader is the same eight lines in both. The
+contour channel is left out of it deliberately: it is a drawn line, already there or absent,
+and it is also what picks the colour between tissue and accent, so windowing it would
+recolour the render rather than stretch it. What the curve does reach on the labelled
+drawing is the grey wash behind the contours — a high floor takes it away and leaves the
+atlas's own line drawing standing alone in three dimensions.
+
+At floor 0, ceiling 100 and gamma 1 the curve is the identity and the shader skips the
+`pow`, so an untouched view costs nothing and draws exactly what it drew before there was
+anything to set. A deep link carries all four numbers as `&tf=<density>,<floor>,<ceiling>,<gamma>`
+in hundredths, written only when one of them is off its default — so no link written before
+this changes meaning — and the note under the view quotes the window whenever one is set,
+because a windowed render is a picture of the tissue after something was done to it and the
+reader of somebody else's link has no other way of knowing.
 
 ### The skull
 

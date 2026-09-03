@@ -146,7 +146,7 @@
           <button type="button" data-s="myelin" title="The unlabelled Gallyas myelin-stained section at this level, printed in the same coordinate box">Myelin</button>
         </span>
         <label class="tg" title="Read every source the same way: the drawing loses its colour"><input type="checkbox" id="ckgy">Grey</label>
-        <label class="lb3" id="ctrw" title="Stretch the contrast of whichever plate is showing. The 3-D view has Density for the same job, so this is left off it."
+        <label class="lb3" id="ctrw" title="Stretch the contrast of whichever plate is showing. The 3-D view stretches its own tissue with Floor, Ceiling and Gamma, so this is left off it."
           >Contrast <input type="range" id="ctrs" min="60" max="260" step="5" value="100"><b id="ctrl">1.0&times;</b></label>
       </span>
       <span class="vctl" id="ctlPlate">
@@ -192,8 +192,15 @@
           <button type="button" data-r="points">Labels</button>
         </span>
         <span class="tsep"></span>
-        <label class="lb3" title="How strongly each slice contributes"
+        <label class="lb3" title="How strongly each slice contributes, once the curve below has said what its tissue is worth"
           >Density <input type="range" id="v3op" min="4" max="100" value="42"></label>
+        <label class="lb3" title="Tissue at or below this counts for nothing — the control that clears the pale wash a photographed section fogs the stack with"
+          >Floor <input type="range" id="v3t0" min="0" max="100" value="0"><b id="v3t0l">0%</b></label>
+        <label class="lb3" title="Tissue at or above this counts for all, so whatever is left between the two spans the full range. Bring it down to the floor for a hard threshold."
+          >Ceiling <input type="range" id="v3t1" min="0" max="100" value="100"><b id="v3t1l">100%</b></label>
+        <label class="lb3" title="The curve between floor and ceiling: under 1 lifts faint tissue, over 1 keeps only the dense"
+          >Gamma <input type="range" id="v3gm" min="40" max="250" step="5" value="100"><b id="v3gml">1.00</b></label>
+        <button class="z" id="v3tr" type="button" hidden title="Density, floor, ceiling and gamma back to the values this view draws with untouched">Reset contrast</button>
         <label class="lb3" title="Anterior edge of the slab that is drawn"
           >Plates <input type="range" id="v3a" min="1" max="62" value="1"><b id="v3al">1</b></label>
         <label class="lb3" title="Posterior edge of the slab that is drawn"
@@ -367,8 +374,10 @@
       remaining one is out by a single pixel).</p>
     <p><b>Grey</b> takes the colour out of the drawing so the three read alike; the histology
       was published in grey already. <b>Contrast</b> stretches whatever is showing, and both
-      carry into the PNG export. The 3-D view is built from whichever source is selected, and
-      has Density for the same job as contrast.</p>
+      carry into the PNG export. The 3-D view is built from whichever source is selected and
+      stretches it in the renderer instead, with <b>Floor</b>, <b>Ceiling</b> and <b>Gamma</b>
+      windowing the tissue channel before <b>Density</b> decides how opaque what survives is
+      drawn.</p>
     <p>The myelin section is an <em>adjacent</em> section, not the same one: the two stains
       cannot be applied to a single slice. It is aligned as the authors published it.</p>
 
