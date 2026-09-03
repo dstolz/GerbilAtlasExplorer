@@ -385,7 +385,7 @@ def validate(db, frame, grid, labels, brain, raw, ids, present, meshes, plates,
     #     they name one region between them and only one of them carries the extent, so
     #     either name counts as a hit on the one outline they share
     blocks = db.get('label_blocks', {}).get('data', {})
-    hit = tot = inside = before = plane = 0
+    hit = rtot = tot = inside = before = plane = 0
     for p in plates:
         z = grid.plane(idx[p])
         sl = labels[z]
@@ -412,9 +412,15 @@ def validate(db, frame, grid, labels, brain, raw, ids, present, meshes, plates,
                 inside += bool(br[y, x])
                 before += bool(raw_br[y, x])
                 plane += in_outline(outl[str(p)], cx, cy)
+                # A name that is no region -- a fissure, `cbw`, a vessel; see
+                # atlaslib.FEATURES -- has none to be inside, so it is asked
+                # whether it is in the section and not whose ground it is on.
+                if ab in A.FEATURES:
+                    continue
+                rtot += 1
                 if sl[y, x] in want:
                     hit += 1
-    out['labels_in_their_own_region'] = round(hit / max(tot, 1), 4)
+    out['labels_in_their_own_region'] = round(hit / max(rtot, 1), 4)
     out['labels_inside_the_surface'] = round(inside / max(tot, 1), 4)
     if not np.array_equal(brain, raw):
         out['labels_inside_before_opening'] = round(before / max(tot, 1), 4)
