@@ -158,6 +158,15 @@ def test_labels_and_extents_are_in_step(db):
     neighbour while these counts stay balanced, which is how those three were actually
     lost; that needs a per-(plate, abbreviation) diff against the commit whose labels
     the block was rebuilt from, and cannot be asserted from one snapshot.
+
+    And it is a proxy, not proof: `labels_seeded` is the extraction's own account of
+    what it was handed, so editing that number satisfies this assertion whether or not
+    anything was rebuilt. If you reach this test failing during a merge, the fix is to
+    regenerate `region_extents` from the merged `label_positions` and `svg/` -- never to
+    reconcile the count by hand. `region_extents` is derived, like the built pages and
+    the geojson, and neither parent's copy can describe merged inputs. A merge that took
+    one side and balanced this arithmetic by hand reverted a plate-30 re-seed while
+    passing this test, the mesh-consistency tests and CI, on 2026-09-03.
     """
     s = db['region_extents']['summary']
     boxes = sum(len(b) for d in db['label_positions']['data'].values()
