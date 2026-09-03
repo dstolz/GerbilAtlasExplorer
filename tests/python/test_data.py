@@ -75,7 +75,39 @@ def test_leaders(db):
                 assert 0 <= i < len(LP[p][ab])
                 assert 0 <= x <= 1 and 0 <= y <= 1
                 n += 1
-    assert n == db['label_leaders']['summary']['leaders_found'] == 215
+    assert n == db['label_leaders']['summary']['leaders_found'] == 212
+
+
+def test_no_leader_tip_lands_on_another_name(db):
+    """A leader ends in the region it names, never on top of a different name.
+
+    The atlas draws a line from a label it could not fit inside its region to the
+    region itself. It never ends one on another abbreviation: that ground is
+    spoken for, and the word sitting there says so. So a tip inside a different
+    abbreviation's printed box is a line followed too far or the wrong line
+    followed at all, and it seeds the structure in its neighbour's face.
+
+    That failure hides. While the neighbour has no label of its own the
+    mis-seeded region simply holds the neighbour's face and looks right; it only
+    surfaces when the neighbour is finally located, takes its own ground back,
+    and leaves the first with a sliver the small-area cull then removes. `ALPO`
+    on plate 44, `CC` on 60 and `pyx` on 62 were the three, and all three were
+    put aside in `label_leaders.REJECT` -- so this list is empty and stays that
+    way. No exceptions: a new one is a bug, not a fact about the atlas.
+    """
+    LP = db['label_positions']['data']
+    bad = []
+    for p, d in db['label_leaders']['data'].items():
+        for ab, tips in d.items():
+            for i, tx, ty in tips:
+                for other, boxes in LP[p].items():
+                    if other == ab:
+                        continue
+                    for j, (cx, cy, bw, bh) in enumerate(boxes):
+                        if abs(tx - cx) <= bw / 2 and abs(ty - cy) <= bh / 2:
+                            bad.append('plate %s: %s tip %d lands on %s[%d]'
+                                       % (p, ab, i, other, j))
+    assert not bad, 'leader tips ending on another structure: ' + '; '.join(bad)
 
 
 def test_region_extents(db):
@@ -226,7 +258,11 @@ def test_volumes_consistent(db):
     # so until that label was split they had no position anywhere, hence no extent
     # and no mesh. 9bCb and 11N still have none of their own -- they share the
     # entry filed under the name their label leads with.
-    assert V['summary']['structures'] == len(V['data']) == 687
+    # 688 rather than 687: ALPO joined when its leader stopped ending on RPO's
+    # word. It had never had an extent anywhere -- its seed was inside the oval
+    # RPO is printed in, so it held RPO's face until RPO was located and then
+    # held nothing.
+    assert V['summary']['structures'] == len(V['data']) == 688
     assert not (have & set(db['features']['data']))
     assert 'little-endian' in V['note']
     for ab, e in V['data'].items():
