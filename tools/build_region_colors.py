@@ -85,7 +85,14 @@ import atlaslib as A  # noqa: E402
 
 SLOTS = 8               # palette slots the app has to fill; the colors themselves are its own
 NEAR_MM = 0.05          # a gap this thin is not a boundary the eye can find, so it is a touch
-SEEDS = 64              # tabu restarts to try before giving the color count up as too small
+SEEDS = 256             # tabu restarts before giving the color count up as too small.
+                        # 64 was enough until layer 1 was located on plates 17 and 18: the
+                        # band it took back from Nv moves four edges of the quotient graph,
+                        # and on that graph the eighth color is found on a seed past 128.
+                        # The floor is unmoved -- 1, 2, 3, AHA, ICj, Pir, Tu and VP still
+                        # pairwise touch -- so this is the search running out of patience
+                        # and not the atlas needing a ninth color, which the app's palette
+                        # has not got.
 
 
 # ---------------------------------------------------------------- who touches whom
