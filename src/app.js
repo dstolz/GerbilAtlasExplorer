@@ -1000,6 +1000,7 @@ function cmpShow(){
     cmpMark();
   } else { $('xh2').innerHTML=''; }
   mcDraw();
+  tgDraw();
   fitW=0; fit(); applyView();
 }
 /* the selection, outlined on the second pane too where it is the same level */
@@ -2271,9 +2272,18 @@ function tgSample(o,n){
   return q;
 }
 function tgDraw(){
-  const g=$('tk'), o=tgPlan;
-  if(!o||o.len===undefined||smode!=='targ'){ g.innerHTML=''; tgPJ(); return; }
-  const ap0=plateOf[cur].bregma, half=PSTEP/2;
+  const g=$('tk'), g2=$('tk2'), o=tgPlan;
+  if(!o||o.len===undefined||smode!=='targ'){ g.innerHTML=''; g2.innerHTML=''; tgPJ(); return; }
+  g.innerHTML=tgTrackSVG(o,plateOf[cur].bregma);
+  g2.innerHTML=cmpOn ? tgTrackSVG(o,plateOf[cmpPlate()].bregma) : '';
+  tgPJ();
+  if(typeof v3frame==='function') v3frame();
+}
+/* the same track, drawn against whichever plate's plane it is asked of -- the plate shown
+   and the plate beside it in compare are both just a bregma level to test each sample
+   against, so one function answers for either */
+function tgTrackSVG(o,ap0){
+  const half=PSTEP/2;
   const q=tgSample(o,64).map(p=>({x:fromML(p.ml), y:fromDV(p.dv), on:Math.abs(p.ap-ap0)<=half}));
   const out=[];
   let run=[q[0]];
@@ -2319,16 +2329,14 @@ function tgDraw(){
       out.push(`<line class="bd" x1="${(ax-nx).toFixed(1)}" y1="${(ay-ny).toFixed(1)}" x2="${(ax+nx).toFixed(1)}" y2="${(ay+ny).toFixed(1)}"/>`);
     }
   }
-  out.push(...tgFootPlate(o));
-  g.innerHTML=out.join('');
-  tgPJ();
-  if(typeof v3frame==='function') v3frame();
+  out.push(...tgFootPlate(o,ap0));
+  return out.join('');
 }
 /* the sphere cut by this plate's plane: a circle shrinking with the plane's distance from
    the target, in atlas millimeters on both axes */
-function tgFootPlate(o){
+function tgFootPlate(o,ap0=plateOf[cur].bregma){
   if(!tgFoot||!o) return [];
-  const dAP=o.Ta.ap-plateOf[cur].bregma, rr=tgFoot*tgFoot-dAP*dAP;
+  const dAP=o.Ta.ap-ap0, rr=tgFoot*tgFoot-dAP*dAP;
   if(rr<=0) return [];
   const r2=Math.sqrt(rr);
   return [`<ellipse class="fp" cx="${fromML(o.Ta.ml).toFixed(1)}" cy="${fromDV(o.Ta.dv).toFixed(1)}"`+
