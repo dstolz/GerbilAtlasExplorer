@@ -340,20 +340,20 @@ button.z.armed,button.z.armed:hover{background:var(--accent);border-color:var(--
 .pnum{font-size:14px;font-weight:650;font-variant-numeric:tabular-nums;flex:none}
 .coord{font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums;
   min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-/* ---------- the view's controls ----------
-   One panel, two presentations. Out of the flow in both, so opening it changes nothing
-   #imgbox measures and fit() never resizes the plate under the pointer -- which is also
-   what stopped Add rewrapping the toolbar and moving the picture a frame later. */
-.vpan{display:flex;flex-direction:column;background:var(--panel);
-  border:1px solid var(--line);box-shadow:var(--shadow);z-index:22;overflow:hidden}
+/* ---------- the view and the controls that drive it ----------
+   Side by side rather than one over the other: a column beside the picture where there is
+   width for one, a row above it where there is not. Both are in the flow, so opening the
+   panel re-fits the view rather than covering it -- the picture gets smaller and stays
+   wholly visible, which is the trade a docked panel makes and an overlay does not. */
+.vmain{display:flex;flex:1;min-height:0;min-width:0}
+.vcol{display:flex;flex-direction:column;flex:1;min-width:0;min-height:0}
+.vpan{display:flex;flex-direction:column;background:var(--panel2);flex:none;overflow:hidden}
 .vpan[hidden]{display:none}
 .vpanh{display:flex;align-items:center;gap:10px;padding:10px 14px;flex:none;
-  border-bottom:1px solid var(--line);background:var(--panel)}
+  border-bottom:1px solid var(--line)}
 .vpanh b{font-size:13.5px;font-weight:650;margin-right:auto}
 .vpanb{padding:12px 14px 16px;overflow:auto;overscroll-behavior:contain;
   display:flex;flex-direction:column;gap:14px}
-.vpanbd{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:21}
-.vpanbd[hidden]{display:none}
 /* a labeled block of controls: the dialog's own heading treatment, so the panel reads
    like the rest of the app rather than like a new kind of surface */
 .grp{display:flex;flex-direction:column;gap:9px}
@@ -782,26 +782,22 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
      nothing, so on a page that scrolls they would collapse to whatever their content asked
      for. Give them the room instead -- this is the view, and the room is what it is for. */
   #projview .pjw,#v3dview .v3w{min-height:min(50dvh,400px)}
-  /* the plate number rides with the stepper rather than taking a strip of its own */
+  /* the plate number rides with the stepper rather than taking a strip of its own; it and
+     the stage are siblings inside .vcol, and the stepper is the card's own last child */
   .vctx{order:2;border-bottom:0;border-top:1px solid var(--line);padding-bottom:2px}
   .stage{order:1}
-  .vbot{order:3;border-top:0;padding-top:4px}
-  /* the sheet: over the picture, never pushing it */
-  .vpan{position:fixed;left:0;right:0;bottom:0;max-height:72dvh;
-    border-radius:15px 15px 0 0;border-bottom:0;
-    padding-bottom:env(safe-area-inset-bottom,0px)}
-  .vpanh{padding-top:16px;position:relative}
-  .vpanh::before{content:"";position:absolute;top:6px;left:50%;transform:translateX(-50%);
-    width:38px;height:4px;border-radius:2px;background:var(--line)}
+  .vbot{border-top:0;padding-top:4px}
+  /* no width to put a column in, so the controls take a row above the picture -- bounded,
+     and scrolling inside itself, so they can never take the whole screen */
+  .vmain{flex-direction:column}
+  .vpan{order:-1;max-height:45dvh;border-bottom:1px solid var(--line)}
+  /* the sliders have the row's full width here, so they may as well use it */
+  .vpanb{padding:11px 14px 14px}
 }
-/* wide enough for the panel to sit beside what it drives: a popover under its own button,
-   overlaying the top-right of the view rather than taking width off the picture */
+/* wide enough to put the controls beside what they drive rather than on top of it */
 @media (min-width:900px){
-  .vpan{position:absolute;top:calc(100% + 6px);right:14px;width:min(340px,42vw);
-    /* .viewer is overflow:hidden, so the popover has to stay inside the card rather than
-       rely on being able to hang out of it */
-    max-height:min(560px,60dvh);border-radius:12px}
-  .vpanbd{display:none}
+  .vmain{flex-direction:row}
+  .vpan{width:clamp(250px,24vw,320px);border-left:1px solid var(--line)}
 }
 /* given a window with room, the app fills it: every pane scrolls itself and the page
    does not scroll at all, so the plate gets each pixel nothing else is using */
@@ -814,6 +810,8 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
   .side,.viewer{height:100%}
   .list{flex:1;min-height:0;max-height:none}
   .img{height:auto;flex:1;min-height:0}
+  /* the height reaches the plate through the two new wrappers, so both have to pass it on */
+  .vmain,.vcol{min-height:0}
   footer{padding-top:7px;padding-bottom:10px}
 }
 /* narrow phones: hand the structure name the room the columns were wasting */
@@ -857,7 +855,7 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
   .seg button{padding:8px 12px}
 }
 @media print{
-  header,.vbar,.vbot,.side,.rdout,.vhint,.pjn,.v3n,.vinf,.vinfp,.vpan,.vpanbd,
+  header,.vbar,.vbot,.side,.rdout,.vhint,.pjn,.v3n,.vinf,.vinfp,.vpan,
   .fsep,.flink{display:none}
   html,body{height:auto}
   body{display:block;overflow:visible}

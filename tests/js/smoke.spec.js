@@ -381,25 +381,44 @@ test('on a phone the picture is on the first screen in every view', async ({ bro
   await ctx.close();
 });
 
-test('opening the controls does not move the picture', async ({ page }) => {
-  // The whole reason the panel is out of the flow: #imgbox is what fit() measures, and a
-  // panel that changed its height would resize the plate under the pointer -- which is
-  // what revealing Add used to do to the toolbar.
+test('the controls dock beside the picture, and give the room back', async ({ page }) => {
+  // The panel is furniture, not an overlay: it takes a column to the right of the view, so
+  // the plate is re-fitted smaller and stays wholly visible rather than being covered. What
+  // has to hold is that the re-fit is exact in both directions -- fit() is what keeps the
+  // SVG overlays on the image, so a plate left the wrong size is a plate mislabelled.
   await page.goto(BUNDLE + '#p30');
   await page.waitForTimeout(600);
   const before = await page.locator('#iw').boundingBox();
   await page.click('#vctlb');
   await expect(page.locator('#vpan')).toBeVisible();
-  expect(await page.locator('#iw').boundingBox()).toEqual(before);
-  await page.check('#ckan');                       // and revealing Add inside it changes nothing
-  await expect(page.locator('#anadd')).toBeVisible();
-  expect(await page.locator('#iw').boundingBox()).toEqual(before);
+  const pan = await page.locator('#vpan').boundingBox();
+  const open = await page.locator('#iw').boundingBox();
+  expect(pan.x).toBeGreaterThanOrEqual(open.x + open.width - 1);   // beside it, not over it
+  expect(open.width).toBeLessThan(before.width);                   // and it cost the picture width
   await page.keyboard.press('Escape');             // Escape drops the panel before anything else
   await expect(page.locator('#vpan')).toBeHidden();
-  expect(await page.locator('#iw').boundingBox()).toEqual(before);
+  expect(await page.locator('#iw').boundingBox()).toEqual(before); // exactly the size it started
 });
 
-test('arming a click on the plate puts the sheet away first', async ({ browser }) => {
+test('on a phone the controls take a row above the picture', async ({ browser }) => {
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+  const page = await ctx.newPage();
+  await page.goto(BUNDLE + '#p30');
+  await page.waitForTimeout(900);
+  const before = await page.locator('#iw').boundingBox();
+  await page.click('#vctlb');
+  const pan = await page.locator('#vpan').boundingBox();
+  const plate = await page.locator('#iw').boundingBox();
+  expect(pan.y + pan.height).toBeLessThanOrEqual(plate.y + 2);     // above the picture
+  expect(pan.height).toBeLessThanOrEqual(844 * 0.45 + 2);          // and bounded, scrolling inside
+  await page.click('#vctlb');
+  expect(await page.locator('#iw').boundingBox()).toEqual(before);
+  await ctx.close();
+});
+
+test('arming a click on the plate leaves the controls where they are', async ({ browser }) => {
+  // A docked panel covers nothing, so arming Add no longer has to put it away -- and it
+  // should not, or every note would cost you the panel you were working in.
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
   const page = await ctx.newPage();
   await page.goto(BUNDLE + '#p30');
@@ -407,9 +426,41 @@ test('arming a click on the plate puts the sheet away first', async ({ browser }
   await page.click('#vctlb');
   await page.check('#ckan');
   await page.click('#anadd');                      // arms a click on the plate
-  await expect(page.locator('#vpan')).toBeHidden();// which the sheet was covering
-  await expect(page.locator('#iw')).toBeVisible();
+  await expect(page.locator('#vpan')).toBeVisible();
+  const b = await page.locator('#iw').boundingBox();
+  await page.mouse.click(b.x + b.width * 0.45, b.y + b.height * 0.5);
+  await expect(page.locator('#anf')).toBeVisible();// and the click still reached the plate
   await ctx.close();
+});
+
+test('each view remembers which staining it was left on', async ({ page }) => {
+  // The plate and the stack are the same 62 sections seen two ways, and reading one
+  // staining flat against another in 3-D is what having both views is for.
+  await page.goto(BUNDLE + '#p30');
+  await page.waitForTimeout(600);
+  await expect(page.locator('#srcseg')).toBeVisible();
+  await page.click('#srcseg button[data-s="nissl"]');
+  await page.click('#vseg button[data-t="v3d"]');
+  await page.waitForFunction(() => window.__gae && v3ready, null, { timeout: 90000 });
+  await expect(page.locator('#srcseg')).toBeVisible();          // offered here too
+  expect(await page.evaluate(() => window.__gae.state().psrc)).toBe('drawing');
+  await page.click('#srcseg button[data-s="myelin"]');
+  await page.waitForTimeout(2500);
+  await page.click('#vseg button[data-t="plate"]');
+  expect(await page.evaluate(() => window.__gae.state().psrc)).toBe('nissl');
+  await page.click('#vseg button[data-t="v3d"]');
+  await page.waitForTimeout(2500);
+  expect(await page.evaluate(() => window.__gae.state().psrc)).toBe('myelin');
+  // the projection plots where labels are printed, so no staining applies to it
+  await page.click('#vseg button[data-t="proj"]');
+  expect(await page.locator('#srcseg').isVisible()).toBe(false);
+  // both ride in the link, and one written before the stack had its own still sets both
+  const h = await page.evaluate(() => { window.__gae.writeHash(); return location.hash; });
+  expect(h).toContain('&ps=nissl');
+  expect(h).toContain('&ps3=myelin');
+  await page.goto(BUNDLE + '#p30&ps=myelin&t=v3d');
+  await page.waitForFunction(() => window.__gae && v3ready, null, { timeout: 90000 });
+  expect(await page.evaluate(() => window.__gae.state().psrc)).toBe('myelin');
 });
 
 test('a finger zooms the plate, and pinching back in fits it', async ({ browser }) => {
