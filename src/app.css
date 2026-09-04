@@ -247,8 +247,27 @@ input[type=search]:focus{border-color:var(--accent)}
 .vbar{display:flex;flex-wrap:wrap;align-items:center;gap:7px 9px;
   padding:8px 14px;border-bottom:1px solid var(--line);flex:none;position:relative}
 /* the strip of controls the view is steered by. Beside the tabs where there is room; its
-   own row, scrolling sideways rather than wrapping, where there is not. */
-.vqs{display:flex;flex-wrap:wrap;align-items:center;gap:7px 9px;min-width:0}
+   own row on a phone. It scrolls sideways at every width rather than wrapping: wrapping is
+   what put the picture below the fold on a phone, and on a 1280 or 1440 laptop it is what
+   pushed the icon group onto a second and third row in the 3-D view. One row, always, and
+   the fade below says when there is more of it than fits. */
+.vqs{display:flex;flex-wrap:nowrap;align-items:center;gap:7px 9px;flex:1 1 auto;min-width:0;
+  overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;
+  padding:3px 0;margin:-3px 0}   /* room for a focus ring, which overflow would otherwise clip */
+.vqs::-webkit-scrollbar{display:none}
+/* A group in the strip keeps its own width. Left to shrink -- which is the flex default,
+   and .vctl carries min-width:0 -- a group narrower than its contents does not scroll,
+   it clips: .seg is overflow:hidden, so the buttons past the cut simply vanish, which is
+   how Myelin went missing from the 3-D strip on a phone. Overflow is the scroll bar's
+   job, not the group's. */
+.vqs .vctl{flex:none;flex-wrap:nowrap}
+/* the menu form of a segmented control: it exists only where the row is too narrow for
+   the buttons, so it is off by default and the buttons are on */
+.qsel{display:none}
+/* and a row that scrolls sideways has to look like one, or a control past its right edge
+   is a control nobody knows is there */
+.vqs.more{-webkit-mask-image:linear-gradient(to right,#000 calc(100% - 26px),transparent);
+  mask-image:linear-gradient(to right,#000 calc(100% - 26px),transparent)}
 .vctl{display:flex;flex-wrap:wrap;align-items:center;gap:7px 9px;min-width:0}
 .vctl[hidden]{display:none}
 .elinkgrp{margin-left:auto;display:inline-flex;align-items:center;gap:6px}
@@ -357,6 +376,7 @@ button.z.armed,button.z.armed:hover{background:var(--accent);border-color:var(--
 /* a labeled block of controls: the dialog's own heading treatment, so the panel reads
    like the rest of the app rather than like a new kind of surface */
 .grp{display:flex;flex-direction:column;gap:9px}
+.grp[hidden]{display:none}   /* display:flex above outranks the browser's own [hidden] rule */
 .grp h4{margin:0;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
   color:var(--muted)}
 .grp .in{display:flex;flex-wrap:wrap;align-items:center;gap:9px 14px}
@@ -803,13 +823,14 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
 @media (max-width:899px){
   .viewer{order:-1}
   input[type=search]{font-size:16px}   /* <16px makes iOS zoom the page on focus */
-  /* the strip takes a row of its own and scrolls sideways rather than wrapping: a
-     wrapping block is what put the picture below the fold */
-  .vqs{flex-basis:100%;order:3;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;
-    -webkit-overflow-scrolling:touch}
-  .vqs::-webkit-scrollbar{display:none}
+  /* the strip takes a row of its own, under the tabs and the icons */
+  .vqs{flex-basis:100%;order:3}
   .vbar{gap:6px 9px;padding-bottom:0}
-  .vqs>.vctl{flex-wrap:nowrap;padding-bottom:8px}
+  .vqs>.vctl{padding-bottom:8px}
+  /* 195px of buttons become a 100px menu, and the viewpoint and pane controls move into
+     the panel, which leaves the strip carrying what the view is actually steered by */
+  #m3seg{display:none}
+  .qsel{display:inline-block}
   /* a finger has a better zoom than these have: the pinch anchors between the fingers and
      clamps at exactly 100%, which is what Fit writes. Hidden, not removed -- applyView()
      writes to all three of them on every pan. */
@@ -832,6 +853,10 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
 }
 /* wide enough to put the controls beside what they drive rather than on top of it */
 @media (min-width:900px){
+  /* one line, so the strip shrinks and scrolls instead of shouldering the icon group onto
+     a row of its own: a flex container collects its items into lines before it shrinks
+     anything, so a strip allowed to wrap never gets the chance to scroll */
+  .vbar{flex-wrap:nowrap}
   .vmain{flex-direction:row}
   .vpan{width:clamp(250px,24vw,320px);border-left:1px solid var(--line)}
 }

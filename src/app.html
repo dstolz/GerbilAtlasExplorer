@@ -189,8 +189,18 @@
             <button type="button" class="on" data-r="volume">Volume</button>
             <button type="button" data-r="points">Labels</button>
           </span>
+          <!-- the same three modes as a menu. Below 900px a segmented control here costs
+               195px the row has not got, and this is a choice you make once rather than one
+               you flip: the menu is the better shape for it at that width. The switch above
+               is not, which is why that one stays a row of buttons at every width. -->
+          <select class="csel qsel" id="m3sel" aria-label="How the stack is drawn">
+            <option value="contour">Contours</option>
+            <option value="volume">Volume</option>
+            <option value="points">Labels</option>
+          </select>
           <span class="tsep"></span>
-          <label class="lb3" title="Look at the brain from a named direction"
+          <span class="vctl" id="qs3dx">
+          <label class="lb3" id="v3vw" title="Look at the brain from a named direction"
             >View <select id="v3v">
               <option value="obl">Oblique</option>
               <option value="left">Left</option>
@@ -209,6 +219,7 @@
           </span>
           <label class="tg" id="v3lkw" hidden title="Turn, zoom and pan both panes together, holding whatever angle apart they were set to. Untick to rotate them independently; Reset view brings a locked pair back onto the one default."><input type="checkbox" id="v3lk" checked>Lock</label>
           <label class="tg" id="v3fw" hidden title="Draw this view in your working frame instead of the atlas’s — the rotation you set, put on the picture. Appears once a pitch, roll or yaw is set."><input type="checkbox" id="v3f">In frame</label>
+          </span>
         </span>
       </span>
 
@@ -399,6 +410,10 @@
               <span class="tgw" id="v3msw" hidden><label class="tg" title="The interpolated brain surface as a faint shell"><input type="checkbox" id="v3ms">Surface</label>
               <span id="v3mf" hidden><button class="z" id="v3mfb" type="button" title="Open data/gerbil_atlas_volumes.json from the repository">Load file</button><input type="file" id="v3mfile" accept="application/json,.json" hidden></span></span>
             </div></div>
+            <!-- filled by place3d() on a narrow window, where the camera and the pane
+                 controls do not fit in the strip; empty and hidden on a wide one -->
+            <div class="grp" id="g3cam" hidden><h4>Viewpoint and panes</h4>
+              <div class="in" id="g3camin"></div></div>
             <div class="grp"><h4>Camera</h4><div class="in">
               <label class="tg" title="Cut at the midline to see inside"><input type="checkbox" id="v3h">Half</label>
               <label class="tg" title="Parallel projection &mdash; no perspective foreshortening, so equal lengths read equally wherever they sit"><input type="checkbox" id="v3o">Ortho</label>
@@ -500,8 +515,9 @@
       remaining one is out by a single pixel).</p>
     <p><b>Gray</b> takes the color out of the drawing so the three read alike; the histology
       was published in gray already. <b>Contrast</b> stretches whatever is showing, and both
-      carry into the PNG export. The 3-D view is built from whichever source is selected and
-      stretches it in the renderer instead, with <b>Floor</b>, <b>Ceiling</b> and <b>Gamma</b>
+      carry into the PNG export. The 3-D view is built from whichever source is selected
+      there &mdash; the Nissl unless you say otherwise &mdash; and stretches it in the
+      renderer instead, with <b>Floor</b>, <b>Ceiling</b> and <b>Gamma</b>
       windowing the tissue channel before <b>Density</b> decides how opaque what survives is
       drawn.</p>
     <p>The myelin section is an <em>adjacent</em> section, not the same one: the two stains
@@ -677,8 +693,13 @@
 
     <h3>The 3-D view</h3>
     <p>The plates are already in one common coordinate frame, so they can simply be stacked
-      where they belong: each section is drawn at its own bregma. <em>Volume</em>, which is
-      what the view opens in, ray-marches that stack and shows the brain as a solid;
+      where they belong: each section is drawn at its own bregma. The view opens on the
+      <em>Nissl</em> because tissue is what a volume is made of: density reads as density,
+      where the labeled drawing&rsquo;s contour ink and printed abbreviations stack into a
+      haze with a brain somewhere inside it. The plate view still opens on the drawing, and
+      either can be switched, which is the pairing having two views is for.
+      <em>Volume</em>, which is what the view opens in, ray-marches that stack and shows
+      the brain as a solid;
       <em>Contours</em> draws the sections themselves, one textured plate at a time, which is
       the honest picture of what the stack is &mdash; 62 sections and the gaps between them
       &mdash; and at the default angle 62 cards seen nearly edge-on, which is why it is not

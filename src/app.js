@@ -26,15 +26,24 @@ const MRIS={};
 const SRC={drawing:IMG, nissl:window.__NISSL__, myelin:window.__MYELIN__, mri:MRIS};
 const SRCN={drawing:'labeled drawing', nissl:'Nissl section', myelin:'myelin section',
             mri:'MRI plane'};
+const srcOK = k => !!(SRC[k] && SRC[k][1]);
 /* The plate and the stack are the same 62 sections seen two ways, and they used to share
    one source on the grounds that a build where the two disagreed would be a puzzle. It is
    not a puzzle, it is the comparison: reading a Nissl stack against the labeled plate is
    what having both views is for. So each remembers its own, and `psrc` is whichever one is
-   on screen -- every reader of it below is unchanged, and only setSrc and setTab move it. */
-const PSRC={plate:'drawing', v3d:'drawing'};
+   on screen -- every reader of it below is unchanged, and only setSrc and setTab move it.
+
+   The stack opens on the Nissl rather than the drawing, because the two views want
+   different things out of the same sections. The drawing is ink on white: printed
+   abbreviations and contour lines, which stack into a scribble the march renders as haze.
+   The Nissl is tissue, and tissue is what a volume is for -- density reads as density, and
+   the brain comes up looking like a brain. The labeled plate is still one button away, and
+   the plate view still opens on it, which is the pairing the two views are for. A build
+   without the histology has no Nissl to open on and falls back to the drawing. */
+const PSRC={plate:'drawing', v3d: srcOK('nissl') ? 'nissl' : 'drawing'};
+const V3SRC=PSRC.v3d;              /* what a link is read against, and written short of */
 const srcTab = () => tab==='v3d' ? 'v3d' : 'plate';
 let psrc='drawing', pgray=false, pctr=100;
-const srcOK = k => !!(SRC[k] && SRC[k][1]);
 const plateImg = (n,k=psrc) => ((srcOK(k)?SRC[k]:IMG)[n])||'';
 /* gray and contrast are a display filter, not a second copy of the image: the same string
    goes on the <img> and on the canvas the PNG export draws through, so what is saved is
@@ -4492,11 +4501,48 @@ V3CV.addEventListener('click',e=>{
 });
 
 /* ---------- controls ---------- */
-[...$('m3seg').children].forEach(b=>b.onclick=()=>{
-  v3E().mode=b.dataset.r;
-  [...$('m3seg').children].forEach(x=>x.classList.toggle('on',x===b));
+/* the buttons and the menu are two shapes of the one control, so they go through one
+   setter and are synced together in v3ui() -- neither can drift from the other or from Q */
+function v3setMode(r){
+  v3E().mode=r;
+  [...$('m3seg').children].forEach(x=>x.classList.toggle('on',x.dataset.r===r));
+  $('m3sel').value=r;
   v3note(); v3frame(); queueHash();
-});
+}
+[...$('m3seg').children].forEach(b=>b.onclick=()=>v3setMode(b.dataset.r));
+$('m3sel').onchange=e=>v3setMode(e.target.value);
+
+/* ---------- where the viewpoint and pane controls live ----------
+   In the strip beside the mode where there is width for them; in the panel where there is
+   not, rather than off the right edge of a row nobody can see the end of. The nodes are
+   moved rather than duplicated, so their handlers, their ids and their state come with
+   them and there is only ever one of each. */
+const NARROW=matchMedia('(max-width:899px)');
+/* how much of the strip its groups actually stand on. Not scrollWidth: the strip grows to
+   fill the bar, so scrollWidth is the box wherever the contents are smaller than it, and a
+   group that had gone into the panel could never be found room to come back to. */
+function vqsUsed(q){
+  const l=q.getBoundingClientRect().left; let w=0;
+  for(const k of q.children){ const r=k.getBoundingClientRect(); if(r.width) w=Math.max(w,r.right-l); }
+  return w+q.scrollLeft;
+}
+let q3w=0;                    /* what the group last measured while it was in the strip */
+function place3d(){
+  const q=$('vqs'), box=$('qs3dx'), here=box.parentElement===$('qs3d');
+  if(here&&box.offsetWidth) q3w=box.offsetWidth+9;      /* +9: the gap it would sit behind */
+  /* room, not screen size, is the question. A phone never has it; a 1280 laptop with the
+     sidebar open has not got it either, which is what a 900px breakpoint alone got wrong --
+     it left Split and Lock past a silent right edge on the width most people read this on.
+     The comparison is asymmetric on purpose: it leaves on the first pixel of overflow and
+     comes back only with six to spare, so a window dragged across the line does not flap. */
+  const used=vqsUsed(q);
+  const room = !NARROW.matches &&
+    (here ? used<=q.clientWidth : used+q3w<=q.clientWidth-6);
+  const to = room ? $('qs3d') : $('g3camin');
+  if(box.parentElement!==to) to.appendChild(box);
+  $('g3cam').hidden = room;
+}
+NARROW.addEventListener('change',vqsSync);
 
 /* ---- the second pane ----
    Split opens it, A and B choose which one every control below is about, and Lock decides
@@ -4522,6 +4568,7 @@ $('v3lk').onchange=e=>{ v3lock=e.target.checked; v3note(); queueHash(); };
 function v3ui(){
   const Q=v3E();
   [...$('m3seg').children].forEach(b=>b.classList.toggle('on',b.dataset.r===Q.mode));
+  $('m3sel').value=Q.mode;
   v3tui();
   $('v3a').value=Q.a+1; $('v3al').textContent=Q.a+1;
   $('v3b').value=Q.b+1; $('v3bl').textContent=Q.b+1;
@@ -5003,7 +5050,7 @@ function v3open(){
 new ResizeObserver(()=>{ if(tab==='v3d') v3frame(); }).observe(V3WRAP);
 
 /* ---------- deep links: #p30/MGV, plus the view state when it is not the default ---------- */
-let v3src='drawing';        /* the source the stack currently in the GPU was read from */
+let v3src=V3SRC;            /* the source the stack currently in the GPU was read from */
 let hashT=null, lastWritten='';
 function queueHash(){ clearTimeout(hashT); hashT=setTimeout(writeHash,180); }
 function writeHash(){
@@ -5023,11 +5070,15 @@ function writeHash(){
      every link that only asks for the colors is the short one it has always looked like */
   if(mcOn&&mcWash!==45) h+='&cw='+mcWash;
   /* ct, not c: c has been the pan center since before there was anything to stretch */
-  if(PSRC.plate!=='drawing') h+='&ps='+PSRC.plate;
+  const ps = PSRC.plate!=='drawing' ? PSRC.plate : '';
+  if(ps) h+='&ps='+ps;
   /* ps has named the plate's source since before the stack had one of its own, so it still
-     does; ps3 is written only where the two differ, and a link without it sets both -- which
-     is exactly what every link written before this meant */
-  if(PSRC.v3d!==PSRC.plate) h+='&ps3='+PSRC.v3d;
+     does, and a link carrying only it still sets both -- which is what every link written
+     before there was a ps3 meant. ps3 rides wherever that reading would land somewhere
+     else: where the stack is off its own default, or where the plate is named and the
+     stack is something other than it. Where the link already says what the stack is, it
+     stays out. */
+  if(PSRC.v3d !== (ps || V3SRC)) h+='&ps3='+PSRC.v3d;
   if(pctr!==100) h+='&ct='+pctr;
   if(pview!=='dv') h+='&pj='+pview;
   if(cmpOn) h+='&cmp='+cmpWhat;
@@ -5111,11 +5162,11 @@ function readHash(){
      the ask and let mriLoad honour it if they are. */
   if(!srcOK('mri')){
     const w=[]; if(par.ps==='mri') w.push('plate');
-    if(par.ps3==='mri' || (!par.ps3 && par.ps==='mri')) w.push('v3d');
+    if(par.ps3==='mri' || (!par.ps3 && par.ps==='mri')) w.push('v3d');   /* same reading as below */
     mriWant = w.length ? w : null;
   }
   PSRC.plate = srcOK(par.ps) ? par.ps : 'drawing';
-  PSRC.v3d   = srcOK(par.ps3) ? par.ps3 : PSRC.plate;
+  PSRC.v3d   = srcOK(par.ps3) ? par.ps3 : srcOK(par.ps) ? PSRC.plate : V3SRC;
   psrc = PSRC[srcTab()];
   if(v3ready&&PSRC.v3d!==was) v3resrc();
   /* set before go(), which is what paints the plate: after it the first frame would be
@@ -5462,7 +5513,7 @@ function setTab(t){
   $('advh').hidden = t==='proj';
   /* each view keeps its own staining, so arriving at one puts its own back on screen */
   psrc=PSRC[srcTab()];
-  srcCtl(); srcShow();
+  srcCtl(); srcShow(); vqsSync();
   hideTip(); pjHide(); v3hide();
   infOpen(false);
   advSync(); vpanSync();
@@ -5507,6 +5558,7 @@ function srcShow(){
      opens in is no longer the first button along. */
   const c=$('m3seg').querySelector('[data-r="contour"]');
   c.textContent = gray ? 'Slices' : 'Contours';
+  $('m3sel').querySelector('[value="contour"]').textContent = c.textContent;
   c.title = gray
     ? 'Each section drawn where it sits, one plate at a time'
     : "The atlas's own drawn contours, one plate at a time";
@@ -5532,6 +5584,31 @@ function setSrc(k){
 const srcN = () => [...$('srcseg').children].filter(b=>!b.hidden).length;
 /* the projection plots where labels are printed, not pixels, so no staining applies to it */
 function srcCtl(){ $('ctlSrc').hidden = srcN()<2 || tab==='proj'; }
+
+/* the strip fades at its right edge while there is more of it to reach, and stops fading
+   once it has been scrolled to the end -- the only thing that says a sideways-scrolling row
+   is one, on a touch screen with no scrollbar to see */
+const VQS=$('vqs');
+function vqsEdge(){
+  VQS.classList.toggle('more', vqsUsed(VQS)-VQS.clientWidth-VQS.scrollLeft > 2);
+}
+VQS.addEventListener('scroll',vqsEdge,{passive:true});
+/* The strip's own width answers the window; its groups' widths answer the view, the
+   staining on offer and whether a frame is set. Both move the right edge, so both are
+   watched -- watching only the strip left the fade off on a phone, where the row is a
+   fixed 100% wide and the only thing that changes is what is standing in it.
+   The pass runs a frame later rather than inside the observer: it moves a group in or out
+   of the row it is measuring, and a mutation made from inside the callback that saw it is
+   how a resize loop starts. One frame, one pass, however many notifications arrived. */
+let vqsQ=0;
+function vqsSync(){
+  if(vqsQ) return;
+  vqsQ=requestAnimationFrame(()=>{ vqsQ=0; place3d(); vqsEdge(); });
+}
+const vqsRO=new ResizeObserver(vqsSync);
+vqsRO.observe(VQS);
+[...VQS.children].forEach(c=>vqsRO.observe(c));
+place3d(); vqsEdge();
 
 /* ---------- the view's controls: docked beside what they drive ----------
    A column to the right of the picture where there is width for one, a row above it where
@@ -5563,6 +5640,9 @@ function vpanCount(){
 /* the two counts are shown apart: the badge on the button answers "is anything set in
    there", and the one on Advanced answers it again for the half that is folded away */
 function vpanSync(){
+  /* and it says which view's controls these are, since the panel outlives the tab switch */
+  $('vpanh').textContent =
+    (tab==='plate'?'Plate':tab==='proj'?'Projection':'3-D')+' controls';
   const n=vpanCount()+advCount(), b=$('vctln');
   b.textContent=n; b.hidden=!n;
   const a=advCount(), ab=$('advn');

@@ -38,9 +38,16 @@ the whole atlas (all 186 plate images) lives inside it, 22 MB, most of that the 
   plate, so the outlines and the readout land on it unchanged. Two things it is not — the
   whole head rather than a cut section, so there is skull, scalp and eye in the picture;
   and 117 µm voxels against the drawing's 18, so it is soft where the drawing is sharp.
+- On a phone the 3-D view's render mode is a menu rather than a row of buttons, and the
+  viewpoint and the pane controls move into **Controls** — a row that runs past the edge of
+  the screen hides more than a button does. They move by room rather than by screen size, so
+  a narrow desktop window hands them over too and a wide one takes them back. The staining
+  switch stays a row of buttons at every width: it is the one you flip to read a level two
+  ways.
 - The plate and the 3-D stack each remember their own source, so you can read a Nissl
   stack against the labeled plate — which is what having two views of the same 62 sections
-  is for. A link carries both; one written before the stack had a source of its own still
+  is for. That is also what each opens on: the plate on the drawing, the stack on the
+  Nissl. A link carries both; one written before the stack had a source of its own still
   sets them together, which is what it always meant. The projection plots where labels are
   *printed* rather than pixels, so no staining applies to it and none is offered.
 - **Gray** drops the drawing's color so the three read alike, and **Contrast** stretches
@@ -193,10 +200,12 @@ handful.
   cropped around it; click one to go there.
 - **Projection** plots every printed label in side view (AP × DV) or top-down (AP × ML),
   with your selected structure highlighted, so you can see how it runs through the brain.
-- **3D** stacks the 62 plates where they actually sit and opens with **Volume**, the stack
-  ray-marched, so the first sight of it is the brain as a solid. **Contours** draws the
-  sections themselves — the atlas's own boundaries, or the Nissl or myelin section — one
-  textured plate at a time, and **Labels** is a point cloud of all 6,315 printed
+- **3D** stacks the 62 plates where they actually sit and opens on the **Nissl** as a
+  **Volume**, the stack ray-marched, so the first sight of it is the brain as a solid.
+  Tissue is what a volume is made for — density reads as density, where the drawing's ink
+  and printed abbreviations stack into a haze — and the labeled plate is one button away.
+  **Contours** draws the sections themselves — the atlas's own boundaries, or the Nissl or
+  myelin section — one textured plate at a time, and **Labels** is a point cloud of all 6,315 printed
   abbreviations you can orbit. Clip to a slab or cut
   it in half at the midline. **Floor**, **Ceiling** and **Gamma** window the tissue before
   **Density** decides how opaque it is drawn — the difference between a gray fog and a

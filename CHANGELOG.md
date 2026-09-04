@@ -6,6 +6,69 @@ carries a `version` block naming the release its derived fields were built for.
 ## [Unreleased]
 
 ### Changed
+- **The 3-D view opens on the Nissl.** It opened on the labeled drawing, which is the right
+  first sight of a *plate* and the wrong one of a *stack*: the drawing is ink on white, and
+  62 sheets of contour lines and printed abbreviations ray-march into a haze with a brain
+  somewhere inside it. The Nissl is tissue, which is what a volume is made of — density
+  reads as density — so the stack now comes up looking like a brain. The plate view still
+  opens on the drawing, which is the pairing having two views is for, and either can be
+  switched in one tap.
+
+  The link follows: `ps3` is written where the stack is off its own default, or where the
+  plate is named and the stack is something else, and stays out where the link already says
+  what the stack is. A link written before the stack had a source of its own still sets both
+  from `ps`, exactly as it always meant.
+- **Which controls stand in the bar is decided by room, not by screen size.** The viewpoint,
+  **Split**, **A**/**B**, **Lock** and **In frame** moved into the panel below 900&nbsp;px
+  and stayed in the bar above it — but a 1440&nbsp;px window with the search column open
+  gives the 3-D bar 638&nbsp;px for 648&nbsp;px of controls, and ticking **Split** adds a
+  further 110. So a breakpoint alone left **A**/**B** and **Lock** past a silent right edge
+  on the width most people read this on. The group is measured against the room now: it
+  hands itself to the panel on the first pixel of overflow and comes back with six to spare,
+  so a window dragged across the line does not flap.
+
+  The bar itself is one row at every width as a result. In the 3-D view it was 80&nbsp;px at
+  1440 and 117&nbsp;px at 1280 — two and three rows, the icon group shouldered onto its own
+  — and is 47&nbsp;px at both now. A flex container collects its items into lines *before* it
+  shrinks any of them, so a strip left free to wrap never gets the chance to scroll; the
+  strip no longer wraps, and it takes the free space instead.
+- **The 3-D strip fits a phone now, instead of running off the edge of it.** It carried
+  590&nbsp;px of controls in a 368&nbsp;px row, so most of it was reachable only by scrolling
+  sideways. Two changes, each where it earns its keep: the render mode — Contours / Volume /
+  Labels — becomes a menu below 900&nbsp;px, which is 195&nbsp;px of buttons for 81 and suits
+  a choice you make once rather than one you flip; and the viewpoint, **Split**, **A**/**B**,
+  **Lock** and **In frame** move into the panel at that width, because a control past the
+  right edge of a row is worse than one behind a button that says *Controls*. The nodes are
+  moved rather than copied, so there is only ever one of each and its state comes with it.
+  All three views now fit exactly: plate, projection and 3-D each need no scroll at all.
+
+  The staining switch stays a row of buttons at every width. It is the one you flip back and
+  forth to read the same level two ways, and that is worth one tap and being able to see what
+  you are switching to — the rest is what gave way to make room for it.
+
+### Fixed
+- A control group carrying `hidden` was drawn anyway. `.grp{display:flex}` is an author rule
+  and the browser's own `[hidden]{display:none}` is not, so the author rule won and the
+  panel's *Viewpoint and panes* heading stood over nothing whenever its controls were in the
+  bar. `.grp[hidden]` says it now, the way `.vctl`, `.tg` and `.seg` already do.
+- The panel's heading always read *Plate controls*, whichever view it was showing the
+  controls for.
+- The right-edge fade did not appear on a phone. Only the strip was watched for a resize,
+  and on a phone the strip is a fixed 100% wide — the thing that changes is what is standing
+  in it. Its groups are watched too now.
+- **The source switch was being cut off in the 3-D view on a phone.** A group in the control
+  strip was left free to shrink — flex's default, and `.vctl` carries `min-width:0` — so on a
+  390 px screen the 3-D strip squeezed the switch from its natural 175 px down to 108 and
+  `.seg`'s `overflow:hidden` ate **Myelin**. A clipped button is not a scrolled one: no
+  gesture brings it back. Groups in the strip keep their own width now, and the overflow goes
+  where it belongs, to the strip's own sideways scroll.
+- The strip fades at its right edge while there is more of it to reach, and stops once it has
+  been scrolled to the end. On a touch screen there is no scrollbar to see, so without it a
+  control past the edge is a control nobody knows is there — which is how the switch went
+  missing in the first place.
+
+### Changed
+
 - **A notice is laid over the plate instead of pushing it around.** The one line the app
   writes when something needs saying — this structure is not on this plate, that import was
   not JSON, the image has not arrived yet — sat under the picture in the column flow, so it
