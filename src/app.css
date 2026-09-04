@@ -410,6 +410,13 @@ input[type=range]{accent-color:var(--accent)}
 #om path{fill:var(--mark);fill-opacity:.10;stroke:var(--mark);stroke-width:1.5;fill-rule:evenodd;
   vector-effect:non-scaling-stroke;filter:drop-shadow(0 0 2px rgba(255,255,255,.9))}
 #om path.grp,#om2 path.grp{fill:var(--markg);fill-opacity:.07;stroke:var(--markg);stroke-width:2.2}
+/* the map colouring: a wash under everything else the plate draws, so the atlas's own
+   lines, the grid and every mark stay on top of it. The opacity is set on the group
+   rather than per path, so a region drawn inside another does not come out twice as
+   strong as the one around it. Each path is stroked in its own fill, which is not a line
+   -- it is what closes the hairline the antialiasing leaves along an edge two regions
+   share, and it is why the colours meet rather than showing the plate between them. */
+#mc path,#mc2 path{fill-rule:evenodd;stroke-width:.8;vector-effect:non-scaling-stroke}
 /* dashed where the atlas does not print the boundary and the extraction inferred it */
 #hr.est,#hr2.est,#om path.est{stroke-dasharray:6 4}
 /* boxes round the printed names, for a structure the atlas draws no boundary round at

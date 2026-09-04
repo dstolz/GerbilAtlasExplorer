@@ -40,6 +40,18 @@ the whole atlas (all 186 plate images) lives inside it, 22 MB, most of that the 
   and 117 µm voxels against the drawing's 18, so it is soft where the drawing is sharp.
 - **Grey** drops the drawing's colour so the three read alike, and **Contrast** stretches
   whichever one is showing. Both carry into the PNG.
+- **Colour regions** paints the section as a map: every region filled, and no two regions
+  that touch given the same colour. It shows the whole partition at once — where one
+  structure stops and the next starts, how much of the section each holds, which of them are
+  neighbours — and on the Nissl, the myelin and the MRI, which print no lines at all, it is
+  the only view that shows any of it. **Wash** sets how strongly the colours are laid on, and
+  both ride into the PNG and the SVG. A colour means nothing beyond "not my neighbour": it is
+  not a system or a division, and two regions of one colour have nothing in common except
+  that they do not touch. Each region does ask for the same colour on every plate it is drawn
+  on, and gets it about half the time, so stepping through the levels is not a kaleidoscope.
+  Nothing is painted that the atlas does not draw — the names it draws no boundary between
+  share a colour rather than being split by one, and the faces it seals and names nothing
+  inside are left unpainted.
 
 **Find things**
 - **Hover anywhere on a structure** — the printed abbreviation included — to read what it
@@ -179,8 +191,8 @@ handful.
   surface at any transparency from a faint shell to solid bone. **Landmarks** stands bregma,
   lambda, the interaural axis and the occipital crest in the stack: each landmark's coronal
   plane as a rule up the midline, a cross on the vault, and the interaural line as the
-  ear-bar axis running out past the brain to a ring at each canal — the one view where it is
-  a line and not a point. **Ortho** switches to a
+  ear-bar axis, run laterally right through the head and out the other side with a ring
+  where it passes each canal — the one view where it is a line and not a point. **Ortho** switches to a
   parallel projection, so nothing is foreshortened. **View** puts the camera on an
   anatomical axis — left, right, rostral, caudal, dorsal or ventral — and the link you
   copy carries it. **Meshes** fetches the closed surfaces built offline from the outlines
