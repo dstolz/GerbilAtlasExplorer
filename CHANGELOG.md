@@ -6,6 +6,15 @@ carries a `version` block naming the release its derived fields were built for.
 ## [Unreleased]
 
 ### Changed
+- **The planned track is drawn on the comparison plate too.** `tgDraw()` put the track into
+  the main pane only, so turning compare on gave you two plates and one track. The per-plate
+  rendering is now `tgTrackSVG(o, ap0)`, keyed on the bregma of whichever plate is being
+  drawn, and it fills both panes: the current plate, and whatever compare is showing beside
+  it — the same section under another stain, or the one before or after. Each pane ghosts the
+  track against its own plane rather than copying the first, so a track that never reaches
+  plate 47 shows ghosted there while it is solid on 46, and `tgFootPlate()` takes the same
+  `ap0` so the footprint sphere is cut by the right plane on each side.
+
 - **A region keeps its color across the whole atlas.** Color regions was solved one plate at
   a time, and a plate cannot know what its neighbors did: a structure bordering three things
   on one level and five on the next took whatever slot was free on each, held its color
