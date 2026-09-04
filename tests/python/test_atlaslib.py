@@ -65,7 +65,8 @@ def test_payloads():
     full = A.images_payload('drawing')
     assert full['30'].startswith('data:image/jpeg;base64,/9j/')
     r = A.region_payload(db)
-    assert set(r) == {'r', 'u', 'k', 'b'}
+    assert set(r) == {'r', 'u', 'k', 'b', 'c', 'm'}
+    assert r['c'] == db['region_colors']['data'] and r['m'] == db['region_colors']['merged']
 
 
 def test_build_renders_every_blob():

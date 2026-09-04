@@ -52,11 +52,14 @@ the whole atlas (all 186 plate images) lives inside it, 22 MB, most of that the 
   the only view that shows any of it. **Wash** sets how strongly the colors are laid on, and
   both ride into the PNG and the SVG. A color means nothing beyond "not my neighbor": it is
   not a system or a division, and two regions of one color have nothing in common except
-  that they do not touch. Each region does ask for the same color on every plate it is drawn
-  on, and gets it about half the time, so stepping through the levels is not a kaleidoscope.
-  Nothing is painted that the atlas does not draw — the names it draws no boundary between
-  share a color rather than being split by one, and the faces it seals and names nothing
-  inside are left unpainted.
+  that they do not touch. A region wears one color and wears it on every plate it is drawn
+  on, so stepping through the levels moves the boundaries and repaints nothing; that is
+  settled once over all 62 plates rather than plate by plate, and eight colors is what it
+  costs, against the five or six a single plate needs. Nothing is painted that the atlas
+  does not draw — several names inside one printed outline are one patch in one color, and
+  the faces it seals and names nothing inside are left unpainted. Where the atlas draws a
+  boundary on one plate and none on another, the printed boundary decides: those two names
+  differ in color everywhere, rather than a line the atlas prints being painted away.
 
 **Find things**
 - **Hover anywhere on a structure** — the printed abbreviation included — to read what it

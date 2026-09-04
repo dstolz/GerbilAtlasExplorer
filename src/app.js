@@ -813,7 +813,7 @@ function mark(){
      this says what the dashing means. The projections are where a tilt reads true.
      Appended here rather than in tgDraw() because this line has one owner: written from
      two places it would double up, and go stale the moment the planner was put away. */
-  if(mcOn&&ROK) vhAdd(' \u00b7 <b>colors</b> tell neighbors apart and mean nothing else');
+  if(mcOn&&MCOK) vhAdd(' \u00b7 <b>colors</b> tell neighbors apart and mean nothing else');
   if(tgOffPlate())
     vhAdd(' \u00b7 <b>track</b> dashed where it passes in front of or'+
       ' behind this plate');
@@ -1354,150 +1354,50 @@ function grpTxt(o,g){
    about the plate rather than about the one structure you asked for, and on the Nissl,
    the myelin and the MRI, where nothing at all is printed, it is the only one.
 
-   Two regions are neighbors when they share a point, or come near enough to one that the
-   gap cannot be seen. The extents are a clean planar subdivision -- every boundary between
-   two of them is one polyline held twice, vertex for vertex -- so the first half is answered
-   off the vertices themselves, with no tolerance and no geometry at all: index every vertex,
-   and the regions filed under it all touch there. Sharing a point rather than an edge is
-   deliberate; two regions that meet at a single corner read as one patch if they are
-   painted alike. The second half is the same judgement about a gap instead of a corner. A
-   lamina a pixel or two wide -- Py between Or and Rad on plate 30 is one of 91 pairs over the
-   62 plates that would otherwise have matched -- is a boundary the eye cannot find at the
-   zoom the plate opens at, and one color on both sides of it reads as one region. So
-   anything within MCNEAR counts as touching, which costs nothing: the plates need exactly
-   the colors they needed without it.
+   A region wears one color and wears it everywhere. That is not something a plate can
+   decide for itself: colored plate by plate, a structure bordering three things on one
+   level and five on the next takes whatever was free on each, half the section repaints
+   as you step, and the color you have just learned to read as CPu belongs to somebody
+   else a plate later. So the coloring is solved once over all 62 plates together and the
+   page carries the answer -- `region_colors` in the database, a palette slot per
+   abbreviation. tools/build_region_colors.py is the derivation and states what it costs:
+   eight colors rather than the five or six one plate needs, because eight regions of this
+   atlas pairwise touch; and the structures the atlas draws no boundary between are held
+   to one color only where it can be done without erasing a boundary it does draw
+   somewhere else. Beyond "not my neighbor" a color means nothing whatever, and the line
+   under the plate says so.
 
-   The colors come from a greedy pass in smallest-last order -- take the least connected
-   region out of the graph over and over, then color them back in the reverse of that
-   order. Each region then has at most as many already-colored neighbors as the graph's
-   degeneracy when its turn comes, so the palette cannot run out on a map that is flat:
-   five colors cover 58 of the 62 plates here and six cover the other four, inside a palette
-   of seven. That is the four-color theorem's neighborhood, reached by the cheap route
-   rather than the famous one -- four is not what a greedy pass promises, and this does not
-   claim it.
+   Two things are still not painted. The faces the atlas seals and names nothing in are
+   left as they are, because there is no region there to color. And a patch of several
+   names -- the mediodorsal thalamus, a run of cerebellar lobules inside one printed
+   outline -- is one color across the whole of it, because a color change is a boundary
+   and that one is not a line this atlas has. */
 
-   Each region asks first for one particular color, hashed from its abbreviation, and gets
-   it wherever it is free. That costs nothing -- a free color is as good as any other free
-   color -- and buys the atlas some continuity: about half the structures hold their
-   color from one plate to the next, so stepping through the levels is not a kaleidoscope,
-   and the same plate is the same picture in every session and in the export. Beyond that a
-   color means nothing whatever, and the line under the plate says so.
-
-   Two things are deliberately not painted. The faces the atlas seals and names nothing in
-   are left as they are, because there is no region there to color. And the structures the
-   atlas draws no boundary between -- see regUnd() -- take one color between them, because
-   a color change is a boundary, and the split those were cut apart on is not a line this
-   atlas has. What that paints is what the plate prints: one patch per boundary, whatever
-   number of names the atlas has set inside it. */
-
-/* Okabe and Ito's seven, less the black and with a violet in its place: hues that stay
-   apart from one another in the common forms of color blindness, and dark enough to read
-   as a wash over white paper and over a photographed section alike. Not themed, for the
+/* Six of Okabe and Ito's eight -- the black and the yellow are no use as a wash -- with a
+   violet and a brown in their place, chosen to sit as far from the six as the six sit from
+   each other: hues that stay apart in the common forms of color blindness, and dark enough
+   to read over white paper and over a photographed section alike. Not themed, for the
    reason the selection marker is not: they sit on the plate, and the plate is the same
    picture in either theme. */
-const MCPAL=['#0072b2','#d55e00','#009e73','#cc79a7','#e69f00','#56b4e9','#7b5cd6'];
-/* how close is touching: 0.05 mm, which is 2.9 px of the 1100 x 703 frame and about a
-   pixel and a half on screen at the zoom the plate opens at */
-const MCNEAR=0.05*ML_PXMM;
-/* the color a region asks for: a hash of its own name, so it is the same color on every
-   plate that draws it, in every session, and in the PNG and the SVG as on the screen */
-function mcPref(ab){
-  let h=0; for(let i=0;i<ab.length;i++) h=(h*31+ab.charCodeAt(i))>>>0;
-  return h%MCPAL.length;
-}
+const MCPAL=['#0072b2','#d55e00','#009e73','#cc79a7','#e69f00','#56b4e9','#7b5cd6','#8f5540'];
+/* the slot each region wears, and the patch it shares with the names the atlas draws no
+   boundary between it and, where there is one */
+const MCBY=RGN.c||{}, MCUN=RGN.m||{};
+const MCOK=ROK&&Object.keys(MCBY).length>0;
 const MCC={};
+/* what the plate needs to paint: the slot per region, the patches, and how many colors
+   this plate turns out to use. All of it read off the table, so opening the view costs
+   nothing; what it is checked against is the geometry, in the tests. */
 function mcBuild(pl){
   if(MCC[pl]) return MCC[pl];
-  const R=regBuild(pl), out={by:{},unit:{},adj:{},n:0};
-  if(!R.regs.length) return MCC[pl]=out;
-
-  /* who touches whom: every vertex, and the regions filed under it */
-  const at=new Map();
-  for(const o of R.regs) for(const g of o.gs) for(const q of g){
-    const k=q[0]+','+q[1]; let t=at.get(k);
-    if(!t) at.set(k,t=new Set());
-    t.add(o.ab);
+  const R=regBuild(pl), out={by:{},unit:{},n:0}, used=new Set();
+  for(const o of R.regs){
+    const c=MCBY[o.ab];
+    out.unit[o.ab]=MCUN[o.ab]||o.ab;
+    if(c===undefined) continue;
+    out.by[o.ab]=c; used.add(c);
   }
-  const adj=new Map(), nb=a=>{ let t=adj.get(a); if(!t) adj.set(a,t=new Set()); return t; };
-  for(const o of R.regs) nb(o.ab);
-  for(const t of at.values()){
-    if(t.size<2) continue;
-    const l=[...t];
-    for(let i=0;i<l.length;i++) for(let j=i+1;j<l.length;j++){ nb(l[i]).add(l[j]); nb(l[j]).add(l[i]); }
-  }
-  /* and who all but touches whom. Every boundary segment is filed under the cells its own
-     samples fall in -- sampled every MCNEAR, on cells of twice that -- so a segment within
-     MCNEAR of a point is in one of the nine cells around it, and the search is nine lookups
-     per vertex rather than a pass over the plate. */
-  const CELL=2*MCNEAR, bin=new Map(), cell=(x,y)=>Math.floor(x/CELL)+':'+Math.floor(y/CELL);
-  for(const o of R.regs) for(const g of o.gs) for(let i=0;i+1<g.length;i++){
-    const a=g[i], b=g[i+1], e=[o.ab,a,b];
-    const n=Math.max(1,Math.ceil(Math.hypot(b[0]-a[0],b[1]-a[1])/MCNEAR));
-    for(let k=0;k<=n;k++){
-      const t=k/n, ck=cell(a[0]+(b[0]-a[0])*t, a[1]+(b[1]-a[1])*t);
-      let l=bin.get(ck); if(!l) bin.set(ck,l=[]);
-      if(l[l.length-1]!==e) l.push(e);            /* a run of samples in one cell files once */
-    }
-  }
-  /* squared distance from a point to a segment: the projection where it falls on the
-     segment, the nearer end where it does not */
-  const d2=(p,a,b)=>{
-    const dx=b[0]-a[0], dy=b[1]-a[1], L=dx*dx+dy*dy;
-    const t=L?Math.max(0,Math.min(1,((p[0]-a[0])*dx+(p[1]-a[1])*dy)/L)):0;
-    const ex=p[0]-(a[0]+t*dx), ey=p[1]-(a[1]+t*dy);
-    return ex*ex+ey*ey;
-  };
-  const R2=MCNEAR*MCNEAR;
-  for(const o of R.regs) for(const g of o.gs) for(const q of g){
-    const ci=Math.floor(q[0]/CELL), cj=Math.floor(q[1]/CELL);
-    for(let di=-1;di<=1;di++) for(let dj=-1;dj<=1;dj++){
-      const l=bin.get((ci+di)+':'+(cj+dj)); if(!l) continue;
-      for(const [ab,a,b] of l){
-        if(ab===o.ab||nb(o.ab).has(ab)) continue;
-        if(d2(q,a,b)<=R2){ nb(o.ab).add(ab); nb(ab).add(o.ab); }
-      }
-    }
-  }
-
-  /* the names the atlas draws no boundary between, gathered into one patch each: a run of
-     them that touch is one thing to color, which is one boundary with several names in it */
-  const und=new Set(R.regs.filter(regUnd).map(o=>o.ab)), unit={}, seen=new Set();
-  for(const a of [...und].sort()){
-    if(seen.has(a)) continue;
-    seen.add(a); const st=[a], comp=[];
-    while(st.length){ const x=st.pop(); comp.push(x);
-      for(const y of nb(x)) if(und.has(y)&&!seen.has(y)){ seen.add(y); st.push(y); } }
-    comp.sort(); for(const x of comp) unit[x]=comp[0];
-  }
-  for(const o of R.regs) if(!unit[o.ab]) unit[o.ab]=o.ab;
-  const uadj=new Map(), un=a=>{ let t=uadj.get(a); if(!t) uadj.set(a,t=new Set()); return t; };
-  for(const o of R.regs){ const u=unit[o.ab]; un(u);
-    for(const b of nb(o.ab)){ const v=unit[b]; if(v!==u){ un(u).add(v); un(v).add(u); } } }
-
-  /* smallest-last: strip the least connected patch off the graph until none is left, and
-     the reverse of that order is one every patch meets with few neighbors already colored */
-  const nodes=[...uadj.keys()].sort(), deg=new Map(), left=new Set(nodes), ord=[];
-  for(const v of nodes) deg.set(v,uadj.get(v).size);
-  while(left.size){
-    let pick=null;
-    for(const v of left) if(pick===null||deg.get(v)<deg.get(pick)) pick=v;
-    left.delete(pick); ord.push(pick);
-    for(const u of uadj.get(pick)) if(left.has(u)) deg.set(u,deg.get(u)-1);
-  }
-  ord.reverse();
-  const col=new Map();
-  for(const v of ord){
-    const used=new Set();
-    for(const u of uadj.get(v)) if(col.has(u)) used.add(col.get(u));
-    let c=mcPref(v);
-    if(used.has(c)){ c=0; while(used.has(c)) c++; }
-    col.set(v,c);
-  }
-
-  const used=new Set();
-  for(const o of R.regs){ const c=col.get(unit[o.ab]); out.by[o.ab]=c; used.add(c); }
-  out.unit=unit; out.n=used.size;
-  for(const [k,t] of adj) out.adj[k]=[...t];      /* plain, so the tests can read it */
+  out.n=used.size;
   return MCC[pl]=out;
 }
 /* largest first, so a region that lies inside another is not painted over by it; the fill
@@ -1505,13 +1405,13 @@ function mcBuild(pl){
 function mcRegs(pl){
   return [...regBuild(pl).regs].sort((a,b)=>b.mm2-a.mm2);
 }
-const mcFill = (M,ab) => MCPAL[M.by[ab]%MCPAL.length];
+const mcFill = (M,ab) => M.by[ab]===undefined ? null : MCPAL[M.by[ab]%MCPAL.length];
 function mcPaint(g,pl){
-  if(!mcOn||!ROK){ g.innerHTML=''; return; }
+  if(!mcOn||!MCOK){ g.innerHTML=''; return; }
   const M=mcBuild(pl);
   g.style.opacity=(mcWash/100).toFixed(2);
   g.innerHTML=mcRegs(pl).map(o=>{ const c=mcFill(M,o.ab);
-    return `<path fill="${c}" stroke="${c}" d="${regD(o)}"></path>`; }).join('');
+    return c ? `<path fill="${c}" stroke="${c}" d="${regD(o)}"></path>` : ''; }).join('');
 }
 /* the sentence both exports carry: what the colors are, and what they are not */
 const mcNote = pl => 'Regions colored so that no two that touch are alike — '+
@@ -1525,13 +1425,14 @@ function mcSet(on){
   mcDraw(); mark(); queueHash();
 }
 $('ckmc').onchange=e=>mcSet(e.target.checked);
-/* a build with no regional outlines has nothing to color, so the control says so and goes
-   dead rather than offering a picture it cannot draw -- as the Gray box does on a source
-   that was published in gray */
-if(!ROK){
+/* a build with no regional outlines, or none of the coloring solved off them, has nothing
+   to color, so the control says so and goes dead rather than offering a picture it cannot
+   draw -- as the Gray box does on a source that was published in gray */
+if(!MCOK){
   $('ckmc').disabled=true;
-  $('ckmc').closest('.tg').title=
-    'This build carries no regional outlines, so there is nothing to color';
+  $('ckmc').closest('.tg').title = ROK
+    ? 'This build carries no colors for its regions'
+    : 'This build carries no regional outlines, so there is nothing to color';
 }
 $('mcs').oninput=e=>{
   mcWash=+e.target.value||45; $('mcl').textContent=mcWash+'%';
@@ -2690,11 +2591,12 @@ function exportPNG(){
   finally{ g.filter='none'; }
 
   /* the map coloring, under every other mark exactly as it is on screen */
-  if(mcOn&&ROK){
+  if(mcOn&&MCOK){
     const M=mcBuild(cur);
     g.globalAlpha=mcWash/100; g.lineWidth=0.5;
     mcRegs(cur).forEach(o=>{
       const c=mcFill(M,o.ab);
+      if(!c) return;
       g.beginPath();
       o.gs.forEach(gg=>{ gg.forEach(([x,y],i)=>i?g.lineTo(x,y):g.moveTo(x,y)); g.closePath(); });
       g.fillStyle=c; g.fill('evenodd'); g.strokeStyle=c; g.stroke();
@@ -2810,7 +2712,7 @@ function exportPNG(){
   const notes=[];
   if(psrc!=='drawing') notes.push(`${SRCN[psrc][0].toUpperCase()+SRCN[psrc].slice(1)} — unlabeled, registered to the drawing by the printed coordinate box`);
   if(pgray||pctr!==100) notes.push(`Shown ${[pgray&&'in gray',pctr!==100&&`at ${(pctr/100).toFixed(1)}× contrast`].filter(Boolean).join(' and ')}`);
-  if(mcOn&&ROK) notes.push(mcNote(cur));
+  if(mcOn&&MCOK) notes.push(mcNote(cur));
   if(mA&&mB){ const dml=toML(mB[0])-toML(mA[0]), ddv=toDV(mB[1])-toDV(mA[1]);
     notes.push(`Measured ${Math.hypot(dml,ddv).toFixed(2)} mm (ΔML ${sgn(dml)}, ΔDV ${sgn(ddv)})`); }
   if(qOn) notes.push(`Query point ML ${sgn(qa.ml)}, DV ${sgn(qa.dv)}`);
@@ -2865,13 +2767,13 @@ function exportSVG(){
   /* the clip is a plate-frame rectangle, so it has to sit outside the matrix: a
      clipPath resolves in the user space its own element establishes, which for a
      transformed group is the page frame the paths are still in */
-  if(ROK&&mcOn){
+  if(MCOK&&mcOn){
     const M=mcBuild(cur), nm=t=>byAb[t]?t+' — '+byAb[t].name:t;
     o.push(`<g id="region-colors" opacity="${(mcWash/100).toFixed(2)}" `+
       'fill-rule="evenodd" stroke-width="0.8">'+
       mcRegs(cur).map(r=>{ const c=mcFill(M,r.ab);
-        return `<path fill="${c}" stroke="${c}" data-abbr="${xml(r.ab)}" d="${regD(r)}">`+
-               `<title>${xml(nm(r.ab))}</title></path>`; }).join('')+'</g>');
+        return c ? `<path fill="${c}" stroke="${c}" data-abbr="${xml(r.ab)}" d="${regD(r)}">`+
+               `<title>${xml(nm(r.ab))}</title></path>` : ''; }).join('')+'</g>');
   }
   o.push('<g id="outlines" clip-path="url(#plate)">');
   o.push(`<g transform="matrix(${V.m.join(' ')})" `+
@@ -2983,7 +2885,7 @@ function exportSVG(){
     `interaural ${p.interaural.toFixed(2)}  ·  occipital crest ${p.occipital_crest.toFixed(2)} mm`));
   const notes=['Regional outlines traced from the printed plate — vector paths only, no section image'+
                (ROK?'; one named group per region':'')];
-  if(mcOn&&ROK) notes.push(mcNote(cur));
+  if(mcOn&&MCOK) notes.push(mcNote(cur));
   if(mA&&mB){ const dml=toML(mB[0])-toML(mA[0]), ddv=toDV(mB[1])-toDV(mA[1]);
     notes.push(`Measured ${Math.hypot(dml,ddv).toFixed(2)} mm (ΔML ${sgn(dml)}, ΔDV ${sgn(ddv)})`); }
   if(qOn) notes.push(`Query point ML ${sgn(qa.ml)}, DV ${sgn(qa.dv)}`);

@@ -183,6 +183,65 @@ def test_shared_edges_recomputed(db):
     assert val == 1.0
 
 
+def test_region_colors(db):
+    """The map coloring, checked from the geometry rather than from its own summary.
+
+    Two things have to hold together, and neither is readable off one plate. A region
+    wears one slot everywhere it is drawn -- that is what the block exists for, and it
+    is true by construction, so what is checked is that every region the extents carry
+    has one. And no two regions that touch wear the same slot, on any of the 62 plates,
+    where touching is what the app calls touching: a shared vertex, or a gap under
+    0.05 mm. The adjacency is recomputed here off the committed extents, so a coloring
+    that no longer fits the geometry it was solved for fails, whatever its summary says.
+
+    The exception is a patch: several names inside one printed outline are one region
+    to the reader and are painted as one, so a pair the block lists as sharing a patch
+    is allowed to touch. Those pairs are checked the other way, in
+    test_region_colors_patches_are_never_split_by_the_atlas.
+    """
+    import build_region_colors as B
+    C, R = db['region_colors'], db['region_extents']
+    assert sorted(C['data']) == sorted({ab for d in R['data'].values() for ab in d})
+    assert set(C['data'].values()) == set(range(C['summary']['colors']))
+    assert C['summary']['colors'] == B.SLOTS
+    near = B.NEAR_MM * db['plate_frame']['ml_px_per_mm']
+    patch = dict(C['merged'])
+    worst = 0
+    for plate, regs, _w in B.read_plates(db):
+        for a, b in B.touching(regs, near):
+            if patch.get(a, a) == patch.get(b, b):
+                continue
+            assert C['data'][a] != C['data'][b], (plate, a, b)
+        worst = max(worst, len({C['data'][ab] for ab in regs}))
+    assert worst == C['summary']['colors_on_the_busiest_plate']
+
+
+def test_region_colors_patches_are_never_split_by_the_atlas(db):
+    """A patch is several names the atlas prints no boundary between, so painting it in
+    one color hides no line it draws. That is only true if no two of its members are
+    ever drawn apart: on every plate carrying both, at least one of the pair has to be
+    an entry with no outline of its own (`w`). Chains of merges are where this could
+    go wrong -- a joined to b and b to c, with a printed line between a and c -- so it
+    is checked over the whole patch and not pair by pair."""
+    import build_region_colors as B
+    C = db['region_colors']
+    patch, members = dict(C['merged']), {}
+    for ab, p in patch.items():
+        members.setdefault(p, []).append(ab)
+    assert members and max(len(v) for v in members.values()) == \
+        C['summary']['names_in_the_largest_patch']
+    near = B.NEAR_MM * db['plate_frame']['ml_px_per_mm']
+    for plate, regs, w in B.read_plates(db):
+        for a, b in B.touching(regs, near):
+            if patch.get(a, a) == patch.get(b, b):
+                assert w[a] and w[b], (plate, a, b)
+
+
+def test_region_colors_block_is_a_fresh_build(db):
+    import build_region_colors as B
+    assert db['region_colors'] == B.block(db)
+
+
 def test_brain_outline(db):
     fr = A.Frame(db['plate_frame'])
     O = db['brain_outline']['data']
