@@ -11,9 +11,13 @@ const path = require('path');
 const BUNDLE = 'file://' + path.join(__dirname, '..', '..', 'gerbil_atlas_explorer.html');
 
 // the stack is built on first sight of the view and takes a few seconds under swiftshader
+// Split and the A/B pair sit in the view's panel at this width, along with Landmarks
+// itself, so every spec here opens it up front.
 async function open(page, hash) {
   await page.goto(BUNDLE + hash);
   await page.waitForFunction(() => window.__gae && v3ready, null, { timeout: 90000 });
+  await panel(page);
+  await page.waitForTimeout(400);
 }
 const panes = page => page.evaluate(() => window.__gae.panes());
 const names = page => page.evaluate(() =>
@@ -27,7 +31,7 @@ test('the marks and their names come on together, and change the picture', async
   expect(await page.locator('#v3lw').isVisible()).toBe(false);
   const off = await shot(page);
 
-  await panel(page); await page.click('#v3lm');
+  await page.click('#v3lm');
   expect((await panes(page))[0].lm).toBe(true);
   expect(await page.locator('#v3lw').isVisible()).toBe(true);
   // all four are named, and the atlas's own spelling of each is what is written. They come
@@ -36,7 +40,7 @@ test('the marks and their names come on together, and change the picture', async
     .toEqual(['bregma', 'interaural', 'lambda', 'occipital crest']);
   expect(await shot(page)).not.toBe(off);
 
-  await panel(page); await page.click('#v3lm');                    // and back off, cleanly
+  await page.click('#v3lm');                    // and back off, cleanly
   expect(await page.locator('#v3lw').isVisible()).toBe(false);
   expect(await names(page)).toEqual([]);
 });
@@ -45,7 +49,7 @@ test('the setting belongs to a pane, and rides in the link', async ({ page }) =>
   await open(page, '#p30&t=v3d');
   await page.click('#v3sp');                    // two panes, both without landmarks
   await page.click('#v3pseg button[data-p="1"]');
-  await panel(page); await page.click('#v3lm');
+  await page.click('#v3lm');
   let p = await panes(page);
   expect(p[0].lm).toBe(false);
   expect(p[1].lm).toBe(true);
@@ -72,7 +76,7 @@ test('the setting belongs to a pane, and rides in the link', async ({ page }) =>
 test('the midline cut takes the left half of the ear-bar axis with it', async ({ page }) => {
   await open(page, '#p30&t=v3d&lm=1&vp=rost&or=1');
   const whole = await shot(page);
-  await panel(page); await page.click('#v3h');
+  await page.click('#v3h');
   expect((await panes(page))[0].half).toBe(true);
   expect(await shot(page)).not.toBe(whole);
 });

@@ -11,9 +11,15 @@ const BUNDLE = 'file://' + path.join(__dirname, '..', '..', 'gerbil_atlas_explor
 // The stack is built on first sight of the view and takes a few seconds under swiftshader.
 // v3ready is a module-scope `let` in a classic script, so it is not a property of window:
 // the bare identifier is what resolves to it, the same way the other 3-D specs wait.
+// Split, the A/B pair and Lock sit in the view's panel at this width -- the strip beside
+// the tabs has the room for them only on a wide monitor -- so every spec here opens it, and
+// opens it before the first render it compares against: the panel is in the flow, so opening
+// it re-fits the canvas.
 async function open(page, hash) {
   await page.goto(BUNDLE + hash);
   await page.waitForFunction(() => window.__gae && v3ready, null, { timeout: 90000 });
+  await panel(page);
+  await page.waitForTimeout(400);
 }
 
 // A drag on the canvas, in the middle of the pane's own rectangle. The handlers read
@@ -61,7 +67,7 @@ test.describe('the second 3-D pane', () => {
     await open(page, '#p30&t=v3d');
     // set the one pane away from the defaults first, so a copy is visibly a copy
     await page.click('#m3seg button[data-r="contour"]');
-    await panel(page); await page.click('#v3h');
+    await page.click('#v3h');
     await page.click('#v3sp');
     let p = await panes(page);
     expect(p[1].mode).toBe('contour');
@@ -113,7 +119,7 @@ test.describe('the second 3-D pane', () => {
     for (const p of await panes(page)) expect(Math.abs(p.el)).toBeLessThanOrEqual(1.5531);
 
     // reset is the one that converges them: back to the one default
-    await panel(page); await page.click('#v3r');
+    await page.click('#v3r');
     const p3 = await panes(page);
     expect(p3[0].az).toBe(p3[1].az);
     expect(p3[0].el).toBe(p3[1].el);

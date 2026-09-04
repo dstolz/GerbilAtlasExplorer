@@ -443,7 +443,7 @@ test('each view remembers which staining it was left on', async ({ page }) => {
   await page.click('#vseg button[data-t="v3d"]');
   await page.waitForFunction(() => window.__gae && v3ready, null, { timeout: 90000 });
   await expect(page.locator('#srcseg')).toBeVisible();          // offered here too
-  expect(await page.evaluate(() => window.__gae.state().psrc)).toBe('drawing');
+  expect(await page.evaluate(() => window.__gae.state().psrc)).toBe('nissl');   // its own default
   await page.click('#srcseg button[data-s="myelin"]');
   await page.waitForTimeout(2500);
   await page.click('#vseg button[data-t="plate"]');
@@ -461,6 +461,47 @@ test('each view remembers which staining it was left on', async ({ page }) => {
   await page.goto(BUNDLE + '#p30&ps=myelin&t=v3d');
   await page.waitForFunction(() => window.__gae && v3ready, null, { timeout: 90000 });
   expect(await page.evaluate(() => window.__gae.state().psrc)).toBe('myelin');
+});
+
+test('the stack opens on the Nissl, and the link stays short about it', async ({ page }) => {
+  // Ink stacks into a scribble the march renders as haze; tissue stacks into a brain. So
+  // the stack opens on the section and the plate still opens on the drawing, which is the
+  // pairing having two views is for.
+  await page.goto(BUNDLE + '#p30&t=v3d');
+  await page.waitForFunction(() => window.__gae && v3ready, null, { timeout: 90000 });
+  expect(await page.evaluate(() => window.__gae.state().psrc)).toBe('nissl');
+  expect(await page.evaluate(() => window.__gae.panes()[0].mode)).toBe('volume');
+  await page.evaluate(() => window.__gae.writeHash());
+  expect(await page.evaluate(() => location.hash)).toBe('#p30&t=v3d');   // nothing to say
+  await page.click('#vseg button[data-t="plate"]');
+  expect(await page.evaluate(() => window.__gae.state().psrc)).toBe('drawing');
+
+  // put the stack back on the drawing and the link has to say so, since that is no longer
+  // what a link silent about the stack means
+  await page.click('#vseg button[data-t="v3d"]');
+  await page.waitForTimeout(2500);
+  await page.click('#srcseg button[data-s="drawing"]');
+  await page.waitForTimeout(2500);
+  const h = await page.evaluate(() => { window.__gae.writeHash(); return location.hash; });
+  expect(h).toContain('&ps3=drawing');
+  expect(h).not.toContain('&ps=');
+  await page.goto(BUNDLE + h);
+  await page.waitForFunction(() => window.__gae && v3ready, null, { timeout: 90000 });
+  expect(await page.evaluate(() => window.__gae.state().psrc)).toBe('drawing');
+
+  // a plate source alone still names the stack's, the way it did before ps3 existed
+  await page.goto(BUNDLE + '#p30&ps=myelin&t=v3d');
+  await page.waitForFunction(() => window.__gae && v3ready, null, { timeout: 90000 });
+  expect(await page.evaluate(() => window.__gae.state().psrc)).toBe('myelin');
+  // but a plate moved off the drawing while the stack sits on its default is written out
+  // in full, since reading ps as both would land the stack somewhere it is not
+  await page.goto(BUNDLE + '#p30');
+  await page.waitForTimeout(700);
+  await page.click('#srcseg button[data-s="myelin"]');
+  await page.waitForTimeout(500);
+  const h2 = await page.evaluate(() => { window.__gae.writeHash(); return location.hash; });
+  expect(h2).toContain('&ps=myelin');
+  expect(h2).toContain('&ps3=nissl');
 });
 
 test('a finger zooms the plate, and pinching back in fits it', async ({ browser }) => {
@@ -533,34 +574,96 @@ test('commentary goes behind the mark, a warning stays under the plate', async (
   expect(await page.evaluate(() => window.__gae.state().cur)).toBe(44);
 });
 
-test('the control strip scrolls rather than clipping its groups', async ({ browser }) => {
-  // A group in the strip used to be allowed to shrink -- flex's default, and .vctl carries
-  // min-width:0 -- so on a phone the 3-D strip squeezed the source switch from 175px to 108
-  // and .seg's overflow:hidden ate Myelin. A clipped button is not a scrolled one: there is
-  // no gesture that brings it back.
+test('the control strip fits every view on a phone, and never clips a group', async ({ browser }) => {
+  // Two failures this guards, both seen for real. A group in the strip used to be allowed to
+  // shrink -- flex's default, and .vctl carries min-width:0 -- so the 3-D strip squeezed the
+  // source switch from 175px to 108 and .seg's overflow:hidden ate Myelin; a clipped button
+  // is not a scrolled one, no gesture brings it back. And the 3-D row was 590px of controls
+  // in 368, so the rest was off the right edge with nothing to say so.
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
   const page = await ctx.newPage();
-  await page.goto(BUNDLE + '#p30&t=v3d');
-  await page.waitForFunction(() => window.__gae && v3ready, null, { timeout: 90000 });
-  const clipped = await page.evaluate(() => [...document.querySelector('.vqs').children]
-    .filter(el => !el.hidden && el.scrollWidth > el.clientWidth + 1)
-    .map(el => el.id || el.className));
-  expect(clipped, 'groups in the strip must never be narrower than their contents').toEqual([]);
+  for (const [hash, wait] of [['#p30', 900], ['#p30&t=proj', 900], ['#p30&t=v3d', 0]]) {
+    await page.goto(BUNDLE + hash);
+    if (wait) await page.waitForTimeout(wait);
+    else await page.waitForFunction(() => window.__gae && v3ready, null, { timeout: 90000 });
+    const m = await page.evaluate(() => {
+      const q = document.querySelector('.vqs');
+      return { over: q.scrollWidth - q.clientWidth,
+               clipped: [...q.children].filter(el => !el.hidden && el.scrollWidth > el.clientWidth + 1)
+                          .map(el => el.id || el.className) };
+    });
+    expect(m.clipped, `${hash}: no group may be narrower than its contents`).toEqual([]);
+    expect(m.over, `${hash}: the strip should need no sideways scroll`).toBe(0);
+  }
 
-  // every source button is whole, and inside the strip's scrollable width
-  const src = await page.evaluate(() => {
-    const q = document.querySelector('.vqs'), s = document.getElementById('srcseg');
-    return { segWhole: s.scrollWidth <= s.clientWidth + 1,
-             fits: s.getBoundingClientRect().width > 150,
-             scrolls: q.scrollWidth > q.clientWidth };
-  });
-  expect(src.segWhole).toBe(true);
-  expect(src.fits).toBe(true);
-  expect(src.scrolls).toBe(true);              // the row does overflow -- that is the point
+  // in 3-D the mode is a menu and the source is still a row of buttons: the source is the
+  // switch you flip to compare stainings, and that is worth one tap and seeing the choices
+  await expect(page.locator('#m3sel')).toBeVisible();
+  await expect(page.locator('#m3seg')).toBeHidden();
+  const src = await page.locator('#srcseg').boundingBox();
+  expect(src.width).toBeGreaterThan(150);
+  // the two shapes of the one control cannot drift apart
+  expect(await page.evaluate(() => window.__gae.panes()[0].mode)).toBe('volume');
+  await page.selectOption('#m3sel', 'contour');
+  expect(await page.evaluate(() => window.__gae.panes()[0].mode)).toBe('contour');
+  expect(await page.evaluate(() => document.querySelector('#m3seg .on').dataset.r)).toBe('contour');
+  // and what did not fit went into the panel rather than off the edge
+  const inPanel = s => page.evaluate(x => !!document.getElementById(x).closest('#ctl3d'), s);
+  expect(await inPanel('v3vw')).toBe(true);
+  expect(await inPanel('v3sp')).toBe(true);
+  await ctx.close();
+});
 
-  // and it says so, until it has been scrolled to the end
+test('a strip that does overflow says so until it is scrolled', async ({ browser }) => {
+  // Narrower than any phone this targets, purely to exercise the affordance: a touch screen
+  // has no scrollbar, so a row that runs past its edge has to fade or nobody knows it does.
+  const ctx = await browser.newContext({ viewport: { width: 320, height: 720 }, hasTouch: true, isMobile: true });
+  const page = await ctx.newPage();
+  await page.goto(BUNDLE + '#p30');
+  await page.waitForTimeout(900);
+  expect(await page.evaluate(() => {
+    const q = document.querySelector('.vqs'); return q.scrollWidth > q.clientWidth;
+  })).toBe(true);
   await expect(page.locator('.vqs')).toHaveClass(/more/);
   await page.evaluate(() => { const q = document.querySelector('.vqs'); q.scrollLeft = q.scrollWidth; });
   await expect(page.locator('.vqs')).not.toHaveClass(/more/);
   await ctx.close();
+});
+
+test('a wide window gets the buttons back, and one row of them', async ({ page }) => {
+  await page.goto(BUNDLE + '#p30&t=v3d');
+  await page.waitForFunction(() => window.__gae && v3ready, null, { timeout: 90000 });
+  await expect(page.locator('#m3seg')).toBeVisible();
+  await expect(page.locator('#m3sel')).toBeHidden();
+  expect(await page.evaluate(() => Math.round(document.querySelector('.vbar').getBoundingClientRect().height)))
+    .toBeLessThan(60);                                  // one row, not two
+});
+
+test('the strip hands what it cannot hold to the panel, and takes it back', async ({ page }) => {
+  // Room, not screen size: a 1440 laptop with the sidebar open has not got the width for
+  // the viewpoint group, and cutting it off at a silent right edge is how Myelin went
+  // missing on a phone. It goes into the panel there and comes back on a wide monitor.
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(BUNDLE + '#p30&t=v3d');
+  await page.waitForFunction(() => window.__gae && v3ready, null, { timeout: 90000 });
+  const where = () => page.evaluate(() =>
+    document.getElementById('v3vw').closest('#qs3d') ? 'strip' : 'panel');
+  const fits = () => page.evaluate(() => {
+    const q = document.querySelector('.vqs'), l = q.getBoundingClientRect().left;
+    let w = 0;
+    for (const k of q.children) { const r = k.getBoundingClientRect(); if (r.width) w = Math.max(w, r.right - l); }
+    return w <= q.clientWidth + 1;
+  });
+  expect(await where()).toBe('panel');
+  expect(await fits()).toBe(true);                      // and nothing is cut to make it fit
+  await panel(page);
+  await expect(page.locator('#g3cam')).toBeVisible();   // the panel says where it went
+  await page.setViewportSize({ width: 1920, height: 900 });
+  await page.waitForTimeout(400);
+  expect(await where()).toBe('strip');
+  expect(await fits()).toBe(true);
+  await expect(page.locator('#g3cam')).toBeHidden();
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.waitForTimeout(400);
+  expect(await where()).toBe('panel');                  // and back, without flapping
 });

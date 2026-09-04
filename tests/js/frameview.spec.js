@@ -60,7 +60,7 @@ test('the two views share the one setting', async ({ page }) => {
 
   await page.click('#vseg button[data-t="v3d"]');     // and untickable from the 3-D view
   await page.waitForTimeout(600);
-  await page.click('#v3fw');
+  await panel(page); await page.click('#v3fw');
   await page.waitForTimeout(300);
   expect(await page.evaluate(() => document.getElementById('ckpf').checked)).toBe(false);
   expect(await page.evaluate(() => window.__gae.state().fvOn)).toBe(false);
@@ -155,6 +155,11 @@ test('the 3-D view turns too, and says which orientation it is standing in', asy
   const shot = () => page.evaluate(() => { v3render(); return document.getElementById('v3c').toDataURL(); });
   const note = () => page.evaluate(() => document.getElementById('v3n').textContent);
 
+  // In frame sits in the panel at this width, and the panel is in the flow: opening it
+  // re-fits the canvas. So it is opened before the first shot, or the two pictures being
+  // compared would differ by the resize rather than by the turn.
+  await panel(page);
+  await page.waitForTimeout(400);
   const atlas = await shot();
   expect(await note()).not.toContain('Standing in your frame');
 
@@ -186,7 +191,7 @@ test('meshes come along when the view is turned', async ({ page }) => {
   const shot = () => page.evaluate(() => { v3render(); return document.getElementById('v3c').toDataURL(); });
 
   const atlas = await shot();
-  await page.click('#v3fw');
+  await page.click('#v3fw');                          // panel already open, for #v3m above
   await page.waitForTimeout(800);
   const turned = await shot();
   expect(turned).not.toBe(atlas);
