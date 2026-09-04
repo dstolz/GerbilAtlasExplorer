@@ -504,6 +504,16 @@ label.z.anlab{display:inline-block;cursor:pointer}
 .v3lb{position:absolute;font-size:11px;font-weight:600;line-height:1.4;padding:1px 6px;
   border-radius:4px;background:var(--panel2);color:var(--muted);border:1px solid var(--line)}
 .v3lb.on{color:var(--accent);border-color:var(--accent)}
+/* The landmark names. The marks themselves are geometry in the scene -- they turn with the
+   brain and are hidden by nothing, the way the ear-bar axis really is not hidden by a head
+   -- but a name has to stay upright and legible, so it rides over the canvas as text and is
+   placed from the same projection the mark was drawn with. Under the pane chrome and the
+   tooltip, which are the two things that must be readable over anything. */
+.v3lw{position:absolute;inset:0;z-index:2;pointer-events:none}
+.v3lw[hidden]{display:none}
+.v3lw span{position:absolute;transform:translate(-50%,-100%);white-space:nowrap;
+  font-size:11px;font-weight:600;color:var(--lmk);text-shadow:0 0 3px var(--panel),
+  0 0 3px var(--panel),0 0 3px var(--panel)}
 .v3msg{position:absolute;inset:0;z-index:3;display:grid;place-content:center;justify-items:center;
   text-align:center;gap:8px;padding:22px;color:var(--muted);font-size:12.5px;line-height:1.55}
 .v3msg b{color:var(--ink);font-size:14px;font-weight:600}

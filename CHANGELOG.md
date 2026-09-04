@@ -6,6 +6,25 @@ carries a `version` block naming the release its derived fields were built for.
 ## [Unreleased]
 
 ### Added
+- **Landmarks in the 3-D view.** Bregma, lambda, the interaural line and the occipital crest
+  are drawn on the plate whose plane they fall in and as reference rules around the
+  projections; in 3-D they can now be drawn as what they actually are. Each landmark's
+  coronal plane is a rule up the midline, exact because the atlas's printed AP for it is
+  exact. Bregma, lambda and the occipital crest carry a three-axis cross on the vault. The
+  interaural line is the ear-bar axis itself, running canal to canal with a ring at each
+  end and out past the brain — this is the one view in the app where it is a line and not a
+  point seen end-on. Nothing of it is depth-tested, deliberately: an ear bar is not hidden
+  by the head it goes into. The names ride over the canvas as text so they stay upright and
+  legible while the marks turn with the brain, and where two land on top of each other —
+  which is what a rostral or caudal view does to all four — the nearer name is the one
+  written. **Half** cuts the ear-bar axis at the midline with everything else. The heights
+  come off the same approximate skull fit the shell does and the note under the view says
+  so; the AP planes do not, and are drawn whether the fit is there or not. It belongs to a
+  pane rather than to the view, like the rest of the 3-D toolbar, and rides in the link
+  (`&lm=1`, `&lm2=1`). Unlike the projection's, it is not stood down by a working frame:
+  there an AP rule is a line only because the view has flattened an axis away, while here
+  it is the plane itself, turned by the same model matrix as the brain.
+
 - **The MRI images ship with the atlas.** They were held back while it was unclear whether
   the volume could be redistributed; it comes from the same open-access supplement as the 186
   section pages, so it now travels with them and on the same terms — the work of
@@ -170,6 +189,15 @@ carries a `version` block naming the release its derived fields were built for.
   the one thing they left out.
 
 ### Changed
+- **The 3-D view opens ray-marched.** **Volume** is now the mode a pane opens in and
+  **Contours** is one button along. The stack of textured plates is the honest picture of
+  what the reconstruction is — 62 sections and the gaps between them — but at the default
+  oblique angle it is 62 cards seen nearly edge-on, which is not what somebody who has just
+  clicked **3D** is looking for; the march reads the same field and shows the brain as a solid. The
+  note under the view still says what the stack is either way. A link that names no mode now
+  reads as the volume: every link ever written without an `&r=` opens ray-marched, and
+  `&r=contour` is what a link now carries to ask for the stack.
+
 - **A note on the plate is a marker, not its own text across the drawing.** Every note used
   to print its line of text beside its ring, so a plate with a handful of them on it was
   read through its own annotations. A note now draws as a small bubble with its tail on the
@@ -231,6 +259,14 @@ carries a `version` block naming the release its derived fields were built for.
   is not affected — the test is how much of the wall the watershed put *inside* a face lands
   on ink, not how much of the whole outline does, so `CPu` and `Po` keep theirs.
   `no_drawn_outline` carries the same flag into the per-plate GeoJSON.
+
+### Removed
+- **The NIfTI and STL download buttons, for now.** Both are out of the 3-D toolbar: **NIfTI**,
+  which wrote the 62-plate stack out as a gzipped NIfTI-1 volume, and **STL**, which wrote the
+  selected structure's mesh. Nothing about either file changes — the writers are unchanged and
+  still reachable from the page's `__gae` handle, the NIfTI header is still held to its
+  geometry by its test, and `tools/build_volumes.py --stl` still writes the meshes offline.
+  What is gone is the two controls.
 
 ### Fixed
 - **The lean page never refreshed its offline copy, and a rebuilt data file never reached a
