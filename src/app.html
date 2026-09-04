@@ -144,16 +144,20 @@
            what used to push the picture off the first screen. Everything that is set once
            and then read rather than driven lives in the panel below. -->
       <span class="vqs" id="vqs">
-        <span class="vctl" id="qsPlate">
-          <span class="vctl" id="ctlSrc">
-            <span class="seg" id="srcseg">
-              <button type="button" class="on" data-s="drawing" title="The atlas's own drawing: contours and printed abbreviations">Labeled</button>
-              <button type="button" data-s="nissl" title="The unlabeled Nissl-stained section at this level, printed in the same coordinate box">Nissl</button>
-              <button type="button" data-s="myelin" title="The unlabeled Gallyas myelin-stained section at this level, printed in the same coordinate box">Myelin</button>
-              <button type="button" data-s="mri" hidden title="The atlas's own MRI at this level, resampled into the same coordinate box. 117 &micro;m in plane against the drawing's 18, so it is soft where the drawing is sharp &mdash; and it is the animal's head, not a cut section">MRI</button>
-            </span>
+        <!-- Which staining is on screen belongs to the plate and to the stack alike, so it
+             sits outside either one's group and shows for both. Each view remembers its own:
+             reading a Nissl stack against the labeled plate is the comparison having two
+             views is for, and that needs them set apart rather than in step. -->
+        <span class="vctl" id="ctlSrc">
+          <span class="seg" id="srcseg">
+            <button type="button" class="on" data-s="drawing" title="The atlas's own drawing: contours and printed abbreviations">Labeled</button>
+            <button type="button" data-s="nissl" title="The unlabeled Nissl-stained section at this level, printed in the same coordinate box">Nissl</button>
+            <button type="button" data-s="myelin" title="The unlabeled Gallyas myelin-stained section at this level, printed in the same coordinate box">Myelin</button>
+            <button type="button" data-s="mri" hidden title="The atlas's own MRI at this level, resampled into the same coordinate box. 117 &micro;m in plane against the drawing's 18, so it is soft where the drawing is sharp &mdash; and it is the animal's head, not a cut section">MRI</button>
           </span>
           <span class="tsep"></span>
+        </span>
+        <span class="vctl" id="qsPlate">
           <!-- A finger has a better zoom than these buttons are: the pinch is anchored on
                the fingers rather than on the box center, and pinching in clamps at exactly
                100% with the pan zeroed, which is what Fit writes. So the group is hidden
@@ -226,11 +230,109 @@
           aria-label="Open the wiki documentation (opens in a new tab)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></a>
       </span>
+    </div>
 
-      <!-- One panel, two presentations: a sheet over the picture on a phone, a popover
-           anchored under its button on a wide window. Out of the flow either way, so
-           opening it never changes what #imgbox measures and the plate never resizes
-           under the pointer. -->
+    <!-- The view and the controls that drive it, side by side. A column on the right where
+         there is width for one, a row above the picture where there is not. In the flow
+         either way, so opening it re-fits the plate rather than covering it. -->
+    <div class="vmain">
+      <div class="vcol">
+        <div class="vctx">
+          <span class="pnum" id="pn">Plate 30</span>
+          <span class="coord" id="pc"></span>
+        </div>
+
+        <div class="stage">
+          <div class="view on" id="plateview">
+            <div class="img" id="imgbox">
+              <div class="imgwrap" id="iw">
+                <div class="pan" id="pan">
+                  <img id="pi" alt="">
+                  <svg id="ov" viewBox="0 0 1100 703" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+                    <g id="mc"></g>
+                    <g id="grid"></g>
+                    <g id="sk"></g>
+                    <g id="lm"></g>
+                    <rect id="hl" rx="2" style="display:none"></rect>
+                    <path id="hr" style="display:none"></path>
+                    <g id="om"></g>
+                    <g id="xh"></g>
+                    <g id="ms"></g>
+                    <g id="tk"></g>
+                    <g id="pk"></g>
+                    <g id="an"></g>
+                  </svg>
+                </div>
+                <div class="sbar" id="sb" hidden><div class="bar" id="sbb"></div><div class="lab" id="sbl"></div></div>
+                <div class="tip" id="tip" hidden></div>
+                <form class="anf" id="anf" hidden autocomplete="off">
+                  <input type="text" id="ant" maxlength="200" placeholder="What is here?" aria-label="Note text">
+                  <button type="submit" class="z">Save</button>
+                  <button type="button" class="z" id="andel">Delete</button>
+                  <button type="button" class="z" id="ancan">Cancel</button>
+                </form>
+                <button class="vinf" id="vinfb" type="button" aria-expanded="false" aria-controls="vinfp"
+                  aria-label="About this view" title="About this view">i</button>
+              </div>
+              <!-- The panel sits beside the plate box rather than inside it: .imgwrap is
+                   overflow:hidden for the pan transform, and anything hanging off its edge
+                   would be cut. #imgbox does not clip, and an absolute child changes nothing
+                   fit() measures. -->
+              <div class="vinfp" id="vinfp" hidden role="note"><div id="vinfo"></div></div>
+              <div class="imgwrap cmp" id="iw2" hidden>
+                <div class="pan" id="pan2">
+                  <img id="pi2" alt="">
+                  <svg id="ov2" viewBox="0 0 1100 703" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+                    <g id="mc2"></g>
+                    <path id="hr2" style="display:none"></path>
+                    <g id="om2"></g>
+                    <g id="xh2"></g>
+                  </svg>
+                </div>
+                <div class="cmplab" id="cmplab"></div>
+              </div>
+            </div>
+            <div class="rdout" id="rd" hidden aria-live="polite"></div>
+            <div class="rdout ms" id="rm" hidden></div>
+            <p class="vhint" id="vhint" hidden aria-live="polite"></p>
+      </div>
+
+      <div class="view" id="projview">
+        <div class="pjw" id="pjw">
+          <svg id="pjs" preserveAspectRatio="xMidYMid meet" role="img"><title id="pjttl"></title>
+            <g id="pja"></g>
+            <g id="pjk" clip-path="url(#pjclip)"></g>
+            <g id="pjlm" clip-path="url(#pjclip)"></g>
+            <path id="pjb"></path>
+            <path id="pjf"></path>
+            <g id="pjl"></g>
+            <g id="pjg"></g>
+            <g id="pjtk"></g>
+            <g id="pjan"></g>
+            <circle id="pjhi" r="9" style="display:none"></circle>
+          </svg>
+          <div class="tip" id="pjt" hidden></div>
+          <button class="vinf" id="pjnb" type="button" aria-expanded="false" aria-controls="pjnp"
+              aria-label="About this view" title="About this view">i</button>
+          <div class="vinfp" id="pjnp" hidden role="note"><p class="pjn" id="pjn"></p></div>
+        </div>
+      </div>
+
+      <div class="view" id="v3dview">
+        <div class="v3w" id="v3w">
+          <canvas id="v3c"></canvas>
+          <div class="v3lw" id="v3lw" hidden aria-hidden="true"></div>
+          <div class="v3pn" id="v3pn" hidden aria-hidden="true"><span class="v3dv" id="v3dv"></span><span class="v3on" id="v3on"></span><span class="v3lb on" id="v3lb0">A</span><span class="v3lb" id="v3lb1">B</span></div>
+          <div class="tip" id="v3t" hidden></div>
+          <div class="v3msg" id="v3msg" hidden aria-live="polite"></div>
+          <button class="vinf" id="v3nb" type="button" aria-expanded="false" aria-controls="v3np"
+              aria-label="About this view" title="About this view">i</button>
+        </div>
+        <div class="vinfp" id="v3np" hidden role="note"><p class="v3n" id="v3n"></p></div>
+      </div>
+    </div>
+
+      </div>
       <div class="vpan" id="vpan" hidden aria-labelledby="vpanh">
         <div class="vpanh">
           <b id="vpanh">Plate controls</b>
@@ -330,103 +432,6 @@
         </div>
       </div>
     </div>
-    <div class="vpanbd" id="vpanbd" hidden></div>
-
-    <div class="vctx">
-      <span class="pnum" id="pn">Plate 30</span>
-      <span class="coord" id="pc"></span>
-    </div>
-
-    <div class="stage">
-      <div class="view on" id="plateview">
-        <div class="img" id="imgbox">
-          <div class="imgwrap" id="iw">
-            <div class="pan" id="pan">
-              <img id="pi" alt="">
-              <svg id="ov" viewBox="0 0 1100 703" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
-                <g id="mc"></g>
-                <g id="grid"></g>
-                <g id="sk"></g>
-                <g id="lm"></g>
-                <rect id="hl" rx="2" style="display:none"></rect>
-                <path id="hr" style="display:none"></path>
-                <g id="om"></g>
-                <g id="xh"></g>
-                <g id="ms"></g>
-                <g id="tk"></g>
-                <g id="pk"></g>
-                <g id="an"></g>
-              </svg>
-            </div>
-            <div class="sbar" id="sb" hidden><div class="bar" id="sbb"></div><div class="lab" id="sbl"></div></div>
-            <div class="tip" id="tip" hidden></div>
-            <form class="anf" id="anf" hidden autocomplete="off">
-              <input type="text" id="ant" maxlength="200" placeholder="What is here?" aria-label="Note text">
-              <button type="submit" class="z">Save</button>
-              <button type="button" class="z" id="andel">Delete</button>
-              <button type="button" class="z" id="ancan">Cancel</button>
-            </form>
-            <button class="vinf" id="vinfb" type="button" aria-expanded="false" aria-controls="vinfp"
-              aria-label="About this view" title="About this view">i</button>
-          </div>
-          <!-- The panel sits beside the plate box rather than inside it: .imgwrap is
-               overflow:hidden for the pan transform, and anything hanging off its edge
-               would be cut. #imgbox does not clip, and an absolute child changes nothing
-               fit() measures. -->
-          <div class="vinfp" id="vinfp" hidden role="note"><div id="vinfo"></div></div>
-          <div class="imgwrap cmp" id="iw2" hidden>
-            <div class="pan" id="pan2">
-              <img id="pi2" alt="">
-              <svg id="ov2" viewBox="0 0 1100 703" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
-                <g id="mc2"></g>
-                <path id="hr2" style="display:none"></path>
-                <g id="om2"></g>
-                <g id="xh2"></g>
-              </svg>
-            </div>
-            <div class="cmplab" id="cmplab"></div>
-          </div>
-        </div>
-        <div class="rdout" id="rd" hidden aria-live="polite"></div>
-        <div class="rdout ms" id="rm" hidden></div>
-        <p class="vhint" id="vhint" hidden aria-live="polite"></p>
-      </div>
-
-      <div class="view" id="projview">
-        <div class="pjw" id="pjw">
-          <svg id="pjs" preserveAspectRatio="xMidYMid meet" role="img"><title id="pjttl"></title>
-            <g id="pja"></g>
-            <g id="pjk" clip-path="url(#pjclip)"></g>
-            <g id="pjlm" clip-path="url(#pjclip)"></g>
-            <path id="pjb"></path>
-            <path id="pjf"></path>
-            <g id="pjl"></g>
-            <g id="pjg"></g>
-            <g id="pjtk"></g>
-            <g id="pjan"></g>
-            <circle id="pjhi" r="9" style="display:none"></circle>
-          </svg>
-          <div class="tip" id="pjt" hidden></div>
-          <button class="vinf" id="pjnb" type="button" aria-expanded="false" aria-controls="pjnp"
-              aria-label="About this view" title="About this view">i</button>
-          <div class="vinfp" id="pjnp" hidden role="note"><p class="pjn" id="pjn"></p></div>
-        </div>
-      </div>
-
-      <div class="view" id="v3dview">
-        <div class="v3w" id="v3w">
-          <canvas id="v3c"></canvas>
-          <div class="v3lw" id="v3lw" hidden aria-hidden="true"></div>
-          <div class="v3pn" id="v3pn" hidden aria-hidden="true"><span class="v3dv" id="v3dv"></span><span class="v3on" id="v3on"></span><span class="v3lb on" id="v3lb0">A</span><span class="v3lb" id="v3lb1">B</span></div>
-          <div class="tip" id="v3t" hidden></div>
-          <div class="v3msg" id="v3msg" hidden aria-live="polite"></div>
-          <button class="vinf" id="v3nb" type="button" aria-expanded="false" aria-controls="v3np"
-              aria-label="About this view" title="About this view">i</button>
-        </div>
-        <div class="vinfp" id="v3np" hidden role="note"><p class="v3n" id="v3n"></p></div>
-      </div>
-    </div>
-
     <div class="vbot">
       <button class="b" id="prev" type="button">&larr; anterior</button>
       <input type="range" id="rng" min="1" max="62" value="30" aria-label="Plate">
@@ -741,7 +746,9 @@
       <dt><kbd>/</kbd></dt><dd>jump to the search box</dd>
       <dt><kbd>?</kbd></dt><dd>open this panel</dd>
       <dt><kbd>C</kbd></dt><dd>the view&rsquo;s controls &mdash; everything the bar above the
-        picture does not have room for. <b>Advanced</b> inside it holds the contrast, the
+        picture does not have room for. They dock beside the view, as a column where there
+        is width for one and a row above it where there is not, so the picture is re-fitted
+        around them rather than covered. <b>Advanced</b> inside them holds the contrast, the
         tone curve and the slab: the settings you make once.</dd>
       <dt>two fingers</dt><dd>pinch the plate to zoom, anchored between them; pinch back in
         to fit. One finger drags once you are in. The &minus; / + / <b>Fit</b> buttons are

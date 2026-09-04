@@ -6,6 +6,29 @@ carries a `version` block naming the release its derived fields were built for.
 ## [Unreleased]
 
 ### Changed
+- **The controls dock beside the view rather than over it.** They were a popover on a wide
+  window and a sheet on a phone, both out of the flow so that opening them could not resize
+  the picture. They are furniture now: a column to the right of the view where there is
+  width for one, a row above it where there is not. That reverses the trade deliberately —
+  the picture gets smaller when they are open instead of being partly hidden behind them,
+  and nothing you are looking at is ever covered. At 1440 px the plate goes 985 px wide to
+  665 while they are open, and back to exactly 985 when they close; every open and close
+  runs the same re-fit `setMax()` does, because `fit()` is what keeps the SVG overlays on
+  the image. The backdrop went with the sheet, and so did closing the panel whenever a
+  click on the plate was armed — a docked panel covers nothing, so arming **Add** no longer
+  costs you the panel you were working in.
+- **Each view remembers its own staining.** The plate and the stack shared one source, on
+  the grounds that a build where the two disagreed would be a puzzle. It is not a puzzle,
+  it is the comparison: reading a Nissl stack against the labeled plate is what having both
+  views is for. They keep their own now, and switching between them brings each one's back.
+  The link carries both as `ps` and `ps3`, and `ps` alone still sets them together — which
+  is exactly what every link written before this meant.
+
+### Fixed
+- The source switch had gone missing from the 3-D view. Moving the controls into a strip
+  put it inside the plate's own group, so it showed only there; it belongs to both views
+  and is offered by both again. The projection never had it and still does not: it plots
+  where labels are printed, not pixels.
 - **The picture first, and the controls on call.** Every control for the current view used to
   sit in one wrapping row above it. That works at 1440 px and does not work on a phone: at
   390 × 844 the row ran to six lines on the plate and twelve in the 3-D view, where it was

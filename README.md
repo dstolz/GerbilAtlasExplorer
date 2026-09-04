@@ -38,6 +38,11 @@ the whole atlas (all 186 plate images) lives inside it, 22 MB, most of that the 
   plate, so the outlines and the readout land on it unchanged. Two things it is not — the
   whole head rather than a cut section, so there is skull, scalp and eye in the picture;
   and 117 µm voxels against the drawing's 18, so it is soft where the drawing is sharp.
+- The plate and the 3-D stack each remember their own source, so you can read a Nissl
+  stack against the labeled plate — which is what having two views of the same 62 sections
+  is for. A link carries both; one written before the stack had a source of its own still
+  sets them together, which is what it always meant. The projection plots where labels are
+  *printed* rather than pixels, so no staining applies to it and none is offered.
 - **Gray** drops the drawing's color so the three read alike, and **Contrast** stretches
   whichever one is showing. Both carry into the PNG.
 - **Color regions** paints the section as a map: every region filled, and no two regions
@@ -105,11 +110,13 @@ the whole atlas (all 186 plate images) lives inside it, 22 MB, most of that the 
   cleared, which is what **Fit** does. A window wide enough to have a mouse on it also gets
   the − / + / **Fit** buttons; a phone does not, because the fingers already do it better.
 - **Controls** (or <kbd>C</kbd>) opens everything the bar above the picture does not have
-  room for — the overlays, Compare, the notes and the exports. It is a sheet over the
-  picture on a phone and a popover on a wide window, and it never resizes the view it is
-  covering. Inside it, **Advanced** folds away the settings you make once: the contrast, the
-  3-D tone curve and the slab. The count beside each says how much is set in there, and a
-  link that carried any of it opens Advanced on arrival.
+  room for — the overlays, Compare, the notes and the exports. It docks beside what it
+  drives: a column to the right of the view where there is width for one, a row above the
+  picture where there is not. The view is re-fitted around it rather than covered, so
+  nothing you are looking at is ever hidden behind it. Inside it, **Advanced** folds away
+  the settings you make once: the contrast, the 3-D tone curve and the slab. The count
+  beside each says how much is set in there, and a link that carried any of it opens
+  Advanced on arrival.
 - The **i** in the picture's bottom-right corner says what the view is showing and how to
   read it. What cannot wait to be asked for stays under the plate: the coordinate readout,
   the running measurement, and anything the app needs to warn you about.
