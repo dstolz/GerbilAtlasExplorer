@@ -20,7 +20,7 @@ arrangement of them looks like:
   2. For each letter, keep the exemplar most like its fellows, so a stray box or a
      letter clipped by a boundary line cannot become the template for a whole run.
   3. Compose the missing word from those letters on a common baseline, and slide it
-     over the plate by normalised cross-correlation, exactly as the other pass does.
+     over the plate by normalized cross-correlation, exactly as the other pass does.
   4. Read every peak above KEEP against the printed plate before keeping it.
 
 Step 4 is not a formality. A composed template is a weaker claim than a cut one --
@@ -175,7 +175,7 @@ def inkmap(doc, plate, cache={}):
         (np.asarray(native(doc, plate), np.uint8) < INK).astype(np.uint8)))
 
 
-def grey(doc, plate, cache={}):
+def gray(doc, plate, cache={}):
     """The same plate as floats with ink high, which is what NCC scores over."""
     return _cached(cache, plate, lambda:
                    1.0 - np.asarray(native(doc, plate), np.float32) / 255.0, 4)
@@ -286,7 +286,7 @@ def harvest(doc, DB, need, plates):
 def typical(exemplars):
     """The exemplar most like its fellows, among those of the commonest size.
 
-    A letter clipped by a region boundary, or one whose box caught a neighbour's
+    A letter clipped by a region boundary, or one whose box caught a neighbor's
     stroke, is the wrong size or the wrong shape; taking the modal size first and
     then the member nearest that group's mean drops both without a threshold.
     """
@@ -328,7 +328,7 @@ def compose(word, lib, gaps):
 # ---------------------------------------------------------------- the search
 
 def score(img, tpl):
-    """Normalised cross-correlation of a binary template over a whole plate.
+    """Normalized cross-correlation of a binary template over a whole plate.
 
     NCC and not a pixel overlap, for the reason the other pass gives: the halftone
     ground and half a pixel of set-off put binary agreement for the same word on
@@ -451,7 +451,7 @@ def main():
         # Not one library for the run: the same letter is a slightly different
         # picture sixty plates away -- a different exposure of the same plate, a
         # hair more ink -- and composing DTgP from the far end of the atlas puts it
-        # below LDTg on its own page, where composing it from its neighbours puts
+        # below LDTg on its own page, where composing it from its neighbors puts
         # both of its printed copies above.
         order = sorted(range(1, A.N_PLATES + 1),
                        key=lambda p: (min(abs(p - q) for q in plates), p))
@@ -470,7 +470,7 @@ def main():
                  ' '.join('%s%d' % (ch, len(seen[ch])) for ch in sorted(set(a))),
                  '   thin: ' + ' '.join(thin) if thin else ''))
         for p in plates:
-            hits = peaks(score(grey(doc, p), tpl), args.keep, MOST)
+            hits = peaks(score(gray(doc, p), tpl), args.keep, MOST)
             verdict = READ.get((p, a), '')
             line = ' '.join('%.2f' % v for v, _x, _y in hits) or '-'
             if hits and len(verdict) < len(hits):

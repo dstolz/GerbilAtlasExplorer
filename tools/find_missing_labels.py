@@ -13,9 +13,9 @@ Nothing here reads letters. The atlas sets every abbreviation in one typeface at
 one size, so a word missed on one plate is a word already located on another, and
 the question is only where that same picture appears again:
 
-  1. Cut the word out of a plate where it *was* located -- the greyscale patch,
+  1. Cut the word out of a plate where it *was* located -- the grayscale patch,
      trimmed to its own ink.
-  2. Slide it over the plate where it was not, scoring normalised cross-
+  2. Slide it over the plate where it was not, scoring normalized cross-
      correlation over the whole page by FFT. NCC and not a pixel overlap: the
      halftone ground and half a pixel of set-off put binary agreement for the
      same word on two plates at 0.6, which is where the wrong words are too.
@@ -51,13 +51,13 @@ from label_blocks import native, denoise, INK                 # noqa: E402
 
 PAD = 3         # native px of white kept around a cut word
 KEEP = 0.80     # NCC a match has to reach; see the docstring for the spread
-FLOOR = 36.0    # a window flatter than 6 grey levels of variance is blank paper
+FLOOR = 36.0    # a window flatter than 6 gray levels of variance is blank paper
 DEC = 4         # fraction decimals, as label_positions already uses
 
 # The score says how like the word a patch is. It cannot say the patch is the
 # whole word, and for a short abbreviation that is the whole difficulty: `sol`
 # is printed inside `5Sol`, `Cu` inside `9a,bCb`, `I` inside `LaV`. Widening the
-# template's white margin so a neighbouring letter falls inside it does not
+# template's white margin so a neighboring letter falls inside it does not
 # separate them either -- at every margin tried, a true `VTT` or `Rh` scores
 # below a false `SHi` -- and neither does anything else that does not amount to
 # reading the letters, which is the pass this one exists to patch rather than
@@ -97,7 +97,7 @@ CONFIRM = {
 
 
 def ncc(I, T):
-    """Normalised cross-correlation of T over I, by FFT, at every offset.
+    """Normalized cross-correlation of T over I, by FFT, at every offset.
 
     Blank paper has no variance and would divide to noise, so it scores zero
     rather than something."""
@@ -117,7 +117,7 @@ def ncc(I, T):
     return out
 
 
-def cut(grey, ink, box):
+def cut(gray, ink, box):
     """One word as a patch, trimmed to its ink, with the box's own offset kept."""
     x0, y0, x1, y1 = box
     r0, c0 = max(0, y0 - 8), max(0, x0 - 8)
@@ -127,7 +127,7 @@ def cut(grey, ink, box):
     r, c = np.where(s)
     a, b = max(0, r.min() - PAD), r.max() + 1 + PAD
     d, e = max(0, c.min() - PAD), c.max() + 1 + PAD
-    return dict(t=grey[r0 + a:r0 + b, c0 + d:c0 + e],
+    return dict(t=gray[r0 + a:r0 + b, c0 + d:c0 + e],
                 dx=x0 - (c0 + d), dy=y0 - (r0 + a),
                 w=x1 - x0, h=y1 - y0)
 

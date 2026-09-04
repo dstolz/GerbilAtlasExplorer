@@ -1,5 +1,10 @@
 // The built pages in a browser: the bundle from disk, the lean page over http.
 const { test, expect } = require('@playwright/test');
+/* Most of what a view is set by lives in a panel now, and the tuning inside it behind
+   Advanced. Both are closed when the page opens, so a spec that drives one of those
+   controls says so first. */
+const panel = p => p.evaluate(() => window.__gae.vpan(true));
+const adv   = p => p.evaluate(() => window.__gae.adv(true));
 const path = require('path');
 const fs = require('fs');
 
@@ -19,7 +24,7 @@ for (const [name, url] of [['bundle', BUNDLE], ['lean', LEAN]]) {
       await expect(page.locator('#pn')).toHaveText('Plate 44');
       await page.waitForFunction(() => location.hash === '#p44/MSO');   // written after a short debounce
       await page.goto(url + '#p46/MSO&v=rg');
-      await expect(page.locator('#vhint')).toContainText('MSO outlined');
+      await expect(page.locator('#vinfo')).toContainText('MSO outlined');
       expect(await page.evaluate(() => document.getElementById('ckg').checked)).toBe(true);
       // a bad hash arriving on an open page is ignored; on a fresh load it falls back to plate 30
       await page.goto('about:blank');
@@ -95,6 +100,7 @@ test("the Updated stamp is rewritten onto the reader's own clock", async ({ brow
 
 test('the SVG export carries one named group per region', async ({ page }) => {
   await page.goto(BUNDLE + '#p1/Mi');
+  await panel(page);
   const [dl] = await Promise.all([page.waitForEvent('download'), page.click('#esvg')]);
   const svg = fs.readFileSync(await dl.path(), 'utf8');
   expect((svg.match(/<path /g) || []).length).toBeGreaterThan(44);
@@ -110,7 +116,7 @@ test('the SVG export carries one named group per region', async ({ page }) => {
    holds it to its header. It is asserted twice over: against the app's own calibration, so
    a recalibration moves the file with it, and against the plate table's printed APs, so it
    cannot move somewhere the atlas does not say. */
-test('the NIfTI writer writes an RAS volume at the atlas\u2019s own millimetres', async ({ page }) => {
+test('the NIfTI writer writes an RAS volume at the atlas\u2019s own millimeters', async ({ page }) => {
   await page.goto(BUNDLE + '#p30');
   const r = await page.evaluate(() => {
     const N = V3W * V3H, nv = N * V3D;
@@ -197,13 +203,13 @@ test('a name that is no region has no entry, and highlights the name it prints',
     // same-document navigation, so the app would never re-read the hash.
     await page.goto('about:blank');
     await page.goto(BUNDLE + '#p52/cbw');
-    await expect(page.locator('#vhint')).toContainText('the ground it lies in belongs to the regions around it');
+    await expect(page.locator('#vinfo')).toContainText('the ground it lies in belongs to the regions around it');
     expect(await page.evaluate(() => document.querySelectorAll('#om ellipse').length)).toBe(11);
     expect(await page.evaluate(() => document.querySelectorAll('#om path').length)).toBe(0);
     // and the lobule whose white matter that is holds the ground instead
     await page.goto('about:blank');
     await page.goto(BUNDLE + '#p52/Sp5I');
-    await expect(page.locator('#vhint')).toContainText('Sp5I outlined');
+    await expect(page.locator('#vinfo')).toContainText('Sp5I outlined');
   });
 
 /* `Crus2` on plate 52 is the other case: it *has* ground -- 7.57 mm2 of section, a mesh,
@@ -232,8 +238,8 @@ test('a name the atlas draws no boundary round keeps its area and highlights its
     // selecting it circles the labels, and still quotes the area it has
     await page.goto('about:blank');
     await page.goto(BUNDLE + '#p52/Crus2');
-    await expect(page.locator('#vhint')).toContainText('no outline of its own to draw');
-    await expect(page.locator('#vhint')).toContainText('mm² of section here');
+    await expect(page.locator('#vinfo')).toContainText('no outline of its own to draw');
+    await expect(page.locator('#vinfo')).toContainText('mm² of section here');
     expect(await page.evaluate(() => document.querySelectorAll('#om ellipse').length)).toBe(4);
     expect(await page.evaluate(() => document.querySelectorAll('#om path').length)).toBe(0);
   });
@@ -241,7 +247,7 @@ test('a name the atlas draws no boundary round keeps its area and highlights its
 /* The atlas letters one hemisphere for some names; the other is named by mirroring. */
 test('a name printed on one hemisphere is outlined on both', async ({ page }) => {
   await page.goto(BUNDLE + '#p19/S1J');
-  await expect(page.locator('#vhint')).toContainText('S1J outlined');
+  await expect(page.locator('#vinfo')).toContainText('S1J outlined');
   const sides = await page.evaluate(() => {
     const o = window.__REGION__.r['19'].S1J;
     return [o.n, o.g.length, o.g.map(g => g[0][0] > 0.4727 ? 1 : -1)];
@@ -296,7 +302,7 @@ test('the gallery draws only the thumbnails that are on screen', async ({ page }
 test('maximising hands the whole window to the view, and gives it back', async ({ page }) => {
   // The browser's own fullscreen would resize the viewport under the assertions, and
   // whether it is granted at all is the environment's business -- so it is refused here.
-  // That is the path worth pinning anyway: a refusal must still maximise the page itself.
+  // That is the path worth pinning anyway: a refusal must still maximize the page itself.
   await page.addInitScript(() => {
     Element.prototype.requestFullscreen = () => Promise.reject(new Error('refused'));
   });
@@ -348,4 +354,130 @@ test('the lean page registers its service worker', async ({ page }) => {
   expect(cache.names).toEqual(['gae-' + build]);
   expect(cache.shell).toBe(true);
   expect(cache.file).toBe(true);
+});
+
+/* ---------------------------------------------------------------------------
+   The layout the controls were moved for. These are the assertions that make
+   the move worth having: if the toolbar creeps back up the screen, they fail.
+   --------------------------------------------------------------------------- */
+
+test('on a phone the picture is on the first screen in every view', async ({ browser }) => {
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+  const page = await ctx.newPage();
+  for (const [hash, sel, wait] of [['#p30', '#iw', 900], ['#p30&t=proj', '#pjw', 900],
+                                   ['#p30&t=v3d', '#v3w', 9000]]) {
+    await page.goto(BUNDLE + hash);
+    await page.waitForTimeout(wait);
+    const bar = await page.evaluate(() =>
+      Math.round(document.querySelector('.vbar').getBoundingClientRect().height));
+    const g = await page.locator(sel).boundingBox();
+    expect(bar, `${hash}: the control bar`).toBeLessThan(110);
+    expect(g.y, `${hash}: the top of the picture`).toBeLessThan(200);
+    expect(g.width, `${hash}: the picture takes the width`).toBeGreaterThan(380);
+    // and nothing hangs off the side at any of them
+    const w = await page.evaluate(() => [document.documentElement.scrollWidth, innerWidth]);
+    expect(w[0]).toBeLessThanOrEqual(w[1]);
+  }
+  await ctx.close();
+});
+
+test('opening the controls does not move the picture', async ({ page }) => {
+  // The whole reason the panel is out of the flow: #imgbox is what fit() measures, and a
+  // panel that changed its height would resize the plate under the pointer -- which is
+  // what revealing Add used to do to the toolbar.
+  await page.goto(BUNDLE + '#p30');
+  await page.waitForTimeout(600);
+  const before = await page.locator('#iw').boundingBox();
+  await page.click('#vctlb');
+  await expect(page.locator('#vpan')).toBeVisible();
+  expect(await page.locator('#iw').boundingBox()).toEqual(before);
+  await page.check('#ckan');                       // and revealing Add inside it changes nothing
+  await expect(page.locator('#anadd')).toBeVisible();
+  expect(await page.locator('#iw').boundingBox()).toEqual(before);
+  await page.keyboard.press('Escape');             // Escape drops the panel before anything else
+  await expect(page.locator('#vpan')).toBeHidden();
+  expect(await page.locator('#iw').boundingBox()).toEqual(before);
+});
+
+test('arming a click on the plate puts the sheet away first', async ({ browser }) => {
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+  const page = await ctx.newPage();
+  await page.goto(BUNDLE + '#p30');
+  await page.waitForTimeout(900);
+  await page.click('#vctlb');
+  await page.check('#ckan');
+  await page.click('#anadd');                      // arms a click on the plate
+  await expect(page.locator('#vpan')).toBeHidden();// which the sheet was covering
+  await expect(page.locator('#iw')).toBeVisible();
+  await ctx.close();
+});
+
+test('a finger zooms the plate, and pinching back in fits it', async ({ browser }) => {
+  // The -/+/Fit buttons are hidden under 900px because this works. If it stops working
+  // there is no way to zoom a plate on a phone at all, so it is pinned here.
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+  const page = await ctx.newPage();
+  await page.goto(BUNDLE + '#p30');
+  await page.waitForTimeout(900);
+  expect(await page.locator('.zg').isVisible()).toBe(false);
+  const pinch = (a, b) => page.evaluate(([a, b]) => {
+    const iw = document.getElementById('iw'), r = iw.getBoundingClientRect();
+    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    const ev = (t, id, x) => iw.dispatchEvent(new PointerEvent(t,
+      { pointerId: id, bubbles: true, button: 0, pointerType: 'touch', clientX: x, clientY: cy }));
+    ev('pointerdown', 1, cx - a); ev('pointerdown', 2, cx + a);
+    for (let i = 1; i <= 8; i++) {
+      const d = a + (b - a) * i / 8;
+      ev('pointermove', 1, cx - d); ev('pointermove', 2, cx + d);
+    }
+    ev('pointerup', 1, cx - b); ev('pointerup', 2, cx + b);
+  }, [a, b]);
+  await pinch(40, 150);
+  expect(await page.evaluate(() => window.__gae.state().zoom)).toBeGreaterThan(1.5);
+  expect(await page.locator('#iw').getAttribute('class')).toContain('zoomed');
+  await pinch(150, 20);                            // and back in, which clamps at exactly 1
+  expect(await page.evaluate(() => window.__gae.state().zoom)).toBe(1);
+  expect(await page.locator('#iw').getAttribute('class')).not.toContain('zoomed');
+  await ctx.close();
+});
+
+test('the zoom buttons are there for a mouse', async ({ page }) => {
+  await page.goto(BUNDLE + '#p30');
+  await expect(page.locator('.zg')).toBeVisible();
+  await page.click('#zi');
+  expect(await page.evaluate(() => window.__gae.state().zoom)).toBeGreaterThan(1);
+  await page.click('#zf');
+  expect(await page.evaluate(() => window.__gae.state().zoom)).toBe(1);
+});
+
+test('a link that carried tuning opens Advanced to show it', async ({ page }) => {
+  // A folded section must never be the unexplained reason the picture looks like that.
+  await page.goto(BUNDLE + '#p30&t=v3d&tf=42,20,80,150');
+  await page.waitForFunction(() => window.__gae && v3ready, null, { timeout: 90000 });
+  expect(await page.evaluate(() => window.__gae.state().advOn)).toBe(true);
+  await page.click('#vctlb');
+  await expect(page.locator('#v3gm')).toBeVisible();
+  expect(await page.locator('#advn')).toHaveText('1');
+  // a bare link leaves it alone
+  await page.goto(BUNDLE + '#p30');
+  await page.waitForTimeout(600);
+  await page.click('#vctlb');
+  await expect(page.locator('#advn')).toBeHidden();
+});
+
+test('commentary goes behind the mark, a warning stays under the plate', async ({ page }) => {
+  await page.goto(BUNDLE + '#p46/MSO');
+  await page.waitForTimeout(900);
+  await expect(page.locator('#vinfo')).toContainText('MSO outlined');
+  await expect(page.locator('#vhint')).toBeHidden();
+  await page.click('#vinfb');
+  await expect(page.locator('#vinfp')).toBeVisible();
+  await expect(page.locator('#vinfp')).toContainText('MSO outlined');
+  // off this plate is not commentary: it stays in flow, and so does the way out of it
+  await page.goto(BUNDLE + '#p30/MSO');
+  await page.waitForTimeout(900);
+  await expect(page.locator('#vhint')).toBeVisible();
+  await expect(page.locator('#vhint')).toContainText('is not on plate 30');
+  await page.click('#oobgo');   // the nearest plate MSO is on, going posterior from 30
+  expect(await page.evaluate(() => window.__gae.state().cur)).toBe(44);
 });

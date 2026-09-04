@@ -119,15 +119,15 @@ common coordinate frame.
 ### The three plates of a level
 
 The atlas prints each of the 62 levels three times — the Nissl-stained section, the
-Gallyas myelin-stained section from an adjacent section, and the labelled drawing traced
+Gallyas myelin-stained section from an adjacent section, and the labeled drawing traced
 over them — on consecutive pages of the supplement, with a fourth page carrying that
 level's abbreviation list and its CT/MRI reference. All 186 section pages are in the app,
-selected with **Labelled / Nissl / Myelin**.
+selected with **Labeled / Nissl / Myelin**.
 
 ### The MRI, as a fourth source
 
 `mri_frame` in `data/gerbil_atlas.json` records how the atlas's own reference MRI volume
-maps to stereotaxic millimetres, and `tools/build_mri.py` resamples it into the same
+maps to stereotaxic millimeters, and `tools/build_mri.py` resamples it into the same
 1100 × 703 coordinate box as the three published plates, writing `data/plates/mri/NN.jpg`.
 Where those files are present the app offers **MRI** beside the other three; where they are
 not, the button is absent and nothing else changes.
@@ -176,18 +176,18 @@ Three things had to be got right, and each is checked rather than assumed:
   rotation, so the cue is content: the vertical *dorso-ventral coordinate* caption sits
   outside the box on the right and nothing at all sits outside it on the left. This is read
   on the native page, before the mapping. Turning the mapped image instead is wrong in a way
-  that is easy to miss — the box is not centred in the 1100 px canvas, so a half-turn
-  there lands it 58 px, a full millimetre of ML, off.
-- **The mapping itself.** Re-deriving the 62 labelled plates through the same code lands
+  that is easy to miss — the box is not centered in the 1100 px canvas, so a half-turn
+  there lands it 58 px, a full millimeter of ML, off.
+- **The mapping itself.** Re-deriving the 62 labeled plates through the same code lands
   them on the images already in the app, pixel for pixel, on 61 of 62; plate 61 is out by
   one pixel in x.
 
 The myelin section is an *adjacent* section, not the same one — the two stains cannot be
 applied to a single slice — and is aligned as the authors published it.
 
-The alternates are stored at the same 1100×703 as the drawings, as greyscale JPEG at
+The alternates are stored at the same 1100×703 as the drawings, as grayscale JPEG at
 quality 65: 5.8 MB of Nissl and 5.1 MB of myelin, taking the single file from 7.3 MB to
-18.2 MB. **Grey** and **Contrast** in the toolbar are a CSS filter on the image, and the
+18.2 MB. **Gray** and **Contrast** in the toolbar are a CSS filter on the image, and the
 same filter string is set on the canvas the PNG export draws through, so what is saved is
 what was on screen. The 3-D view reads whichever source is selected and rebuilds its volume
 when it changes; it is left out of that filter because a filter on an `<img>` cannot reach
@@ -245,8 +245,8 @@ click-to-select in the HTML app and can be reused for annotation overlays elsewh
 
 The labels were read twice. The first pass OCR'd 300 dpi renders with Tesseract and
 located 4,164 labels. The second pass re-read all 62 plates from the lossless 300 dpi
-PNGs embedded in the source PDF, using a recogniser built for this one typeface:
-11,985 labelled glyph exemplars harvested from the first pass, matched as
+PNGs embedded in the source PDF, using a recognizer built for this one typeface:
+11,985 labeled glyph exemplars harvested from the first pass, matched as
 baseline-anchored binary templates, then whole tokens parsed against the 723 published
 abbreviations by Viterbi segmentation. Per-character accuracy under leave-one-plate-out
 validation is 96.4% top-1 and 99.75% top-3; the vocabulary constraint resolves the rest.
@@ -274,15 +274,15 @@ point at. That is what a reader notices, because it looks like the app has lost 
 A third pass, `tools/find_missing_labels.py`, reads no letters at all. The atlas sets every
 abbreviation in one typeface at one size, so a word missed on one plate is a word already
 located on another, and the only question is where that same picture appears again: cut the
-greyscale patch out of a plate that carries it, and slide it over the plate that does not,
-scoring normalised cross-correlation over the whole page by FFT. Correlation rather than
+grayscale patch out of a plate that carries it, and slide it over the plate that does not,
+scoring normalized cross-correlation over the whole page by FFT. Correlation rather than
 pixel overlap, because the halftone ground and half a pixel of set-off put binary agreement
 between two impressions of the same word at 0.6, which is where the wrong words are too.
 
 **The score filters; it does not decide.** It cannot tell a word from the same word inside a
 longer one, and for a short abbreviation that is the whole difficulty: `sol` is printed
 inside `5Sol`, `Cu` inside `9a,bCb`, `I` inside `LaV`. Widening the template's white margin
-so a neighbouring letter falls into it does not separate them — at every margin tried, a
+so a neighboring letter falls into it does not separate them — at every margin tried, a
 true `VTT` or `Rh` scores below a false `SHi` — and nothing else does either, short of
 reading the letters, which is the pass this one exists to patch rather than repeat. So all
 47 candidates were put beside the printed plate and read. **37 were the word and 23 entries
@@ -316,19 +316,19 @@ outside and draws a thin line from the word back into the region. `VMHSh` on pla
 printed clear of the brain altogether, with its line running back up into the shell of the
 ventromedial nucleus. **212 of the 6,315 located labels are set that way, on 47 of the 62
 plates.** For those the box says where the word is and not where the structure is, and the
-two are a median 0.52 mm apart, a tenth of them over a millimetre.
+two are a median 0.52 mm apart, a tenth of them over a millimeter.
 
 That gap is not a rounding error anywhere downstream. A seed dropped on the word lands on
 the far side of a boundary, so the extraction below hands the region to whichever name the
-word happens to fall in and the two swap territories. The stereotaxic centre the app quotes
-is the centre of a piece of white paper beside the section. The track planner aims at it.
+word happens to fall in and the two swap territories. The stereotaxic center the app quotes
+is the center of a piece of white paper beside the section. The track planner aims at it.
 
 `tools/label_leaders.py` reads the line off the page and records where it ends, as
 `label_leaders` in the JSON and `window.__LEAD__` in the app, keyed to the box it belongs
 to. It reads no letters either. A leader is the only thing on the page that is all three of:
 ink the tracing did not draw, straight over its whole length, and running out of a located
 label. So the ink is thresholded as the label passes threshold it, but **not** denoised —
-`denoise` wants two orthogonal neighbours and a two-pixel diagonal rule has none, so it
+`denoise` wants two orthogonal neighbors and a two-pixel diagonal rule has none, so it
 deletes exactly what this is looking for. Subtract the tracing in `svg/`; subtract the
 printed labels, meaning the located boxes and the gap between two words the atlas set as one
 label, so that the slash of `Cg1/ RSD` or of `LhbL/M` goes with them. What is left is
@@ -437,7 +437,7 @@ The steps, in order, run by `tools/build_region_extents.py`:
    abbreviation is that structure's area *as drawn*, and that is 3,477 of the faces. A label
    the atlas set outside its region is seeded at the end of the line it draws rather than on
    the word — see [Where the name is not the place](#where-the-name-is-not-the-place). 212
-   labels are, and seeding those on the word puts them in a neighbour's face.
+   labels are, and seeding those on the word puts them in a neighbor's face.
 5. **Letter the hemisphere the atlas did not.** The atlas prints most abbreviations twice,
    once per hemisphere, but not all of them: `S1J` on plate 19, `MPtA` on 28, `LPtA` on 29
    are set once, and the sealed face on the other side is then a hole in the section that
@@ -476,7 +476,7 @@ The steps, in order, run by `tools/build_region_extents.py`:
    matter the lobule whose label happens to sit deepest takes the whole arbor and the
    vermis with it. What the seed must not do is keep the ground, which is the lobule's.
 8. **Leave the unnamed faces alone.** A face holding no label is not absorbed by a
-   neighbour. The atlas seals it and declines to name it, and the largest such class is the
+   neighbor. The atlas seals it and declines to name it, and the largest such class is the
    ventricles; calling a ventricle `CPu` would propagate into every readout downstream.
    These are written out separately as `region_extents.unassigned`, and they are a mean 6%
    of section area.
@@ -501,7 +501,7 @@ The steps, in order, run by `tools/build_region_extents.py`:
 on its own and simplifying its ring gives two different polylines for the same shared
 boundary, because Douglas-Peucker is global to the ring it is handed; at a 2 px tolerance
 they cross, and the regions then overlap and leave slivers. So the boundary is traced on the
-lattice *between* pixels, where both neighbours see the identical chain of corners, and it
+lattice *between* pixels, where both neighbors see the identical chain of corners, and it
 is cut at the corners where three or more regions meet — a purely local test, so both sides
 cut in the same places. Each arc is simplified once. Douglas-Peucker keeps its endpoints and
 is symmetric under reversal, so the two owners of an arc keep the same vertices although
@@ -511,7 +511,7 @@ Three checks, none of which the extraction was tuned to pass:
 
 | Check | Extracted |
 | --- | --- |
-| Every boundary between two regions stored as one polyline, twice | **100%** of directed boundary edges have their reverse in exactly one neighbour, so the regions tile the section — a point is inside exactly one, or inside none |
+| Every boundary between two regions stored as one polyline, twice | **100%** of directed boundary edges have their reverse in exactly one neighbor, so the regions tile the section — a point is inside exactly one, or inside none |
 | Printed labels inside the region they name | **97%**, read at the end of the label's line where the atlas draws one |
 | Regions plus unassigned faces against the section area | within **3.0%** on the worst plate (an earlier figure of 4.5% omitted the closing edge of the outline rings, which `brain_outline` stores unclosed) |
 
@@ -544,7 +544,7 @@ other, the mediodorsal thalamus, the lateral hypothalamic zones, and little else
 arrived. The 63 are lobules — with `cbw` out of the way in step 7, a lobule's outline is the
 fissure lines the atlas draws rather than a split against the white matter inside it. Two of
 the three are the far side of splitting a compound label: `9aCb` and `9N` are named only
-inside `9a,bCb` and `9/11N`, so each now seeds a face it shares with its neighbours and takes
+inside `9a,bCb` and `9/11N`, so each now seeds a face it shares with its neighbors and takes
 a `w` where before it had no entry at all — and where the name it shares the label with,
 `9bCb` and `11N`, keeps none of its own. The third is `pyx` on plate 62, seeded from its word
 once the line it seemed to carry was put aside — see [Where the name is not the
@@ -580,7 +580,7 @@ one box and the first answers for both, with the region they share.
 212 of the 6,312 printed labels are set outside their region with a line drawn back into
 it, and are seeded at the end of that line. A further 201 sit outside the face they name
 with no line this pass could follow — printed on a boundary, or beside the section on a line
-the tracing runs along — and are pulled to the largest face within a millimetre; most of
+the tracing runs along — and are pulled to the largest face within a millimeter; most of
 those are on the olfactory bulb plates 5–9, where the section is small and the drawing sets
 the abbreviations beside it. Following the lines took that fallback down from 262. Three
 labels could not be resolved at all and have no extent.
@@ -626,7 +626,7 @@ both ends falling back, and `l`, `1` and `I` do neither.
 One thing had to be ruled out rather than measured. A drawn boundary runs through a label at
 any angle and is every bit as thin, as tall and as straight as a slash; every rule of thumb
 tried here either kept a boundary or lost a real slash. It did not have to be a rule of
-thumb: **the boundaries are already vectorised in `svg/`**, so a candidate lying on a traced
+thumb: **the boundaries are already vectorized in `svg/`**, so a candidate lying on a traced
 path is a boundary, and that is said rather than guessed. That rules out five would-be joins
 — `Sc/Po` on 32, `Or/Py` on 34, `Oca/icp` on 49, `ts/pyx` and `12N/12GH` on 57 — each of
 which is two labels with a drawn line between them.
@@ -636,15 +636,15 @@ plate 49 the slash of `PM/ Cop` is drawn along the very boundary it names, and a
 threshold that keeps it, two of those five come back. Every one of the 31 occurrences was
 checked against the printed page by eye.
 
-### Colouring the section
+### Coloring the section
 
-The extents tile the plate, which is what lets the app colour it the way a map of countries
-is coloured: fill every region, and give no two regions that touch the same colour. That is
+The extents tile the plate, which is what lets the app color it the way a map of countries
+is colored: fill every region, and give no two regions that touch the same color. That is
 a rendering, not data — nothing below is written to a file, and the extents are unchanged by
 it — but the two properties it leans on are properties of the extents, so they are recorded
 here.
 
-**Neighbours are read off the vertices, and then off the gaps.** Every boundary between two
+**Neighbors are read off the vertices, and then off the gaps.** Every boundary between two
 regions is one polyline held twice, once in each, vertex for vertex, so two regions that
 share a boundary share its vertices: index the vertices and the regions filed under each one
 touch there, with no tolerance and no intersection test. That is sound because the extents
@@ -659,31 +659,31 @@ and a boundary can be missed by a hair without being shared. **Two regions that 
 at the zoom the plate opens at — are counted as touching too.** Over the atlas 367 pairs are
 near without being shared: a lamina one or two pixels wide (`Py` between `Or` and `Rad` on
 plate 30), a near-corner where two boundaries pass within a fifth of a pixel without meeting
-(9 pairs over the 62 plates), a pinch. 91 of the 367 would have been painted the same colour
+(9 pairs over the 62 plates), a pinch. 91 of the 367 would have been painted the same color
 on the vertex test alone, on 44 plates, and would then have read as one patch across a gap
 nobody can see. Folding them in costs nothing: with the rule and without it, the plates need
-the same colours.
+the same colors.
 
-**The colours come from a greedy pass in smallest-last order.** Strip the least connected
-region off the graph over and over, and colour them back in the reverse of that order; each
-region then meets its turn with at most as many coloured neighbours as the graph's
-degeneracy, so a flat map cannot exhaust the palette. Five colours are enough for 58 of the
-62 plates and six for the other four. That is the four-colour theorem's neighbourhood reached by
+**The colors come from a greedy pass in smallest-last order.** Strip the least connected
+region off the graph over and over, and color them back in the reverse of that order; each
+region then meets its turn with at most as many colored neighbors as the graph's
+degeneracy, so a flat map cannot exhaust the palette. Five colors are enough for 58 of the
+62 plates and six for the other four. That is the four-color theorem's neighborhood reached by
 the cheap route, and it is not a claim to have reached four: a greedy pass does not promise
 it, and this does not go looking for it.
 
-Each region asks first for one colour of the seven, hashed from its abbreviation, and takes
-it wherever a neighbour has not already got it. A free colour is as good as any other free
-colour, so this costs nothing and buys some continuity between levels: **48.1 % of the
-structures drawn on two consecutive plates hold their colour across the step**, against
-23.6 % for the same pass with no preference. It does spend colours the plate did not need —
-55 of the 62 use all seven — which is no worse a picture and arguably a better one. The colouring is a pure function of the extents,
+Each region asks first for one color of the seven, hashed from its abbreviation, and takes
+it wherever a neighbor has not already got it. A free color is as good as any other free
+color, so this costs nothing and buys some continuity between levels: **48.1 % of the
+structures drawn on two consecutive plates hold their color across the step**, against
+23.6 % for the same pass with no preference. It does spend colors the plate did not need —
+55 of the 62 use all seven — which is no worse a picture and arguably a better one. The coloring is a pure function of the extents,
 so a plate is the same picture in every session and in both exports.
 
 Two things are deliberately not painted. The sealed faces the atlas names nothing inside
-(`unassigned`, above) have no region to colour. And structures that lie inside one boundary
-the atlas draws round several names — the `w` flag, above — share one colour between them,
-because a colour change *is* a boundary and that split is this extraction's own. What that
+(`unassigned`, above) have no region to color. And structures that lie inside one boundary
+the atlas draws round several names — the `w` flag, above — share one color between them,
+because a color change *is* a boundary and that split is this extraction's own. What that
 paints is what the plate prints: one patch per printed boundary, whatever number of names
 the atlas has set inside it.
 
@@ -702,7 +702,7 @@ its own; everything it shows is derived, in the app, from its members:
 | --- | --- |
 | its outline on a plate | its members' outlines, with the boundaries they share with each other dropped |
 | its area on a plate | the sum of its members' own areas, the numbers `region_extents` already carries |
-| its label centre and spread | the median and range of its members' printed labels |
+| its label center and spread | the median and range of its members' printed labels |
 | its mesh | its members' meshes, drawn together |
 | the plates it is on | where its members are, clipped to its own range where it has one |
 
@@ -755,10 +755,10 @@ does. The first clause keeps a long forebrain tract out: the forceps major reach
 and is no more pontine for it. The second keeps a straddler in both: the deep dorsal cochlear
 nucleus is on plates 49 and 50, so it is pontine and medullary at once, which is what it is.
 
-A division's **plate range** is where its grey matter is, not where its members reach. The
+A division's **plate range** is where its gray matter is, not where its members reach. The
 medial lemniscus is part of the pons where it runs through it and part of nothing at plate 30,
 so tracts are still outlined with a division on its own plates but do not extend it. Divisions
-made only of tracts — the fibre tracts, which run the length of the series — are the exception
+made only of tracts — the fiber tracts, which run the length of the series — are the exception
 and take their members' range.
 
 **Six structures are in no division**: `acer` and `mcer`, the anterior and middle cerebral
@@ -782,7 +782,7 @@ taxonomy can be read and disagreed with without opening the JSON or the Python, 
 `brain_outline` and `region_extents` are 62 coronal drawings and nothing between them. The
 app's own `plateAt()` says so in as many words — *nothing interpolates between plates: the
 outlines are 350 µm apart and an interpolated surface would be arithmetic, not anatomy* —
-and quantises an AP to the nearest section rather than blending two.
+and quantizes an AP to the nearest section rather than blending two.
 `data/gerbil_atlas_volumes.json` sets that aside on purpose. It stacks the 62 plates and
 fills the six planes between each pair at 50 µm, giving **a brain surface and one mesh for
 each of the 697 structures that carry an area**.
@@ -798,27 +798,27 @@ why this is not a segmentation either.
 `tools/build_volumes.py`, from the two datasets above and nothing else.
 
 1. **Rasterize each plate** onto a 0.05 mm lattice, reading the stored fractions into
-   millimetres with the same `plate_frame` formulae the app uses. The fill is **even-odd
+   millimeters with the same `plate_frame` formulae the app uses. The fill is **even-odd
    across all of a structure's rings together**, which is exactly `regIn()` in the app: the
    two hemispheres union, a hole subtracts, and no winding order has to be kept right.
 2. **Lay AP out so every plate lands exactly on a sample** — plate *k* at index 4 + 7*k*. A
    plate's own drawing is then never resampled, so the whole of the interpolation is in the
    six planes between two plates and none of it is anywhere else.
 3. **Interpolate the signed distance field, not the contour.** Each mask's signed distance
-   is blended between neighbouring plates and thresholded at zero. This is the choice that
+   is blended between neighboring plates and thresholded at zero. This is the choice that
    carries the result: the section outline splits and rejoins along the series — the
    hemispheres part on plates 10–14, cortex from midbrain on 37–42, cerebellum from
    brainstem on 56–59 — and a scheme that pairs contours between plates has nothing to pair
    across a split. A distance field needs no correspondence at all.
 4. **Let every structure compete in the same plane.** Interpolating each structure on its
-   own would let neighbours overlap and leave voids in the gap, throwing away the one
+   own would let neighbors overlap and leave voids in the gap, throwing away the one
    property `region_extents` worked hardest for. So every structure on a plate, together
    with the unassigned faces the atlas seals and declines to name, is blended into the same
    intermediate plane and each voxel goes to whichever field is highest. **The regions
    partition the volume exactly as they partition a section**, and a ventricle stays a
    ventricle rather than being absorbed by whatever borders it.
 5. **Close a run's ends rather than extruding them.** Where a structure is drawn on one of
-   two neighbouring plates and not the other, its field is tapered out from the plate that
+   two neighboring plates and not the other, its field is tapered out from the plate that
    has it until it is negative everywhere, half a section step beyond. It is *not* blended
    with the absent plate: that side's field is a large negative constant and averaging with
    it would swamp the taper and end the structure flat at the plate.
@@ -849,8 +849,8 @@ is a tenfold overclaim.
 Each entry carries its plate runs, its volume and its connected components. **Nothing is cut
 at ML 0 on principle.** A bilateral structure comes out as two components and a midline one
 as a single component spanning the midline, which is the honest way round: the drawings are
-not perfectly symmetric — plates 43 and 44 sit about a millimetre off centre — so cutting
-every structure at ML 0 would invent a midline the atlas does not draw. The centres bear
+not perfectly symmetric — plates 43 and 44 sit about a millimeter off center — so cutting
+every structure at ML 0 would invent a midline the atlas does not draw. The centers bear
 this out against the published widths: `Au1` at ML ±6.5 against the atlas's ±6.48, `LSO` at
 ±1.65 against ±1.67, `3V` and `cbw` single and on the midline.
 
@@ -897,11 +897,11 @@ isosurface sitting half a voxel inside the voxels it was cut from accounts for a
 And **74% of structures arrive as the one or two pieces anatomy expects**. Where a thin sheet
 pinches off into more — `CA1`, the ventricle slits, `DCl` — a median 16% of it sits outside
 the largest two. This is reported rather than closed up: closing it would mean growing a
-structure into a neighbour, and the partition is worth more than a tidy component count. The
+structure into a neighbor, and the partition is worth more than a tidy component count. The
 per-component volumes are in the file, so a reader can drop the scraps.
 
 `qc/chk_vol_NN.png` is the picture a reader can check by eye: a plate, the plane interpolated
-halfway to the next, and that next plate, side by side and coloured the same way — the
+halfway to the next, and that next plate, side by side and colored the same way — the
 interpolation is either plausible between them or it is not.
 `qc/chk_vol_surface.png` and `chk_vol_regions.png` are depth-shaded sagittal, top-down and
 coronal views of the whole thing.
@@ -916,7 +916,7 @@ now; the writer behind it is unchanged and `tools/build_volumes.py --stl` writes
 meshes offline. The label volume the meshes are cut
 from is also written out, by `build_volumes.py --nifti`, as `data/gerbil_atlas_labels.nii.gz`:
 one uint16 id per 50 µm voxel, the file's axes in RAS order (x to the animal's right, y
-anterior, z dorsal) with the atlas millimetres in its sform, and `data/gerbil_atlas_labels_lut.csv`
+anterior, z dorsal) with the atlas millimeters in its sform, and `data/gerbil_atlas_labels_lut.csv`
 naming each id; 0 is outside the brain and 65000 a face the atlas seals and does not name.
 Its per-structure voxel counts agree with the mesh volumes to within 0.3%. The meshes were regenerated with the
 library versions `tools/requirements.txt` pins: the vertices are those of the first build
@@ -972,7 +972,7 @@ height  dorsal surface (0, the atlas's own DV zero)
 
 The three numbers are an **offset from the landmark**, not an absolute coordinate, which is
 how a zero that is not quite on a landmark gets said: lambda with an AP offset of −0.50 is
-half a millimetre behind lambda. Leave them at 0 and zero is the landmark itself. Internally
+half a millimeter behind lambda. Leave them at 0 and zero is the landmark itself. Internally
 the landmark contributes only its AP — the atlas prints one for each of these and neither an
 ML nor a height — so on those two axes the offset is the whole story. Bregma is landmark 0
 and its AP offset is 0, so a stored frame or a link written before the offset existed reads
@@ -991,7 +991,7 @@ bregma, lambda and the occipital crest the button offers the vault at that AP in
 The AP is the atlas's own and exact; **the height is not**. No height for any of these
 landmarks is published, so it comes off the same approximate skull registration the
 **Skull** overlays are drawn from, and carries the same asterisk to the same note — good
-to a few tenths of a millimetre, before animal-to-animal variation. The button only types
+to a few tenths of a millimeter, before animal-to-animal variation. The button only types
 the number into the DV field: it holds no state of its own, so the deep link, the stored
 frame and the CSV's `frame_spec` carry it as the plain offset they always did, and a
 measured ear-bar depth typed in by hand behaves identically.
@@ -1017,14 +1017,14 @@ written before it existed changes meaning.
 
 What is turned is the rotation and nothing else. `toFrame` is `R(p−C)+A`, which is
 `Rp + (A−RC)`: a rotation about the atlas origin followed by a translation. The rotation goes
-onto the picture; the translation stays a relabelling of the axes, which is exactly how a
+onto the picture; the translation stays a relabeling of the axes, which is exactly how a
 re-zero has always been drawn. Splitting it that way is what keeps an origin at lambda from
-sliding the whole cloud five millimetres off the plot, and it makes the single-axis helpers
+sliding the whole cloud five millimeters off the plot, and it makes the single-axis helpers
 those views rule their ticks with honest in both cases — with no rotation the split reproduces
 the old one-axis `toFrame` to the last decimal place.
 
 In the projection the label cloud is rotated point by point and the axes are widened, in whole
-millimetres per end, to hold whatever the rotation pushed past the atlas's own extents; at 17°
+millimeters per end, to hold whatever the rotation pushed past the atlas's own extents; at 17°
 of pitch that is most of the cortex, so a view that turned without widening would simply drop
 it. The plate guide stops being a vertical rule, because a plate stops being a single AP: it is
 drawn as the line where that section's plane cuts the middle of the brain, tilted by exactly
@@ -1033,9 +1033,9 @@ the click is read back through the rotation at the same depth the line is drawn 
 
 In the 3-D view the whole scene — the 62-section stack, the 6,315 labels, the CT shell, the
 plate ring and any planned track — is held in one world built affinely out of atlas
-millimetres, so the turn is a model matrix in front of the camera rather than a rebuild of any
+millimeters, so the turn is a model matrix in front of the camera rather than a rebuild of any
 of it, and three transformed basis vectors are the whole of that matrix. It is taken about the
-world's own centre so the brain turns in place instead of swinging out of shot, and because the
+world's own center so the brain turns in place instead of swinging out of shot, and because the
 atlas-to-world map has determinant −1 the result is `S R S⁻¹`: still a rotation, so its inverse
 is still its transpose, which is what restates the camera in model space for the ray-marcher,
 the shell's shading and the picker.
@@ -1079,7 +1079,7 @@ pitch, `MSO` reads AP −10.36 with the pivot left at the interaural AP on the d
 surface, and AP −7.72 with the pivot on the fitted ear-bar axis 9.05 mm lower.
 
 Two consequences the app makes visible. A plate stops being a single AP: under pitch the
-AP of a point drifts by `sin θ` per millimetre of DV — about 2.5 mm between the top and
+AP of a point drifts by `sin θ` per millimeter of DV — about 2.5 mm between the top and
 the bottom of the brain at 17° — so the readout gives an AP for the point under the
 pointer rather than one figure for the plate. And a coordinate is only foldable to `ML ±x`
 while the frame keeps the atlas's bilateral symmetry: pitch does, but roll, yaw and a
@@ -1181,7 +1181,7 @@ without it, a leader line would be reported as the brain surface. A solve costs 
 
 The surface is the nearest plate's outline, and nothing interpolates between plates: at
 350 µm spacing an interpolated surface would be arithmetic rather than anatomy, the same
-objection the 3-D view's streaking already carries. An entry AP is therefore quantised at
+objection the 3-D view's streaking already carries. An entry AP is therefore quantized at
 the section spacing however smooth the drawn line looks.
 
 Two things the panel says rather than hides. The **entry on the flank** — the track went
@@ -1192,30 +1192,30 @@ dorsal approach. And a **target outside its own outline**, which is the case for
 
 Across all 703 structures that have located labels, at three angle settings each, all
 2,109 solves return finite, bounded numbers; 7 return no entry at all, every one of them a
-structure whose label centre lies outside the section.
+structure whose label center lies outside the section.
 
 ### Naming the target: which plate, and how far off the label
 
 The target has always been the median of the structure's printed labels, folded onto the
 chosen hemisphere. Two controls narrow that, and both sit on the same side of one line.
 
-**Which plate.** `CA1` is labelled on 20 sections; the median of all 20 labels is a point
+**Which plate.** `CA1` is labeled on 20 sections; the median of all 20 labels is a point
 somewhere in the middle of the structure, and no experiment aims at it. *Take the label
 from* names one plate and takes the median of that section's labels alone. The menu is
 built from the plates the abbreviation is actually *printed* on, not the plate range the
-structure is listed for — a structure present at a level is not necessarily labelled
+structure is listed for — a structure present at a level is not necessarily labeled
 there, and only a plate carrying a label can be a plate to read one from. Picking a plate
 also turns the viewer to it: the plan is drawn on the plates, and a target taken from
 plate 13 read against plate 30 is a picture of a track somewhere else. A pick is dropped
 the moment the target changes to a structure not printed on that plate.
 
-**How far off it.** The three *offset* boxes move the aim off the label in millimetres —
+**How far off it.** The three *offset* boxes move the aim off the label in millimeters —
 0.2 mm dorsal to `VO`, the classic quarter-turn above a structure. With an offset set the
 panel prints the label and the target as two rows rather than one: the plan is then a
 claim about a point nothing in the atlas is printed at, and the point it was measured from
 has to be readable beside it.
 
-**The offset is in atlas millimetres, and it is the only thing in the planner that is.**
+**The offset is in atlas millimeters, and it is the only thing in the planner that is.**
 It is applied beside the fold and *before* the carry into the working frame, because
 naming a target is anatomy: *dorsal* has to mean dorsal in the brain rather than up the
 manipulator's own axis, or the same offset would mean something different at every pitch.
@@ -1231,7 +1231,7 @@ with and without the offset, so the two rows cannot drift apart.
 
 An offset can walk the target off the plate its label was read from, or past either end of
 the series. Neither is an error — the first is a perfectly good plan for a point on a
-neighbouring section — but neither is what the plate menu appears to promise, so the panel
+neighboring section — but neither is what the plate menu appears to promise, so the panel
 says which happened.
 
 Deep links carry both, appended after the five fields a plan link has always had and only
@@ -1254,7 +1254,7 @@ Two limits, both said in the panel. A sample resolves to the nearest 350 µm sec
 boundary that runs obliquely between two plates lands on whichever plate is nearer; and a
 region whose boundary the atlas does not print is an estimate, and the row says so. A
 sliver of nothing shorter than 30 µm at either end — the entry sitting on the outline, or
-the target on a boundary — is given to its neighbour rather than listed.
+the target on a boundary — is given to its neighbor rather than listed.
 
 ### An injection's footprint
 
@@ -1288,7 +1288,7 @@ ascending pathway from cochlear nucleus to cortex in one view. Hovering a point 
 it and reads out its coordinates; clicking one opens its plate.
 
 Two things to keep in mind when reading these plots. A point is a *printed label*, so
-it marks where the abbreviation sits, near but not identical to the structure's centre;
+it marks where the abbreviation sits, near but not identical to the structure's center;
 and the atlas samples AP in 350 µm steps, which is why the cloud falls into 62
 columns — those columns are the plates.
 
@@ -1320,7 +1320,7 @@ in about a second; it needs WebGL 2, and says so plainly if that is missing.
 
 The layers are separable because the plates are not line art: they are Nissl
 photomicrographs with a red vector contour overlay printed on top, so isolating the
-contour channel is a matter of colour, not tracing. A flood fill inward from the border
+contour channel is a matter of color, not tracing. A flood fill inward from the border
 drops everything outside the section, which is what keeps the plate number and the
 AP-coordinate table out of the volume.
 
@@ -1351,9 +1351,9 @@ other rather than pushing it, the way the slab's two ends already do.
 One curve serves both raster renderers, so a section reads the same whether it is drawn as
 one of 62 quads or sampled by a ray, and the shader is the same eight lines in both. The
 contour channel is left out of it deliberately: it is a drawn line, already there or absent,
-and it is also what picks the colour between tissue and accent, so windowing it would
-recolour the render rather than stretch it. What the curve does reach on the labelled
-drawing is the grey wash behind the contours — a high floor takes it away and leaves the
+and it is also what picks the color between tissue and accent, so windowing it would
+recolor the render rather than stretch it. What the curve does reach on the labeled
+drawing is the gray wash behind the contours — a high floor takes it away and leaves the
 atlas's own line drawing standing alone in three dimensions.
 
 At floor 0, ceiling 100 and gamma 1 the curve is the identity and the shader skips the
@@ -1374,17 +1374,17 @@ Slicer or nibabel and can be resliced, measured, or registered against something
 The header is the same 348 bytes of struct `tools/volume.py` writes for the label volume,
 and the file is laid out the same way: voxels x fastest in (ML, AP, DV) order so it reads
 as RAS — x to the animal's right, y anterior, z dorsal — with an sform putting each voxel
-centre at its atlas millimetres. Across a plate the voxel is the printed coordinate box
+center at its atlas millimeters. Across a plate the voxel is the printed coordinate box
 divided by the texture, 32.4 µm or a little under two plate pixels; through the stack it
 is the plate spacing, 350 µm. That anisotropy is written into the file rather than
 resampled away, which is the honest way to hand it on: a reader that interpolates it can
 say so, and one that does not is not misled about what was actually sampled.
 
-The labelled drawing writes two volumes, the ink and then the drawn contour, because on it
+The labeled drawing writes two volumes, the ink and then the drawn contour, because on it
 the red contour is a picture in its own right; a Nissl or myelin stack writes one, because
 a photograph has no contour channel at all — it is tissue the whole way through. Nothing
 the toolbar sets goes into the file: not the slab, not the midline cut, not the tissue
-curve. Those say what is drawn, and this is what they are drawn from. The millimetres are
+curve. Those say what is drawn, and this is what they are drawn from. The millimeters are
 the atlas's own, from bregma as the plates print it, which is the frame the STL export
 writes in too — a re-zero renames coordinates in the app and does not move the sections,
 and a file carrying a private origin would be the one thing about it a reader could not
@@ -1458,34 +1458,34 @@ midline — the paper's own construction — gives bregma, constrained to AP 0. 
 **occipital crest** weakly to −9.95. Tilt and height are then set by the
 **drawn sections of all 62 plates**: the outer boundary of every section was
 extracted, and the signed clearance from each dorsal-arc boundary point to the first
-bone along its outward ray — measured against the full-resolution scan — is levelled
+bone along its outward ray — measured against the full-resolution scan — is leveled
 iteratively, tilting until the clearance no longer trends with AP (slope
 0.0004 mm/mm at convergence) and setting the height to a small positive roof gap.
 That lands at pitch −21.6° of the scan's long axis. The three axis scales are fitted
 separately rather than kept uniform, because the two animals are not the same shape:
-AP ×1.032, ML ×1.042, DV ×0.957 relative to the CT's own millimetres. The DV shrink is
+AP ×1.032, ML ×1.042, DV ×0.957 relative to the CT's own millimeters. The DV shrink is
 what seats the calvaria on the cortex — the scanned skull's vault sits about a
-millimetre proud of the atlas animal's brain at the midline — and an atlas-AP stretch
+millimeter proud of the atlas animal's brain at the midline — and an atlas-AP stretch
 only changes *which* cross-section of the scan lands on each plate, so it never
 distorts the ML/DV outline drawn on any one plate. The **lambdoid suture could not be resolved** in
 this scan, so lambda is the one printed landmark not independently anchored.
 
 The plates were deliberately given the last word over the landmarks, because the two
-disagree by a few tenths of a millimetre and the sections are what the skull is drawn
+disagree by a few tenths of a millimeter and the sections are what the skull is drawn
 against. After the tilt is set by the plates, the suture-derived bregma reads
 AP +0.5, the ear canals −7.6 against the printed −7.25, and the foramen magnum
-centre sits 0.5 mm above the cord on the last plates — each within roughly the sum
+center sits 0.5 mm above the cord on the last plates — each within roughly the sum
 of its own measurement uncertainty and the skull-shape difference, and stated here
 rather than fitted away. The residual that remains in the overlays: this skull's
 **posterior fossa runs shallower** relative to its calvaria than the atlas animal's,
 so the cerebellar plates still sit closest to the roof (about +0.1 mm median
 clearance, against +0.4 over the cerebrum) — a shape difference no rigid fit can
-remove. Expect registration error of a few tenths of a millimetre on top of the
+remove. Expect registration error of a few tenths of a millimeter on top of the
 animal-to-animal variation that any skull-to-atlas comparison carries.
 
 For the page the mesh is decimated to 70k triangles (0.42 mm vertex clustering, then
 interior surfaces that are never visible from outside — turbinates, the inner ear —
-dropped), quantised to 0.01 mm and embedded as ~0.75 MB of base64, which is where the
+dropped), quantized to 0.01 mm and embedded as ~0.75 MB of base64, which is where the
 page's size grows beyond the plate images; the projection silhouettes ride along as a
 few kilobytes of polylines. Smooth normals are rebuilt at load, and nothing is decoded
 until a skull control is first turned on.

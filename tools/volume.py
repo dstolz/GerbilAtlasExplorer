@@ -11,13 +11,13 @@ Two choices carry the result.
 **Shape-based interpolation, not contour lofting.** The section outline changes topology
 along the series -- the interhemispheric fissure separates the hemispheres on plates
 10-14, cortex parts from midbrain on 37-42, cerebellum from brainstem on 56-59 -- so a
-scheme that pairs contours between neighbouring plates has nothing to pair across a
+scheme that pairs contours between neighboring plates has nothing to pair across a
 split. Interpolating the signed distance field of each mask and thresholding it at zero
 needs no correspondence at all: a shape may branch, merge or vanish between two plates
 and the field simply carries it.
 
 **One competition, not one structure at a time.** Interpolating each structure's field on
-its own lets neighbours overlap and leave voids in the six planes between two plates,
+its own lets neighbors overlap and leave voids in the six planes between two plates,
 which throws away the property `build_region_extents.py` worked hardest for -- every
 boundary stored once and shared exactly, so a point is inside one region or none. Here
 every structure on a plate, plus the unassigned faces the atlas seals and declines to
@@ -38,7 +38,7 @@ UNASSIGNED = -1             # the label for a sealed face the atlas does not nam
 # ---------- the frame ----------
 
 class Frame:
-    """Fractions of the 1100 x 703 plate frame into stereotaxic millimetres.
+    """Fractions of the 1100 x 703 plate frame into stereotaxic millimeters.
 
     The same two formulae the app applies -- `toML()` / `toDV()` in src/app.js, which
     is also how it reads the outlines -- taken from `plate_frame` rather than copied,
@@ -57,7 +57,7 @@ class Frame:
         return (self.y0 - np.asarray(yf, float) * NH) / self.ys
 
     def rings(self, gs):
-        """A stored polygon list into a list of (n, 2) millimetre arrays."""
+        """A stored polygon list into a list of (n, 2) millimeter arrays."""
         out = []
         for g in gs:
             a = np.asarray(g, float)
@@ -170,7 +170,7 @@ def fill(rings, grid):
 # ---------- fields ----------
 
 def sdf(mask, res):
-    """Signed distance in millimetres, positive inside.
+    """Signed distance in millimeters, positive inside.
 
     An empty or full mask has no boundary to measure from, so it gets a constant field
     far enough out that it neither wins a comparison wrongly nor loses one."""
@@ -202,10 +202,10 @@ def taper(phi, t):
 # ---------- meshing ----------
 
 def march(field, grid, box=None, level=0.0, stride=1):
-    """Marching cubes on a signed field, returning (ml, dv, ap) millimetre vertices.
+    """Marching cubes on a signed field, returning (ml, dv, ap) millimeter vertices.
 
     `box` is the (z, y, x) slice the field was cut from, so a structure can be surfaced
-    in its own neighbourhood rather than across the whole lattice.
+    in its own neighborhood rather than across the whole lattice.
 
     `stride` samples the field every n voxels. A distance field is smooth where the mask
     it came from is not, so reading it more coarsely costs a surface far less than
@@ -244,7 +244,7 @@ def orient(v, f):
 def cluster(v, f, cell):
     """Vertex-clustering decimation, as the skull mesh on the page already uses.
 
-    Vertices in one cell of a `cell`-millimetre lattice collapse to their mean and the
+    Vertices in one cell of a `cell`-millimeter lattice collapse to their mean and the
     triangles follow; a triangle whose three corners land in one cell has no area left
     and is dropped. It is not the best decimator there is, but it is a dozen lines, it is
     deterministic, and it cannot fold a surface through itself."""
@@ -311,14 +311,14 @@ def label3(mask):
 
     A bilateral structure comes out as two and a midline one as a single component that
     spans ML 0, which is the honest way round: the drawings are not perfectly symmetric
-    -- plates 43 and 44 sit about a millimetre off centre -- so cutting every structure
+    -- plates 43 and 44 sit about a millimeter off center -- so cutting every structure
     at ML 0 would invent a midline the atlas does not draw."""
     return ndimage.label(mask, structure=np.ones((3, 3, 3), bool))
 
 
 # ---------- output ----------
 
-def quantise(v, step=0.01):
+def quantize(v, step=0.01):
     """Vertices onto a 0.01 mm lattice as uint16 offsets, as the skull mesh is stored."""
     o = v.min(0)
     q = np.rint((v - o) / step).astype(np.int64)
@@ -331,7 +331,7 @@ def write_nifti(path, labels, grid, descrip='', unnamed=65000):
 
     Voxels are written x fastest, in (ML, AP, DV) order so that the file reads as RAS --
     x to the animal's right, y anterior, z dorsal -- with an sform that puts each voxel
-    centre at its atlas millimetres. 0 is outside the brain, `unnamed` is a sealed face
+    center at its atlas millimeters. 0 is outside the brain, `unnamed` is a sealed face
     the atlas does not name, and every other id is a structure named in the lookup table
     written beside it. Nothing here needs nibabel: the header is 348 bytes of struct."""
     import gzip

@@ -12,7 +12,7 @@ Three outputs:
   mri_frame                the calibration, written into data/gerbil_atlas.json
 
 `mri_frame` carries the same six keys `atlaslib.Frame` reads, so `A.Frame(db['mri_frame'])`
-converts voxels to millimetres with no new arithmetic anywhere. Composing it with
+converts voxels to millimeters with no new arithmetic anywhere. Composing it with
 `A.Frame(db['plate_frame'])` is the whole of the resampling below.
 
 The plate images go under data/plates/ so that `atlaslib.plate_path` and
@@ -111,7 +111,7 @@ def mri_frame_block(db, mm, lo=None, hi=None, residual=None):
     ap_first = plates[-1]['bregma']                  # plate 62, which is slice 0
     step = db['conventions']['spacing_mm']
     block = {
-        'note': "Converts a voxel of the atlas's own MRI into stereotaxic millimetres. "
+        'note': "Converts a voxel of the atlas's own MRI into stereotaxic millimeters. "
                 "The volume is already in the atlas frame, one slice per plate, so "
                 "nothing here is fitted along AP: plate = %d - slice. The first six keys "
                 "are the ones atlaslib.Frame reads." % A.N_PLATES,
@@ -154,7 +154,7 @@ def mri_frame_block(db, mm, lo=None, hi=None, residual=None):
             "cortical surface sits at DV 0, which is the atlas's own definition of DV "
             "zero. The residual worth knowing about is a small yaw: the per-slice "
             "mirror-symmetry column drifts across the series, so a single ml_zero_px "
-            "carries a systematic ML error of a few tenths of a millimetre at the ends.",
+            "carries a systematic ML error of a few tenths of a millimeter at the ends.",
     }
     if lo is not None:
         block['display_window'] = [lo, hi]
@@ -164,9 +164,9 @@ def mri_frame_block(db, mm, lo=None, hi=None, residual=None):
 
 
 def frame_axes(plate_frame, mri, w, h):
-    """Output pixel centres of a w x h frame image, as MRI column and row coordinates.
+    """Output pixel centers of a w x h frame image, as MRI column and row coordinates.
 
-    Two Frames composed: plate pixel -> millimetres -> voxel. No arithmetic of its own.
+    Two Frames composed: plate pixel -> millimeters -> voxel. No arithmetic of its own.
     """
     import numpy as np
     x = (np.arange(w) + 0.5) * (plate_frame.w / w)
@@ -259,7 +259,7 @@ def verify(vol, plate_frame, mri, db, span=8):
         'spread_ml_mm': round(float(np.std(ml)), 3),
         'median_offset_mm': round(float(np.median(np.hypot(dv, ml))), 3),
         'note': 'Whole-pixel shift per plate that best lines brain_outline up with the '
-                'image gradient, in millimetres. Written by build_mri.py --verify.',
+                'image gradient, in millimeters. Written by build_mri.py --verify.',
     }
 
 

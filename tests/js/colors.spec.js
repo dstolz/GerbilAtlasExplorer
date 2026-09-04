@@ -1,11 +1,13 @@
-// The section coloured as a map: the invariant the colouring exists for, on all 62 plates,
+// The section colored as a map: the invariant the coloring exists for, on all 62 plates,
 // and the control, the link and the exports that carry it.
 const { test, expect } = require('@playwright/test');
 const path = require('path');
+/* the plate's overlays live in the view's panel now, and it opens closed */
+const panel = p => p.evaluate(() => window.__gae.vpan(true));
 
 const BUNDLE = 'file://' + path.join(__dirname, '..', '..', 'gerbil_atlas_explorer.html');
 
-test('no two regions that touch are given the same colour, on any plate', async ({ page }) => {
+test('no two regions that touch are given the same color, on any plate', async ({ page }) => {
   test.setTimeout(120000);
   await page.goto(BUNDLE + '#p30');
   const out = await page.evaluate(() => {
@@ -15,12 +17,12 @@ test('no two regions that touch are given the same colour, on any plate', async 
       const M = G.mcBuild(p), R = G.regBuild(p).regs;
       regions += R.length;
       for (const o of R) {
-        if (M.by[o.ab] === undefined) bad.push(`p${p} ${o.ab} uncoloured`);
+        if (M.by[o.ab] === undefined) bad.push(`p${p} ${o.ab} uncolored`);
         for (const n of (M.adj[o.ab] || [])) {
           // the names the atlas draws no boundary between share a patch, and a patch is
-          // one colour by construction; every other pair that touches must differ
+          // one color by construction; every other pair that touches must differ
           if (M.unit[o.ab] !== M.unit[n] && M.by[o.ab] === M.by[n])
-            bad.push(`p${p} ${o.ab}/${n} both colour ${M.by[o.ab]}`);
+            bad.push(`p${p} ${o.ab}/${n} both color ${M.by[o.ab]}`);
         }
       }
       counts.push(M.n);
@@ -29,14 +31,14 @@ test('no two regions that touch are given the same colour, on any plate', async 
   });
   expect(out.bad).toEqual([]);
   expect(out.regions).toBeGreaterThan(3000);
-  // it never asks for more colours than the palette has, and never needs many
+  // it never asks for more colors than the palette has, and never needs many
   expect(Math.max(...out.counts)).toBeLessThanOrEqual(out.pal);
 });
 
 // The invariant again, from the geometry rather than from the app's own adjacency: any two
-// regions whose boundaries come within the tolerance the colouring calls touching must wear
-// different colours. Brute force over the pairs whose boxes are close enough to matter.
-test('two regions that all but touch are never the same colour', async ({ page }) => {
+// regions whose boundaries come within the tolerance the coloring calls touching must wear
+// different colors. Brute force over the pairs whose boxes are close enough to matter.
+test('two regions that all but touch are never the same color', async ({ page }) => {
   test.setTimeout(120000);
   await page.goto(BUNDLE + '#p30');
   const bad = await page.evaluate(() => {
@@ -68,7 +70,7 @@ test('two regions that all but touch are never the same colour', async ({ page }
   expect(bad).toEqual([]);
 });
 
-test('a region asks for the same colour on every plate it is drawn on', async ({ page }) => {
+test('a region asks for the same color on every plate it is drawn on', async ({ page }) => {
   await page.goto(BUNDLE + '#p30');
   const keep = await page.evaluate(() => {
     const G = window.__gae;
@@ -97,21 +99,21 @@ test('the toggle paints every region of the plate and clears it again', async ({
   await page.goto(BUNDLE + '#p30');
   expect(await page.locator('#mc path').count()).toBe(0);
   expect(await page.locator('#mcw').isVisible()).toBe(false);
-  await page.click('#ckmc');
+  await panel(page); await page.click('#ckmc');
   const n = await page.evaluate(() => window.__gae.regBuild(30).regs.length);
   expect(await page.locator('#mc path').count()).toBe(n);
   expect(await page.locator('#mcw').isVisible()).toBe(true);
-  await expect(page.locator('#vhint')).toContainText('colours');
+  await expect(page.locator('#vinfo')).toContainText('colors');
   // every path is filled, and its stroke is that same fill: the stroke closes the
   // antialiasing seam along a shared edge, it is not a line of its own
   const paths = await page.$$eval('#mc path', ps => ps.map(p => [p.getAttribute('fill'), p.getAttribute('stroke')]));
   expect(paths.every(([f, s]) => /^#[0-9a-f]{6}$/.test(f) && f === s)).toBe(true);
   // it steps with the plate
-  await page.click('#ckmc');
+  await panel(page); await page.click('#ckmc');
   expect(await page.locator('#mc path').count()).toBe(0);
 });
 
-test('the second pane is coloured on its own plate', async ({ page }) => {
+test('the second pane is colored on its own plate', async ({ page }) => {
   await page.goto(BUNDLE + '#p30&v=C&cmp=next');
   await expect(page.locator('#mc2 path')).not.toHaveCount(0);
   const [a, b] = await page.evaluate(() => [
@@ -123,7 +125,7 @@ test('the second pane is coloured on its own plate', async ({ page }) => {
   expect(b).toBe(r31);
 });
 
-test('the link carries the colours and the wash', async ({ page }) => {
+test('the link carries the colors and the wash', async ({ page }) => {
   await page.goto(BUNDLE + '#p30&v=C&cw=70');
   const st = await page.evaluate(() => window.__gae.state());
   expect(st.mcOn).toBe(true);
@@ -140,22 +142,23 @@ test('the link carries the colours and the wash', async ({ page }) => {
   expect(h2).not.toContain('cw=');
 });
 
-test('the SVG export carries the colours as one named group', async ({ page }) => {
+test('the SVG export carries the colors as one named group', async ({ page }) => {
   await page.goto(BUNDLE + '#p30&v=C');
+  await panel(page);
   const [dl] = await Promise.all([page.waitForEvent('download'), page.click('#esvg')]);
   const fs = require('fs');
   const svg = fs.readFileSync(await dl.path(), 'utf8');
-  expect(svg).toContain('<g id="region-colours"');
+  expect(svg).toContain('<g id="region-colors"');
   const pal = await page.evaluate(() => window.__gae.MCPAL);
   for (const c of pal) expect(svg).toContain(`fill="${c}"`);
-  expect(svg).toContain('Regions coloured so that no two that touch are alike');
-  // and does not when the plate is not coloured
+  expect(svg).toContain('Regions colored so that no two that touch are alike');
+  // and does not when the plate is not colored
   await page.goto(BUNDLE + '#p30');
   const [dl2] = await Promise.all([page.waitForEvent('download'), page.click('#esvg')]);
-  expect(fs.readFileSync(await dl2.path(), 'utf8')).not.toContain('region-colours');
+  expect(fs.readFileSync(await dl2.path(), 'utf8')).not.toContain('region-colors');
 });
 
-test('the PNG export washes the same colours over the same plate', async ({ page }) => {
+test('the PNG export washes the same colors over the same plate', async ({ page }) => {
   const fs = require('fs');
   // a point that is certainly inside CPu, found the way the app answers a click
   await page.goto(BUNDLE + '#p30');
@@ -168,6 +171,7 @@ test('the PNG export washes the same colours over the same plate', async ({ page
   expect(at).not.toBeNull();
   const [fx, fy, hex] = at;
   const pixel = async () => {
+    await panel(page);
     const [dl] = await Promise.all([page.waitForEvent('download'), page.click('#epng')]);
     const b64 = fs.readFileSync(await dl.path()).toString('base64');
     return page.evaluate(async ([b64, x, y]) => {
@@ -181,7 +185,7 @@ test('the PNG export washes the same colours over the same plate', async ({ page
   const plain = await pixel();
   await page.goto(BUNDLE + '#p30&v=C');
   const washed = await pixel();
-  // the sheet is the plate with the region's own colour laid over it at the wash the
+  // the sheet is the plate with the region's own color laid over it at the wash the
   // toggle turns on at, which is what the screen shows
   const pal = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16));
   for (let i = 0; i < 3; i++)

@@ -3,6 +3,10 @@
 // the rotation and nothing else, that the two views share the one setting, and that the
 // overlays which cannot be re-flattened at another angle say so instead of being wrong.
 const { test, expect } = require('@playwright/test');
+/* the controls these specs drive live in the view's panel, which opens closed */
+const panel = p => p.evaluate(() => window.__gae.vpan(true));
+const adv   = p => p.evaluate(() => window.__gae.adv(true));
+
 const path = require('path');
 
 const BUNDLE = 'file://' + path.join(__dirname, '..', '..', 'gerbil_atlas_explorer.html');
@@ -145,8 +149,10 @@ test('the 3-D view turns too, and says which orientation it is standing in', asy
   await page.goto(BUNDLE + '#p30/CPu&t=v3d' + TURNED);
   await page.waitForFunction(() => window.__gae && v3ready, null, { timeout: 60000 });
   await page.waitForTimeout(500);
-  // render and read in the one task: the drawing buffer is not preserved across frames
-  const shot = () => page.evaluate(() => { v3frame(); return document.getElementById('v3c').toDataURL(); });
+  // Render and read in the one task: the drawing buffer is not preserved across frames, so
+  // this has to be v3render(), which draws now -- v3frame() only schedules one for the next
+  // animation frame, and reading straight after it returns an empty buffer every time.
+  const shot = () => page.evaluate(() => { v3render(); return document.getElementById('v3c').toDataURL(); });
   const note = () => page.evaluate(() => document.getElementById('v3n').textContent);
 
   const atlas = await shot();
@@ -157,7 +163,7 @@ test('the 3-D view turns too, and says which orientation it is standing in', asy
   const turned = await shot();
   expect(await note()).toContain('Standing in your frame');
   expect(turned).not.toBe(atlas);
-  expect(turned.length).toBeGreaterThan(5000);      // a rendered frame, not a blank buffer
+  expect(turned.length).toBeGreaterThan(100000);    // a rendered frame, not a blank buffer
 
   await page.click('#v3fw');
   await page.waitForTimeout(500);
@@ -174,10 +180,10 @@ test('meshes come along when the view is turned', async ({ page }) => {
   page.on('pageerror', e => errors.push(String(e)));
   await page.goto('http://127.0.0.1:8765/index.html#p30/CPu&t=v3d' + TURNED);
   await page.waitForFunction(() => window.__gae && v3ready, null, { timeout: 90000 });
-  await page.click('#v3m');                                    // fetch and switch on meshes
+  await panel(page); await page.click('#v3m');                                    // fetch and switch on meshes
   await page.waitForFunction(() => window.__gae.mesh(), null, { timeout: 120000 });
   await page.waitForTimeout(1500);
-  const shot = () => page.evaluate(() => { v3frame(); return document.getElementById('v3c').toDataURL(); });
+  const shot = () => page.evaluate(() => { v3render(); return document.getElementById('v3c').toDataURL(); });
 
   const atlas = await shot();
   await page.click('#v3fw');

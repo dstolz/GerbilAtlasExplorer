@@ -14,7 +14,7 @@ updated where building it changed the answer, and those changes are marked. For 
 shipped tool actually works, see [METHODS.md](METHODS.md#planning-a-track).
 
 Three things moved between plan and build, all noted in place below: the angle
-composition order, the decision not to interpolate between plates, and a millimetre-sized
+composition order, the decision not to interpolate between plates, and a millimeter-sized
 arithmetic error in the first surface extraction that three independent checks caught.
 
 ## What already exists
@@ -100,7 +100,7 @@ The surface is instead recoverable from the plates themselves, using code the ap
 runs. `v3build()` floods the paper in from the border of each cropped plate, keeps the
 connected components above a floor, and gets the section as a single blob — that blob's
 outline **is** the brain outline at that level, in plate pixels, which `plate_frame`
-converts to millimetres.
+converts to millimeters.
 
 **This was checked, not assumed.** Running that flood fill offline with the app's own crop
 (`V3C = [14, 14, 1020, 681]`) and threshold (min channel < 236) returns the section, and
@@ -114,8 +114,8 @@ Getting there took one correction worth recording, because it is the kind of err
 plausible-looking answer hides. The first pass read the plate pixels with
 `dv_zero_px` as the pixel of DV 0, which is what the JSON's own formula does — but the app
 uses `DV_Y0 = dv_zero_px − dv_px_per_mm`, the pixel of DV **+1**. Every extracted height
-was a millimetre high, which put the brain's apex at +0.94 mm and made it look as though
-the surface floated most of a millimetre above the plane that defines it. Corrected, the
+was a millimeter high, which put the brain's apex at +0.94 mm and made it look as though
+the surface floated most of a millimeter above the plane that defines it. Corrected, the
 three independent checks above agree to within 0.07 mm. **Read the app's constant, not the
 JSON's prose.**
 
@@ -135,7 +135,7 @@ Ray/surface intersection then walks the track from outside toward the target and
 first crossing. **Nothing is interpolated between plates** — this is a change from what
 this section first proposed. At 350 µm spacing an interpolated surface would be arithmetic
 rather than anatomy, which is the objection the 3-D view's streaking already carries; the
-surface is the nearest plate's, and the entry AP is quantised at the section spacing.
+surface is the nearest plate's, and the entry AP is quantized at the section spacing.
 
 ### What this surface is and is not
 
@@ -170,7 +170,7 @@ Sides         6.47 mm down · 3.02 mm across
 Straight down 7.51 mm
 ```
 
-Those figures are real — the built tool's, against `MSO`'s label centre. A vertical
+Those figures are real — the built tool's, against `MSO`'s label center. A vertical
 approach crosses 7.51 mm of brain; a 25° lateral one is 7.14 mm and enters 3 mm further
 out. That the angled track is *shorter* is not an error: it enters on the shoulder of the
 section, where the surface is already lower.

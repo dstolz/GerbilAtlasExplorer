@@ -2,7 +2,7 @@
 
 A searchable, clickable version of the Radtke-Schuller et al. (2016) Mongolian gerbil
 brain atlas: 723 structures across 62 coronal plates, each with stereotaxic coordinates,
-and each plate in all three of the ways the atlas prints it — labelled drawing, Nissl,
+and each plate in all three of the ways the atlas prints it — labeled drawing, Nissl,
 myelin.
 
 ## ▶ [Open the Explorer](https://dstolz.github.io/GerbilAtlasExplorer/)
@@ -28,7 +28,7 @@ the whole atlas (all 186 plate images) lives inside it, 22 MB, most of that the 
 ## What you can do
 
 **See the actual sections**
-- **Labelled / Nissl / Myelin** switches each level between the atlas's own drawing, the
+- **Labeled / Nissl / Myelin** switches each level between the atlas's own drawing, the
   Nissl-stained section and the Gallyas myelin section printed beside it. All three carry
   the atlas's printed coordinate box and were cropped to it, so they are registered exactly:
   the grid, the measure tool, the circled structure and the hover labels are all still in
@@ -38,19 +38,19 @@ the whole atlas (all 186 plate images) lives inside it, 22 MB, most of that the 
   plate, so the outlines and the readout land on it unchanged. Two things it is not — the
   whole head rather than a cut section, so there is skull, scalp and eye in the picture;
   and 117 µm voxels against the drawing's 18, so it is soft where the drawing is sharp.
-- **Grey** drops the drawing's colour so the three read alike, and **Contrast** stretches
+- **Gray** drops the drawing's color so the three read alike, and **Contrast** stretches
   whichever one is showing. Both carry into the PNG.
-- **Colour regions** paints the section as a map: every region filled, and no two regions
-  that touch given the same colour. It shows the whole partition at once — where one
+- **Color regions** paints the section as a map: every region filled, and no two regions
+  that touch given the same color. It shows the whole partition at once — where one
   structure stops and the next starts, how much of the section each holds, which of them are
-  neighbours — and on the Nissl, the myelin and the MRI, which print no lines at all, it is
-  the only view that shows any of it. **Wash** sets how strongly the colours are laid on, and
-  both ride into the PNG and the SVG. A colour means nothing beyond "not my neighbour": it is
-  not a system or a division, and two regions of one colour have nothing in common except
-  that they do not touch. Each region does ask for the same colour on every plate it is drawn
+  neighbors — and on the Nissl, the myelin and the MRI, which print no lines at all, it is
+  the only view that shows any of it. **Wash** sets how strongly the colors are laid on, and
+  both ride into the PNG and the SVG. A color means nothing beyond "not my neighbor": it is
+  not a system or a division, and two regions of one color have nothing in common except
+  that they do not touch. Each region does ask for the same color on every plate it is drawn
   on, and gets it about half the time, so stepping through the levels is not a kaleidoscope.
   Nothing is painted that the atlas does not draw — the names it draws no boundary between
-  share a colour rather than being split by one, and the faces it seals and names nothing
+  share a color rather than being split by one, and the faces it seals and names nothing
   inside are left unpainted.
 
 **Find things**
@@ -77,7 +77,7 @@ the whole atlas (all 186 plate images) lives inside it, 22 MB, most of that the 
   several names inside one boundary and prints nothing between them — the cerebellar
   lobules against each other, the mediodorsal thalamus, the lateral hypothalamic zones.
   Those structures are still found, listed, measured and
-  modelled, but they get no outline: hover or select one and every place the plate prints
+  modeled, but they get no outline: hover or select one and every place the plate prints
   its name highlights instead, and the tip says why. An outline there would be a boundary
   this atlas does not have.
 - Search by abbreviation, name, or alias — `NAc`, `MGB`, `nucleus accumbens`, `SOC` and
@@ -88,9 +88,9 @@ the whole atlas (all 186 plate images) lives inside it, 22 MB, most of that the 
   no "hippocampus" in the index, only CA1, CA2, CA3, DG and their layers. Twenty gross
   divisions are added here — cortex and its four lobes, the hippocampal formation, the
   olfactory areas and the bulb, amygdala, striatum and pallidum, septum and basal forebrain,
-  thalamus, hypothalamus, midbrain, pons, medulla, brainstem, cerebellum, fibre tracts,
+  thalamus, hypothalamus, midbrain, pons, medulla, brainstem, cerebellum, fiber tracts,
   ventricles — and each behaves like a structure: pick one and it is outlined on the plate
-  in its own colour, listed on every plate it is on, plotted in the projection, and drawn in
+  in its own color, listed on every plate it is on, plotted in the projection, and drawn in
   3D as its members' meshes. A division has no geometry of its own. Its outline is its
   members' outlines with the walls between them dropped, its area the sum of theirs, its
   coordinate the median of their printed labels — so nothing it shows is a boundary the atlas
@@ -100,8 +100,20 @@ the whole atlas (all 186 plate images) lives inside it, 22 MB, most of that the 
   structure's own card says which divisions it is in.
 - **At a coordinate** — go the other way: type bregma / ML / DV and get the structures
   nearest that point. Or hit **Pick on the plate** and just click where you're aiming.
-- Step through the 62 plates, zoom and pan, **Fit** to reset.
-- **Maximise** (the corners button, or <kbd>F</kbd>) gives the whole window to whichever
+- Step through the 62 plates and pan around them. **Pinch** to zoom on a touch screen — the
+  zoom anchors between your fingers, and pinching back in stops at exactly 100% with the pan
+  cleared, which is what **Fit** does. A window wide enough to have a mouse on it also gets
+  the − / + / **Fit** buttons; a phone does not, because the fingers already do it better.
+- **Controls** (or <kbd>C</kbd>) opens everything the bar above the picture does not have
+  room for — the overlays, Compare, the notes and the exports. It is a sheet over the
+  picture on a phone and a popover on a wide window, and it never resizes the view it is
+  covering. Inside it, **Advanced** folds away the settings you make once: the contrast, the
+  3-D tone curve and the slab. The count beside each says how much is set in there, and a
+  link that carried any of it opens Advanced on arrival.
+- The **i** in the picture's bottom-right corner says what the view is showing and how to
+  read it. What cannot wait to be asked for stays under the plate: the coordinate readout,
+  the running measurement, and anything the app needs to warn you about.
+- **Maximize** (the corners button, or <kbd>F</kbd>) gives the whole window to whichever
   view is open — plate, projection or 3D. The search column, the header and the footer
   step out, and the browser is asked for its own chrome as well, so a rig screen or a
   projector shows nothing but the section and the controls that drive it. <kbd>Esc</kbd>
@@ -142,7 +154,7 @@ drive from the brain surface.
 - **Offset** aims somewhere other than the label itself — 0.2 mm dorsal to `VO` on plate 13,
   say. The plan then prints the label and the target as separate rows, so the point the
   numbers were measured from stays readable beside the point they are about. The offset is
-  in *atlas* millimetres, not the frame's, because naming a target is anatomy; lateral is
+  in *atlas* millimeters, not the frame's, because naming a target is anatomy; lateral is
   taken toward whichever hemisphere is chosen, so the two sides stay mirror images.
 - **Copy notes** or **Download** writes the plan as plain text with the frame it was planned
   in, **JSON** writes every number of it typed, and **Copy link** restores the whole thing —
@@ -173,8 +185,8 @@ handful.
   textured plate at a time, and **Labels** is a point cloud of all 6,315 printed
   abbreviations you can orbit. Clip to a slab or cut
   it in half at the midline. **Floor**, **Ceiling** and **Gamma** window the tissue before
-  **Density** decides how opaque it is drawn — the difference between a grey fog and a
-  render you can see a nucleus in, and on the labelled drawing a high floor takes the wash
+  **Density** decides how opaque it is drawn — the difference between a gray fog and a
+  render you can see a nucleus in, and on the labeled drawing a high floor takes the wash
   away and leaves the contours alone. All four ride in the link. **Skull** (experimental) wraps the stack in a CT skull
   surface at any transparency from a faint shell to solid bone. **Landmarks** stands bregma,
   lambda, the interaural axis and the occipital crest in the stack: each landmark's coronal
@@ -224,7 +236,7 @@ ear-bar axis rather than a point on the brain, running about 9 mm ventral to the
 plane the atlas measures DV from, so zeroing on it with DV left at 0 is out by all of that.
 Set the height and the readout is ordinary interaural coordinates — AP behind the ear bars,
 DV up from them, with `MSO` at `interaural −0.70 · DV +0.75`. The same row under the pivot
-puts a rotation on the ear-bar axis instead of a parallel one several millimetres too high.
+puts a rotation on the ear-bar axis instead of a parallel one several millimeters too high.
 The APs are the atlas's own and exact; the heights come off the skull fit and are approximate.
 
 **Your own frame** (experimental) — the same dialog takes a pitch / roll / yaw and a pivot,
@@ -245,7 +257,7 @@ cannot be re-flattened at yours, are unavailable while it is on.
 ## Before you trust a coordinate
 
 - A structure's coordinate is the **median position of where its abbreviation is
-  printed** — close to, but not the same as, the structure's centre. It's a targeting
+  printed** — close to, but not the same as, the structure's center. It's a targeting
   aid, not a substitute for reading the plate. Where the atlas could not fit the name inside
   the region and set it outside with a line drawn back in, the coordinate is the end of that
   line rather than the word: 212 labels on 47 plates, a median 0.52 mm apart.
@@ -268,7 +280,7 @@ cannot be re-flattened at yours, are unavailable while it is on.
 - The **region outlines** are cut from the atlas's own drawn lines, not from a published
   segmentation — the atlas has none. 3,065 structure–plate entries have one, and each says
   how much of its own boundary the atlas prints: the median is 98%, but **3% of regions are
-  under half drawn**, and those outlines are dashed and labelled as inferred because that is
+  under half drawn**, and those outlines are dashed and labeled as inferred because that is
   what they are. Where the drawing seals a face and names nothing, nothing is claimed.
 - **A name that is no region has none of that**, and the twenty of them are named in
   `features` in the JSON. The 184 mm² they used to be given goes to whichever region is
@@ -285,7 +297,7 @@ cannot be re-flattened at yours, are unavailable while it is on.
 - The **myelin** plate of a level is an *adjacent* section, not the same slice as the Nissl:
   the two stains cannot both be applied to one section. It is aligned as published.
 - The **skull** overlays are a CT surface of a *different* animal, aligned here rather than
-  published with the atlas — good to a few tenths of a millimetre. Context, not a surface to
+  published with the atlas — good to a few tenths of a millimeter. Context, not a surface to
   measure against.
 - The **track planner** is experimental and has not been checked against a track anybody has
   driven. Its brain surface is the outline of the atlas's own drawn section — it reaches
@@ -321,11 +333,11 @@ plate range is malformed, and which are printed on one plate more than it gives 
 | `data/gerbil_atlas.json` | Full database: structures, coordinates, label positions, brain outlines, region extents, the page-to-plate registration, calibration, a version stamp. |
 | `data/gerbil_atlas_structures.csv` | One row per structure: abbreviation, name, plate and bregma range, tags. |
 | `data/gerbil_atlas_groups.csv` | One row per gross division: its members spelled out, the plates it is on, its other names, and a note saying what it holds and what it deliberately does not. Written by `tools/build_groups.py`; added here, not published with the atlas. |
-| `data/gerbil_atlas_structure_table.csv` | One row per structure with its label centre, areas per plate, and the volume and centre of its mesh. |
+| `data/gerbil_atlas_structure_table.csv` | One row per structure with its label center, areas per plate, and the volume and center of its mesh. |
 | `data/gerbil_atlas_labels.csv` | One row per printed label — 6,315 stereotaxic triplets, read at the end of the label's leader line where the atlas draws one. |
 | `data/gerbil_atlas_plates.csv` | One row per plate: bregma / lambda / interaural / occipital-crest AP. |
-| `data/geojson/plate_NN.geojson` | The regional outlines of one plate in millimetres, one feature per structure, with the unnamed faces and the section outline. |
-| `data/gerbil_atlas_labels.nii.gz`, `data/gerbil_atlas_labels_lut.csv` | The label volume the meshes were cut from, as a NIfTI file at 50 µm: one id per voxel in RAS (x right, y anterior, z dorsal) with the atlas millimetres in its sform, and the table that names each id. Interpolated between sections 350 µm apart, like the meshes. |
+| `data/geojson/plate_NN.geojson` | The regional outlines of one plate in millimeters, one feature per structure, with the unnamed faces and the section outline. |
+| `data/gerbil_atlas_labels.nii.gz`, `data/gerbil_atlas_labels_lut.csv` | The label volume the meshes were cut from, as a NIfTI file at 50 µm: one id per voxel in RAS (x right, y anterior, z dorsal) with the atlas millimeters in its sform, and the table that names each id. Interpolated between sections 350 µm apart, like the meshes. |
 | `data/plates/{drawing,nissl,myelin}/NN.jpg` | The 186 plate images, cropped to the atlas's printed coordinate box. |
 | `data/vec.json`, `data/skull.json` | The traced outlines with their per-plate registration, and the CT skull surface: the two assets no script here regenerates. |
 | `data/index_raw.txt` | The authors' Index of abbreviations as extracted. Source of truth for the rest. |
@@ -347,11 +359,11 @@ python3 -m pytest tests/python          # the data's invariants
 npm ci && npx playwright install chromium && npm run build && npm test   # the pages in a browser
 ```
 
-## Licence
+## License
 
 The code is MIT; the derived data — the database, the tables, the outlines, the meshes —
 is CC BY 4.0, with the plate images reproduced from the open-access atlas under its own
-licence. See [LICENSE](LICENSE), [LICENSE-DATA.md](LICENSE-DATA.md) and
+license. See [LICENSE](LICENSE), [LICENSE-DATA.md](LICENSE-DATA.md) and
 [CITATION.cff](CITATION.cff) for how to cite both the atlas and this tool.
 
 ## Website development

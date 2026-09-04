@@ -5,39 +5,94 @@ carries a `version` block naming the release its derived fields were built for.
 
 ## [Unreleased]
 
+### Changed
+- **The picture first, and the controls on call.** Every control for the current view used to
+  sit in one wrapping row above it. That works at 1440 px and does not work on a phone: at
+  390 × 844 the row ran to six lines on the plate and twelve in the 3-D view, where it was
+  taller than the canvas it drove, and the picture started 290 px down a 844 px screen. The
+  row now holds only what steers the view — the tabs, the source or render switch, the pane
+  controls — in a strip that scrolls sideways rather than wrapping. Everything else moved
+  into one panel, presented as a sheet over the picture on a phone and a popover under its
+  button on a wide window; inside it, **Advanced** folds away the settings that are made once
+  rather than driven: contrast, the tone curve, the slab. Measured at 390 × 844: the control
+  bar 290 px → 94, the top of the plate 290 → 157, the plate itself 352 × 225 → 390 × 249,
+  and the 3-D canvas 250 → 400. Nothing was removed, and no control id changed, so every
+  deep link written before this still opens the view it named.
+
+  The panel is out of the flow in both presentations, which is the point: `#imgbox` is what
+  `fit()` measures, so opening it cannot resize the plate under the pointer. That also fixes
+  a long-standing twitch — revealing **Add** when Notes was ticked used to rewrap the toolbar
+  and move the picture a frame later, which `tests/js/notes.spec.js` had to wait out.
+- **The zoom buttons come off a phone.** The plate has had a real two-finger pinch since the
+  pan and zoom were written; it anchors between the fingers rather than on the box center,
+  and `zoomAt` clamps at 1, so pinching in lands on exactly the state **Fit** writes. Under
+  900 px the − / 100% / + / Fit cluster is therefore hidden — hidden, not removed, because
+  `applyView()` writes to all three of those elements on every pan. A wide window keeps them,
+  because a mouse has no pinch. The gesture was never documented; it is now, in About and in
+  the README.
+- **What each view is showing moved onto the picture.** The line under each graphic cost that
+  graphic its height on every view — in the 3-D stack it reached 1,059 characters, about
+  eighteen lines on a phone, taller than the canvas it described. It is now behind an **i** in
+  the corner the scale bar does not use. Only the commentary moved: the coordinate readout,
+  the running measurement and every warning stay in flow, because a warning is the only place
+  the app says a structure is not on this plate — and it carries the **Go to plate** button
+  that fixes it — and because the measurement counts up as you move to the second point,
+  which a panel you have to hold open cannot do.
+- **The 3-D view no longer crops the brain because its box is tall.** The projection took a
+  fixed vertical field and derived the horizontal one from the aspect, so a viewport taller
+  than it was wide cut the ends off the stack rather than showing more of it. That is exactly
+  the shape a pane takes once the view is split, and the shape the whole view takes on a
+  phone. The binding axis is now the one held: at or above 1:1 nothing changes, and below it
+  the vertical field opens by 1/aspect so the horizontal extent stays put. Found because the
+  taller canvas this release gives the split view dropped the occipital crest off the end of
+  it.
+
+### Fixed
+- Two 3-D specs read the canvas with `toDataURL()` immediately after `v3frame()`, which only
+  schedules a render for the next animation frame — so they were comparing two empty 20 kB
+  buffers and passing on the difference between them. They call `v3render()` now, the way
+  `landmarks3d.spec.js` always did and the way their own comment says they meant to, and the
+  blank-buffer guard went from 5 kB to 100 kB, which is the difference between an empty
+  buffer and a rendered frame.
+
+### Changed
+- Below 560 px the cards take the phone's full width and the header buttons get compact
+  padding, so the header stops wrapping to two lines and the plate gets the margins back.
+  Nothing is hidden to achieve either.
+
 ### Added
-- **The section as a map: every region coloured, no two neighbours alike.** **Colour regions**
+- **The section as a map: every region colored, no two neighbors alike.** **Color regions**
   over the plate fills all of them at once, and gives no two regions that touch the same
-  colour — the atlas coloured the way a map of countries is. What it shows is the thing the
+  color — the atlas colored the way a map of countries is. What it shows is the thing the
   app could not show before: not the one structure you asked about but the whole partition,
-  where each stops and the next starts and which of them are neighbours. On the *Nissl*, the
+  where each stops and the next starts and which of them are neighbors. On the *Nissl*, the
   *myelin* and the *MRI*, which print no lines at all, it is the only view that shows any of
-  it. **Wash** sets how strongly the colours are laid on, both ride in the link (`&v=C`,
-  `&cw=`), the second pane is coloured on its own plate, and the PNG and the SVG carry the
-  colours — the SVG as one named group, `region-colours`, one path per region with its name
+  it. **Wash** sets how strongly the colors are laid on, both ride in the link (`&v=C`,
+  `&cw=`), the second pane is colored on its own plate, and the PNG and the SVG carry the
+  colors — the SVG as one named group, `region-colors`, one path per region with its name
   on it.
 
-  Neighbours come off the extents rather than out of a picture: they tile the section, so two
+  Neighbors come off the extents rather than out of a picture: they tile the section, so two
   regions that share a boundary share its vertices exactly, and the vertex index answers who
   touches whom with no tolerance at all. A gap thinner than 0.05 mm counts as touching too —
   a lamina a pixel or two wide is not a boundary the eye can find at the zoom the plate opens
-  at, and one colour on both sides of it would read as one region; 91 pairs over the 62
+  at, and one color on both sides of it would read as one region; 91 pairs over the 62
   plates would have matched without that, `Py` between `Or` and `Rad` on plate 30 among them.
-  The colours themselves come from a greedy pass in smallest-last order, which is why the
-  palette cannot run out: five colours do 58 of the plates and six the other four, inside a
+  The colors themselves come from a greedy pass in smallest-last order, which is why the
+  palette cannot run out: five colors do 58 of the plates and six the other four, inside a
   palette of seven.
 
-  **A colour means nothing beyond "not my neighbour"** — not a system, not a division, not a
+  **A color means nothing beyond "not my neighbor"** — not a system, not a division, not a
   value — and the line under the plate says so. What it does do is stay put: each region asks
-  for one colour of the seven, the same one on every plate it is drawn on, and takes it
-  wherever a neighbour has not got there first, which is 48% of the time, so stepping through
+  for one color of the seven, the same one on every plate it is drawn on, and takes it
+  wherever a neighbor has not got there first, which is 48% of the time, so stepping through
   the levels is not a kaleidoscope and a plate is the same picture in every session and in
   both exports. Nothing is painted that the atlas does not draw. The fill carries no outline
-  of its own — the only edge it makes is where one colour stops and the next begins — the
-  names the atlas draws no boundary between share a colour rather than being split by one, so
+  of its own — the only edge it makes is where one color stops and the next begins — the
+  names the atlas draws no boundary between share a color rather than being split by one, so
   the mediodorsal thalamus is one patch and so are the cerebellar lobules inside one printed
   line, and the faces the atlas seals and names nothing inside are left unpainted, there
-  being no region there to colour.
+  being no region there to color.
 
 - **Landmarks in the 3-D view.** Bregma, lambda, the interaural line and the occipital crest
   are drawn on the plate whose plane they fall in and as reference rules around the
@@ -48,7 +103,7 @@ carries a `version` block naming the release its derived fields were built for.
   the other side the way the bars themselves go, with a ring where it passes each canal —
   this is the one view in the app where it is a line and not a point seen end-on. Only the
   rings are a measurement: they are where the fit puts the canals, which sit a fraction of
-  a millimetre inside the bone, so the bar is carried clear of the widest of it rather than
+  a millimeter inside the bone, so the bar is carried clear of the widest of it rather than
   stopping there and reading as a chord inside the head. Nothing of it is depth-tested,
   deliberately: an ear bar is not hidden by the head it goes into. The names ride over the canvas as text so they stay upright and
   legible while the marks turn with the brain, and where two land on top of each other —
@@ -64,14 +119,14 @@ carries a `version` block naming the release its derived fields were built for.
 - **The MRI images ship with the atlas.** They were held back while it was unclear whether
   the volume could be redistributed; it comes from the same open-access supplement as the 186
   section pages, so it now travels with them and on the same terms — the work of
-  Radtke-Schuller et al., reproduced under that publication's licence and not relicensed here
+  Radtke-Schuller et al., reproduced under that publication's license and not relicensed here
   (`LICENSE-DATA.md`). **MRI** is therefore simply present now, rather than appearing only
   where someone had run `tools/build_mri.py` first. The copies here are 8-bit and resampled
   onto the plate frame for display; anything quantitative should go back to the source volume.
 
 - **The atlas's own MRI, as a fourth plate source.** The atlas is "CT/MRI-aided", and the
   imaging half of that has never been in the app. Where `tools/build_mri.py` has been run,
-  **MRI** now sits beside *Labelled / Nissl / Myelin*, and because the volume is already in
+  **MRI** now sits beside *Labeled / Nissl / Myelin*, and because the volume is already in
   the atlas's coordinates — one slice per plate — every overlay lands on it unchanged: the
   region outlines, the coordinate readout, the grid, the measure tool, a planned track, and
   the compare pane, which will now put the MRI beside the drawing at the same zoom and pan.
@@ -107,13 +162,13 @@ carries a `version` block naming the release its derived fields were built for.
   it opens in ITK-SNAP, FSLeyes, Slicer or nibabel and can be resliced, measured or registered
   against something else. The header is the 348 bytes of struct `tools/volume.py` already
   writes for the label volume, and the file is laid out the same way: voxels x fastest in
-  (ML, AP, DV) order so it reads as RAS, with an sform putting each voxel centre at its atlas
-  millimetres — 32.4 µm across a plate, 350 µm through the stack, that anisotropy written into
-  the file rather than resampled away. The labelled drawing writes two volumes, the ink and
+  (ML, AP, DV) order so it reads as RAS, with an sform putting each voxel center at its atlas
+  millimeters — 32.4 µm across a plate, 350 µm through the stack, that anisotropy written into
+  the file rather than resampled away. The labeled drawing writes two volumes, the ink and
   then the drawn contour, because on it the red contour is a picture in its own right; a Nissl
   or myelin stack writes one, because a photograph has no contour channel at all. Nothing the
   toolbar sets goes in — not the slab, not the midline cut, not the tissue curve: those say
-  what is drawn, and this is what they are drawn from. The millimetres are the atlas's own,
+  what is drawn, and this is what they are drawn from. The millimeters are the atlas's own,
   from bregma as the plates print it, the frame the STL export writes in too.
 
   Read from the plates again rather than kept from the build: the stack is 24 MB and the view
@@ -140,7 +195,7 @@ carries a `version` block naming the release its derived fields were built for.
   nothing else: nothing is downloaded, decoded or uploaded twice. Side by side while the view is
   wider than it is tall and stacked while it is not, which is what a phone held upright gets.
   The divider, the pane letters and the frame on the pane being set are elements laid over the
-  canvas rather than lines drawn into it, so they take the sheet's colours and stay a hairline
+  canvas rather than lines drawn into it, so they take the sheet's colors and stay a hairline
   at any pixel ratio — and they are put right on their own, so a rebuild after a source change
   cannot leave them on the pane they were on before. A deep link carries the second pane under
   the same keys with a `2` on the end (`r2`, `tf2`, `sl2`, `hf2`, `or2`, `vp2`, `sk2`, `mh2`)
@@ -155,8 +210,8 @@ carries a `version` block naming the release its derived fields were built for.
   alone could only turn the whole render up, fog included, which is what a Nissl or myelin
   stack of 62 pale sections mostly is; a floor around 40 % at γ 1.8 turns that fog into a
   volume with the folia and the cortical band visible in it. The same curve serves the slice
-  stack and the ray-march, so a section reads the same either way, and on the labelled drawing
-  a high floor takes the grey wash away and leaves the atlas's own contours standing alone.
+  stack and the ray-march, so a section reads the same either way, and on the labeled drawing
+  a high floor takes the gray wash away and leaves the atlas's own contours standing alone.
   The two ends hold each other in order the way the slab's do, and meeting is allowed —
   a window with no width is a hard threshold. **Reset contrast** appears once there is
   something to undo. At 0, 100 and 1 the curve is the identity and the shader skips the `pow`,
@@ -166,7 +221,7 @@ carries a `version` block naming the release its derived fields were built for.
   The note under the view quotes the window whenever one is set — a windowed render is a
   picture of the tissue after something was done to it, and the reader of somebody else's
   link has no other way of knowing. See [METHODS](METHODS.md#the-tissue-curve).
-- **Maximise.** A corners button beside Copy link, and <kbd>F</kbd>, give the whole window to
+- **Maximize.** A corners button beside Copy link, and <kbd>F</kbd>, give the whole window to
   whichever view is open — the plate, the projection or the 3-D stack. The search column, the
   header, the footer and the card's own frame step out; what drives the view stays, because it
   is still being driven. The browser is asked for its own chrome at the same time, so a rig
@@ -186,8 +241,8 @@ carries a `version` block naming the release its derived fields were built for.
   they are two pictures of one brain. Off by default, and carried in a deep link as `fv=1`
   only beside a rotation, so no link written before this changes meaning. What is applied is
   the rotation and nothing else: `toFrame` is `R(p−C)+A`, which is `Rp + (A−RC)`, so moving
-  zero stays a relabelling of the axes and cannot slide the cloud off the plot. The
-  projection widens its axes in whole millimetres per end to hold what the rotation pushed
+  zero stays a relabeling of the axes and cannot slide the cloud off the plot. The
+  projection widens its axes in whole millimeters per end to hold what the rotation pushed
   past the atlas's extents, and the plate guide becomes the line where that section's plane
   cuts the middle of the brain — still clickable, read back through the rotation at the
   depth it is drawn at. The skull silhouette and the landmark rules are flattened at the
@@ -200,9 +255,9 @@ carries a `version` block naming the release its derived fields were built for.
 - **Gross divisions.** The atlas names 723 structures and no containers for them; twenty
   are added here — cerebral cortex and its four lobes, hippocampal formation, olfactory
   areas, olfactory bulb, amygdala, striatum and pallidum, septum and basal forebrain,
-  thalamus, hypothalamus, midbrain, pons, medulla, brainstem, cerebellum, fibre tracts and
+  thalamus, hypothalamus, midbrain, pons, medulla, brainstem, cerebellum, fiber tracts and
   the ventricular system. A division behaves like a structure everywhere in the app: it is
-  outlined on the plate in its own colour, listed on every plate it is on with thumbnails,
+  outlined on the plate in its own color, listed on every plate it is on with thumbnails,
   plotted in the projection, drawn in 3-D as its members' meshes and downloadable as one
   STL, carried by a deep link, and written into the PNG and the SVG. **List them** narrows
   the structure list to a division's members, so the CSV and label exports answer for it
@@ -245,7 +300,7 @@ carries a `version` block naming the release its derived fields were built for.
   prints name no ground of their own: the sixteen fissures, sulci and the rhinal incisure,
   which are the clefts *between* regions and are drawn as the lines between them; `cbw`,
   the white matter core of whichever lobule it runs through; and the three vessels `acer`,
-  `mcer` and `BV`. Seeding them against their neighbours handed each the ground on both
+  `mcer` and `BV`. Seeding them against their neighbors handed each the ground on both
   sides of a line that is a boundary rather than a region — `cbw` alone held 170 mm² of
   cerebellum, which left `Crus2` a wedge of its own lobule and, on plate 54, `PM` nothing
   but its label box. A new `features` block names the twenty and says what each is;
@@ -309,7 +364,7 @@ carries a `version` block naming the release its derived fields were built for.
   the notes it carries are appended to whatever the selection wrote there, and appending with
   `innerHTML +=` re-parses the line: the button offered when the selected structure is not on
   this plate came back as fresh markup with no click on it. They are appended as nodes now.
-  Switching the plate between *Labelled*, *Nissl*, *Myelin* and *MRI* also rewrote that line
+  Switching the plate between *Labeled*, *Nissl*, *Myelin* and *MRI* also rewrote that line
   without those notes, so a dashed track lost its explanation on a source switch; it now
   rewrites the whole line rather than the selection's half of it.
 - **The lean page never refreshed its offline copy, and a rebuilt data file never reached a
@@ -331,9 +386,9 @@ carries a `version` block naming the release its derived fields were built for.
 - **The 3-D contour stack was drawn near plate first.** The test for which end of the stack
   the camera was on had its branches crossed, so the slices went down front to back and the
   far plates were painted over the near ones — inside out, and visibly so at high density.
-  And each slice sampled the volume at `k/61` rather than the centre of layer `k`, which
-  mid-stack blends a quarter of the neighbouring plate into the section shown; the ray-march
-  did the same. Both read at layer centres now.
+  And each slice sampled the volume at `k/61` rather than the center of layer `k`, which
+  mid-stack blends a quarter of the neighboring plate into the section shown; the ray-march
+  did the same. Both read at layer centers now.
 - Smaller things in the app, each found on review: typing `P5` or `P7` — both are structures
   — jumped to plate 5 or 7; a tap on the plate or in the 3-D view after a pinch was
   swallowed, because the flag a drag leaves for the click that follows it was never cleared
@@ -374,7 +429,7 @@ carries a `version` block naming the release its derived fields were built for.
   `S1` claimed the whole thing, ground and all. Found by cutting the right-hemisphere label as
   a template and cross-correlating it against the same plate's page image (0.927, well over the
   0.80 the finder in `tools/find_missing_labels.py` requires, and read against the printed page
-  before it was kept): the mirrored word is there, its region centred at ML -4.59 mm against
+  before it was kept): the mirrored word is there, its region centered at ML -4.59 mm against
   the located side's +4.24, not an exact mirror. `find_missing_labels.py` itself did not
   catch this — its `want`
   list is abbreviations with *no* location on a plate, not one missing a second instance — so
@@ -430,7 +485,7 @@ carries a `version` block naming the release its derived fields were built for.
 
 ### Added
 - LICENSE (MIT, code), LICENSE-DATA.md (CC BY 4.0, derived data; the plate images under
-  the atlas's own licence), CITATION.cff, and this changelog.
+  the atlas's own license), CITATION.cff, and this changelog.
 - The app is now built: `src/app.html`, `src/app.css` and `src/app.js` are the source,
   `tools/build_app.py` writes `gerbil_atlas_explorer.html` and a lean `index.html`, and
   stamps the commit and date into both. `--check` says whether a committed page is a fresh
@@ -443,7 +498,7 @@ carries a `version` block naming the release its derived fields were built for.
   transform, outline readers, `--plates` grammar and the renderer that writes the
   database byte for byte as it is kept.
 - `tools/export_tables.py`: the CSVs that used to be kept by hand, a per-label coordinate
-  table (6,266 rows), a per-structure table with areas, volumes and mesh centres, and
+  table (6,266 rows), a per-structure table with areas, volumes and mesh centers, and
   GeoJSON extents per plate; `--refresh-db` recomputes the per-plate counts the database
   carries and the `plate_registration` block; `--check` for CI.
 - Tests: `tests/python` (the data's invariants, the shared library, the committed pages
@@ -472,7 +527,7 @@ carries a `version` block naming the release its derived fields were built for.
 - Accessibility: tab roles and selected state on every segmented control, live regions
   for the readouts, focus rings, keyboard access to results, chips and thumbnails,
   `Home`/`End` and `?` shortcuts, hints in place of modal alerts, a `<noscript>` line.
-- The neighbouring plates are decoded before the arrow key asks for them.
+- The neighboring plates are decoded before the arrow key asks for them.
 
 ### Changed
 - `region_extents.validation` and the volumes' `validation` compute their numbers rather

@@ -154,7 +154,7 @@ def denoise(ink):
     """Drop single speckles of the halftone ground and keep every stroke.
 
     A glyph stroke is two or more pixels wide here, so a pixel with fewer than
-    two orthogonal neighbours is ground."""
+    two orthogonal neighbors is ground."""
     n = np.zeros(ink.shape, np.uint8)
     n[1:] += ink[:-1]
     n[:-1] += ink[1:]
@@ -247,7 +247,7 @@ def shape(ink, sub, g, x0, y0, y1, tall, part, traced=None):
     # A drawn boundary runs through a label at any angle and is as thin and as
     # straight as a slash, so shape alone cannot tell them apart -- and every
     # rule of thumb tried here either kept a boundary or lost a real slash. It
-    # does not have to: the boundaries are already vectorised in svg/, so a
+    # does not have to: the boundaries are already vectorized in svg/, so a
     # candidate sitting on a traced path is a boundary, said and not guessed.
     if traced is not None:
         hit = (traced[max(0, y0):y1, x0 + g[0]:x0 + g[-1] + 1][s].mean()

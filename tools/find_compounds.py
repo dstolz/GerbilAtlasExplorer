@@ -236,11 +236,11 @@ def marked(ink, x, y, shape, span, traced=None):
     whole band. Either way there is ink there, and in a plain gap between two
     separate words there is none -- which is the whole test, and it is a strong
     one: on plate 55 the printed `9a,bCb` puts four pixels in the gap and every
-    wrong reading of the same neighbourhood puts none.
+    wrong reading of the same neighborhood puts none.
 
     Ink lying on a path the atlas traced is not counted. A drawn boundary runs
     through the lettering at every angle and is as thin as a mark, so shape
-    cannot tell them apart -- but the boundaries are already vectorised in
+    cannot tell them apart -- but the boundaries are already vectorized in
     `svg/`, so a stroke sitting on one is a boundary, said and not guessed. That
     is `label_blocks.py`'s reasoning, and its ONLINE threshold.
     """
@@ -355,7 +355,7 @@ def main():
                                        len(cand) - len(anch)))
 
     # One glyph library per plate, not per candidate: the letters wanted on a
-    # plate are wanted from the same neighbourhood, and harvesting them once
+    # plate are wanted from the same neighborhood, and harvesting them once
     # turns a run that reads the same eight pages a thousand times into one that
     # reads them once.
     want = defaultdict(set)
@@ -375,7 +375,7 @@ def main():
         tpl, span = compose(tok, lib, gaps)
         if tpl is None:
             continue
-        img = F.grey(doc, p)
+        img = F.gray(doc, p)
         if anchor:
             hits = []
             for x0, y0, x1, y1 in windows(F.inkmap(doc, p), LP[str(p)][anchor],

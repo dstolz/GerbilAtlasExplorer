@@ -10,10 +10,10 @@ again: CI runs `--check` and fails if a committed table is not what the JSON say
     data/gerbil_atlas_structures.csv     one row per structure, as before
     data/gerbil_atlas_plates.csv         one row per plate, as before
     data/gerbil_atlas_labels.csv         one row per printed label, with its stereotaxic triplet
-    data/gerbil_atlas_structure_table.csv  one row per structure with its label centre,
-                                         areas, and the volume and centre from the meshes
+    data/gerbil_atlas_structure_table.csv  one row per structure with its label center,
+                                         areas, and the volume and center from the meshes
     data/gerbil_atlas_groups.csv         one row per gross division, with its members
-    data/geojson/plate_NN.geojson        the region extents of one plate, in millimetres
+    data/geojson/plate_NN.geojson        the region extents of one plate, in millimeters
 
 `--refresh-db` also recomputes the counts the database carries -- per plate
 (`n_structures`, `n_labels_located`, `ocr_confirmed`) and the two totals in
@@ -70,7 +70,7 @@ def positions(db):
     """Every printed label with its stereotaxic triplet, in plate then abbr order.
 
     The position is the end of the label's leader line where the atlas draws one and
-    the centre of the printed word otherwise -- the same rule the app applies.
+    the center of the printed word otherwise -- the same rule the app applies.
     """
     fr = A.Frame(db['plate_frame'])
     breg = A.bregma_of(db)
@@ -152,16 +152,16 @@ def load_volumes():
 
 
 def table_csv(db, vols=None):
-    """One row per structure: the label centre the app's card shows, the areas the
-    extents give it, and the volume and centre the meshes give it."""
+    """One row per structure: the label center the app's card shows, the areas the
+    extents give it, and the volume and center the meshes give it."""
     vols = load_volumes() if vols is None else vols
     # sums are math.fsum: exact, so the table is the same on every Python (3.12 changed
     # what sum() does with floats, and a last-digit difference is a stale table in CI)
     header = ['abbr', 'name', 'systems', 'first_plate', 'last_plate', 'n_plates', 'plates',
-              'n_labels', 'n_plates_labelled', 'label_ap_bregma_median_mm', 'label_ml_abs_median_mm',
+              'n_labels', 'n_plates_labeled', 'label_ap_bregma_median_mm', 'label_ml_abs_median_mm',
               'label_dv_median_mm', 'n_plates_with_extent', 'area_mm2_sum', 'area_mm2_max',
               'traced_fraction_min', 'volume_mm3', 'mesh_grade', 'n_components',
-              'centre_ml_mm', 'centre_dv_mm', 'centre_ap_mm']
+              'center_ml_mm', 'center_dv_mm', 'center_ap_mm']
     by = {}
     for q in positions(db):
         by.setdefault(q['abbr'], []).append(q)
@@ -190,14 +190,14 @@ def table_csv(db, vols=None):
                      fmt(smin, 2) if smin is not None else '',
                      fmt(v.get('volume_mm3'), 4) if v else '', v.get('grade', ''),
                      len(comps) if v else '',
-                     fmt(big['centre_mm'][0]) if big else '', fmt(big['centre_mm'][1]) if big else '',
-                     fmt(big['centre_mm'][2]) if big else ''])
+                     fmt(big['center_mm'][0]) if big else '', fmt(big['center_mm'][1]) if big else '',
+                     fmt(big['center_mm'][2]) if big else ''])
     return csv_text(rows, header)
 
 
 # ---------- GeoJSON ----------
 def geojson(db, plate):
-    """The extents of one plate as a FeatureCollection in millimetres (x = ML, y = DV)."""
+    """The extents of one plate as a FeatureCollection in millimeters (x = ML, y = DV)."""
     fr = A.Frame(db['plate_frame'])
     breg = A.bregma_of(db)
     names = {s['abbr']: s['name'] for s in db['structures']}
