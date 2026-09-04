@@ -105,7 +105,7 @@ against the fit alone: midline structures (`3V`, `Aq`, `4V`, `cc`, `MnR`) land w
 0.10 mm of ML 0, and bilateral pairs come out symmetric at the published widths —
 `MSO` ±1.33, `LSO` ±1.67, `CIC` ±1.93, `Au1` ±6.48 (mean distance from the midline).
 
-With AP coming from the plate, this gives every one of the 6,315 located labels a full
+With AP coming from the plate, this gives every one of the 6,322 located labels a full
 stereotaxic triplet.
 
 ## Plate images
@@ -163,7 +163,7 @@ quantitative should go back to the source volume rather than to these. See
 
 Registration between them is by construction rather than by fitting. Every page carries
 the atlas's own printed ML/DV box, and each page is cropped to *its own* box by the same
-detector, so all three land in the coordinate frame above — the frame the 6,315 label
+detector, so all three land in the coordinate frame above — the frame the 6,322 label
 positions are recorded in. Nothing is warped, translated or scaled to match anything else.
 
 Three things had to be got right, and each is checked rather than assumed:
@@ -239,7 +239,7 @@ on, each in its own named group, with the same caption the PNG carries.
 `label_positions` in the JSON records where each abbreviation is printed on each
 plate, as `[cx, cy, w, h]` fractions of the frame-cropped image. Most structures
 appear twice, once per hemisphere; layered ones such as cerebellar white matter
-appear many more times. 6,315 individual labels are located, covering 3,338 of the
+appear many more times. 6,322 individual labels are located, covering 3,339 of the
 3,510 structure-plate entries (95%). These drive the circling, the hover tooltips and
 click-to-select in the HTML app and can be reused for annotation overlays elsewhere.
 
@@ -314,9 +314,9 @@ A label is not always on the thing it names. Where a region is small, or crowded
 against the edge of the section, the atlas cannot fit the word inside it: it sets the name
 outside and draws a thin line from the word back into the region. `VMHSh` on plate 30 is
 printed clear of the brain altogether, with its line running back up into the shell of the
-ventromedial nucleus. **212 of the 6,315 located labels are set that way, on 47 of the 62
+ventromedial nucleus. **233 of the 6,322 located labels are set that way, on 47 of the 62
 plates.** For those the box says where the word is and not where the structure is, and the
-two are a median 0.52 mm apart, a tenth of them over a millimeter.
+two are a median 0.56 mm apart, a sixth of them over a millimeter.
 
 That gap is not a rounding error anywhere downstream. A seed dropped on the word lands on
 the far side of a boundary, so the extraction below hands the region to whichever name the
@@ -345,12 +345,17 @@ from `VMHDM` it leaves the bottom edge three pixels shy of the corner, and there
 else in the picture to separate the two readings. A leader is drawn out of the side of a
 word far more often than out from under it, so where two labels can claim one line the
 sideways reading wins. That settles most of them and not all, so — as with the words the
-passes missed — the shape tests propose and the page disposes: **all 228 lines were put
+passes missed — the shape tests propose and the page disposes: **all 229 lines were put
 beside the printed plate and read**, and the ten that turned out to be somebody else's line
 are listed in the tool with what they were. Nine of the ten are one failure: a line drawn
 past a label on its way somewhere else, close enough and straight enough to be that label's.
 Two more were dropped for pointing outside the section, which a leader never does. 215
-survive, and every one of them was seen on the plate.
+survive, and every one of them was seen on the plate. Those 215 lines answer for 233
+boxes: where the atlas typesets several names as one label — `E/OV` on the olfactory
+bulb plates — the line is drawn from the whole label, so it is recorded against every
+name in it. Only one box can be the one the march reached, and without that the other
+kept the printed position and seeded itself where the word is set, which for a label
+printed beside its section is not a near miss but another region entirely.
 
 The box stays what it was. It is where the word is printed, so it is still what the app hit
 tests when you hover, and `window.__BOX__` is unchanged. What moves is the *position*: the
@@ -373,25 +378,26 @@ printed coordinate box at `[14, 14, 1020, 681]` of the 1100 × 703 frame, call a
 where its smallest channel is below 236, flood the paper in from the border, and keep the
 connected components of what the paper did not reach that are larger than
 `max(400 px scaled to full resolution, 2% of the largest)`. Holes are filled, so a
-ventricle counts as brain. The boundary of each surviving component is traced and
-simplified by Douglas-Peucker at 2 px — 35 µm, well inside the atlas's own error — giving
-82 polygons over the 62 plates, 8,829 points in all.
-
-**One component that rule culls is kept anyway.** On plate 22 the atlas draws the optic
-chiasm as a closed island below the section and prints `och` inside it. At 3,515 px it is
-well over the 400 px floor and under the 2% one — 4,331 px — so the size rule drops it for
-being small beside a whole section rather than for being noise. Dropped, it costs `och` the
-plate: `region_extents` fills the outline for the section interior, so a face outside it
-can never be named, and the structure came out with a hole at plate 22 in a run the
-published index gives as 21–25. Its contour is traced by the steps above and stored as the
-plate's second polygon. A sweep of all 62 plates found exactly one other component the 2%
-rule drops that holds a printed label: the mammillary body on plate 36.
+ventricle counts as brain. Two components are kept that the rule drops, which across the
+62 plates is every one of them that carries a printed name. On plate 36 the atlas draws
+the mammillary body clear of the rest of the section, and at 1,628 px against a 2% floor
+of 5,131 it was culled — and with it `ML`, which is printed inside it, so the structure
+had no area on the one plate of its three that separates it. On plate 22 it draws the
+optic chiasm the same way, and at 3,515 px against a floor of 4,331 that was culled too,
+taking `och` — which came out with a hole at plate 22 in a run the published index gives
+as 21–25. Both islands are far over the 400 px floor and were dropped only for being
+small beside a whole section, and a face outside the outline can never be named, since
+`region_extents` fills the outline for the section interior. Both are traced by the same
+steps and kept as their plate's second polygon. The boundary of each surviving component
+is traced and simplified by Douglas-Peucker at 2 px — 35 µm, well inside the atlas's own
+error — giving 83 polygons over the 62 plates, 8,841 points in all.
 
 **Most plates give one polygon, and the ones that give more do so anatomically.** The
 interhemispheric fissure separates the two hemispheres on plates 10–14, the cortex parts
-from the midbrain on 37–42, the cerebellum from the brainstem on 56–59, and the optic
-chiasm stands clear of the section on plate 22. A reader that kept only the largest blob
-would silently lose a hemisphere.
+from the midbrain on 37–42, the cerebellum from the brainstem on 56–59, and two structures
+stand clear of the section altogether — the optic chiasm on plate 22 and the mammillary
+body on plate 36. A reader that kept only the largest blob would silently lose a
+hemisphere.
 
 **No morphological opening.** The drawing prints some abbreviations beside the section and
 points at them, and the flood runs a few pixels out along those leader lines. An opening
@@ -408,11 +414,11 @@ Three checks, none of which the extraction was tuned to pass:
 | --- | --- | --- |
 | Highest point of any outline | DV 0 is the plane through the most dorsal points of cerebrum and cerebellum | **DV −0.06 mm** — reaches it, never crosses it |
 | Lowest point of any outline | the deepest printed label sits at DV −9.02 | **DV −9.09 mm** — just below it |
-| Printed labels inside their own plate's outline | — | **98.7%** (6,233 of 6,315) |
+| Printed labels inside their own plate's outline | — | **98.8%** (6,245 of 6,322) |
 
-Of the 82 labels that fall outside, the largest group is on the olfactory bulb plates 5–9,
+Of the 77 labels that fall outside, the largest group is on the olfactory bulb plates 5–9,
 where the section is small and the drawing prints the labels beside it; the median one is
-0.10 mm out, and the 90th percentile 0.21 mm.
+0.10 mm out, and the 90th percentile 0.17 mm.
 
 ## Region extents
 
@@ -420,9 +426,9 @@ where the section is small and the drawing prints the labels beside it; the medi
 *names*: the area of each structure on each plate, as a list of closed polygons of `[x, y]`
 fractions of the frame-cropped image — the same frame and the same convention
 `brain_outline` uses, so the app's existing point-in-polygon test reads them unchanged.
-**3,066 structure-plate entries carry an area**, 96% of the 3,203 the label pass located
+**3,067 structure-plate entries carry an area**, 96% of the 3,204 the label pass located
 and 91% of the 3,365 the published index lists — both counted over the structures that are
-regions — as 5,884 polygons over 166,950 points. Where
+regions — as 5,882 polygons over 166,888 points. Where
 the atlas prints two names as one label the two share an entry, so a name having no entry of
 its own does not mean it has no area — see step 8. Twenty of the 723 names have no entry
 anywhere, and never could: they name no region — see step 7.
@@ -445,7 +451,7 @@ The steps, in order, run by `tools/build_region_extents.py`:
 3. **Close against `brain_outline`**, inverse-transformed into the page frame, and fill it
    for the section interior.
 4. **Cut the empty space into faces.** A face sealed by traced ink and holding exactly one
-   abbreviation is that structure's area *as drawn*, and that is 3,478 of the faces. A label
+   abbreviation is that structure's area *as drawn*, and that is 3,472 of the faces. A label
    the atlas set outside its region is seeded at the end of the line it draws rather than on
    the word — see [Where the name is not the place](#where-the-name-is-not-the-place). 212
    labels are, and seeding those on the word puts them in a neighbor's face.
@@ -539,7 +545,7 @@ to **0.7% of polygons** and the repeated vertices to none.
 the difference between a polygon that reads as the line the atlas drew and one that visibly
 cuts its corners. The floor is the page lattice: at 0.35 px the tolerance drops below the
 raster step and the polygon starts recording the staircase rather than the line, at seven
-times the points. At 0.5 it does not — 166,950 points against the 77,453 the 2 px pass
+times the points. At 0.5 it does not — 166,888 points against the 77,453 the 2 px pass
 wrote, for a median traced share of **1.00** where it was 0.98, and it takes the last of the
 crossings with it: **0.03% of polygons**, two of 7,048, against 9% before either change.
 A thin structure is what a coarse tolerance cannot draw without folding its two sides
@@ -578,7 +584,7 @@ the share of the wall the watershed put *inside* a face that lands on traced ink
 half, nobody drew it — and an entry that sits only in faces like that, and whose own border
 is under three-quarters drawn, carries `w`. That is the cerebellar lobules against each
 other, the mediodorsal thalamus, the lateral hypothalamic zones, and little else: **294 of
-3,066 entries**, against 1,551 that share a face at all. It used to be 372: 63 left, 3
+3,067 entries**, against 1,551 that share a face at all. It used to be 372: 63 left, 3
 arrived, and 18 more left when step 10 was tightened — a polygon that tracks the ink to half
 a pixel has more of its border *on* the ink, so an entry whose own border was just under
 three-quarters drawn crosses the line. The 63 are lobules — with `cbw` out of the way in step 7, a lobule's outline is the
@@ -605,25 +611,25 @@ all, no area, no volume and no mesh. Collapsing the second into the first would 
 back the 170 mm² of cerebellum step 7 exists to take off it. Plate 52 carries one of each,
 and `tests/js/smoke.spec.js` tests them separately for that reason.
 
-End to end, in the app: pointing at each of the 6,315 printed labels in turn resolves to a
+End to end, in the app: pointing at each of the 6,322 printed labels in turn resolves to a
 structure every time, and to the name pointed at 6,297 times. **5,346 of them are answered
 with an outline.** 549 are answered with the printed name because the entry carries `w` and
-there is no boundary to draw, and 420 because there is no extent to give — 297 of those being
+there is no boundary to draw, and 423 because there is no extent to give — 297 of those being
 the names that are no region, which is not a shortfall but the point of step 7, and the other
-123 structures no extent could be cut for. Of the 18 that answer with another name, four are
+126 structures no extent could be cut for. Of the 18 that answer with another name, four are
 places where one located box sits inside another (`StA` around `STMA` on plate 23, `PVP`
 around `VL` on 29, `psf` around `sf` on 53, `SolC` around `sol` on 55) and the smaller of the
 two wins the point, which is the right tie-break everywhere else; the other fourteen are the
 compound labels — `9a,bCb`, `9/11N`, `3/4Cb`, `S1J/BF`, `RSGb/c` — where two names hold the
 one box and the first answers for both, with the region they share.
 
-212 of the 6,313 printed labels are set outside their region with a line drawn back into
-it, and are seeded at the end of that line. A further 201 sit outside the face they name
+233 of the 6,322 printed labels are set outside their region with a line drawn back into
+it, and are seeded at the end of that line. A further 192 sit outside the face they name
 with no line this pass could follow — printed on a boundary, or beside the section on a line
 the tracing runs along — and are pulled to the largest face within a millimeter; most of
 those are on the olfactory bulb plates 5–9, where the section is small and the drawing sets
-the abbreviations beside it. Following the lines took that fallback down from 262. Two
-labels could not be resolved at all and have no extent.
+the abbreviations beside it. Following the lines took that fallback down from 262. One
+label could not be resolved at all and has no extent.
 
 `qc/chk_regions_NN.png` overlays the result on the plate for five levels, tinted green where
 the boundary is drawn and red where it is inferred, which is the check a reader can make by
@@ -1014,7 +1020,7 @@ anything readable off a manipulator. Nothing in the atlas records which way a gi
 is tilted, so the app cannot check a sign; the dialog shows what the frame does to a
 familiar structure and the sign is confirmed by reading that back against anatomy.
 
-This is worth more than it might look. At 17° of pitch about the atlas origin the 6,315
+This is worth more than it might look. At 17° of pitch about the atlas origin the 6,322
 labels move a **median of 2.20 mm** — `MSO` goes from AP −7.95 / DV −8.30 to AP −10.05 /
 DV −5.64. The displacement grows with distance from the pivot, so the pivot matters more
 than the angles do.
@@ -1096,7 +1102,7 @@ drawn as the line where that section's plane cuts the middle of the brain, tilte
 the part of the rotation those two axes can see, and clicking it still lands on its plate —
 the click is read back through the rotation at the same depth the line is drawn at.
 
-In the 3-D view the whole scene — the 62-section stack, the 6,315 labels, the CT shell, the
+In the 3-D view the whole scene — the 62-section stack, the 6,322 labels, the CT shell, the
 plate ring and any planned track — is held in one world built affinely out of atlas
 millimeters, so the turn is a model matrix in front of the camera rather than a rebuild of any
 of it, and three transformed basis vectors are the whole of that matrix. It is taken about the
@@ -1373,7 +1379,7 @@ there is no library.
   this one; `&r=contour` and `&r=points` are what a link now carries to say otherwise.
 - **Contours** draws the atlas's own red boundary drawings as a stack. It reads as a
   contour model of the brain because that is exactly what it is.
-- **Labels** plots all 6,315 printed abbreviations as a stereotaxic point cloud — the
+- **Labels** plots all 6,322 printed abbreviations as a stereotaxic point cloud — the
   projection views with the third axis put back. The `auditory` chip lights the whole
   ascending pathway in one rotatable view.
 

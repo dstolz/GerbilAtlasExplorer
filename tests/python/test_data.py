@@ -61,8 +61,8 @@ def test_label_positions(db):
             for b in boxes:
                 assert len(b) == 4 and all(0 <= v <= 1 for v in b)
                 n += 1
-    assert n == db['verification']['label_positions_located'] == 6315
-    assert sum(len(d) for d in LP.values()) == db['verification']['ocr_confirmed'] == 3338
+    assert n == db['verification']['label_positions_located'] == 6322
+    assert sum(len(d) for d in LP.values()) == db['verification']['ocr_confirmed'] == 3339
 
 
 def test_leaders(db):
@@ -75,7 +75,7 @@ def test_leaders(db):
                 assert 0 <= i < len(LP[p][ab])
                 assert 0 <= x <= 1 and 0 <= y <= 1
                 n += 1
-    assert n == db['label_leaders']['summary']['leaders_found'] == 212
+    assert n == db['label_leaders']['summary']['leaders_found'] == 233
 
 
 def test_no_leader_tip_lands_on_another_name(db):
@@ -254,16 +254,17 @@ def test_brain_outline(db):
             for x, y in g:
                 dv = fr.dv_f(y)
                 top, bottom = max(top, dv), min(bottom, dv)
-    # 82: one polygon per plate, plus the hemispheres parted on 10-14, the cortex
+    # 83: one polygon per plate, plus the hemispheres parted on 10-14, the cortex
     # off the midbrain on 37-42, the cerebellum off the brainstem on 56-59, and the
-    # optic chiasm standing clear of the section on 22 -- see `brain_outline.note`.
-    assert rings == 82
+    # two islands the section leaves standing clear of it -- the optic chiasm on 22
+    # and the mammillary body on 36. See `brain_outline.note`.
+    assert rings == 83
     assert -0.1 <= top <= 0.0          # reaches the dorsal plane, never crosses it
     assert -9.2 <= bottom <= -9.0      # just below the deepest printed label
 
 
 def test_labels_inside_outline(db):
-    """98.7% of printed labels fall inside their plate's outline (METHODS)."""
+    """98.8% of printed labels fall inside their plate's outline (METHODS)."""
     fr = A.Frame(db['plate_frame'])
     O = db['brain_outline']['data']
     inside = total = 0

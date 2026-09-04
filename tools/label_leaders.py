@@ -37,7 +37,11 @@ and running out of a located label. So:
   5. Run the same march forwards from the far end for the tip, and take that as
      the structure's position. Drop a tip that lands outside the section: a
      leader points into the brain, never out of it.
-  6. Then read every one against the printed plate, because the shape tests
+  6. Give the line to every name in the label it was drawn from. `E/OV` is one
+     label of two names and one line, and only one of the two boxes can be the
+     box the march reached; the other would otherwise keep the printed position
+     and seed itself out where the word is set -- see impressions().
+  7. Then read every one against the printed plate, because the shape tests
      cannot settle all of them -- see REJECT.
 
 Reads:  the source PDF (--pdf), svg/*.svg, data/gerbil_atlas.json, data/vec.json
@@ -126,6 +130,44 @@ REJECT = {
 }
 
 
+def impressions(DB, plate, boxes):
+    """The boxes of one printed label, grouped -- `E/OV` is one word twice over.
+
+    `joined` masks the punctuation between the words of a label so the mark is not
+    read as a line. This is the other half of the same fact: a line drawn from
+    `E/OV` is drawn from the whole label and points for both names in it. Only one
+    box can be the one the line was traced back to, so without this the other is
+    left seeding where the word is printed -- which for a label set outside its
+    section is not a near miss but another region entirely.
+
+    Grouped on `label_blocks`, the record of what the atlas typeset as one label,
+    and then only where those boxes are actually set together on the page: the
+    JOIN_X/JOIN_Y adjacency `joined` already uses, so a label printed once per
+    hemisphere gives one group per hemisphere rather than one of all four."""
+    order = {}
+    for i, (ab, x0, y0, x1, y1) in enumerate(boxes):
+        order.setdefault(ab, []).append((i, x0, y0, x1, y1))
+    parent = list(range(len(boxes)))
+
+    def find(i):
+        while parent[i] != i:
+            parent[i] = parent[parent[i]]
+            i = parent[i]
+        return i
+
+    for group in DB.get('label_blocks', {}).get('data', {}).get(str(plate), []) or []:
+        got = [b for ab in group for b in order.get(ab, [])]
+        for n, a in enumerate(got):
+            for b in got[n + 1:]:
+                if (max(a[1] - b[3], b[1] - a[3], 0) <= JOIN_X
+                        and max(a[2] - b[4], b[2] - a[4], 0) <= JOIN_Y):
+                    parent[find(a[0])] = find(b[0])
+    out = {}
+    for i in range(len(boxes)):
+        out.setdefault(find(i), []).append(i)
+    return [v for v in out.values() if len(v) > 1]
+
+
 def rejected(plate, ab, index):
     """Why a label's line was put aside on reading the page, or None.
 
@@ -208,7 +250,7 @@ def march(free, tr, start, d, shape, maxlen, box=None, skipmax=SKIP):
     return last, False
 
 
-def leaders(page, tr, boxes, blocks=()):
+def leaders(page, tr, boxes, blocks=(), oneword=()):
     """Every located label on one plate that has a line, and where it points."""
     shape = page.shape
     H, W = shape
@@ -218,12 +260,28 @@ def leaders(page, tr, boxes, blocks=()):
             max(0, int(x0) - PAD):int(x1) + 1 + PAD] = True
     free = (page < INK) & ~tr & ~occ
 
+    # What the march aims at is the label, and a label is not always one word.
+    # The line the atlas draws from `E/OV` arrives between the two names, so a
+    # target of one word puts that word's own far corner in the way of a line
+    # pointing at the pair -- on plate 5 the right-hand line passes 1.4 px off
+    # the corner of `E` and was read as no line at all. Only the labels
+    # `label_blocks` reads as one are widened, and only to the words' own
+    # extent: every other target stays the single box it was. Which of the two
+    # words then claims the line does not matter, because it is given to both.
+    aim = [b[1:] for b in boxes]
+    for g in oneword:
+        rect = (min(boxes[i][1] for i in g), min(boxes[i][2] for i in g),
+                max(boxes[i][3] for i in g), max(boxes[i][4] for i in g))
+        for i in g:
+            aim[i] = rect
+
     # A piece is one line's, not one label's: two labels can each reach it and
     # only one of them printed it, so the claims are collected against the piece
     # and settled once, on which end arrives at the side of a word.
     claim = {}
     for k, (_ab, x0, y0, x1, y1) in enumerate(boxes):
         b = (x0, y0, x1, y1)
+        aimed = aim[k]
         wy0, wy1 = max(0, int(y0) - REACH), min(H, int(y1) + REACH)
         wx0, wx1 = max(0, int(x0) - REACH), min(W, int(x1) + REACH)
         for e0, e1, L in pieces(free[wy0:wy1, wx0:wx1], wx0, wy0):
@@ -241,10 +299,10 @@ def leaders(page, tr, boxes, blocks=()):
                 # backwards from that end it goes further away still, and read
                 # backwards from the other it runs down into the word `MVPO`.
                 at, hit = march(free, tr, near, -d, shape,
-                                min(BACK, int(dn) + 6), b, BACKSKIP)
+                                min(BACK, int(dn) + 6), aimed, BACKSKIP)
                 if not hit:
                     continue
-                rank = (entry_edge(at, b), dn)
+                rank = (entry_edge(at, aimed), dn)
                 if (e0, e1) not in claim or rank < claim[(e0, e1)][0]:
                     claim[(e0, e1)] = (rank, k, near, far, L)
 
@@ -401,8 +459,10 @@ NOTE = ("Where the atlas prints an abbreviation outside the region it names and 
         "label_positions on the same plate and x, y are fractions of the "
         "frame-cropped plate image, the frame plate_frame calibrates. The box "
         "in label_positions is still where the word is printed and is still "
-        "what a reader hovers; this is where it points. Labels without a line "
-        "are absent: for those the box is the position.")
+        "what a reader hovers; this is where it points. Where the atlas typesets "
+        "several names as one label -- see label_blocks -- the one line it draws "
+        "is recorded against every name in it, because it is drawn from the whole "
+        "label. Labels without a line are absent: for those the box is the position.")
 
 
 def main():
@@ -438,7 +498,8 @@ def main():
         if tr is None:
             print('plate %d: no tracing, skipped' % p)
             continue
-        found, _free = leaders(page, tr, boxes, joined(DB, p, boxes))
+        oneword = impressions(DB, p, boxes)
+        found, _free = leaders(page, tr, boxes, joined(DB, p, boxes), oneword)
         keep, off, cut = [], 0, 0
         for o in found:
             ab, j = idx[o['i']]
@@ -451,6 +512,19 @@ def main():
                 off += 1                          # a line points into the brain
                 continue
             keep.append((ab, j, round(fx, DEC), round(fy, DEC), o['reach']))
+        # one line, every name in the label it was drawn from
+        shared, done = 0, {(ab, j) for ab, j, *_ in keep}
+        for group in oneword:
+            src = next((k for k in keep if idx.index((k[0], k[1])) in group), None)
+            if src is None:
+                continue
+            for i in group:
+                ab, j = idx[i]
+                if (ab, j) in done or rejected(p, ab, j):
+                    continue
+                keep.append((ab, j, src[2], src[3], src[4]))
+                done.add((ab, j))
+                shared += 1
         if keep:
             d = {}
             for ab, j, fx, fy, _r in keep:
@@ -458,8 +532,9 @@ def main():
             data[str(p)] = {k: sorted(v) for k, v in sorted(d.items())}
         rows.append((p, len(boxes), len(keep), off, cut,
                      [r for *_x, r in keep]))
-        print('plate %2d: %3d labels %3d leaders%s%s  %s'
+        print('plate %2d: %3d labels %3d leaders%s%s%s  %s'
               % (p, len(boxes), len(keep),
+                 (' (%d shared across a joined label)' % shared) if shared else '',
                  (' (%d off-section)' % off) if off else '',
                  (' (%d read against the page and rejected)' % cut) if cut else '',
                  ' '.join(sorted({ab for ab, *_ in keep}))))
