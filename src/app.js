@@ -11,14 +11,17 @@ const DB = window.__ATLAS__, IMG = window.__IMG__;
    A build without the histology falls back to the drawing rather than showing a blank,
    and the buttons for the missing sources take themselves out of the toolbar.
 
-   The MRI is a fourth source and the only one the build does not carry. Its images are an
-   optional download whose terms are unsettled, and deliberately not a `@blob`: the two
-   pages are checked byte for byte, so a blob filled here from files CI has not got is
-   stale the moment it is committed. Nor could the lean build's URLs stand in for the
-   files -- `images_payload` writes them whether or not anything is behind them, which
-   would light the button up on a site where every plate is a 404. So this map starts
-   empty and `mriLoad` fills it only once a plate has actually loaded, which is what keeps
-   `srcOK('mri')` meaning what it says everywhere else in the file. */
+   The MRI is a fourth source and the only one the build does not inline. The other three
+   ride in as blobs; this one is fetched, and the map starts empty and is filled by
+   `mriLoad` once a plate has actually loaded -- which is what keeps `srcOK('mri')` meaning
+   what it says everywhere else in the file.
+
+   That began as the only way to carry an optional download at all, the images then being
+   ungitignored and the pages being checked byte for byte. They are committed now, so a
+   blob would work; it is still not one, because inlining them would put two megabytes into
+   both pages to save a request the lean page is already making sixty-two of. The cost is
+   that the single-file bundle has the MRI only beside a data folder, which the About
+   dialog says. */
 const MRIS={};
 const SRC={drawing:IMG, nissl:window.__NISSL__, myelin:window.__MYELIN__, mri:MRIS};
 const SRCN={drawing:'labelled drawing', nissl:'Nissl section', myelin:'myelin section',
@@ -5186,11 +5189,12 @@ function srcCtl(){ $('ctlSrc').hidden = srcN()<2 || tab==='proj'; }
    Nothing else is downloaded until a plate is actually shown. If the probe fails the
    button leaves the toolbar, which is what a missing source has always done.
 
-   Where the images are not there that costs one 404 in the console, and there is no way
-   round it worth having: what the page needs to know is whether the files exist, and the
-   build cannot tell it -- a flag written here from files CI has not got is exactly the
-   staleness the pages are checked for. So the request is the answer, and one image is the
-   cheapest form of the question. */
+   Where the images are not there that costs one 404 in the console. A flag written at
+   build time would spare it, now that the files are committed and every checkout has
+   them -- but it would be a claim about the build machine rather than about this page,
+   and it would be wrong in exactly the case that matters: a copy served without its data
+   folder would swear the MRI was there and then fail on every plate. The request is the
+   honest form of the question, and one image is the cheapest form of the request. */
 const MRIURL = p => 'data/plates/mri/'+String(p).padStart(2,'0')+'.jpg';
 let mriWant=false;                 /* a deep link that asked for the MRI before it was here */
 function mriLoad(){

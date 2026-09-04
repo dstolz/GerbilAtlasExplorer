@@ -147,10 +147,19 @@ soft wherever the drawing is sharp. And it is the **only source whose registrati
 frame was computed here** rather than published — the other three are registered by
 construction through the atlas's own printed coordinate box.
 
-It is also the only source the build does not carry, deliberately: the two pages are
-checked byte for byte, so a data blob filled from files CI has not got would be stale the
-moment it was committed. The app finds the images at run time instead, by loading one of
-them. See `LICENSE-DATA.md` for why the volume itself is not distributed here.
+It is also the only source that is not inlined into the pages. The other three ride in as
+data blobs; the MRI is fetched from `data/plates/mri/` at run time, and the app decides it
+is there by loading one of the images rather than by being told at build time. That began
+as a way of keeping an optional download out of a byte-for-byte page check, and it stays
+because it is what lets the lean page carry a fourth source for the cost of a request
+rather than of two megabytes. The single-file bundle therefore has the MRI only when it is
+opened beside a `data/` folder, where the other three are inside it.
+
+The images here are 8-bit and JPEG-compressed at 550 × 352, resampled onto the plate
+frame — about a third the bytes of storing them at the frame's own 1100 × 703, which would
+buy nothing, since the voxels are 6.7 times coarser than the frame either way. Anything
+quantitative should go back to the source volume rather than to these. See
+`LICENSE-DATA.md` for the terms they are reproduced under.
 
 Registration between them is by construction rather than by fitting. Every page carries
 the atlas's own printed ML/DV box, and each page is cropped to *its own* box by the same

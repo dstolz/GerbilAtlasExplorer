@@ -6,6 +6,14 @@ carries a `version` block naming the release its derived fields were built for.
 ## [Unreleased]
 
 ### Added
+- **The MRI images ship with the atlas.** They were held back while it was unclear whether
+  the volume could be redistributed; it comes from the same open-access supplement as the 186
+  section pages, so it now travels with them and on the same terms — the work of
+  Radtke-Schuller et al., reproduced under that publication's licence and not relicensed here
+  (`LICENSE-DATA.md`). **MRI** is therefore simply present now, rather than appearing only
+  where someone had run `tools/build_mri.py` first. The copies here are 8-bit and resampled
+  onto the plate frame for display; anything quantitative should go back to the source volume.
+
 - **The atlas's own MRI, as a fourth plate source.** The atlas is "CT/MRI-aided", and the
   imaging half of that has never been in the app. Where `tools/build_mri.py` has been run,
   **MRI** now sits beside *Labelled / Nissl / Myelin*, and because the volume is already in

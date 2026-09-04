@@ -7,7 +7,7 @@ test-results/
 playwright-report/
 *.tmp
 
-# The atlas MRI, until its redistribution terms are settled (tools/build_mri.py).
-# The app builds and behaves identically without these.
-data/plates/mri/
+# The MRI tile sheet is the whole 256 x 256 x 72 volume in voxel space, which nothing
+# reads yet -- it is the input the reformat views will want. The 62 plate images beside
+# it are committed, like the other three sources. Both come from tools/build_mri.py.
 data/mri_volume.jpg
