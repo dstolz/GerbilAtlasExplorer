@@ -6,6 +6,25 @@ carries a `version` block naming the release its derived fields were built for.
 ## [Unreleased]
 
 ### Changed
+- **The pivot is the tilt axis, not the zero, and the dialog stops implying otherwise.** With
+  an origin named, the pivot controls faded out under the line "an origin is set, so the pivot
+  no longer changes anything" — which reads as the app conflating the two. It never did: the
+  pivot genuinely leaves the arithmetic once the readout is measured from a named point,
+  because the origin and the target swing about the axis together and it enters the
+  subtraction twice with opposite signs. But that is a fact about the order the rig is set up
+  in, not a reason to grey out a control describing something the head physically does — and
+  the axis is used directly whenever the origin is left on *the atlas origin*, where the
+  difference is 2.6 mm of AP at 17°.
+
+  The pivot now stays live and editable whatever the origin is. The note under the heading
+  says which of the two the axis is rather than that it does not matter, and a worked table
+  does the lab's own procedure longhand at 17° about the ear-bar axis: where lambda and `MSO`
+  sit before the tilt, where they sit after it, and what is left once you zero on lambda. The
+  dialog also now names the case it exists for — Radtke-Schuller et al. recommend leveling
+  lambda against the occipital crest to approximate the atlas plane, but a frame with a tooth
+  bar and a nose clamp cannot reach that, so the head is leveled bregma to lambda and every
+  published coordinate is adjusted after the fact.
+
 - **A region keeps its color across the whole atlas.** Color regions was solved one plate at
   a time, and a plate cannot know what its neighbors did: a structure bordering three things
   on one level and five on the next took whatever slot was free on each, held its color
