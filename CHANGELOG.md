@@ -47,6 +47,46 @@ carries a `version` block naming the release its derived fields were built for.
   you are switching to — the rest is what gave way to make room for it.
 
 ### Fixed
+- **Four regions the app drew wrongly, and the four different reasons.** Each was reported
+  from the plate view, and no two share a cause.
+
+  `S1DZ` on plate 19 was a scrap on the left hemisphere and a proper band on the right, with
+  `S1J` bulging through the gap between. The tracing had missed a 30 px run of the dashed
+  boundary, and the two dangling ends it left sat 30 px from their own continuation and under
+  20 from the `S1FL` line beside them — so `BRIDGE_PX` welded each of them sideways across the
+  band, walling the strip off from the face holding its label. The missing run is traced now,
+  as a cubic; `S1DZ` goes 0.43 to 0.61 mm², which is its mirror.
+
+  `ML` on plate 36 had no area at all. The atlas draws the mammillary body clear of the rest
+  of the section there, and `brain_outline` keeps a component only if it is larger than
+  `max(400 px, 2% of the largest)` — the island is 1,628 px against a 5,131 floor, so it was
+  culled, and a face outside the outline can never be named. It is traced by the same steps
+  and kept as a second polygon. Two components the rule drops carry a printed name over the
+  62 plates; the other is `och` on plate 22, still dropped.
+
+  `OV` on plate 5 outlined the bulb's outer layer instead of the ventricle its line points
+  at. `E/OV` is one label of two names and one line, and only one of the two boxes can be the
+  one the march reached — the other kept the printed position, out beyond the section, and was
+  snapped into whatever face was nearest. A line is recorded against every name in the label
+  it was drawn from now, and the march aims at the label rather than at one word of it, which
+  is what finds plate 5's right-hand line at all: it passes 1.4 px off the corner of `E` on
+  its way to the gap between the two words. 215 lines answer for 233 boxes.
+
+  Layer `1` was missing from plate 17 and half-missing from plate 18 — not geometry but
+  reading: none of plate 17's four printed `1`s had a box. A bare `1` cannot be found by
+  matching the word, scoring 0.98 against the 1 inside `S1DZ`, `M1` and `Cg1` and against the
+  coordinate ticks, so the match was anchored to the neighbourhood of a `2` or `3` already
+  read — the digits are printed as a stack — and every candidate was put beside the printed
+  page. Seven boxes added over the three plates, two candidates rejected there. Plate 17 gives
+  layer 1 back 0.87 mm² that `Nv` had been holding for want of a label to take it.
+
+- **The map coloring nearly shipped a ninth color the palette has not got.** The search gives
+  `k` up after `SEEDS` restarts and tries `k+1`, and nothing downstream would have said so:
+  slot 8 renders as `undefined`. The floor is unmoved — `1`, `2`, `3`, `AHA`, `ICj`, `Pir`,
+  `Tu` and `VP` still pairwise touch, so eight is still the fewest — but locating layer 1 on
+  plates 17 and 18 moves four edges of the quotient graph, and on that graph the eighth color
+  is found on a seed past 128. `SEEDS` is 256.
+
 - A control group carrying `hidden` was drawn anyway. `.grp{display:flex}` is an author rule
   and the browser's own `[hidden]{display:none}` is not, so the author rule won and the
   panel's *Viewpoint and panes* heading stood over nothing whenever its controls were in the
