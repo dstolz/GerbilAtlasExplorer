@@ -78,7 +78,7 @@ GROUPS = [
     dict(id='hipp', abbr='HIPP', name='hippocampal formation',
          alias=('hippocampus', 'hippocampal', 'archicortex'),
          note="The atlas's hippocampal tag: the CA fields and their layers, the dentate "
-              'gyrus, the subicular complex, entorhinal cortex, and the fibre systems the '
+              'gyrus, the subicular complex, entorhinal cortex, and the fiber systems the '
               'formation is defined by (fornix, fimbria, alveus, the hippocampal commissures).',
          sys=('hippocampal',),
          drop=('hif',)),
@@ -141,7 +141,7 @@ GROUPS = [
     dict(id='midb', abbr='MIDB', name='midbrain',
          alias=('midbrain', 'mesencephalon', 'tectum', 'tegmentum', 'colliculus'),
          note='Tectum (superior and inferior colliculi), the pretectum, the periaqueductal '
-              'grey, the tegmentum, substantia nigra and the ventral tegmental area, the red '
+              'gray, the tegmentum, substantia nigra and the ventral tegmental area, the red '
               'nucleus and the oculomotor and trochlear nuclei. The dorsal raphe is here where '
               'the atlas prints it rostral of the pontine nuclei; its caudal subdivisions fall '
               'at pontine levels and are filed there.',
@@ -183,16 +183,16 @@ GROUPS = [
          drop=('hif', 'rf', 'af')),
 
     dict(id='fibr', abbr='FIBR', name='fiber tracts',
-         alias=('white matter', 'tracts', 'fibre tracts', 'commissures'),
+         alias=('white matter', 'tracts', 'fiber tracts', 'commissures'),
          note='Every named tract, commissure, lemniscus, fascicle and cranial nerve root. '
-              'These run through the grey-matter divisions rather than beside them, so most '
+              'These run through the gray-matter divisions rather than beside them, so most '
               'are in one of those as well.',
          sys=('fiber_tract',)),
 
     dict(id='vent', abbr='VENT', name='ventricular system',
          alias=('ventricles', 'ventricular', 'csf', 'circumventricular'),
          note='The ventricles and their recesses, the aqueduct and central canal, the choroid '
-              'plexus and ependyma, and the circumventricular organs. The periaqueductal grey '
+              'plexus and ependyma, and the circumventricular organs. The periaqueductal gray '
               'is filed under midbrain, though the atlas tags it here.',
          sys=('ventricular',),
          nsys=('vascular',),
@@ -280,7 +280,7 @@ def resolve(structs):
                      % (g['id'], ', '.join(unknown)))
         members[g['id']] = sorted(m, key=lambda x: (x.lower(), x))
         # Which plates the group is *on*, which is not simply where its members are. A
-        # division is where its grey matter is: the tracts belong to it there and are still
+        # division is where its gray matter is: the tracts belong to it there and are still
         # outlined with it, but the medial lemniscus reaching plate 54 does not put the
         # thalamus in the medulla. A group of nothing but tracts is where its tracts are.
         core = [a for a in members[g['id']] if 'fiber_tract' not in byab[a]['systems']]

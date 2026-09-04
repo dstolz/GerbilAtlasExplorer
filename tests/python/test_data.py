@@ -85,11 +85,11 @@ def test_no_leader_tip_lands_on_another_name(db):
     region itself. It never ends one on another abbreviation: that ground is
     spoken for, and the word sitting there says so. So a tip inside a different
     abbreviation's printed box is a line followed too far or the wrong line
-    followed at all, and it seeds the structure in its neighbour's face.
+    followed at all, and it seeds the structure in its neighbor's face.
 
-    That failure hides. While the neighbour has no label of its own the
-    mis-seeded region simply holds the neighbour's face and looks right; it only
-    surfaces when the neighbour is finally located, takes its own ground back,
+    That failure hides. While the neighbor has no label of its own the
+    mis-seeded region simply holds the neighbor's face and looks right; it only
+    surfaces when the neighbor is finally located, takes its own ground back,
     and leaves the first with a sliver the small-area cull then removes. `ALPO`
     on plate 44, `CC` on 60 and `pyx` on 62 were the three, and all three were
     put aside in `label_leaders.REJECT` -- so this list is empty and stays that
@@ -155,7 +155,7 @@ def test_labels_and_extents_are_in_step(db):
     labels added four commits earlier.
 
     This catches the block going stale. It does not catch a region losing ground to a
-    neighbour while these counts stay balanced, which is how those three were actually
+    neighbor while these counts stay balanced, which is how those three were actually
     lost; that needs a per-(plate, abbreviation) diff against the commit whose labels
     the block was rebuilt from, and cannot be asserted from one snapshot.
 
@@ -174,7 +174,7 @@ def test_labels_and_extents_are_in_step(db):
     assert s['labels_seeded'] + s['labels_dropped'] == boxes
 
 def test_shared_edges_recomputed(db):
-    """Every directed boundary edge has its reverse in exactly one neighbour: the regions
+    """Every directed boundary edge has its reverse in exactly one neighbor: the regions
     tile the section. Recomputed here rather than trusted from the summary."""
     import build_region_extents as B
     R = db['region_extents']

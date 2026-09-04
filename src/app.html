@@ -92,7 +92,7 @@
       <p class="tnote" id="tyawn" hidden>The track is vertical, so yaw has nothing to turn.</p>
       <p class="tlbl"><b>Offset</b> &mdash; where to aim relative to the label</p>
       <div class="tgrid" id="toffg">
-        <label class="rvf" title="Moves the target anterior of the label, in millimetres. The offset says where to aim relative to the printed abbreviation, so it is measured along the atlas's own axes and stays anatomical whatever frame the plan is read in."><span>AP mm &middot; ant +</span><input type="number" id="toap" step="0.05" value="0"></label>
+        <label class="rvf" title="Moves the target anterior of the label, in millimeters. The offset says where to aim relative to the printed abbreviation, so it is measured along the atlas's own axes and stays anatomical whatever frame the plan is read in."><span>AP mm &middot; ant +</span><input type="number" id="toap" step="0.05" value="0"></label>
         <label class="rvf" title="Moves the target away from the midline on whichever hemisphere is chosen, so left and right stay mirror images of each other."><span>ML mm &middot; lat +</span><input type="number" id="toml" step="0.05" value="0"></label>
         <label class="rvf" title="Moves the target dorsal of the label. Positive is up, toward the surface."><span>DV mm &middot; dors +</span><input type="number" id="todv" step="0.05" value="0"></label>
       </div>
@@ -147,15 +147,15 @@
         <span class="vctl" id="qsPlate">
           <span class="vctl" id="ctlSrc">
             <span class="seg" id="srcseg">
-              <button type="button" class="on" data-s="drawing" title="The atlas's own drawing: contours and printed abbreviations">Labelled</button>
-              <button type="button" data-s="nissl" title="The unlabelled Nissl-stained section at this level, printed in the same coordinate box">Nissl</button>
-              <button type="button" data-s="myelin" title="The unlabelled Gallyas myelin-stained section at this level, printed in the same coordinate box">Myelin</button>
+              <button type="button" class="on" data-s="drawing" title="The atlas's own drawing: contours and printed abbreviations">Labeled</button>
+              <button type="button" data-s="nissl" title="The unlabeled Nissl-stained section at this level, printed in the same coordinate box">Nissl</button>
+              <button type="button" data-s="myelin" title="The unlabeled Gallyas myelin-stained section at this level, printed in the same coordinate box">Myelin</button>
               <button type="button" data-s="mri" hidden title="The atlas's own MRI at this level, resampled into the same coordinate box. 117 &micro;m in plane against the drawing's 18, so it is soft where the drawing is sharp &mdash; and it is the animal's head, not a cut section">MRI</button>
             </span>
           </span>
           <span class="tsep"></span>
           <!-- A finger has a better zoom than these buttons are: the pinch is anchored on
-               the fingers rather than on the box centre, and pinching in clamps at exactly
+               the fingers rather than on the box center, and pinching in clamps at exactly
                100% with the pan zeroed, which is what Fit writes. So the group is hidden
                under 900px rather than shown to a thumb. Hidden, never removed -- applyView()
                writes to all three of these on every pan. -->
@@ -214,7 +214,7 @@
           >Controls<b class="bdg" id="vctln" hidden></b></button>
         <button class="z" id="emax" type="button" aria-pressed="false"
           title="Give the view the whole window: the search column, the header and the browser's own chrome step out of the way. F, or Esc to come back."
-          aria-label="Maximise the view"><svg class="ic i1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+          aria-label="Maximize the view"><svg class="ic i1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3H5a2 2 0 0 0-2 2v4"/><path d="M15 3h4a2 2 0 0 1 2 2v4"/><path d="M9 21H5a2 2 0 0 1-2-2v-4"/><path d="M15 21h4a2 2 0 0 0 2-2v-4"/></svg><svg
             class="ic i2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9h4a2 2 0 0 0 2-2V3"/><path d="M21 9h-4a2 2 0 0 1-2-2V3"/><path d="M3 15h4a2 2 0 0 1 2 2v4"/><path d="M21 15h-4a2 2 0 0 0-2 2v4"/></svg></button>
@@ -239,7 +239,7 @@
         <div class="vpanb">
           <div class="vctl" id="ctlPlate">
             <div class="grp"><h4>Overlays</h4><div class="in">
-              <label class="tg" title="Fill every region on this plate so that no two that touch are the same colour. The colours name nothing &mdash; they only tell neighbours apart."><input type="checkbox" id="ckmc">Colour regions</label>
+              <label class="tg" title="Fill every region on this plate so that no two that touch are the same color. The colors name nothing &mdash; they only tell neighbors apart."><input type="checkbox" id="ckmc">Color regions</label>
               <!-- Wash is a parameter, but it is already disclosed by its own toggle, so it
                    stays beside it rather than being hidden a second time behind Advanced --
                    the same reason Bone stays with Skull. -->
@@ -255,7 +255,7 @@
             <div class="grp"><h4>Compare</h4><div class="in">
               <label class="tg" title="A second plate beside this one, sharing zoom, pan and crosshair: the other histology of this level, the drawing, or the plate before or after"><input type="checkbox" id="ckcmp">Compare</label>
               <select class="csel" id="cmpsel" hidden aria-label="What the second pane shows">
-                <option value="nissl">Nissl</option><option value="myelin">Myelin</option><option value="drawing">Labelled</option>
+                <option value="nissl">Nissl</option><option value="myelin">Myelin</option><option value="drawing">Labeled</option>
                 <option value="mri" hidden>MRI</option>
                 <option value="prev">Plate before</option><option value="next">Plate after</option>
               </select>
@@ -302,7 +302,7 @@
           <div class="advb" id="advb" hidden>
             <div class="vctl" id="advPlate">
               <div class="grp"><h4>Image rendering</h4><div class="in col">
-                <label class="tg" title="Read every source the same way: the drawing loses its colour"><input type="checkbox" id="ckgy">Grey</label>
+                <label class="tg" title="Read every source the same way: the drawing loses its color"><input type="checkbox" id="ckgy">Gray</label>
                 <label class="lb3" id="ctrw" title="Stretch the contrast of whichever plate is showing. The 3-D view stretches its own tissue with Floor, Ceiling and Gamma, so this is left off it."
                   >Contrast <input type="range" id="ctrs" min="60" max="260" step="5" value="100"><b id="ctrl">1.0&times;</b></label>
               </div></div>
@@ -461,7 +461,7 @@
     <h3>The three plates of a level</h3>
     <p>The atlas prints every level three times: the <b>Nissl</b>-stained section, the
       <b>Gallyas</b> myelin-stained section from an adjacent section beside it, and the
-      <b>labelled drawing</b> traced over them. All three are here, and <em>Labelled /
+      <b>labeled drawing</b> traced over them. All three are here, and <em>Labeled /
       Nissl / Myelin</em> above the plate switches between them.</p>
     <p>A fourth button, <em>MRI</em>, shows the atlas&rsquo;s own reference MRI &mdash; the
       imaging half of the &ldquo;CT/MRI-aided&rdquo; in its title. It is already in the
@@ -478,11 +478,11 @@
       having rather than decorative: the grid, the scale bar, the measure tool, the
       coordinate lookup and the outlined structure are all still in the right place on a
       section with no labels printed on it, and hovering where the drawing prints an
-      abbreviation still names it. Checked by re-deriving the labelled plates the same way
+      abbreviation still names it. Checked by re-deriving the labeled plates the same way
       and landing on the ones already in this file, pixel for pixel, on 61 of 62 (the
       remaining one is out by a single pixel).</p>
-    <p><b>Grey</b> takes the colour out of the drawing so the three read alike; the histology
-      was published in grey already. <b>Contrast</b> stretches whatever is showing, and both
+    <p><b>Gray</b> takes the color out of the drawing so the three read alike; the histology
+      was published in gray already. <b>Contrast</b> stretches whatever is showing, and both
       carry into the PNG export. The 3-D view is built from whichever source is selected and
       stretches it in the renderer instead, with <b>Floor</b>, <b>Ceiling</b> and <b>Gamma</b>
       windowing the tissue channel before <b>Density</b> decides how opaque what survives is
@@ -522,34 +522,34 @@
       <code>data/gerbil_atlas_groups.csv</code>, and Methods says how each was drawn.</p>
 
     <h3>The section as a map</h3>
-    <p><b>Colour regions</b> over the plate fills every region on it, and no two regions
-      that touch are given the same colour &mdash; the section coloured the way a map of
+    <p><b>Color regions</b> over the plate fills every region on it, and no two regions
+      that touch are given the same color &mdash; the section colored the way a map of
       countries is. It shows the whole partition at once: where one structure stops and the
-      next starts, how much of the section each holds, which of them are neighbours. On the
+      next starts, how much of the section each holds, which of them are neighbors. On the
       <em>Nissl</em>, the <em>myelin</em> and the <em>MRI</em>, which carry no printed lines
       at all, it is the only view that shows any of that. <b>Wash</b> sets how strongly the
-      colours are laid on; the plate is underneath them at every setting, and both ride into
+      colors are laid on; the plate is underneath them at every setting, and both ride into
       the PNG and the SVG.</p>
     <p>Touching is read off the extents themselves &mdash; two regions share the vertices of
       the boundary between them &mdash; and a gap thinner than 0.05&nbsp;mm counts as touching
       too, because a lamina a pixel or two wide is not a boundary the eye can find, and one
-      colour on both sides of it would read as one region.</p>
-    <p><b>A colour means nothing beyond &ldquo;not my neighbour&rdquo;.</b> It is not a
-      system, a division or a value: two regions of the same colour on one plate have
-      nothing in common except that they do not touch. What a colour does do is stay put
-      &mdash; each region asks for the same colour on every plate it is drawn on and gets it
-      wherever a neighbour has not already taken it, which is about half the time, so
+      color on both sides of it would read as one region.</p>
+    <p><b>A color means nothing beyond &ldquo;not my neighbor&rdquo;.</b> It is not a
+      system, a division or a value: two regions of the same color on one plate have
+      nothing in common except that they do not touch. What a color does do is stay put
+      &mdash; each region asks for the same color on every plate it is drawn on and gets it
+      wherever a neighbor has not already taken it, which is about half the time, so
       stepping through the levels is not a kaleidoscope and the same plate is the same
       picture every time it is opened.</p>
     <p>Nothing is drawn that the atlas does not draw. The fill is the region extents, which
       are cut from the atlas&rsquo;s own lines, and it carries no outline of its own &mdash;
-      the only edge it makes is where one colour stops and the next begins. Where the atlas
-      draws no boundary between several names, those names <em>share</em> a colour rather
-      than being split by one, because a colour change is a boundary and that split is not a
+      the only edge it makes is where one color stops and the next begins. Where the atlas
+      draws no boundary between several names, those names <em>share</em> a color rather
+      than being split by one, because a color change is a boundary and that split is not a
       line this atlas has: on plate 30 the mediodorsal thalamus is one patch, on plate 54 the
       cerebellar lobules it prints inside one line are one patch. The faces the atlas seals
       and names nothing inside are left unpainted, because there is no region there to
-      colour. Five colours would do 58 of the 62 plates and six the other four; the palette
+      color. Five colors would do 58 of the 62 plates and six the other four; the palette
       holds seven, and the spare ones go to the regions that ask for them.</p>
 
     <h3>Your own frame</h3>
@@ -563,9 +563,9 @@
       one.</p>
     <p>It can also be told where <em>zero</em> is, and that part stands on its own. Name bregma,
       lambda, the interaural line or the occipital crest and give an offset from it &mdash; the
-      offset is how a zero that is not quite on a landmark gets said, such as half a millimetre
+      offset is how a zero that is not quite on a landmark gets said, such as half a millimeter
       behind lambda &mdash; and every coordinate is measured from that point, with the readouts
-      labelling AP by the landmark it now comes from. Moving zero moves no point, so the
+      labeling AP by the landmark it now comes from. Moving zero moves no point, so the
       projections read their axes from it too and the measure tool needs no caveat; leave every
       angle at 0 and that is all the frame does.</p>
     <p>The landmark carries an AP and nothing else, because that is all the atlas prints for
@@ -575,7 +575,7 @@
       plane the atlas measures DV from, so with the height set the readout becomes ordinary
       interaural coordinates &mdash; AP behind the ear bars, DV up from them. The same row
       under the <em>Pivot</em> puts a rotation on that axis instead of on a parallel one
-      several millimetres too high. The APs stay the atlas&rsquo;s own and exact; the heights
+      several millimeters too high. The APs stay the atlas&rsquo;s own and exact; the heights
       inherit the skull fit&rsquo;s approximation, and say so.</p>
     <p>A rotation is the part that has to be hedged. While one is set, the grid and the measure
       tool stay in atlas coordinates and say so. Note too that a plate then stops being a single
@@ -620,21 +620,21 @@
       DV&nbsp;0 and does not cross it, which is where the atlas defines that plane, and 97.8% of
       the printed labels fall inside it. But it is the outline of a <em>fixed, sectioned</em>
       brain, not the surface under intact dura, and the sections are 350&nbsp;µm apart, so an
-      entry AP is quantised at that spacing however smooth the line looks. Nothing is
+      entry AP is quantized at that spacing however smooth the line looks. Nothing is
       interpolated between plates.</p>
     <p>And the target is the <b>median position of the printed abbreviation</b>, not the
       structure&rsquo;s centroid &mdash; the caveat that runs through everything here, and that
       matters most in a tool that invites this much trust. The plan knows nothing about
       vasculature, the sinus or the ventricles, and does not check the entry against the skull.</p>
     <p><b>Which plate, and how far off the label.</b> A structure that spans a dozen sections is
-      labelled on each of them, and the median of all those labels is a point somewhere in the
+      labeled on each of them, and the median of all those labels is a point somewhere in the
       middle of the structure rather than a point on the section anybody is aiming at.
       <em>Take the label from</em> names one plate and reads that section&rsquo;s labels alone;
       picking a plate also turns the viewer to it. Below the angles, the three <em>offset</em>
       boxes move the aim off the label &mdash; 0.2&nbsp;mm dorsal to VO on plate 13, say &mdash;
       and the plan then prints the label and the target as separate rows, so the point the
       numbers were measured from stays readable beside the point they are about.</p>
-    <p>The offset is in <b>atlas millimetres</b>, not the working frame&rsquo;s, and this is the
+    <p>The offset is in <b>atlas millimeters</b>, not the working frame&rsquo;s, and this is the
       one place in the planner where that is true. Naming a target is anatomy: <em>dorsal</em>
       has to mean dorsal in the brain rather than up the manipulator&rsquo;s own axis, or an
       offset would mean something different at every pitch. Lateral is taken toward whichever
@@ -645,13 +645,13 @@
     <h3>Caveats</h3>
     <p>System tags (auditory, hippocampal, &hellip;) are a convenience layer added on top of the
       published nomenclature, not part of the original atlas, and the gross divisions are the same kind of addition and a larger one &mdash; which structures make up &ldquo;the pons&rdquo; is a judgement made here. A structure listed for a plate range is
-      present at those levels; it is not necessarily labelled on every plate. Label positions come from
+      present at those levels; it is not necessarily labeled on every plate. Label positions come from
       OCR &mdash; where one was not located, the app says so rather than showing nothing.</p>
     <p><b>Not every name has an outline.</b> The regional outlines are cut from the atlas&rsquo;s
       own drawing, and the drawing sometimes puts several names inside one boundary and
       prints nothing between them &mdash; the cerebellar lobules and the white matter running
       through them, the mediodorsal thalamus, the lateral hypothalamic zones. Those
-      structures are still found, listed, measured and modelled, but no outline is drawn for
+      structures are still found, listed, measured and modeled, but no outline is drawn for
       them: hovering or selecting one highlights every place the plate prints its name
       instead, and the tip says why. An outline there would be a boundary this atlas does not
       have, and a dashed one would still read as a boundary. Where the atlas <em>does</em>
@@ -692,7 +692,7 @@
       axis scales are then set by the drawn sections of all 62 plates, which get the last
       word. Because the two animals are not the same shape, the scales differ a little by
       axis &mdash; the skull is stretched about 3% along AP and 4% across, and shortened 4%
-      in depth, to seat the vault on the cortex. Good to a few tenths of a millimetre.
+      in depth, to seat the vault on the cortex. Good to a few tenths of a millimeter.
       Context around the sections, not a surface to measure against.</p>
     <p><em>Landmarks</em> marks bregma, lambda and the occipital crest on the plate whose
       plane they fall in, and draws the interaural line &mdash; solid where it lies in the
@@ -715,7 +715,7 @@
       instead of a photograph: the regional outlines, traced off the printed plate, with
       whatever overlays were showing and the same caption. Every part is a named group
       &mdash; <code>outlines-solid</code>, <code>outlines-dashed</code>,
-      <code>region-colours</code>, <code>grid</code>,
+      <code>region-colors</code>, <code>grid</code>,
       <code>skull</code>, <code>landmarks</code>, <code>highlight</code>,
       <code>measure</code>, <code>track</code>, <code>query</code>, <code>notes</code>,
       <code>caption</code> &mdash; so a figure can
@@ -724,7 +724,7 @@
       is kept in that frame; each plate carries the matrix that puts it on the
       1100&nbsp;&times;&nbsp;703 crop everything else here measures in. That matrix is not
       assumed from the page layout &mdash; it is fitted to each plate&rsquo;s own printed ink,
-      which is what catches the pages the journal set sideways or off-centre &mdash; plate 20
+      which is what catches the pages the journal set sideways or off-center &mdash; plate 20
       is printed at a quarter turn, and plate 31 comes out 47&nbsp;px low in the plate frame,
       the same displaced figure the plate crops already correct for. Every plate lands within
       1.8&nbsp;px of its own drawn lines, about 0.03&nbsp;mm, so the outlines sit where the
@@ -751,11 +751,11 @@
         header and the browser&rsquo;s own chrome go, and the plate, the projection or the
         stack takes the room. <kbd>Esc</kbd> comes back.</dd>
       <dt>Compare</dt><dd>a second plate beside the first, sharing zoom, pan and crosshair</dd>
-      <dt>Colour regions</dt><dd>the whole section filled, no two neighbours alike &mdash; the
-        colours tell them apart and mean nothing else</dd>
+      <dt>Color regions</dt><dd>the whole section filled, no two neighbors alike &mdash; the
+        colors tell them apart and mean nothing else</dd>
       <dt>Notes</dt><dd>your own markers, kept in this browser; export them as JSON to keep them</dd>
       <dt>Meshes</dt><dd>in 3D, the structure as a closed surface interpolated between its plates</dd>
-      <dt><kbd>Esc</kbd></dt><dd>come back from the maximised view, drop the selection, or clear a measurement</dd>
+      <dt><kbd>Esc</kbd></dt><dd>come back from the maximized view, drop the selection, or clear a measurement</dd>
       <dt>double-click</dt><dd>zoom into the plate at that point; drag to pan</dd>
       <dt>hover a label</dt><dd>read its full name; click it to select that structure</dd>
     </dl>
@@ -821,7 +821,7 @@
       case, and needs nothing but the dropdown.</p>
     <p><b>The three numbers are an offset from the landmark</b>, not an absolute coordinate, so
       a zero that is not on a landmark can still be named by the nearest one: lambda with an
-      AP offset of &minus;0.50 is half a millimetre behind lambda. Anterior, right and dorsal
+      AP offset of &minus;0.50 is half a millimeter behind lambda. Anterior, right and dorsal
       are positive, as everywhere else here. Leave them at 0 and zero is the landmark itself.</p>
     <p>Left on <em>the atlas origin</em> nothing changes: zero stays wherever the rotation
       carries bregma, which is what the pivot below decides. Name a landmark instead and the
@@ -842,7 +842,7 @@
       rather than on dura.</p>
     <p><b>The AP is the atlas&rsquo;s own and exact; the height is not.</b> No height for any of
       these landmarks is published, so it is read off the same approximate skull registration
-      the <em>Skull</em> overlays use &mdash; good to a few tenths of a millimetre, before
+      the <em>Skull</em> overlays use &mdash; good to a few tenths of a millimeter, before
       animal-to-animal variation. The field stays yours: measure your own ear-bar depth and type
       it in preference to the button.</p>
 
@@ -908,7 +908,7 @@
     <p>Readouts name what AP is measured from &mdash; <em>lambda</em> rather than <em>AP</em>
       &mdash; whenever an origin is set, and the atlas figure stays beside them as always.</p>
     <p>A plate is no longer a single AP once the frame is tilted: at 17&deg; of pitch the AP of a
-      point drifts about 0.29&nbsp;mm per millimetre down the plate, some 2.5&nbsp;mm across the
+      point drifts about 0.29&nbsp;mm per millimeter down the plate, some 2.5&nbsp;mm across the
       depth of the brain. That is why the readout gives an AP for the point under the pointer
       rather than one figure for the whole plate.</p>
     <p>This is a rigid rotation of the published coordinates, <b>not</b> a resectioning: no oblique

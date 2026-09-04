@@ -78,7 +78,7 @@ test('the midline cut takes the left half of the ear-bar axis with it', async ({
 });
 
 // The bar goes into the head from outside it. The canals the fit locates sit a fraction of
-// a millimetre inside the bone, so an axis that stopped at them would read as a chord
+// a millimeter inside the bone, so an axis that stopped at them would read as a chord
 // within the skull rather than as an ear bar through it. What a test can hold of that is
 // the reach: it has to clear the widest the fitted skull gets, not just the canals.
 test('the ear-bar axis is carried out past the widest bone', async ({ page }) => {

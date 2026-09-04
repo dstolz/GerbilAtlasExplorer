@@ -1,6 +1,6 @@
 """Boundary geometry for the region extraction.
 
-The point of this module is that neighbouring regions must come out sharing
+The point of this module is that neighboring regions must come out sharing
 their boundary *exactly*, not approximately. Contouring each region on its own
 and simplifying its ring is the obvious thing and it is wrong: Douglas-Peucker
 is global to the ring it is given, so the same shared boundary, handed to it
@@ -9,7 +9,7 @@ they cross. The tiling then overlaps, the hit test claims a pixel twice or not
 at all, and an export draws every boundary as a hairline pair.
 
 So the boundary is traced on the crack lattice between pixels, where both
-neighbours see the identical chain of corners, and it is cut at the corners
+neighbors see the identical chain of corners, and it is cut at the corners
 where three or more regions meet -- a purely local test, so both sides cut in
 the same places. Each arc is then simplified once. Douglas-Peucker keeps its
 endpoints and is symmetric under reversal, so the two sides of an arc keep the
@@ -50,7 +50,7 @@ def trace_rings(mask):
     """Closed rings of a binary mask, as corner coordinates (x, y).
 
     Rings are traced on the crack lattice, so a ring's vertices are integer
-    corners and are identical to the ones its neighbour traces. Holes come out
+    corners and are identical to the ones its neighbor traces. Holes come out
     as their own rings; the caller treats the set even-odd."""
     m = np.zeros((mask.shape[0] + 2, mask.shape[1] + 2), bool)
     m[1:-1, 1:-1] = mask
@@ -136,7 +136,7 @@ def dp(pts, eps):
 def simplify_ring(ring, junc, eps):
     """Simplify a traced ring arc by arc, cutting at junction corners.
 
-    With no junction on the ring -- a region wholly surrounded by one neighbour
+    With no junction on the ring -- a region wholly surrounded by one neighbor
     -- the ring is cut at its lexicographically smallest corner instead, which
     both owners also agree on."""
     n = len(ring) - 1                       # ring[-1] == ring[0]

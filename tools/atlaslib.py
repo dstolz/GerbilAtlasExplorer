@@ -1,6 +1,6 @@
 """What the derivation scripts share.
 
-Paths, the database and how it is written, the plate frame in millimetres, the
+Paths, the database and how it is written, the plate frame in millimeters, the
 page-to-plate transform, the traced outlines, and the pieces the app is built from.
 Every script here used to carry its own copy of most of this, and the copies had
 begun to disagree; now there is one, and the tests read it.
@@ -53,7 +53,7 @@ def from_native(x, y):
 
 
 class Frame:
-    """Plate-image fractions or pixels <-> stereotaxic millimetres, from `plate_frame`.
+    """Plate-image fractions or pixels <-> stereotaxic millimeters, from `plate_frame`.
 
     Taken from the database rather than copied, so a recalibration moves everything
     together. `ml(x)` and `dv(y)` take pixels; `ml_f`/`dv_f` take fractions of the frame.
@@ -94,7 +94,7 @@ def bregma_of(db):
 # fissure or a sulcus is the cleft *between* two regions and is drawn as the
 # line between them; `cbw` is the white matter core of whichever lobule it runs
 # through rather than a lobule beside them; a vessel is not brain at all.
-# Seeding those against their neighbours in build_region_extents.py hands them
+# Seeding those against their neighbors in build_region_extents.py hands them
 # the ground either side of the line: `cbw` took 170 mm2 of cerebellum off the
 # lobules it splits, and left `Crus2` a wedge of its own lobule and `PM` its
 # label box. So they are not seeded, and the region whose boundary the atlas

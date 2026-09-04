@@ -78,14 +78,14 @@ def grade_of(runs):
     Three plates is the least that says anything about how a shape changes along the
     brain: two give a linear ramp between them and one gives nothing at all but its own
     thickness. A structure whose every run is shorter than that gets an enclosing volume
-    instead of a surface, and is labelled as one."""
+    instead of a surface, and is labeled as one."""
     return 'surface' if max(len(r) for r in runs) >= 3 else 'slab'
 
 
 # ---------- the label volume ----------
 
 def build_volume(db, frame, grid, plates, log=print):
-    """Rasterize every plate, interpolate between neighbours, return the label volume.
+    """Rasterize every plate, interpolate between neighbors, return the label volume.
 
     Returns (labels, brain, ids, planes) where `labels` is int16 over the whole lattice,
     0 outside the brain and V.UNASSIGNED on a sealed face the atlas does not name."""
@@ -239,7 +239,7 @@ def despur(brain, log=print):
     through many. So the opening here is along AP alone, with an element longer than one
     section step: in principle anything confined to a single plate goes, anything that
     persists across two stays, and nothing is eroded within a section at all. The first
-    and last plate are left alone, a cap being confined to one plate's neighbourhood by
+    and last plate are left alone, a cap being confined to one plate's neighborhood by
     construction.
 
     In practice it does not separate them cleanly enough to be the default. It removes
@@ -317,13 +317,13 @@ def pad_box(mask, pad, shape):
 
 
 def encode(v, f):
-    """Mesh to base64, quantised to 0.01 mm as the skull mesh on the page is.
+    """Mesh to base64, quantized to 0.01 mm as the skull mesh on the page is.
 
     Little-endian whatever the machine, which is what the note promises and what
     the page's typed arrays read."""
     if len(f) == 0:
         return None
-    o, q = V.quantise(v)
+    o, q = V.quantize(v)
     idx = f.astype('<u4') if len(v) > 65535 else f.astype('<u2')
     return {'o': [round(float(x), 4) for x in o],
             'nv': int(len(v)), 'nf': int(len(f)),
@@ -448,7 +448,7 @@ def validate(db, frame, grid, labels, brain, raw, ids, present, meshes, plates,
     # (6) how cleanly a structure comes out as the one or two pieces anatomy expects.
     #     A thin sheet -- CA1, the ventricle slits -- can pinch off between two plates
     #     and arrive as several, so this is reported rather than closed up: closing it
-    #     would mean growing a structure into a neighbour, and the partition is worth
+    #     would mean growing a structure into a neighbor, and the partition is worth
     #     more than the tidy component count
     ncomp = [len(m['components']) for m in meshes.values() if m['components']]
     scrap = []
@@ -465,8 +465,8 @@ def validate(db, frame, grid, labels, brain, raw, ids, present, meshes, plates,
 
 # ---------- QC ----------
 
-def colour(ab):
-    """A stable colour per abbreviation, so two QC runs are diffable."""
+def color(ab):
+    """A stable color per abbreviation, so two QC runs are diffable."""
     import colorsys
     r = (int.from_bytes(ab.encode()[:6].ljust(6, b'\0'), 'big') * 2654435761) % (1 << 32)
     c = colorsys.hsv_to_rgb((r % 360) / 360.0, 0.55 + ((r >> 9) % 30) / 100.0,
@@ -491,7 +491,7 @@ def qc_planes(db, frame, grid, labels, ids, plates, log=print):
             for key in np.unique(sl):
                 if key == 0:
                     continue
-                c = (90, 90, 100) if key == V.UNASSIGNED else colour(inv[key])
+                c = (90, 90, 100) if key == V.UNASSIGNED else color(inv[key])
                 img[sl == key] = c
             cols.append(img)
         strip = np.concatenate([np.pad(c, ((0, 0), (0, 6), (0, 0))) for c in cols], 1)
@@ -510,7 +510,7 @@ def qc_projections(grid, brain, labels, ids, log=print):
     inv = {v: k for k, v in ids.items()}
     lut = np.zeros((max(inv) + 2, 3), np.uint8)
     for key, ab in inv.items():
-        lut[key] = colour(ab)
+        lut[key] = color(ab)
     lut[0] = (105, 105, 112)              # the sealed faces the atlas does not name
 
     def panel(axis, orient, tinted):
@@ -622,7 +622,7 @@ def main():
                 continue
             zs, ys, xs = np.nonzero(lab == c)
             comps.append({'volume_mm3': round(cv * vox, 4),
-                          'centre_mm': [round(float(grid.x[box[2].start + xs].mean()), 2),
+                          'center_mm': [round(float(grid.x[box[2].start + xs].mean()), 2),
                                         round(float(grid.y[box[1].start + ys].mean()), 2),
                                         round(float(grid.z[box[0].start + zs].mean()), 2)]})
         meshes[ab] = {
@@ -733,25 +733,25 @@ GRADES = {
 }
 
 NOTE = ('Three-dimensional extent of the brain and of each structure, built by stacking '
-        'the 62 coronal plates and interpolating between them. Meshes are quantised to '
+        'the 62 coronal plates and interpolating between them. Meshes are quantized to '
         '0.01 mm and base64-encoded as the skull mesh on the page is; `o` is the corner '
         'the offsets are measured from, `v` the uint16 vertex offsets, `f` the triangle '
         'indices at `fw` bytes each. Both are little-endian: `v` decodes to nv*3 uint16, '
         'each vertex an (ML, DV, AP) offset from `o` in steps of 0.01 mm, and `f` to nf*3 '
         'unsigned indices of `fw` bytes each (2, or 4 where a mesh has more than 65535 '
-        'vertices). Coordinates are stereotaxic millimetres, '
+        'vertices). Coordinates are stereotaxic millimeters, '
         '(ML, DV, AP), the same frame the rest of the database uses. `grade` says whether '
         'a mesh follows the drawn boundary or merely encloses the structure; see `grades`.')
 
 DERIVATION = (
     'Built by tools/build_volumes.py from brain_outline and region_extents, both of which '
-    'are fractions of the 1100 x 703 plate frame and are read into millimetres with the '
+    'are fractions of the 1100 x 703 plate frame and are read into millimeters with the '
     'plate_frame formulae. Each plate is rasterized onto a 0.05 mm lattice by an even-odd '
     'fill across all of a structure\'s rings, which is the rule the app\'s own hit test '
     'uses, so the two hemispheres union and a hole subtracts. AP is laid out so every '
     'plate falls exactly on a sample and only the six planes between two plates are '
     'interpolated. Interpolation is shape-based: the signed distance field of each mask is '
-    'blended between neighbouring plates and thresholded at zero, which needs no '
+    'blended between neighboring plates and thresholded at zero, which needs no '
     'correspondence between contours and so survives the places where the section outline '
     'splits and rejoins. Every structure on a plate competes in the same intermediate '
     'plane, together with the unassigned faces the atlas seals and declines to name, and '

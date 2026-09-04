@@ -354,7 +354,7 @@ button.z.armed,button.z.armed:hover{background:var(--accent);border-color:var(--
   display:flex;flex-direction:column;gap:14px}
 .vpanbd{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:21}
 .vpanbd[hidden]{display:none}
-/* a labelled block of controls: the dialog's own heading treatment, so the panel reads
+/* a labeled block of controls: the dialog's own heading treatment, so the panel reads
    like the rest of the app rather than like a new kind of surface */
 .grp{display:flex;flex-direction:column;gap:9px}
 .grp h4{margin:0;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
@@ -365,7 +365,7 @@ button.z.armed,button.z.armed:hover{background:var(--accent);border-color:var(--
 .grp .in.col .lb3{justify-content:space-between}
 .grp .in.col .lb3 input[type=range]{flex:1;min-width:0;width:auto;margin:0 9px}
 .grp .in.col>.z{align-self:flex-start}
-/* Advanced: the Divisions accordion from the sidebar, relabelled -- same caret, same
+/* Advanced: the Divisions accordion from the sidebar, relabeled -- same caret, same
    count, same keyboard. Its state is a preference, so it is remembered. */
 .ghead.adv{border-bottom:0;border-top:1px solid var(--line);background:transparent;
   padding:11px 0 0;margin-top:2px}
@@ -410,12 +410,12 @@ input[type=range]{accent-color:var(--accent)}
 #om path{fill:var(--mark);fill-opacity:.10;stroke:var(--mark);stroke-width:1.5;fill-rule:evenodd;
   vector-effect:non-scaling-stroke;filter:drop-shadow(0 0 2px rgba(255,255,255,.9))}
 #om path.grp,#om2 path.grp{fill:var(--markg);fill-opacity:.07;stroke:var(--markg);stroke-width:2.2}
-/* the map colouring: a wash under everything else the plate draws, so the atlas's own
+/* the map coloring: a wash under everything else the plate draws, so the atlas's own
    lines, the grid and every mark stay on top of it. The opacity is set on the group
    rather than per path, so a region drawn inside another does not come out twice as
    strong as the one around it. Each path is stroked in its own fill, which is not a line
    -- it is what closes the hairline the antialiasing leaves along an edge two regions
-   share, and it is why the colours meet rather than showing the plate between them. */
+   share, and it is why the colors meet rather than showing the plate between them. */
 #mc path,#mc2 path{fill-rule:evenodd;stroke-width:.8;vector-effect:non-scaling-stroke}
 /* dashed where the atlas does not print the boundary and the extraction inferred it */
 #hr.est,#hr2.est,#om path.est{stroke-dasharray:6 4}
@@ -450,10 +450,10 @@ input[type=range]{accent-color:var(--accent)}
 /* the same ML/DV seen from a plate the AP does not resolve to: shown, not asserted */
 #pk.off{opacity:.4}
 /* the skull's cut through this plate. The plate image is white in either theme, so like
-   the markers this is a fixed colour, not the themed line the projections use */
+   the markers this is a fixed color, not the themed line the projections use */
 #sk path{fill:none;stroke:#8f8264;stroke-opacity:.8;stroke-width:2;vector-effect:non-scaling-stroke}
 /* stereotaxic landmarks. The plate image is white in either theme, so like the other
-   plate marks these are a fixed colour rather than a themed one. */
+   plate marks these are a fixed color rather than a themed one. */
 #lm line{stroke:#0f766e;stroke-width:1.8;vector-effect:non-scaling-stroke}
 #lm line.ref{stroke-dasharray:7 5;stroke-opacity:.7}
 #lm circle{fill:none;stroke:#0f766e;stroke-width:2.4;vector-effect:non-scaling-stroke}
@@ -462,7 +462,7 @@ input[type=range]{accent-color:var(--accent)}
 #pk.off circle{stroke-dasharray:4 4}
 /* the planned track. Solid where it is actually on this plate -- within half a section of
    its AP -- and ghosted where it is only the projection of a track passing in front of or
-   behind the plane. Same fixed-colour reasoning as the marks above. */
+   behind the plane. Same fixed-color reasoning as the marks above. */
 #tk line,#tk path{fill:none;stroke:var(--targ);stroke-width:2.4;vector-effect:non-scaling-stroke}
 #tk .gh{stroke-width:1.6;stroke-dasharray:5 4;stroke-opacity:.6}
 #tk .leg{stroke-width:1.4;stroke-dasharray:2 4;stroke-opacity:.75}
@@ -577,7 +577,7 @@ label.z.anlab{display:inline-block;cursor:pointer}
 .v3w.hot canvas{cursor:pointer}
 /* Two panes on the one canvas: the rule between them, the letter on each and the frame
    round the one the toolbar is setting. Elements over the canvas rather than lines drawn
-   into it, so they take the sheet's colours and stay a hairline at any pixel ratio. They
+   into it, so they take the sheet's colors and stay a hairline at any pixel ratio. They
    sit under the tooltip and the build message, which are the things that must be readable
    over anything. Positioned from the same rectangles the viewports are cut from. */
 .v3pn{position:absolute;inset:0;z-index:2;pointer-events:none}
@@ -645,7 +645,7 @@ dialog::backdrop{background:rgba(0,0,0,.5)}
   margin:17px 0 6px;font-weight:600}
 .db h3:first-child{margin-top:0}
 /* the paragraph the asterisks point at: marked briefly on arrival so the eye lands on it
-   rather than on the top of a long dialog. Padding is cancelled by the negative margins,
+   rather than on the top of a long dialog. Padding is canceled by the negative margins,
    so the highlight can breathe without shifting the text out of the column. */
 #skullnote{border-radius:6px;padding:3px 6px;margin:0 -6px 9px}
 #skullnote.lit{animation:sklit 2.2s ease-out}
@@ -737,7 +737,7 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
   .wrap{grid-template-columns:minmax(330px,410px) minmax(0,1fr)}
 }
 @media (min-width:1800px){:root{--maxw:1720px}}
-/* ---------- maximised: the view takes the whole window ----------
+/* ---------- maximized: the view takes the whole window ----------
    Everything that is not the plate, the projection or the stack steps out: the search
    column, the header, the footer, the page's own margins and the card's frame. What the
    view is driven by stays, because it is still being driven -- the tabs, the toolbar,

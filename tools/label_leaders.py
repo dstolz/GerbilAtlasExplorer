@@ -12,7 +12,7 @@ the shell of the ventromedial nucleus.
 For those labels the printed box is not where the structure is, and everything
 downstream that reads the box as a position is wrong by the length of the line:
 the seed `build_region_extents.py` drops (a seed on the wrong side of a boundary
-hands the region to the wrong name), the stereotaxic centre the app quotes, the
+hands the region to the wrong name), the stereotaxic center the app quotes, the
 point the planner aims a track at. This finds the line and records the end of it.
 
 Nothing here reads letters either. A leader is the only thing on the page that
@@ -20,7 +20,7 @@ is all three of: ink the tracing did not draw, straight over its whole length,
 and running out of a located label. So:
 
   1. Ink is `page < INK`, as the rest of the label pass has it, but *not* denoised:
-     `denoise` wants two orthogonal neighbours and a two-pixel diagonal rule has
+     `denoise` wants two orthogonal neighbors and a two-pixel diagonal rule has
      none, so it deletes exactly what this is looking for.
   2. Subtract the tracing -- every line the atlas draws, from `svg/` -- and the
      printed labels: the located glyph boxes, and the gaps between words the
@@ -111,8 +111,8 @@ REJECT = {
     # These three were found from the other end, by their effect. Each seeds its
     # structure inside a face another name owns, and each went unnoticed while
     # that name had no label of its own: the mis-seeded region simply held its
-    # neighbour's face and looked right. When RPO, MnA and SolC were located,
-    # each neighbour claimed its own ground and the mis-seeded region was left
+    # neighbor's face and looked right. When RPO, MnA and SolC were located,
+    # each neighbor claimed its own ground and the mis-seeded region was left
     # with a sliver the small-area cull then removed, so ALPO, CC and pyx lost
     # their entries outright. The tip landing inside another abbreviation's
     # printed box is the tell, and it is now a test -- see tests/python.
@@ -355,8 +355,8 @@ def qc_draw(page, boxes, out, path):
 
     Half the page, and paletted: the halftone ground is most of what a
     full-resolution PNG of this would store and none of it is what a reader is
-    checking. The palette is built rather than quantised for -- an adaptive one
-    over a page of greys throws the three marks away, which are the whole point.
+    checking. The palette is built rather than quantized for -- an adaptive one
+    over a page of grays throws the three marks away, which are the whole point.
     A leader is still a line and its tip is still a dot at 150 dpi."""
     from PIL import Image
     H, W = page.shape
@@ -474,7 +474,7 @@ def main():
 
 
 def report(rows, DB):
-    # a leader's length is quoted where a reader can judge it: millimetres of
+    # a leader's length is quoted where a reader can judge it: millimeters of
     # brain, by way of the plate frame the whole database is calibrated in
     mm = lambda px: px * PX[0] / DB['plate_frame']['ml_px_per_mm']
     n_lead = sum(r[2] for r in rows)

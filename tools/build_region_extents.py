@@ -30,7 +30,7 @@ The pipeline, in order:
      atlas set outside its region with a line drawn back in is seeded at the
      end of that line -- see `label_leaders` and tools/label_leaders.py. Faces holding
      no label at all are left unassigned: the atlas does not name them here,
-     and growing a neighbour over them would invent a claim. Abbreviations
+     and growing a neighbor over them would invent a claim. Abbreviations
      the atlas typeset into one label are seeded as one, not against
      each other -- see `label_blocks` and tools/label_blocks.py. And the names
      that are no region -- the fissures and sulci, the cerebellar white matter,
@@ -43,7 +43,7 @@ The pipeline, in order:
      write that score out beside the geometry.
   7. Trace the boundaries on the crack lattice and simplify each shared arc
      once, at DP_PX with Douglas-Peucker as `brain_outline` already does, so
-     that neighbours come out sharing their boundary exactly rather than
+     that neighbors come out sharing their boundary exactly rather than
      approximately -- see regiongeom.py, which is where that has to be right.
      Store as fractions of the app's 1100 x 703 plate frame, the frame and
      convention brain_outline already uses.
@@ -255,7 +255,7 @@ def build_plate(plate, DB, VECM, want_qc=False):
             # line that says where the structure is -- see label_leaders and
             # tools/label_leaders.py. Seeding those on the word instead is not a
             # near miss: the word is on the far side of a boundary, so the seed
-            # lands in a neighbour's face and the two swap territories.
+            # lands in a neighbor's face and the two swap territories.
             tip = tips.get(j)
             at = tip or (cx, cy)
             px, py = xf(im, at[0] * NW, at[1] * NH)
@@ -364,7 +364,7 @@ def build_plate(plate, DB, VECM, want_qc=False):
 
     # A territory too small to be a published structure, and any face the atlas
     # left unnamed, become unassigned space rather than being handed to a
-    # neighbour: the drawing closes them and does not name them, and absorbing
+    # neighbor: the drawing closes them and does not name them, and absorbing
     # them would put area into a region the atlas never claimed.
     # find_objects walks the raster once and hands back a box per label, so the
     # per-region work below stays inside its own region.
@@ -680,7 +680,7 @@ def write_features(DB):
     """`features` into the database, from atlaslib.FEATURES.
 
     It is written here rather than by a pass of its own because this is the
-    script whose behaviour it is: these are the names it declines to seed. Kept
+    script whose behavior it is: these are the names it declines to seed. Kept
     next to `structures`, which is what it qualifies."""
     block = A.features_block()
     if DB.get('features') == block:
@@ -759,7 +759,7 @@ def check_shared_edges(data, unass):
 
     This is the property that arc-wise simplification exists to preserve, and
     it is the one that matters: an interior edge appearing once, or three
-    times, means two neighbours disagree about where their common boundary is,
+    times, means two neighbors disagree about where their common boundary is,
     and there is a sliver between them that the hit test will claim twice or
     not at all. Rim edges legitimately appear once, so they are counted apart
     by looking for the reverse of each edge."""
@@ -797,7 +797,7 @@ def write_qc(plate, qc):
     ok = (gx >= 0) & (gx < W) & (gy >= 0) & (gy < H)
     lab = np.where(ok, LBL[np.clip(gy, 0, H - 1), np.clip(gx, 0, W - 1)], 0)
 
-    # colour ramp: traced boundaries green, inferred ones red
+    # color ramp: traced boundaries green, inferred ones red
     nreg = len(order)
     tint = np.zeros((nreg + 2, 3), np.uint8) + 255
     for ab, gid in order.items():
@@ -833,7 +833,7 @@ def validation_text(v, DB):
         "back into it and were seeded at the end of that line rather than on "
         "the word -- see `label_leaders`. A further %(snap)d sat on a boundary, "
         "or on a line this pass could not follow, and were pulled to the "
-        "largest face within a millimetre; %(drop)d could not be resolved at "
+        "largest face within a millimeter; %(drop)d could not be resolved at "
         "all. %(mir)d more seeds are not printed labels at all but mirrors of "
         "one about ML 0, filling a face the drawing seals on the hemisphere the "
         "atlas did not letter. %(feat)d of the seeds name no region at all -- the "
@@ -851,7 +851,7 @@ def validation_text(v, DB):
         "none of which the extraction was tuned "
         "to pass. (1) Every boundary between two regions is stored as one "
         "polyline, twice: %(share)s of directed boundary edges have their "
-        "reverse in exactly one neighbour, so the regions tile the section "
+        "reverse in exactly one neighbor, so the regions tile the section "
         "without overlapping it or leaving a sliver. (2) %(inside)s of printed "
         "labels fall inside the region they name, read at the end of the line "
         "where the atlas draws one. (3) Regions plus unassigned "

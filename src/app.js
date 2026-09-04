@@ -4,7 +4,7 @@ const DB = window.__ATLAS__, IMG = window.__IMG__;
    beside it, and the drawing traced over them. All three carry the atlas's own printed
    coordinate box and all three were cropped to it, so they are registered to each other
    by construction rather than by fitting -- the drawing's contours land on the cell and
-   fibre boundaries they were drawn from. That is what makes the switch worth having:
+   fiber boundaries they were drawn from. That is what makes the switch worth having:
    every overlay the app draws, and every printed label whose position it knows, is still
    in the right place on a plate with no labels printed on it at all.
 
@@ -24,16 +24,16 @@ const DB = window.__ATLAS__, IMG = window.__IMG__;
    dialog says. */
 const MRIS={};
 const SRC={drawing:IMG, nissl:window.__NISSL__, myelin:window.__MYELIN__, mri:MRIS};
-const SRCN={drawing:'labelled drawing', nissl:'Nissl section', myelin:'myelin section',
+const SRCN={drawing:'labeled drawing', nissl:'Nissl section', myelin:'myelin section',
             mri:'MRI plane'};
-let psrc='drawing', pgrey=false, pctr=100;
+let psrc='drawing', pgray=false, pctr=100;
 const srcOK = k => !!(SRC[k] && SRC[k][1]);
 const plateImg = (n,k=psrc) => ((srcOK(k)?SRC[k]:IMG)[n])||'';
-/* grey and contrast are a display filter, not a second copy of the image: the same string
+/* gray and contrast are a display filter, not a second copy of the image: the same string
    goes on the <img> and on the canvas the PNG export draws through, so what is saved is
    what was on screen. */
 const plateFilter = () =>
-  ((pgrey?'grayscale(1) ':'')+(pctr!==100?`contrast(${pctr}%)`:'')).trim() || 'none';
+  ((pgray?'grayscale(1) ':'')+(pctr!==100?`contrast(${pctr}%)`:'')).trim() || 'none';
 const S = DB.structures, P = DB.plates, AL = DB.aliases, LB = window.__BOX__;
 /* Where a printed label points. An abbreviation the atlas could not fit inside the
    region it names is set outside it, with a thin line drawn from the word back into
@@ -94,11 +94,11 @@ const GRP = DB.groups || [];
 GRP.forEach(g=>{ g.grp=true; g.key='@'+g.id; byAb[g.key]=g; });
 const GOK = GRP.length>0;
 const isGrp = a => !!(a&&byAb[a]&&byAb[a].grp);
-/* what to call the selection in a sentence, and what colour it is drawn in. `@ctx` is a
+/* what to call the selection in a sentence, and what color it is drawn in. `@ctx` is a
    key and not a name anybody would read, so a division is called by its name. */
 const selName = () => !sel ? '' : isGrp(sel) ? byAb[sel].name : sel;
 const selHue  = () => isGrp(sel) ? 'teal' : 'blue';
-/* the same two colours the stylesheet gives --mark and --markg, spelled out for the
+/* the same two colors the stylesheet gives --mark and --markg, spelled out for the
    canvas and the SVG, which are written to a file and cannot read a custom property */
 const MARKC='#0a5cff', MARKG='#0097a7';
 const markC = a => (a===undefined?isGrp(sel):isGrp(a)) ? MARKG : MARKC;
@@ -188,7 +188,7 @@ const LMDV=LM.map(([n])=>{ if(!SKLM) return null;
        in the frame, zero there, and lambda reads 0/0/0 however the head is turned.
    The second makes the pivot irrelevant, and not by choice: R(P-piv)+piv - [R(O-piv)+piv]
    is R(P-O) for every piv, so re-zeroing on a point IS rotating about it. Hence fCen/fAdd
-   rather than two copies of the formulae -- one centre to subtract, one vector to add
+   rather than two copies of the formulae -- one center to subtract, one vector to add
    back, and toFrame/fromFrame never learn which mode they are in. */
 const FRAME={on:false,pitch:0,roll:0,yaw:0,pap:0,pml:0,pdv:0,dap:0,dml:0,ddv:0,
              org:false,oref:0,oap:0,oml:0,odv:0};
@@ -201,7 +201,7 @@ let FRM=null;
 const oAbs = () => [FRAME.oap-LM[FRAME.oref][1], FRAME.oml, FRAME.odv];
 /* Whether any point actually moves. A re-zero does not: it renames where 0 is and leaves
    every distance and every angle exactly as the atlas printed them, which is why the
-   views below can honour one by relabelling an axis rather than redrawing anything. A
+   views below can honour one by relabeling an axis rather than redrawing anything. A
    rotation does move points -- so the plate, which is an image, can only say so, while
    the two views that draw from coordinates can offer to be turned into it. */
 const rotated = () => !!(FRAME.pitch||FRAME.roll||FRAME.yaw);
@@ -233,7 +233,7 @@ const fCen = () => FRAME.org ? oAbs()
                              : [FRAME.pap,FRAME.pml,FRAME.pdv];
 const fAdd = () => FRAME.org ? [FRAME.dap,FRAME.dml,FRAME.ddv]
                              : [FRAME.pap+FRAME.dap,FRAME.pml+FRAME.dml,FRAME.pdv+FRAME.ddv];
-function toFrame(ap,ml,dv){                     /* atlas millimetres -> working frame */
+function toFrame(ap,ml,dv){                     /* atlas millimeters -> working frame */
   if(!FRAME.on) return {ap,ml,dv};
   const M=FRM, C=fCen(), A=fAdd(), a=ap-C[0], m=ml-C[1], v=dv-C[2];
   return {ap:M[0]*a+M[1]*m+M[2]*v+A[0],
@@ -324,7 +324,7 @@ const ptsOf={};
 PTS.forEach(q=>(ptsOf[q.ab]||(ptsOf[q.ab]=[])).push(q));
 /* A superstructure's labels are its members', pooled -- and only on the plates the group
    is on, which for the pons and the medulla is narrower than where their members reach.
-   Filed under the group's own key, so the card's centre and spread, the projection, the
+   Filed under the group's own key, so the card's center and spread, the projection, the
    reverse lookup and the planner all read a group the way they read a structure. Not
    pushed into PTS: the background cloud plots each printed label once. */
 GRP.forEach(g=>{ const pl=new Set(g.plates), v=[];
@@ -337,15 +337,15 @@ let zoom=1, tx=0, ty=0;                        /* view transform, applied to #pa
 let showXY=false, showGrid=false, showSB=false, measMode=false;
 let showSK=false, pjsk=false;      /* the skull outline, on the plate and the projections */
 let showLM=false, pjlm=false;      /* stereotaxic landmarks, likewise */
-let mcOn=false, mcWash=45;         /* the map colouring, and how strongly it is washed on */
+let mcOn=false, mcWash=45;         /* the map coloring, and how strongly it is washed on */
 let mA=null, mB=null, mHover=null, lastPt=null, pickArm=false;
 /* the track being planned: which side of the brain, and the three angles of the approach.
    All three default to 0, which is the vertical dorsal approach. */
 let targSide=1, tgTilt=0, tgRoll=0, tgYaw=0, tgLegs=false;
 /* and what the target is, which is not always the label itself. tgPlate is the one plate
    to read the abbreviation from -- 0 for all of them, which is the median the planner has
-   always taken -- and tgOff moves the aim off the label in millimetres. Both default to
-   the old behaviour, so a plan made before either existed still means what it meant. */
+   always taken -- and tgOff moves the aim off the label in millimeters. Both default to
+   the old behavior, so a plan made before either existed still means what it meant. */
 let tgPlate=0, tgOff={ap:0,ml:0,dv:0};
 const tgOffOn = () => !!(tgOff.ap||tgOff.ml||tgOff.dv);
 /* and how long the probe is, if the whole shank is to be read rather than the tip alone.
@@ -544,9 +544,9 @@ function recentDraw(){
 }
 
 /* ---------- detail ---------- */
-/* the printed label positions give a structure a stereotaxic centre; ML is folded to
+/* the printed label positions give a structure a stereotaxic center; ML is folded to
    one side first, because the two hemispheres would otherwise average to the midline.
-   Pass F to read the centre in the working frame. Every label is transformed before the
+   Pass F to read the center in the working frame. Every label is transformed before the
    medians are taken, not after: a median is not linear, so rotating the median of the
    atlas positions is not the median of the rotated ones. The atlas itself is always
    bilaterally symmetric, so only the transformed reading can need splitting by side. */
@@ -572,7 +572,7 @@ function extentOf(a,F){
   return {fold,ml0:Math.min(...ml),ml1:Math.max(...ml),
           dv0:Math.min(...dv),dv1:Math.max(...dv),n:v.length};
 }
-/* a centre as one line, or a line per hemisphere once the frame has broken the atlas's
+/* a center as one line, or a line per hemisphere once the frame has broken the atlas's
    symmetry and folding the two sides onto one figure would be a fiction */
 function ctrTxt(o,F){
   const L=apLab(F);
@@ -601,7 +601,7 @@ function select(a){
      <dt>Bregma</dt><dd>${r.bregma_anterior.toFixed(2)} to ${r.bregma_posterior.toFixed(2)} mm</dd>
      <dt>Lambda</dt><dd>${(r.bregma_anterior+LMof('Lambda')).toFixed(2)} to ${(r.bregma_posterior+LMof('Lambda')).toFixed(2)} mm</dd>
      <dt>Interaural</dt><dd>${(r.bregma_anterior+LMof('Interaural')).toFixed(2)} to ${(r.bregma_posterior+LMof('Interaural')).toFixed(2)} mm</dd>
-     ${c?`<dt title="${g?'Median position of the printed labels of every structure in this division — a centre of the division, not its centroid':"Median position of this structure's printed labels — near, but not identical to, its centroid"}">Label centre</dt>
+     ${c?`<dt title="${g?'Median position of the printed labels of every structure in this division — a center of the division, not its centroid':"Median position of this structure's printed labels — near, but not identical to, its centroid"}">Label center</dt>
         <dd>${ctrTxt(fc||c,fc)}${fc?`<span class="atl">atlas ${ctrTxt(c)}</span>`:''}</dd>`:''}
      ${x?`<dt title="The full spread of those labels — what the projection below plots. Not the ${g?'division':'structure'}'s extent: for that, ${g?'select it on a plate':'hover or select it on a plate'}">Label spread</dt>
         <dd>${extTxt(fx||x)}${fx?`<span class="atl">atlas ${extTxt(x)}</span>`:''}</dd>`:''}
@@ -655,7 +655,7 @@ function galBuild(a){
   [...el.children].forEach(d=>{ d.onclick=()=>go(+d.dataset.p);
     d.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); d.click(); } }; });
   /* against the viewport rather than the strip, so a card scrolled out of sight draws
-     nothing either; the margin fills the neighbours in before they are scrolled to */
+     nothing either; the margin fills the neighbors in before they are scrolled to */
   if(typeof IntersectionObserver==='function'){
     galIO=new IntersectionObserver((es,io)=>{
       for(const e of es) if(e.isIntersecting){ io.unobserve(e.target); galThumb(e.target,a,tok); }
@@ -753,7 +753,7 @@ function preload(){
 
 /* ---------- selection marker, and saying so when it is not on this plate ---------- */
 /* On the histology the abbreviations are not printed, but their positions are known and
-   registered, so hovering still names what is there -- which is more use on an unlabelled
+   registered, so hovering still names what is there -- which is more use on an unlabeled
    section than on the drawing, not less. The hint says which of the two you are on.
    With extents loaded the whole area answers, not just the printed name, so say that
    instead: it is the difference between reading a legend and pointing at a structure. */
@@ -808,7 +808,7 @@ function mark(){
      this says what the dashing means. The projections are where a tilt reads true.
      Appended here rather than in tgDraw() because this line has one owner: written from
      two places it would double up, and go stale the moment the planner was put away. */
-  if(mcOn&&ROK) vhAdd(' \u00b7 <b>colours</b> tell neighbours apart and mean nothing else');
+  if(mcOn&&ROK) vhAdd(' \u00b7 <b>colors</b> tell neighbors apart and mean nothing else');
   if(tgOffPlate())
     vhAdd(' \u00b7 <b>track</b> dashed where it passes in front of or'+
       ' behind this plate');
@@ -819,7 +819,7 @@ function markSel(){
   cmpMark();
   if(!sel){ vhSay(hintTxt()); return; }
   const r=byAb[sel];
-  /* a superstructure is outlined in its own colour and never circled: it has no printed
+  /* a superstructure is outlined in its own color and never circled: it has no printed
      name to circle, and where its members are drawn it always has an outline */
   if(isGrp(sel)){ markGrp(r); return; }
   const bs=(LB[cur]||{})[sel]||[];
@@ -843,9 +843,9 @@ function markSel(){
   if(rg){
     ov.innerHTML=`<path d="${regD(rg)}"${regEst(rg)?' class="est"':''}></path>`;
     vhSay(`<b>${esc(sel)}</b> outlined${blkTxt(rg)} \u00b7 ${regTxt(rg)}`);
-    /* what has to be in view is the outline, so it is the outline's centre and the ends of
+    /* what has to be in view is the outline, so it is the outline's center and the ends of
        the labels' lines that count: a label set outside its region with a line drawn back
-       in would otherwise centre the view on the paper beside the section */
+       in would otherwise center the view on the paper beside the section */
     ensureVisible([[(rg.x0+rg.x1)/2/NW,(rg.y0+rg.y1)/2/NH,(rg.x1-rg.x0)/NW,(rg.y1-rg.y0)/NH],...at]);
     return;
   }
@@ -910,9 +910,9 @@ function ensureVisible(bs){
     return x>=0&&x<=b.width&&y>=0&&y<=b.height; });
   if(vis) return;
   const cx=bs.reduce((s,q)=>s+q[0],0)/bs.length, cy=bs.reduce((s,q)=>s+q[1],0)/bs.length;
-  centreOn(cx*NW,cy*NH);
+  centerOn(cx*NW,cy*NH);
 }
-function centreOn(fx,fy){
+function centerOn(fx,fy){
   const b=iwRect(); if(!b.width) return;
   tx=b.width/2 - zoom*fx/NW*b.width;
   ty=b.height/2 - zoom*fy/NH*b.height;
@@ -951,9 +951,9 @@ function zoomAt(k,cx,cy){
   tx = cx-(cx-tx)*(nk/zoom); ty = cy-(cy-ty)*(nk/zoom);
   zoom=nk; hideTip(); applyView();
 }
-function zoomCentre(k){ const b=iwRect(); zoomAt(k,b.width/2,b.height/2); }
-$('zi').onclick=()=>zoomCentre(zoom*1.6);
-$('zo').onclick=()=>zoomCentre(zoom/1.6);
+function zoomCenter(k){ const b=iwRect(); zoomAt(k,b.width/2,b.height/2); }
+$('zi').onclick=()=>zoomCenter(zoom*1.6);
+$('zo').onclick=()=>zoomCenter(zoom/1.6);
 $('zf').onclick=()=>{ zoom=1; tx=ty=0; hideTip(); applyView(); };
 
 /* the page scrolls under the wheel until you have opted into the viewer by zooming;
@@ -972,7 +972,7 @@ IW.addEventListener('dblclick',e=>{
 });
 
 /* ---------- compare: a second plate beside the first, under the same transform ----------
-   The three plates of a level are registered by construction and neighbouring levels
+   The three plates of a level are registered by construction and neighboring levels
    share the frame, so a second image can sit beside the first with the same zoom, the
    same pan and the same crosshair: what is at a point on the left is at that point on
    the right. It shows the other histology of this level, the drawing, or the plate
@@ -1051,7 +1051,7 @@ function setCmp(on,what){
 $('ckcmp').onchange=e=>setCmp(e.target.checked);
 $('cmpsel').onchange=e=>setCmp(true,e.target.value);
 /* the second pane answers the pointer the way the first does: the crosshair and the
-   readout, the wheel and a drag. A click on a neighbouring plate goes to it. */
+   readout, the wheel and a drag. A click on a neighboring plate goes to it. */
 function s2f2(e){ const b=IW2.getBoundingClientRect(); if(!b.width||!b.height) return null;
   return [((e.clientX-b.left)-tx)/zoom/b.width*NW, ((e.clientY-b.top)-ty)/zoom/b.height*NH]; }
 IW2.addEventListener('pointermove',e=>{
@@ -1088,7 +1088,7 @@ IW.addEventListener('pointerdown',e=>{
   ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
   if(ptrs.size===1){
     moved=0; startXY=lastXY={x:e.clientX,y:e.clientY};
-    /* a pinch or a cancelled drag ends with no click to consume the flag, so a fresh
+    /* a pinch or a canceled drag ends with no click to consume the flag, so a fresh
        press clears it, or the next tap would be the one swallowed */
     noClick=false;
     try{ IW.setPointerCapture(e.pointerId); }catch(_){}
@@ -1258,7 +1258,7 @@ function grpRegion(g,pl,by){
 function regIndex(){ const r=regBuild(cur); regs=r.regs; regBy=r.by; }
 /* the same question of any plate, for a track that runs through several */
 function regAtOn(pl,x,y){ for(const o of regBuild(pl).regs) if(regIn(o,x,y)) return o; return null; }
-/* a colour per structure, the same every time, for the bars that name several at once */
+/* a color per structure, the same every time, for the bars that name several at once */
 function regColor(ab){
   let h=0; for(let i=0;i<ab.length;i++) h=(h*31+ab.charCodeAt(i))>>>0;
   return `hsl(${h%360} 55% 62%)`;
@@ -1340,16 +1340,16 @@ function grpTxt(o,g){
          `does not print, so parts of this edge are inferred`:'');
 }
 
-/* ---------- the section as a map: a colour for every region, none like its neighbour ----------
+/* ---------- the section as a map: a color for every region, none like its neighbor ----------
    The extents tile the plate, which makes it a map in the cartographer's sense, and a map
-   can be coloured. Give every region a colour no region it touches is wearing and the
+   can be colored. Give every region a color no region it touches is wearing and the
    whole partition is visible at once -- where one structure stops and the next begins,
-   how much of the section each holds, which of them are neighbours -- without a single
+   how much of the section each holds, which of them are neighbors -- without a single
    line being drawn that the atlas does not draw. It is the one view here that answers
    about the plate rather than about the one structure you asked for, and on the Nissl,
    the myelin and the MRI, where nothing at all is printed, it is the only one.
 
-   Two regions are neighbours when they share a point, or come near enough to one that the
+   Two regions are neighbors when they share a point, or come near enough to one that the
    gap cannot be seen. The extents are a clean planar subdivision -- every boundary between
    two of them is one polyline held twice, vertex for vertex -- so the first half is answered
    off the vertices themselves, with no tolerance and no geometry at all: index every vertex,
@@ -1358,35 +1358,35 @@ function grpTxt(o,g){
    painted alike. The second half is the same judgement about a gap instead of a corner. A
    lamina a pixel or two wide -- Py between Or and Rad on plate 30 is one of 91 pairs over the
    62 plates that would otherwise have matched -- is a boundary the eye cannot find at the
-   zoom the plate opens at, and one colour on both sides of it reads as one region. So
+   zoom the plate opens at, and one color on both sides of it reads as one region. So
    anything within MCNEAR counts as touching, which costs nothing: the plates need exactly
-   the colours they needed without it.
+   the colors they needed without it.
 
-   The colours come from a greedy pass in smallest-last order -- take the least connected
-   region out of the graph over and over, then colour them back in the reverse of that
-   order. Each region then has at most as many already-coloured neighbours as the graph's
+   The colors come from a greedy pass in smallest-last order -- take the least connected
+   region out of the graph over and over, then color them back in the reverse of that
+   order. Each region then has at most as many already-colored neighbors as the graph's
    degeneracy when its turn comes, so the palette cannot run out on a map that is flat:
-   five colours cover 58 of the 62 plates here and six cover the other four, inside a palette
-   of seven. That is the four-colour theorem's neighbourhood, reached by the cheap route
+   five colors cover 58 of the 62 plates here and six cover the other four, inside a palette
+   of seven. That is the four-color theorem's neighborhood, reached by the cheap route
    rather than the famous one -- four is not what a greedy pass promises, and this does not
    claim it.
 
-   Each region asks first for one particular colour, hashed from its abbreviation, and gets
-   it wherever it is free. That costs nothing -- a free colour is as good as any other free
-   colour -- and buys the atlas some continuity: about half the structures hold their
-   colour from one plate to the next, so stepping through the levels is not a kaleidoscope,
+   Each region asks first for one particular color, hashed from its abbreviation, and gets
+   it wherever it is free. That costs nothing -- a free color is as good as any other free
+   color -- and buys the atlas some continuity: about half the structures hold their
+   color from one plate to the next, so stepping through the levels is not a kaleidoscope,
    and the same plate is the same picture in every session and in the export. Beyond that a
-   colour means nothing whatever, and the line under the plate says so.
+   color means nothing whatever, and the line under the plate says so.
 
    Two things are deliberately not painted. The faces the atlas seals and names nothing in
-   are left as they are, because there is no region there to colour. And the structures the
-   atlas draws no boundary between -- see regUnd() -- take one colour between them, because
-   a colour change is a boundary, and the split those were cut apart on is not a line this
+   are left as they are, because there is no region there to color. And the structures the
+   atlas draws no boundary between -- see regUnd() -- take one color between them, because
+   a color change is a boundary, and the split those were cut apart on is not a line this
    atlas has. What that paints is what the plate prints: one patch per boundary, whatever
    number of names the atlas has set inside it. */
 
 /* Okabe and Ito's seven, less the black and with a violet in its place: hues that stay
-   apart from one another in the common forms of colour blindness, and dark enough to read
+   apart from one another in the common forms of color blindness, and dark enough to read
    as a wash over white paper and over a photographed section alike. Not themed, for the
    reason the selection marker is not: they sit on the plate, and the plate is the same
    picture in either theme. */
@@ -1394,7 +1394,7 @@ const MCPAL=['#0072b2','#d55e00','#009e73','#cc79a7','#e69f00','#56b4e9','#7b5cd
 /* how close is touching: 0.05 mm, which is 2.9 px of the 1100 x 703 frame and about a
    pixel and a half on screen at the zoom the plate opens at */
 const MCNEAR=0.05*ML_PXMM;
-/* the colour a region asks for: a hash of its own name, so it is the same colour on every
+/* the color a region asks for: a hash of its own name, so it is the same color on every
    plate that draws it, in every session, and in the PNG and the SVG as on the screen */
 function mcPref(ab){
   let h=0; for(let i=0;i<ab.length;i++) h=(h*31+ab.charCodeAt(i))>>>0;
@@ -1455,7 +1455,7 @@ function mcBuild(pl){
   }
 
   /* the names the atlas draws no boundary between, gathered into one patch each: a run of
-     them that touch is one thing to colour, which is one boundary with several names in it */
+     them that touch is one thing to color, which is one boundary with several names in it */
   const und=new Set(R.regs.filter(regUnd).map(o=>o.ab)), unit={}, seen=new Set();
   for(const a of [...und].sort()){
     if(seen.has(a)) continue;
@@ -1470,7 +1470,7 @@ function mcBuild(pl){
     for(const b of nb(o.ab)){ const v=unit[b]; if(v!==u){ un(u).add(v); un(v).add(u); } } }
 
   /* smallest-last: strip the least connected patch off the graph until none is left, and
-     the reverse of that order is one every patch meets with few neighbours already coloured */
+     the reverse of that order is one every patch meets with few neighbors already colored */
   const nodes=[...uadj.keys()].sort(), deg=new Map(), left=new Set(nodes), ord=[];
   for(const v of nodes) deg.set(v,uadj.get(v).size);
   while(left.size){
@@ -1508,9 +1508,9 @@ function mcPaint(g,pl){
   g.innerHTML=mcRegs(pl).map(o=>{ const c=mcFill(M,o.ab);
     return `<path fill="${c}" stroke="${c}" d="${regD(o)}"></path>`; }).join('');
 }
-/* the sentence both exports carry: what the colours are, and what they are not */
-const mcNote = pl => 'Regions coloured so that no two that touch are alike — '+
-  `${mcBuild(pl).n} colours over ${regBuild(pl).regs.length} regions, and a colour names nothing`;
+/* the sentence both exports carry: what the colors are, and what they are not */
+const mcNote = pl => 'Regions colored so that no two that touch are alike — '+
+  `${mcBuild(pl).n} colors over ${regBuild(pl).regs.length} regions, and a color names nothing`;
 function mcDraw(){
   mcPaint($('mc'),cur);
   if(cmpOn) mcPaint($('mc2'),cmpPlate()); else $('mc2').innerHTML='';
@@ -1520,13 +1520,13 @@ function mcSet(on){
   mcDraw(); mark(); queueHash();
 }
 $('ckmc').onchange=e=>mcSet(e.target.checked);
-/* a build with no regional outlines has nothing to colour, so the control says so and goes
-   dead rather than offering a picture it cannot draw -- as the Grey box does on a source
-   that was published in grey */
+/* a build with no regional outlines has nothing to color, so the control says so and goes
+   dead rather than offering a picture it cannot draw -- as the Gray box does on a source
+   that was published in gray */
 if(!ROK){
   $('ckmc').disabled=true;
   $('ckmc').closest('.tg').title=
-    'This build carries no regional outlines, so there is nothing to colour';
+    'This build carries no regional outlines, so there is nothing to color';
 }
 $('mcs').oninput=e=>{
   mcWash=+e.target.value||45; $('mcl').textContent=mcWash+'%';
@@ -1670,7 +1670,7 @@ function hintWarn(msg){
    A note is a point on a plate with a line of text: an electrode tip found in the
    histology afterwards, a lesion, a place to come back to. Kept in this browser,
    exported and imported as JSON, and carried in a link while there are few enough to
-   fit in one. Stored on its plate and in atlas millimetres, so it draws on the plate,
+   fit in one. Stored on its plate and in atlas millimeters, so it draws on the plate,
    the projections and the 3-D view alike, and reads out in whatever frame is set. */
 let NOTES=[], anShow=false, anArm=false, anEdit=null, anClrT=null;
 const anOK = n => n && plateOf[n.p] && Number.isFinite(n.x) && Number.isFinite(n.y) &&
@@ -1829,7 +1829,7 @@ function drawXH(f,pl){
   const ml=toML(f[0]), dv=toDV(f[1]);
   if(FRAME.on){
     /* AP is no longer a property of the plate: tilt the frame and it drifts down the
-       section, by sin(pitch) per millimetre of DV -- about 2.5 mm across the brain at
+       section, by sin(pitch) per millimeter of DV -- about 2.5 mm across the brain at
        17 degrees. So the readout gives the AP of this point, not of the plate. */
     const q=toFrame(p.bregma,ml,dv);
     $('rd').innerHTML=`${apLab(1)} <b>${sgn(q.ap)}</b> · ML <b>${sgn(q.ml)}</b> · DV <b>${sgn(q.dv)}</b> mm`+
@@ -1875,10 +1875,10 @@ function drawMeas(){
   out.hidden=false;
   out.innerHTML=`<b>${d.toFixed(2)} mm</b> in plane · ΔML ${sgn(dml)} · ΔDV ${sgn(ddv)}`+
     ` · ${Math.min(Math.abs(ang),180-Math.abs(ang)).toFixed(1)}° from vertical`+
-    /* a rotation preserves length, so the millimetres hold in any frame; the angle does
+    /* a rotation preserves length, so the millimeters hold in any frame; the angle does
        not, and this tool was scoped to stay in the atlas, so it says which frame it is in.
        A re-zero changes neither -- both readings are differences -- so it says nothing. */
-    (FRAME.on&&rotated()?` <span class="fnote" title="A rotation preserves length, so the millimetres`+
+    (FRAME.on&&rotated()?` <span class="fnote" title="A rotation preserves length, so the millimeters`+
       ` hold in any frame. The angle does not — this tool was left in atlas coordinates.">`+
       `in the atlas frame</span>`:'')+
     (mB?` <button type="button" class="z" id="mclr">Clear</button>`:'');
@@ -1935,7 +1935,7 @@ const PSTEP = P.length>1 ? Math.abs(P[1].bregma-P[0].bregma) : .35;
 /* Which section an AP falls on. Nothing interpolates between plates: the outlines are
    350 um apart and an interpolated surface would be arithmetic, not anatomy, the same
    objection the 3-D view's streaking already carries. So the surface is the nearest
-   plate's, and an entry AP is quantised at the section spacing however smooth the drawn
+   plate's, and an entry AP is quantized at the section spacing however smooth the drawn
    line looks. Beyond either end of the series there is no atlas, and so no brain. */
 function plateAt(ap){
   let i=Math.round((P[0].bregma-ap)/PSTEP), best=-1, bd=1e9;
@@ -1953,7 +1953,7 @@ function pip(g,x,y){
   }
   return c;
 }
-/* atlas millimetres in, is this inside the section */
+/* atlas millimeters in, is this inside the section */
 function inBrain(ap,ml,dv){
   const p=plateAt(ap); if(!p) return false;
   const gs=OUTL[p.plate]; if(!gs) return false;
@@ -1984,14 +1984,14 @@ function tgDir(){
 
 /* which plates an abbreviation is actually printed on, in order. Not r.plates: that is
    the range the structure is listed for, and a structure present at a level is not
-   necessarily labelled there. Only a plate carrying a label can be a plate to read one
+   necessarily labeled there. Only a plate carrying a label can be a plate to read one
    from. */
 function tgPlates(a){
   const v=(a&&ptsOf[a])||[];
   return [...new Set(v.map(q=>q.p))].sort((x,y)=>x-y);
 }
 
-/* the target: the label centre of the selection, folded onto the chosen hemisphere.
+/* the target: the label center of the selection, folded onto the chosen hemisphere.
    Folded in atlas coordinates, where the atlas really is mirror-symmetric and the fold is
    exact, and only then carried into the frame -- and each label separately, because a
    median is not linear and the median of the rotated points is not the rotation of the
@@ -2001,7 +2001,7 @@ function tgPlates(a){
    has a label on each, and the median of all of them is a point in the middle of the
    structure rather than a point on the section anybody is aiming at. And an offset, which
    moves the aim off the label -- 0.2 mm dorsal to it, say. The offset goes on beside the
-   fold, in atlas millimetres and before the carry into the frame, because it is part of
+   fold, in atlas millimeters and before the carry into the frame, because it is part of
    naming the target and naming a target is anatomy: "dorsal" has to mean dorsal in the
    brain, not up the manipulator's own axis. Everything downstream of here -- the entry,
    the angles, the drive -- is still the rig's. The line between the two is exactly this
@@ -2033,7 +2033,7 @@ const tgName = o => (byAb[o.abbr]||{}).abbr || o.abbr;
 
 /* ---- where the track leaves the brain ----
    Marched from well outside back toward the target, taking the outermost point that is
-   inside AND has a fifth of a millimetre of brain behind it. The guard is there because
+   inside AND has a fifth of a millimeter of brain behind it. The guard is there because
    the outlines are honest: the drawing points at labels printed outside the section with
    leader lines a few pixels wide, and the contour runs out along them. A rule that took
    the first crossing outright would call one of those the brain surface. Coarse pass
@@ -2055,7 +2055,7 @@ function tgWalk(T,d){
     if(inb(s)&&solid(s,TG_F)) return {s, p:at(s)};
   return {s:hit, p:at(hit)};
 }
-/* the dorsal surface straight above a point, in atlas millimetres -- what tells a track
+/* the dorsal surface straight above a point, in atlas millimeters -- what tells a track
    that entered on the flank of the section from one that came in through the top */
 function tgSurf(ap,ml){
   const inb=dv=>inBrain(ap,ml,dv);
@@ -2173,7 +2173,7 @@ function tgPath(o){
     else { last={key,ab,est,name,from:d,to:d,plates:new Set(pl?[pl.plate]:[])}; segs.push(last); }
   }
   /* a sliver of nothing at an end is the entry sitting on the outline or the target on a
-     boundary; two samples of it say nothing, so it goes to its neighbour, and two runs of
+     boundary; two samples of it say nothing, so it goes to its neighbor, and two runs of
      one structure that it kept apart are joined again */
   for(let i=segs.length-1;i>=0&&segs.length>1;i--){
     const q=segs[i];
@@ -2187,7 +2187,7 @@ function tgPath(o){
   const tip = tgProbe ? (segs.find(q=>tgProbe>=q.from-1e-9&&tgProbe<=q.to+1e-9)||segs[segs.length-1]) : null;
   return {segs,reach,tip};
 }
-/* a point a given depth down the track from the entry, in atlas millimetres */
+/* a point a given depth down the track from the entry, in atlas millimeters */
 function tgAtDepth(o,d){
   const s=o.len-d;
   return tgBack({ap:o.T.ap-o.d[0]*s, ml:o.T.ml-o.d[1]*s, dv:o.T.dv-o.d[2]*s});
@@ -2240,7 +2240,7 @@ function tgHead(o){
 }
 function tgCoord(q,F){ return `${apLab(F)} ${sgn(q.ap)} · ML ${sgn(q.ml)} · DV ${sgn(q.dv)}`; }
 /* the offset in words, dorsoventral first because that is the one anybody sets: a plan is
-   usually so many millimetres above or below a label, and only then off it in the plane.
+   usually so many millimeters above or below a label, and only then off it in the plane.
    Named by direction rather than by sign for the same reason the heading is. */
 function tgOffTxt(){
   const a=[], say=(v,p,m)=>{ if(v) a.push(`${Math.abs(v).toFixed(2)} mm ${v>0?p:m}`); };
@@ -2252,7 +2252,7 @@ function tgOffTxt(){
 /* where the target came from, in one line: how many labels, off which plates, on which
    side. It is the sentence the plan is only as good as. */
 function tgFrom(o){
-  /* For a division this is the median of every label its members carry -- a centre of the
+  /* For a division this is the median of every label its members carry -- a center of the
      division, and nothing the atlas prints a name at. Said in as many words, because the
      one thing that must not happen is somebody reading it as a nucleus. */
   const g=byAb[o.abbr]&&byAb[o.abbr].grp?byAb[o.abbr]:null;
@@ -2322,7 +2322,7 @@ function tgPanel(){
     `<dt>${k}</dt><dd>${v}${s?`<span class="sub">${s}</span>`:''}</dd>`).join('');
   const warn=[];
   /* an offset can walk the target off the section it was taken from, which is a real
-     plan for a point on a neighbouring plate and not an error -- but it is not what the
+     plan for a point on a neighboring plate and not an error -- but it is not what the
      plate menu appears to promise, so it is said out loud */
   if(o.pick && o.plate && o.plate!==o.pick)
     warn.push(`The offset carries the target off plate ${o.pick} and onto `+
@@ -2419,7 +2419,7 @@ function tgDraw(){
   if(typeof v3frame==='function') v3frame();
 }
 /* the sphere cut by this plate's plane: a circle shrinking with the plane's distance from
-   the target, in atlas millimetres on both axes */
+   the target, in atlas millimeters on both axes */
 function tgFootPlate(o){
   if(!tgFoot||!o) return [];
   const dAP=o.Ta.ap-plateOf[cur].bregma, rr=tgFoot*tgFoot-dAP*dAP;
@@ -2512,7 +2512,7 @@ function tgNotes(){
      said now depends on how the target was named and a fixed set of lines cannot say it */
   ln.push(...tgWrap(
     (tgOffOn()
-      ? 'The target is an offset in atlas millimetres from the median position of the '+
+      ? 'The target is an offset in atlas millimeters from the median position of the '+
         'structure’s printed abbreviation, with lateral taken toward the chosen side; the '+
         'label is not a centroid. '
       : 'The target is the median position of the structure’s printed abbreviation, not its '+
@@ -2523,7 +2523,7 @@ function tgNotes(){
         ? 'It is the median across every plate the abbreviation is printed on, which is a '+
           'point inside the structure rather than a point on any one section. '
         : '')+
-    `The surface is the outline of the nearest plate, so the entry AP is quantised at the `+
+    `The surface is the outline of the nearest plate, so the entry AP is quantized at the `+
     `${(PSTEP*1000).toFixed(0)} um section spacing, and it is a fixed, sectioned brain rather than the `+
     'surface under intact dura. Experimental.', 78));
   ln.push('');
@@ -2533,7 +2533,7 @@ function tgNotes(){
 
 /* ---- wiring ---- */
 /* A build without the outline block has nothing to plan a track against, so the mode
-   says so on the button rather than opening a pane that can only apologise -- the same
+   says so on the button rather than opening a pane that can only apologize -- the same
    courtesy the toolbar pays a build with no histology. Disabled rather than removed: a
    link carrying a plan can still arrive, and the pane it lands on has to exist to
    explain itself. */
@@ -2676,7 +2676,7 @@ function exportPNG(){
   const g=c.getContext('2d');
   g.scale(SC,SC);
   g.fillStyle='#fff'; g.fillRect(0,0,NW,NH+CAP);
-  /* grey and contrast are a filter on the <img>, so the canvas has to be given the same
+  /* gray and contrast are a filter on the <img>, so the canvas has to be given the same
      one or the sheet would not be the plate that was on screen. Overlays are drawn after
      it is cleared: a contrast stretch belongs to the section, not to the annotation. */
   g.filter=plateFilter();
@@ -2684,7 +2684,7 @@ function exportPNG(){
   catch(_){ hintWarn('The plate image is still loading — try again in a moment.'); return; }
   finally{ g.filter='none'; }
 
-  /* the map colouring, under every other mark exactly as it is on screen */
+  /* the map coloring, under every other mark exactly as it is on screen */
   if(mcOn&&ROK){
     const M=mcBuild(cur);
     g.globalAlpha=mcWash/100; g.lineWidth=0.5;
@@ -2803,8 +2803,8 @@ function exportPNG(){
   g.fillText(`AP   bregma ${p.bregma.toFixed(2)}  ·  lambda ${p.lambda_.toFixed(2)}  ·  interaural ${p.interaural.toFixed(2)}  ·  occipital crest ${p.occipital_crest.toFixed(2)} mm`,0,NH+50);
   /* whatever else was drawn on the plate gets a word, so the mark is never unexplained */
   const notes=[];
-  if(psrc!=='drawing') notes.push(`${SRCN[psrc][0].toUpperCase()+SRCN[psrc].slice(1)} — unlabelled, registered to the drawing by the printed coordinate box`);
-  if(pgrey||pctr!==100) notes.push(`Shown ${[pgrey&&'in grey',pctr!==100&&`at ${(pctr/100).toFixed(1)}× contrast`].filter(Boolean).join(' and ')}`);
+  if(psrc!=='drawing') notes.push(`${SRCN[psrc][0].toUpperCase()+SRCN[psrc].slice(1)} — unlabeled, registered to the drawing by the printed coordinate box`);
+  if(pgray||pctr!==100) notes.push(`Shown ${[pgray&&'in gray',pctr!==100&&`at ${(pctr/100).toFixed(1)}× contrast`].filter(Boolean).join(' and ')}`);
   if(mcOn&&ROK) notes.push(mcNote(cur));
   if(mA&&mB){ const dml=toML(mB[0])-toML(mA[0]), ddv=toDV(mB[1])-toDV(mA[1]);
     notes.push(`Measured ${Math.hypot(dml,ddv).toFixed(2)} mm (ΔML ${sgn(dml)}, ΔDV ${sgn(ddv)})`); }
@@ -2862,7 +2862,7 @@ function exportSVG(){
      transformed group is the page frame the paths are still in */
   if(ROK&&mcOn){
     const M=mcBuild(cur), nm=t=>byAb[t]?t+' — '+byAb[t].name:t;
-    o.push(`<g id="region-colours" opacity="${(mcWash/100).toFixed(2)}" `+
+    o.push(`<g id="region-colors" opacity="${(mcWash/100).toFixed(2)}" `+
       'fill-rule="evenodd" stroke-width="0.8">'+
       mcRegs(cur).map(r=>{ const c=mcFill(M,r.ab);
         return `<path fill="${c}" stroke="${c}" data-abbr="${xml(r.ab)}" d="${regD(r)}">`+
@@ -2888,7 +2888,7 @@ function exportSVG(){
         g.map(([x,y])=>(x*NW).toFixed(1)+' '+(y*NH).toFixed(1)).join('L')+'Z"/></g>').join('')+'</g>');
   }
 
-  /* --- overlays, in the order and the colours the PNG draws them --- */
+  /* --- overlays, in the order and the colors the PNG draws them --- */
   if(showGrid){
     const L=[];
     for(let m=-8;m<=8;m++){ const x=n2(fromML(m));
@@ -3044,7 +3044,7 @@ function exportCSV(){
 }
 /* one row per printed label rather than one per structure: every located label of the
    structures in the list, with the triplet the app reads it at -- the end of its leader
-   line where the atlas draws one, the centre of the word otherwise */
+   line where the atlas draws one, the center of the word otherwise */
 function exportLabelsCSV(){
   const q=v=>`"${String(v).replace(/"/g,'""')}"`;
   const head=['abbr','name','plate','label_index','ap_bregma_mm','ml_mm','ml_abs_mm','dv_mm','position_from'];
@@ -3073,7 +3073,7 @@ $('elab').onclick=exportLabelsCSV;
    so all 6,220 of them can be scattered at once. That shows a structure's whole extent
    down the brain in one picture, which a stack of coronal plates cannot do. */
 const PM={l:56,r:14,t:24,b:44}, K=40, AP0=8.15, AP1=-13.90, PW=(AP0-AP1)*K;
-/* How far the turned cloud runs past the atlas's own extents, in whole millimetres per
+/* How far the turned cloud runs past the atlas's own extents, in whole millimeters per
    end of each axis. A view that is turned but not widened would simply drop the dots the
    rotation pushed out -- at 17 degrees of pitch that is most of the cortex -- so the plot
    grows to hold them and the axis keeps its 1/40 mm to the unit either way. Every entry
@@ -3086,7 +3086,7 @@ const VIEWS={
       nm:'top-down projection, anterior\u2013posterior against mediolateral'}
 };
 /* This view plots atlas positions until it is asked not to. A re-zero never moves a dot,
-   only the numbering, so the axes are ruled and labelled from wherever zero now is and
+   only the numbering, so the axes are ruled and labeled from wherever zero now is and
    the captions name it. A rotation does move dots -- so with *In frame* ticked the cloud
    is turned by it and the axes become the frame's own, and without it the view stays in
    atlas coordinates and says so, which is all it could ever do before. */
@@ -3103,7 +3103,7 @@ const pjZero = () => (shifted()||fvOn()) && FRAME.org ? esc(orgName()) : 'bregma
 const dotTxt=q=>{ const F=shifted()||fvOn(), c=F?toFrame(q.ap,q.ml,q.dv):q;
   return `${FRAME.on&&!F?'atlas ':''}${apLab(F)} ${sgn(c.ap)}`+
          ` \u00b7 ML ${sgn(c.ml)} \u00b7 DV ${sgn(c.dv)} mm`; };
-/* whole millimetres of the axis as it is labelled, which is the atlas's own lattice until
+/* whole millimeters of the axis as it is labeled, which is the atlas's own lattice until
    an origin moves it. Two apart, from the top of the range down -- the same set the fixed
    lists used to spell out, including the extra ticks the wider skull and landmark views
    open up, but derived from the range rather than kept in step with it by hand. */
@@ -3132,7 +3132,7 @@ function fvBounds(){
   fvP.ml=[lowPad(b.ml[0],VIEWS.ml.lo), hiPad(b.ml[1],VIEWS.ml.hi)];
   pA0=AP0+fvP.ap[1]; PWv=(pA0-(AP1-fvP.ap[0]))*K;
 }
-/* axis ticks are whole millimetres, and get a real minus rather than a hyphen */
+/* axis ticks are whole millimeters, and get a real minus rather than a hyphen */
 const tick=v=>v>0?'+'+v:(v<0?'\u2212'+(-v):'0');
 const PJS=$('pjs'), PJW=$('pjw'), PJT=$('pjt'), PJH=$('pjhi');
 let pview='dv', bgd={}, fld={}, phot=null;
@@ -3263,7 +3263,7 @@ const pjTurn = () => !fvOn() ? '' :
   ` own angle and cannot follow, so they are unavailable while this is on.`;
 function pjNote(q){
   const V=VIEWS[pview], N=$('pjn');
-  const dot='A dot is where an abbreviation is <em>printed</em> \u2014 close to its structure, not its centre.';
+  const dot='A dot is where an abbreviation is <em>printed</em> \u2014 close to its structure, not its center.';
   if(!sel){ N.innerHTML=`Every located label in the atlas. ${dot} Hover one to read it, click it to open its plate.`+pjTurn(); return; }
   const r=byAb[sel];
   if(!q.length){ N.innerHTML=`<b>${esc(selName())}</b> is indexed for plates ${r.first_plate}\u2013${r.last_plate}, but none of its labels were located, so there is nothing to plot.`; return; }
@@ -3371,7 +3371,7 @@ $('v3f').onchange=e=>fvSet(e.target.checked);
    the GPU, plus the same 6,220 label points the projection already carries.
 
    The volume covers the interior of the plates' own printed coordinate box, which is
-   what makes the world extent exact -- that box is where the millimetres come from.
+   what makes the world extent exact -- that box is where the millimeters come from.
    A flood fill inward from the border drops everything outside the brain, and that is
    what removes the plate number and the AP-coordinate table without hand-tuned
    rectangles: they are marginalia, so they lose on area to the section. */
@@ -3387,7 +3387,7 @@ const V3X0=toML(V3C[0]), V3X1=toML(V3C[2]),
       V3Y0=toDV(V3C[3]), V3Y1=toDV(V3C[1]),        /* DV grows upward, so [3] is the floor */
       V3Z0=P[0].bregma,  V3Z1=P[P.length-1].bregma;
 const V3YC=(V3Y0+V3Y1)/2, V3ZS=V3Z0-V3Z1;
-/* world millimetres, centred on the brain: x mediolateral, y dorsoventral, z posterior */
+/* world millimeters, centered on the brain: x mediolateral, y dorsoventral, z posterior */
 const w3y=dv=>dv-V3YC, w3z=ap=>(V3Z0-ap)-V3ZS/2;
 
 const V3CV=$('v3c'), V3WRAP=$('v3w'), V3MSG=$('v3msg'), V3TIP=$('v3t');
@@ -3458,12 +3458,12 @@ function v3cam(Q){
 
 /* ---------- turning the scene into the working frame ----------
    Everything here -- the section stack, the printed labels, the skull shell, the plate ring
-   and the planned track -- is held in one world built affinely out of atlas millimetres
-   (x = ML, y = DV about the centre, z = bregma minus AP). So a frame rotation is a model
+   and the planned track -- is held in one world built affinely out of atlas millimeters
+   (x = ML, y = DV about the center, z = bregma minus AP). So a frame rotation is a model
    matrix in front of the camera rather than a rebuild of any of it, and three transformed
    basis vectors are the whole of that matrix. Only the rotation goes in: the translation
    half of the frame moves zero, not the brain, and the view already reads its axes from
-   wherever zero is. Taken about the world's own centre, so the brain turns in place
+   wherever zero is. Taken about the world's own center, so the brain turns in place
    instead of swinging out of shot. The result is S R S-inverse for an S of determinant
    -1, so it is still a rotation and its inverse is still its transpose. */
 let v3mo=null, v3camM=null;
@@ -3532,7 +3532,7 @@ void main(){ v_uv=a_p; gl_Position=u_mvp*vec4(u_o+u_u*a_p.x+u_v*a_p.y,1.0); }`;
    band of tissue out of it. At 0, 1 and 1 the curve is the identity, so an untouched view
    -- and every link written before there was anything to set -- draws exactly what it did.
    The contour channel is left alone: it is a drawn line, already there or absent, and it
-   also picks the colour, so windowing it would recolour the render rather than stretch it. */
+   also picks the color, so windowing it would recolor the render rather than stretch it. */
 const V3_TONE=`
 float tone(float v){
   float t=clamp((v-u_t0)/max(u_t1-u_t0,0.004),0.0,1.0);
@@ -3584,9 +3584,9 @@ void main(){
     /* the volume was filled row 0 first, which is the dorsal edge of the plate, so
        the DV axis runs the other way to the world's -- the same flip the slice
        shader applies. Miss it here and the brain renders upside down. */
-    /* plate k is layer k, whose centre is (k+0.5)/62. The box runs from the first
-       plate's plane to the last's, so its z is rescaled onto the layer centres, or a
-       mid-stack sample blends a quarter of the neighbouring plate in */
+    /* plate k is layer k, whose center is (k+0.5)/62. The box runs from the first
+       plate's plane to the last's, so its z is rescaled onto the layer centers, or a
+       mid-stack sample blends a quarter of the neighboring plate in */
     vec2 s=texture(u_vol, vec3(uvw.x, 1.0-uvw.y, (uvw.z*${V3D-1}.0+0.5)/${V3D}.0)).rg;
     float a=clamp((s.g + tone(s.r)*u_ink)*u_op*dt*7.0,0.0,1.0);
     acc.rgb+=(1.0-acc.a)*a*mix(u_ti,u_ce,smoothstep(0.03,0.30,s.g));
@@ -3693,7 +3693,7 @@ async function v3build(onp, src=psrc, box=v3box){
     g.drawImage(im, V3C[0]*f,V3C[1]*f, (V3C[2]-V3C[0])*f,(V3C[3]-V3C[1])*f, 0,0, V3W,V3H);
     const px=g.getImageData(0,0,V3W,V3H).data;
     if(mri){
-      /* stored grey, so one channel is the whole of it, and bright is tissue */
+      /* stored gray, so one channel is the whole of it, and bright is tissue */
       for(let i=0;i<N;i++){ ink[i]=px[i*4]; red[i]=0; }
     } else
     for(let i=0;i<N;i++){
@@ -3766,8 +3766,8 @@ async function v3build(onp, src=psrc, box=v3box){
   return vol;
 }
 
-/* ---------- colours come from the sheet, so the view follows the theme ---------- */
-function v3colours(){
+/* ---------- colors come from the sheet, so the view follows the theme ---------- */
+function v3colors(){
   const cs=getComputedStyle(document.documentElement);
   const hex=v=>{ const s=cs.getPropertyValue(v).trim();
     const m=/^#?([0-9a-f]{6})$/i.exec(s);
@@ -3778,7 +3778,7 @@ function v3colours(){
           c0:hex('--cloud'), c1:hex('--cloud2'), c2:hex('--mark'), cg:hex('--markg'),
           bg:hex('--panel'), bone:hex('--bone'), tg:hex('--targ'), an:hex('--note'),
           lm:hex('--lmk') };
-  for(const k in MESHC) if(MESHC[k].col) MESHC[k].col=null;   /* recoloured on next draw */
+  for(const k in MESHC) if(MESHC[k].col) MESHC[k].col=null;   /* recolored on next draw */
 }
 
 function v3init(){
@@ -3819,11 +3819,11 @@ function v3init(){
   gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(nPT),gl.DYNAMIC_DRAW);
   gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1,1,gl.FLOAT,false,0,0);
   gl.bindVertexArray(null);
-  v3colours();
+  v3colors();
   return true;
 }
 
-/* Decode the embedded skull surface once, in atlas millimetres, for everyone: the 3-D
+/* Decode the embedded skull surface once, in atlas millimeters, for everyone: the 3-D
    shell, the plate slicer and the PNG export all read this one copy. */
 let SKM=null;
 function skullMesh(){
@@ -3837,7 +3837,7 @@ function skullMesh(){
   return SKM={pos,idx:F,nf:SK.nf};
 }
 /* the skull's cut through one plate's plane: slice every triangle against ap=bregma,
-   then chain the crossing segments into polylines by their shared quantised endpoints.
+   then chain the crossing segments into polylines by their shared quantized endpoints.
    Cached per plate -- the mesh never changes, so a plate is sliced at most once. */
 const SKSL={};
 function skullLoops(k){
@@ -3949,7 +3949,7 @@ function drawLM(){
 
 /* Build the GPU copy for the 3-D shell from the shared decode, with smooth per-vertex
    normals accumulated here rather than shipped (they are derivable, so shipping them
-   would double the payload for nothing). The atlas->world map (x=ml, y=dv-centre,
+   would double the payload for nothing). The atlas->world map (x=ml, y=dv-center,
    z=bregma-ap-half) has determinant -1, so the triangle winding is swapped on the way
    in to keep outward faces front-facing. */
 function v3skullBuild(){
@@ -4037,7 +4037,7 @@ function v3flags(){
 
 /* ---------- where the panes sit ----------
    Side by side while the view is wider than it is tall, stacked while it is not, which is
-   what a phone held upright and a maximised window respectively get. In CSS pixels of the
+   what a phone held upright and a maximized window respectively get. In CSS pixels of the
    wrap with the origin top left, the way the pointer arrives; GL's own upward y is flipped
    back at the one point it is used. The two rectangles tile the wrap exactly, so the
    rounding of an odd width lands inside a pane rather than as a seam between them. */
@@ -4048,7 +4048,7 @@ function v3rects(){
   const a=Math.round(h/2); return [[0,0,w,a],[0,a,w,h-a]];
 }
 /* The divider, the pane letters and the frame round the pane the toolbar is on. Laid over
-   the canvas as elements rather than drawn into it: they then take the sheet's own colours
+   the canvas as elements rather than drawn into it: they then take the sheet's own colors
    the way the rest of the chrome does, and stay crisp at any device pixel ratio. */
 function v3chrome(R){
   v3lmLab(R);
@@ -4094,7 +4094,7 @@ function v3lmDV(k){
 /* How far out to carry the ear-bar axis. The canals are where the fit puts them and the
    rings are drawn there; the ends of the bar are not a landmark at all -- a bar comes from
    outside the head -- so they are set from the skull's own widest half-width plus a margin,
-   which puts them clear of the bone from any angle rather than a fraction of a millimetre
+   which puts them clear of the bone from any angle rather than a fraction of a millimeter
    inside it, where the canals themselves sit. Read off the top-down silhouette, which is a
    hundred-odd points already in hand, rather than off the decoded mesh. */
 let v3lmW=0;
@@ -4260,14 +4260,14 @@ function v3draw(Q,w,h,dpr){
     gl.uniform3f(U(pSlice,'u_u'),V3X1-V3X0,0,0);
     gl.uniform3f(U(pSlice,'u_v'),0,w3y(V3Y1)-w3y(V3Y0),0);
     const uo=U(pSlice,'u_o'), uz=U(pSlice,'u_z');
-    /* back to front, or the near slices erase what is behind them. The world is centred
+    /* back to front, or the near slices erase what is behind them. The world is centered
        on the stack and z runs caudally, so a camera at negative z is on the rostral side,
        where plate a is nearest: that side draws from b down to a, the other from a up */
     const rostral = cam[2] < 0;
     for(let n=0;n<=Q.b-Q.a;n++){
       const k = rostral ? Q.b-n : Q.a+n;
       gl.uniform3f(uo,V3X0,w3y(V3Y0),w3z(P[k].bregma));
-      gl.uniform1f(uz,(k+.5)/V3D);             /* the centre of layer k, not a point between two */
+      gl.uniform1f(uz,(k+.5)/V3D);             /* the center of layer k, not a point between two */
       gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
     }
   } else if(Q.mode==='volume'){
@@ -4483,7 +4483,7 @@ V3CV.addEventListener('pointerdown',e=>{
        other one would be a control you had to aim twice. */
     if(v3two&&h.i!==v3ed) v3edit(h.i);
     v3drag={x:e.clientX,y:e.clientY,pan:e.button===2||e.shiftKey,i:h.i}; v3moved=0;
-    v3noclick=false;                          /* a pinch or a cancelled drag left no click to clear it */
+    v3noclick=false;                          /* a pinch or a canceled drag left no click to clear it */
     try{ V3CV.setPointerCapture(e.pointerId); }catch(_){}
     V3WRAP.classList.add('drag'); v3hide();
   } else if(v3p.size===2){
@@ -4726,13 +4726,13 @@ function meshGPU(key,m){
   gl.bindVertexArray(null);
   return MESHC[key]={va, n:d.nf*3, type:d.F instanceof Uint32Array?gl.UNSIGNED_INT:gl.UNSIGNED_SHORT};
 }
-/* an HSL colour, as the bars use, to the RGB triple the shader wants */
+/* an HSL color, as the bars use, to the RGB triple the shader wants */
 function hslRGB(h,sat,l){
   const a=sat*Math.min(l,1-l), f=n=>{ const k=(n+h/30)%12; return l-a*Math.max(-1,Math.min(k-3,9-k,1)); };
   return [f(0),f(8),f(4)];
 }
 function meshColor(ab){
-  /* every mesh of a superstructure in the one colour the plate outlines it in: they are
+  /* every mesh of a superstructure in the one color the plate outlines it in: they are
      parts of a thing, and twenty hues would read as twenty things */
   if(isGrp(sel)) return v3col.cg;
   if(ab===sel||(sel&&ab===meshKey(sel))) return v3col.c2;
@@ -4798,7 +4798,7 @@ function meshDraw(Q,M){
   if(Q.ms){ gl.depthMask(false); draw('surface', MESH.surface.mesh, v3col.ti, .16); gl.depthMask(true); }
   gl.disable(gl.DEPTH_TEST); gl.bindVertexArray(null);
 }
-/* the selection's mesh as a binary STL, in atlas millimetres (ML, DV, AP). A
+/* the selection's mesh as a binary STL, in atlas millimeters (ML, DV, AP). A
    superstructure writes every mesh it is drawn from into the one file, as separate shells
    in one solid -- which is what it is: there is no surface of a division that the atlas
    drew, only its members' surfaces standing together.
@@ -4847,9 +4847,9 @@ $('v3mfb').onclick=()=>$('v3mfile').click();
    FSLeyes, Slicer or nibabel and can be measured, resliced or registered against. The
    header is 348 bytes of DataView and needs no library, which is how tools/volume.py
    writes the label volume beside it -- voxels x fastest in (ML, AP, DV) order so the file
-   reads as RAS, with an sform putting each voxel centre at its atlas millimetres.
+   reads as RAS, with an sform putting each voxel center at its atlas millimeters.
 
-   Millimetres are the atlas's own, from bregma as the plates print it, which is the frame
+   Millimeters are the atlas's own, from bregma as the plates print it, which is the frame
    the STL export writes in too. A re-zero renames coordinates in the app; it does not move
    the sections, and a file carrying a private origin would be the one thing about it a
    reader could not check.
@@ -4862,7 +4862,7 @@ $('v3mfb').onclick=()=>$('v3mfile').click();
    test holds to this geometry -- and takes its volume from v3build(); both reach it
    through the __gae handle at the foot of the file. */
 function v3niiBuf(vol,src){
-  /* On the labelled drawing the red contour ink is a picture in its own right, so it goes
+  /* On the labeled drawing the red contour ink is a picture in its own right, so it goes
      out as a second volume beside the tissue. A photographed section has no contour
      channel at all -- it is tissue the whole way through -- so there one volume is the
      whole of what was read. */
@@ -4883,7 +4883,7 @@ function v3niiBuf(vol,src){
       }
     }
   }
-  /* the voxel, and where its first centre sits. Across a plate that is the printed
+  /* the voxel, and where its first center sits. Across a plate that is the printed
      coordinate box divided by the texture, 32.4 um; through the stack it is the plate
      spacing, 350 um. The eleven-fold anisotropy goes into the file rather than being
      resampled away: a reader that interpolates it can say so, and one that does not is
@@ -4921,7 +4921,7 @@ function v3note(){
   const N=$('v3n');
   if(v3fail){ N.textContent=''; return; }
   /* with two panes on screen the note is about the one the toolbar is on, and has to say
-     which -- every number in it, from the slab's millimetres to the mesh volumes, is that
+     which -- every number in it, from the slab's millimeters to the mesh volumes, is that
      pane's and not the other's */
   const Q=v3E();
   const who = v3two ? `<b>Pane ${v3ed?'B':'A'}.</b> ` : '';
@@ -5001,7 +5001,7 @@ function v3note(){
       ? `<b>${esc(selName())}</b> in ${selHue()}: ${q.length} label${q.length>1?'s':''} on `+
         `${new Set(q.map(t=>t.p)).size} plate${new Set(q.map(t=>t.p)).size>1?'s':''}, against all 6,220. `
       : `All 6,220 printed labels at their stereotaxic positions. `)+
-      `A dot is where an abbreviation is <em>printed</em> — close to its structure, not its centre. `+
+      `A dot is where an abbreviation is <em>printed</em> — close to its structure, not its center. `+
       `Hover to read one, click to open its plate.`+slab+half+proj+turn+bone+land+mesh+pair;
     return;
   }
@@ -5068,12 +5068,12 @@ function writeHash(){
   if(zoom>1.01 && b.width) h+=`&z=${zoom.toFixed(2)}`+
     `&c=${(((b.width/2-tx)/zoom)/b.width).toFixed(4)},${(((b.height/2-ty)/zoom)/b.height).toFixed(4)}`;
   const f=[showXY&&'r',showGrid&&'g',showSB&&'s',measMode&&'m',showSK&&'k',pjsk&&'K',
-           showLM&&'l',pjlm&&'L',pgrey&&'y',tgLegs&&'T',mcOn&&'C'].filter(Boolean).join('');
+           showLM&&'l',pjlm&&'L',pgray&&'y',tgLegs&&'T',mcOn&&'C'].filter(Boolean).join('');
   if(f) h+='&v='+f;
   /* the wash rides only where it has been moved off the value the toggle turns on at, so
-     every link that only asks for the colours is the short one it has always looked like */
+     every link that only asks for the colors is the short one it has always looked like */
   if(mcOn&&mcWash!==45) h+='&cw='+mcWash;
-  /* ct, not c: c has been the pan centre since before there was anything to stretch */
+  /* ct, not c: c has been the pan center since before there was anything to stretch */
   if(psrc!=='drawing') h+='&ps='+psrc;
   if(pctr!==100) h+='&ct='+pctr;
   if(pview!=='dv') h+='&pj='+pview;
@@ -5151,7 +5151,7 @@ function readHash(){
      would show the drawing for a frame and then swap it */
   const ct=Math.round(+par.ct);
   pctr = Number.isFinite(ct) ? Math.min(260,Math.max(60,ct)) : 100;
-  pgrey = v.includes('y');
+  pgray = v.includes('y');
   const was=psrc;
   /* a link can name the MRI before the probe that finds it has come back. Falling to the
      drawing is still right for now -- the images may not be there at all -- so remember
@@ -5160,7 +5160,7 @@ function readHash(){
   psrc = srcOK(par.ps) ? par.ps : 'drawing';
   if(v3ready&&psrc!==was) v3resrc();
   /* set before go(), which is what paints the plate: after it the first frame would be
-     the plain plate and the second the coloured one */
+     the plain plate and the second the colored one */
   const cw=Math.round(+par.cw);
   mcWash = Number.isFinite(cw) ? Math.min(90,Math.max(10,cw)) : 45;
   mcOn = v.includes('C');
@@ -5178,7 +5178,7 @@ function readHash(){
   if(Number.isFinite(z)&&z>1){
     zoom=Math.min(ZMAX,z);
     const c=(par.c||'').split(',').map(Number);
-    if(c.length===2&&c.every(Number.isFinite)) centreOn(c[0]*NW,c[1]*NH); else applyView();
+    if(c.length===2&&c.every(Number.isFinite)) centerOn(c[0]*NW,c[1]*NH); else applyView();
   } else { zoom=1; tx=ty=0; applyView(); }
   setPView(par.pj==='ml'?'ml':'dv');
   if(CMPWHAT.includes(par.cmp)!==cmpOn || (par.cmp&&par.cmp!==cmpWhat)) setCmp(CMPWHAT.includes(par.cmp), par.cmp);
@@ -5305,7 +5305,7 @@ $('elink').onclick=e=>copyLink(e.currentTarget);
    Nothing here reads the hover position, which is why the old shortcut kept filling in
    wherever the pointer happened to leave the image on its way to the button. */
 
-/* the three fields as atlas millimetres. With a working frame they are read in that
+/* the three fields as atlas millimeters. With a working frame they are read in that
    frame and inverted, and the landmark dropdown steps aside: lambda, interaural and the
    occipital crest are AP landmarks with no DV or ML recorded anywhere in the database,
    so their position in a tilted frame cannot be worked out honestly. Without a frame
@@ -5326,7 +5326,7 @@ function apPlate(){
   return P.reduce((x,b)=>Math.abs(b.bregma-a.ap)<Math.abs(x.bregma-a.ap)?b:x).plate;
 }
 /* solid on the plate the AP resolves to, faint on any other, so a result found on a
-   neighbouring plate can still be read against the ML and DV that were asked for */
+   neighboring plate can still be read against the ML and DV that were asked for */
 function drawPick(){
   const g=$('pk'), ml0=revNum('rml'), dv0=revNum('rdv');
   /* off the frame this is a plain ML/DV mark and AP need not be filled in; on it the
@@ -5358,7 +5358,7 @@ function revRun(){
   const O=$('revout');
   revSync();
   if(!a){ O.innerHTML='<p class="empty">Enter AP, ML and DV.</p>'; return; }
-  /* the search itself never moved: it runs in atlas millimetres, which is also why its
+  /* the search itself never moved: it runs in atlas millimeters, which is also why its
      bilateral ML matching stays right under a roll or a yaw that is not itself symmetric */
   const {ap,ml,dv}=a;
   const best=new Map();
@@ -5430,12 +5430,12 @@ addEventListener('keydown',e=>{
   /* the zoom keys drive the pane the toolbar is on, since there is no pointer to say
      which pane they meant -- and the lock, if it is set, carries them to the other */
   if(e.key==='+'||e.key==='='){ if(tab==='v3d'){ v3move(v3ed,Q=>{ Q.dist=Math.max(9,Q.dist/1.3); }); v3frame(); }
-                                else zoomCentre(zoom*1.6); }
+                                else zoomCenter(zoom*1.6); }
   if(e.key==='-'||e.key==='_'){ if(tab==='v3d'){ v3move(v3ed,Q=>{ Q.dist=Math.min(90,Q.dist*1.3); }); v3frame(); }
-                                else zoomCentre(zoom/1.6); }
+                                else zoomCenter(zoom/1.6); }
   if(e.key==='0'){ if(tab==='v3d') $('v3r').click();
                    else { zoom=1; tx=ty=0; hideTip(); applyView(); } }
-  /* the search box is one of the things a maximised view has put away, so reaching for
+  /* the search box is one of the things a maximized view has put away, so reaching for
      it is also a way of asking for it back */
   if(e.key==='/'){ e.preventDefault(); setMax(false); setMode('find'); $('q').focus(); $('q').select(); }
   if(e.key==='?'){ e.preventDefault(); openAbout(); }
@@ -5447,7 +5447,7 @@ addEventListener('keydown',e=>{
   if(e.key==='Home'){ e.preventDefault(); go(1); }
   if(e.key==='End'){ e.preventDefault(); go(62); }
   /* what Escape drops is whatever is most recently in the way: a click the plate is
-     waiting for, then a half-made measurement, then the maximised view, then the selection */
+     waiting for, then a half-made measurement, then the maximized view, then the selection */
   if(e.key==='Escape'){ if(infOn) infOpen(false);
                         else if(vpanOn) vpanOpen(false);
                         else if(pickArm) setPick(false);
@@ -5462,7 +5462,7 @@ addEventListener('keydown',e=>{
    switches between the plate and the projection, and each pane keeps its own scroll.
    Given a window with room, the whole app then sits inside it, plate included. */
 const SHELL = matchMedia('(min-width:900px) and (min-height:600px)');
-/* maximised, the window is filled rather than scrolled -- but only where there is the
+/* maximized, the window is filled rather than scrolled -- but only where there is the
    height for that to be a gain; the stylesheet draws the line in the same place */
 const TALL  = matchMedia('(min-height:600px)');
 let smode='find', tab='plate', scope='all', nHere=0, maxed=false;
@@ -5525,30 +5525,30 @@ function srcShow(){
   [...$('srcseg').children].forEach(b=>b.classList.toggle('on',b.dataset.s===psrc));
   $('ctrs').value=pctr;
   $('ctrl').textContent=(pctr/100).toFixed(1)+'×';
-  /* the drawing is the only source with colour in it. The histology was published in grey
+  /* the drawing is the only source with color in it. The histology was published in gray
      and is stored that way, so the box reads as already checked there and goes dead rather
      than offering a filter that would do nothing. */
   if(cmpOn) cmpShow();
-  const grey = psrc!=='drawing';
-  $('ckgy').checked = pgrey || grey;
-  $('ckgy').disabled = grey;
-  $('ckgy').closest('.tg').title = grey
-    ? 'The '+SRCN[psrc]+' is printed in grey already'
-    : 'Read every source the same way: the drawing loses its colour';
+  const gray = psrc!=='drawing';
+  $('ckgy').checked = pgray || gray;
+  $('ckgy').disabled = gray;
+  $('ckgy').closest('.tg').title = gray
+    ? 'The '+SRCN[psrc]+' is printed in gray already'
+    : 'Read every source the same way: the drawing loses its color';
   /* the stacked-quad mode draws one textured quad per plate. On the drawing what that
      shows is the contours, and the button has always said so; on a section it shows the
      section, so the button says that instead rather than naming something that is not
      there. Found by what it is rather than by where it sits, now that the mode a pane
      opens in is no longer the first button along. */
   const c=$('m3seg').querySelector('[data-r="contour"]');
-  c.textContent = grey ? 'Slices' : 'Contours';
-  c.title = grey
+  c.textContent = gray ? 'Slices' : 'Contours';
+  c.title = gray
     ? 'Each section drawn where it sits, one plate at a time'
     : "The atlas's own drawn contours, one plate at a time";
 }
 function setSrc(k){
   if(!srcOK(k)&&k!=='drawing') return;
-  /* mark() rather than markSel(): the notes under the plate -- the colours, the dashed
+  /* mark() rather than markSel(): the notes under the plate -- the colors, the dashed
      track -- belong to the picture, not to which of the four sources is on it */
   psrc=k; srcShow(); mark(); v3resrc(); v3note(); queueHash();
 }
@@ -5581,7 +5581,7 @@ try{ advOn=localStorage.getItem('gae-adv')==='1'; }catch(_){}
 const ctrDef  = ()=>pctr===100;
 const slabDef = Q=>Q.a===0&&Q.b===61;
 function advCount(){
-  if(tab==='plate') return (ctrDef()?0:1)+((pgrey&&psrc==='drawing')?1:0);
+  if(tab==='plate') return (ctrDef()?0:1)+((pgray&&psrc==='drawing')?1:0);
   if(tab==='v3d'){ const Q=v3E(); return (v3tdef(Q)?0:1)+(slabDef(Q)?0:1); }
   return 0;
 }
@@ -5623,7 +5623,7 @@ addEventListener('pointerdown',e=>{
   vpanOpen(false);
 });
 
-/* Advanced: the sidebar's Divisions accordion, relabelled. Same caret, same count, same
+/* Advanced: the sidebar's Divisions accordion, relabeled. Same caret, same count, same
    click-and-Enter, same remembered state. */
 function advSync(){
   ADVH.classList.toggle('open',advOn);
@@ -5707,7 +5707,7 @@ function mriLoad(){
   im.src=MRIURL(1);
 }
 srcCtl(); mriLoad();
-$('ckgy').onchange=e=>{ pgrey=e.target.checked; srcShow(); queueHash(); };
+$('ckgy').onchange=e=>{ pgray=e.target.checked; srcShow(); queueHash(); };
 $('ctrs').oninput=e=>{ pctr=+e.target.value||100; srcShow(); queueHash(); };
 $('ctrs').ondblclick=()=>{ pctr=100; srcShow(); queueHash(); };
 
@@ -5738,7 +5738,7 @@ let fitW=0;
 function fit(){
   if(tab!=='plate') return;
   /* stacked, the page scrolls and the plate is bound by its width, which CSS already
-     knows; an inline width left over from a wider window would only fight it. Maximised
+     knows; an inline width left over from a wider window would only fight it. Maximized
      in a window with the height for it, the app fills the window instead, whatever its
      width, so that is the other way in to the measuring path */
   if(!SHELL.matches && !(maxed&&TALL.matches)){
@@ -5758,7 +5758,7 @@ function fit(){
 new ResizeObserver(fit).observe(IMGBOX);
 for(const q of [SHELL,TALL]) q.addEventListener('change',()=>{ fitW=0; fit(); });
 
-/* ---------- maximised: the window handed over to the view ----------
+/* ---------- maximized: the window handed over to the view ----------
    The plate, the projection and the stack are each bound by whatever room is left once
    the search column, the header and the footer have taken theirs. This gives them the
    lot, and asks the browser for its own chrome as well. That ask can be refused -- an
@@ -5776,7 +5776,7 @@ function setMax(on){
   maxed=on;
   document.body.classList.toggle('maxed',on);
   MAXB.setAttribute('aria-pressed',on?'true':'false');
-  MAXB.setAttribute('aria-label',on?'Restore the view':'Maximise the view');
+  MAXB.setAttribute('aria-label',on?'Restore the view':'Maximize the view');
   MAXB.title = on ? 'Give the search column and the header their room back. Esc does the same.' : MAXT;
   hideTip(); pjHide(); v3hide();
   /* every view is measured off the box it sits in, and that box has just changed */
@@ -5810,8 +5810,8 @@ function setTheme(t){
   b.textContent=theme[0].toUpperCase()+theme.slice(1);
   b.title=(theme==='auto'?'Following the system theme':'Held to '+theme)+' \u2014 click to change';
   try{ localStorage.setItem('gae-theme',theme); }catch(_){}
-  /* the 3-D view takes its colours from the sheet, so it has to be told */
-  if(v3ready){ v3colours(); v3frame(); }
+  /* the 3-D view takes its colors from the sheet, so it has to be told */
+  if(v3ready){ v3colors(); v3frame(); }
 }
 $('themeb').onclick=()=>setTheme(THEMES[(THEMES.indexOf(theme)+1)%THEMES.length]);
 setTheme(theme);
@@ -5868,7 +5868,7 @@ function frameApply(){
 /* ---------- the origin: which point reads zero ----------
    Built from LM rather than spelled out, so it stays in step with the plate table the way
    the pivot presets do. The landmark and the offset are separate: picking one moves zero
-   to it and leaves the offset alone, because "half a millimetre behind lambda" is a thing
+   to it and leaves the offset alone, because "half a millimeter behind lambda" is a thing
    people zero on and "an AP of -4.95" is not how they would say it. There is no "point of
    your own" entry any more -- every point is a landmark plus an offset, and the note under
    the fields says where the two of them put zero. */
@@ -5881,7 +5881,7 @@ $('forg').onchange=e=>{
   frameRead();
 };
 /* the fields go dead while the origin is off, so a stale offset cannot look like it is in
-   use, and the note spells out in atlas millimetres where the pair of them landed */
+   use, and the note spells out in atlas millimeters where the pair of them landed */
 function orgSync(){
   $('forg').value = FRAME.org ? String(FRAME.oref) : '';
   ['foap','foml','fodv'].forEach(k=>$(k).disabled=!FRAME.org);
@@ -5923,7 +5923,7 @@ function pivLM(){
    places: is your DV zero the brain's dorsal surface, or the landmark's own height? It
    writes into the DV field rather than holding a flag of its own, so the number stays
    visible and editable and the deep link, the stored frame and the CSV carry it as the
-   plain millimetres they always did -- nothing downstream has to learn about this.
+   plain millimeters they always did -- nothing downstream has to learn about this.
 
    The dorsal-surface button is the atlas's own zero and exact. The other is off the skull
    fit, so it is named for what it is and carries the same asterisk the Skull toggles do. */
@@ -6185,8 +6185,8 @@ const REPT={
       'ground that belongs next door, or be missing from a plate that prints the name. Say '+
       'which, and the region and the plate in front of you go with it, already named.',
     l:'What is wrong, and what it should be',
-    p:'The ventral boundary is drawn through the fibre tract rather than along it \u2014 it '+
-      'should follow the pale band about half a millimetre dorsal to where it sits.'
+    p:'The ventral boundary is drawn through the fiber tract rather than along it \u2014 it '+
+      'should follow the pale band about half a millimeter dorsal to where it sits.'
   },
   feat:{
     h:'Request a feature',

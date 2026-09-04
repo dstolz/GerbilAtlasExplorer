@@ -116,7 +116,7 @@ test('the SVG export carries one named group per region', async ({ page }) => {
    holds it to its header. It is asserted twice over: against the app's own calibration, so
    a recalibration moves the file with it, and against the plate table's printed APs, so it
    cannot move somewhere the atlas does not say. */
-test('the NIfTI writer writes an RAS volume at the atlas\u2019s own millimetres', async ({ page }) => {
+test('the NIfTI writer writes an RAS volume at the atlas\u2019s own millimeters', async ({ page }) => {
   await page.goto(BUNDLE + '#p30');
   const r = await page.evaluate(() => {
     const N = V3W * V3H, nv = N * V3D;
@@ -302,7 +302,7 @@ test('the gallery draws only the thumbnails that are on screen', async ({ page }
 test('maximising hands the whole window to the view, and gives it back', async ({ page }) => {
   // The browser's own fullscreen would resize the viewport under the assertions, and
   // whether it is granted at all is the environment's business -- so it is refused here.
-  // That is the path worth pinning anyway: a refusal must still maximise the page itself.
+  // That is the path worth pinning anyway: a refusal must still maximize the page itself.
   await page.addInitScript(() => {
     Element.prototype.requestFullscreen = () => Promise.reject(new Error('refused'));
   });

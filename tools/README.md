@@ -9,17 +9,17 @@ anyone check any of them, so they are here as code, in the order they run.
 
 | Script | What it does |
 | --- | --- |
-| `atlaslib.py` | What every script shares: the paths, the plate frame in millimetres, the page-to-plate transform, the traced-outline readers, one `--plates` grammar (`30`, `28-33`, `5,30,45`), and the renderer that writes `data/gerbil_atlas.json` byte for byte as the repository keeps it. A script loads the database, changes its block and saves; nothing splices text. |
+| `atlaslib.py` | What every script shares: the paths, the plate frame in millimeters, the page-to-plate transform, the traced-outline readers, one `--plates` grammar (`30`, `28-33`, `5,30,45`), and the renderer that writes `data/gerbil_atlas.json` byte for byte as the repository keeps it. A script loads the database, changes its block and saves; nothing splices text. |
 | `build_app.py` | Builds `gerbil_atlas_explorer.html` and the lean `index.html` from `src/` and `data/`, stamps the commit, date and time into the page, and with `--check` exits non-zero when a committed page is not a fresh build. `--site DIR` writes everything GitHub Pages serves; `--dev` writes `build/dev.html`, which links `src/app.css` and `src/app.js` so code edits need no rebuild. |
-| `export_tables.py` | The flat files, all from the JSON: the two CSVs that used to be kept by hand, a per-label coordinate table, a per-structure table with areas, volumes and centres, and GeoJSON extents per plate. `--refresh-db` also recomputes the counts the database carries — per plate, and the two totals in `verification` — and the `plate_registration` block; `--check` exits non-zero if any committed table is stale. |
+| `export_tables.py` | The flat files, all from the JSON: the two CSVs that used to be kept by hand, a per-label coordinate table, a per-structure table with areas, volumes and centers, and GeoJSON extents per plate. `--refresh-db` also recomputes the counts the database carries — per plate, and the two totals in `verification` — and the `plate_registration` block; `--check` exits non-zero if any committed table is stale. |
 | `build_groups.py` | The twenty gross divisions — cortex, hippocampal formation, thalamus, pons, brainstem and the rest — as named lists of the atlas's own abbreviations, written into the `groups` block. Declarative rules rather than a hand list, so the taxonomy can be read and argued with; `--report` prints every division with its members and the residue, `--check` exits non-zero if the committed block is stale. It adds no geometry: a division's outline, area, coordinate and mesh are all derived in the app from its members'. Stdlib only. |
 | `check_indexes.py` | Reads the atlas's two published indexes against each other and against the database. No inputs beyond the repository. It is what says the 723 transcribed entries are intact, and it is where the seven malformed plate ranges are enumerated. It also writes the comparison out as `data/index_published.csv` (`--write`) and verifies the committed copy on every plain run. |
 | `find_missing_labels.py` | Finds printed labels the label pass missed, by cutting the word from a plate that carries it and matching it back on one that does not. Extends `label_positions`. Needs the source PDF. |
-| `find_unlettered.py` | Finds the printed labels no plate carries a located copy of, which is the case `find_missing_labels.py` structurally cannot reach: it cuts the word from a plate that has it, and these have none. Composes the word instead, letter by letter, from glyphs cut out of located labels on neighbouring plates, then matches it the same way. Extends `label_positions`. Needs the source PDF. |
+| `find_unlettered.py` | Finds the printed labels no plate carries a located copy of, which is the case `find_missing_labels.py` structurally cannot reach: it cuts the word from a plate that has it, and these have none. Composes the word instead, letter by letter, from glyphs cut out of located labels on neighboring plates, then matches it the same way. Extends `label_positions`. Needs the source PDF. |
 | `label_blocks.py` | Reads which abbreviations the atlas typeset into one printed label — `S1Tr/ LPtA`, `Au1 (A1)` — off the source PDF, and writes `label_blocks`. Those name one region between them, so `build_region_extents.py` seeds them as one. |
 | `find_compounds.py` | The join `label_blocks.py` cannot see: a mark *inside* one token, joining two names neither of which is printed whole — `9a,bCb` is 9aCb and 9bCb, `9/11N` is 9N and 11N. Elides every pair the index lists on a plate with one of them unlocated, composes that token and matches it. Writes the token's box into `label_positions` for each member that has none of its own on it, and the pair into `label_blocks`. Needs the source PDF. |
 | `label_leaders.py` | Follows the line the atlas draws from a label it could not fit inside the region it names, and writes where that line ends into `label_leaders`. For those 212 labels the box is where the word is; this is where the structure is, and it is what everything downstream seeds and aims at. Needs the source PDF. |
-| `build_region_extents.py` | Cuts `region_extents` out of the tracings in `svg/` and the located abbreviations in `label_positions`, and writes it into `data/gerbil_atlas.json`. Also writes `features`, the twenty names the atlas prints that are no region — the fissures and sulci, `cbw`, the vessels — from `atlaslib.FEATURES`, because this is the script whose behaviour that table is: they are seeded and then emptied, and the ground goes to the regions around them. |
+| `build_region_extents.py` | Cuts `region_extents` out of the tracings in `svg/` and the located abbreviations in `label_positions`, and writes it into `data/gerbil_atlas.json`. Also writes `features`, the twenty names the atlas prints that are no region — the fissures and sulci, `cbw`, the vessels — from `atlaslib.FEATURES`, because this is the script whose behavior that table is: they are seeded and then emptied, and the ground goes to the regions around them. |
 | `regiongeom.py` | The boundary geometry: crack-lattice tracing, junction detection, arc-wise Douglas-Peucker. Kept apart because it is the part that has to be right for the regions to tile. |
 | `build_volumes.py` | Stacks the 62 plates, interpolates between them, and writes the brain surface and one mesh per structure to `data/gerbil_atlas_volumes.json`; `--stl DIR` writes the same meshes as STL, `--nifti PATH` the label volume they were cut from as a gzipped NIfTI-1 file with a lookup table beside it. |
 | `volume.py` | The voxel geometry: the even-odd fill, the distance fields, marching cubes, hulls. Kept apart for the same reason `regiongeom.py` is — it holds the part that decides whether the regions still partition the volume. |
@@ -62,7 +62,7 @@ place of `--pdf`.
 because they read the page itself — punctuation for the first, the shape of a whole word for
 the second, a one-pixel line for the third — and the app's plate images are too small to
 carry any of it: 8 px of glyph against 20 on the page, and a leader that survives the
-downsample as grey rather than ink. They are the only scripts here that reach outside the
+downsample as gray rather than ink. They are the only scripts here that reach outside the
 repository, for the same reason the label pass did, and their output is committed so that
 nothing downstream needs the PDF. `label_blocks.py --qc` writes `qc/chk_blocks_NN.png`,
 every join it made, boxed on the page it read; `label_leaders.py --qc` writes
@@ -80,7 +80,7 @@ believe.
 The run prints the verification numbers as it goes and stores them in
 `region_extents.summary`; `region_extents.validation` is the same numbers as prose. The one
 to watch is `boundary_edges_shared_exactly`, which is 1.0 and has to stay there: below it,
-two neighbours disagree about where their common boundary is and the regions no longer tile.
+two neighbors disagree about where their common boundary is and the regions no longer tile.
 
 Same inputs, same outputs — there is nothing random in the pipeline, so a reviewer can
 re-run it and diff.
@@ -100,7 +100,7 @@ Everything the app is built from is under `src/` and `data/`, and `tools/build_a
 puts it together; no script reads or writes the HTML. Four things in `data/` have no
 generator in the repository and are committed as they are: the plate images
 (`data/plates/`, cropped by the pass METHODS describes under "Plate images"), the
-traced outlines and their registration (`data/vec.json` — the paths as the vectoriser
+traced outlines and their registration (`data/vec.json` — the paths as the vectorizer
 produced them, and the six-number matrix fitted per plate; the matrices are copied into
 `plate_registration` in the JSON, and a test keeps the two equal), the skull
 (`data/skull.json`), and `brain_outline`, which the app's own `v3build()` produced.
