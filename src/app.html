@@ -158,6 +158,10 @@
           <button class="z" id="zf" type="button" title="Fit the whole plate">Fit</button>
         </span>
         <span class="tsep"></span>
+        <label class="tg" title="Fill every region on this plate so that no two that touch are the same colour. The colours name nothing — they only tell neighbours apart."><input type="checkbox" id="ckmc">Colour regions</label>
+        <label class="lb3" id="mcw" hidden title="How strong the wash is. The plate is underneath it at every setting."
+          >Wash <input type="range" id="mcs" min="10" max="90" step="5" value="45"><b id="mcl">45%</b></label>
+        <span class="tsep"></span>
         <label class="tg" title="Read bregma / ML / DV under the pointer"><input type="checkbox" id="ckc">Coords</label>
         <label class="tg" title="1 mm stereotaxic grid"><input type="checkbox" id="ckg">Grid</label>
         <label class="tg" title="Scale bar"><input type="checkbox" id="cks">Scale</label>
@@ -267,6 +271,7 @@
             <div class="pan" id="pan">
               <img id="pi" alt="">
               <svg id="ov" viewBox="0 0 1100 703" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+                <g id="mc"></g>
                 <g id="grid"></g>
                 <g id="sk"></g>
                 <g id="lm"></g>
@@ -293,6 +298,7 @@
             <div class="pan" id="pan2">
               <img id="pi2" alt="">
               <svg id="ov2" viewBox="0 0 1100 703" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+                <g id="mc2"></g>
                 <path id="hr2" style="display:none"></path>
                 <g id="om2"></g>
                 <g id="xh2"></g>
@@ -430,6 +436,37 @@
       Which structures make up a division is a judgement made here, not something the atlas
       publishes; every member of every one of them is written out in
       <code>data/gerbil_atlas_groups.csv</code>, and Methods says how each was drawn.</p>
+
+    <h3>The section as a map</h3>
+    <p><b>Colour regions</b> over the plate fills every region on it, and no two regions
+      that touch are given the same colour &mdash; the section coloured the way a map of
+      countries is. It shows the whole partition at once: where one structure stops and the
+      next starts, how much of the section each holds, which of them are neighbours. On the
+      <em>Nissl</em>, the <em>myelin</em> and the <em>MRI</em>, which carry no printed lines
+      at all, it is the only view that shows any of that. <b>Wash</b> sets how strongly the
+      colours are laid on; the plate is underneath them at every setting, and both ride into
+      the PNG and the SVG.</p>
+    <p>Touching is read off the extents themselves &mdash; two regions share the vertices of
+      the boundary between them &mdash; and a gap thinner than 0.05&nbsp;mm counts as touching
+      too, because a lamina a pixel or two wide is not a boundary the eye can find, and one
+      colour on both sides of it would read as one region.</p>
+    <p><b>A colour means nothing beyond &ldquo;not my neighbour&rdquo;.</b> It is not a
+      system, a division or a value: two regions of the same colour on one plate have
+      nothing in common except that they do not touch. What a colour does do is stay put
+      &mdash; each region asks for the same colour on every plate it is drawn on and gets it
+      wherever a neighbour has not already taken it, which is about half the time, so
+      stepping through the levels is not a kaleidoscope and the same plate is the same
+      picture every time it is opened.</p>
+    <p>Nothing is drawn that the atlas does not draw. The fill is the region extents, which
+      are cut from the atlas&rsquo;s own lines, and it carries no outline of its own &mdash;
+      the only edge it makes is where one colour stops and the next begins. Where the atlas
+      draws no boundary between several names, those names <em>share</em> a colour rather
+      than being split by one, because a colour change is a boundary and that split is not a
+      line this atlas has: on plate 30 the mediodorsal thalamus is one patch, on plate 54 the
+      cerebellar lobules it prints inside one line are one patch. The faces the atlas seals
+      and names nothing inside are left unpainted, because there is no region there to
+      colour. Five colours would do 58 of the 62 plates and six the other four; the palette
+      holds seven, and the spare ones go to the regions that ask for them.</p>
 
     <h3>Your own frame</h3>
     <p class="fexp"><b>Rotation is experimental.</b> Pitch, roll and yaw are new and not yet fully
@@ -593,7 +630,8 @@
     <p><b>SVG</b> saves the same sheet <b>PNG</b> does, but with the plate as vector paths
       instead of a photograph: the regional outlines, traced off the printed plate, with
       whatever overlays were showing and the same caption. Every part is a named group
-      &mdash; <code>outlines-solid</code>, <code>outlines-dashed</code>, <code>grid</code>,
+      &mdash; <code>outlines-solid</code>, <code>outlines-dashed</code>,
+      <code>region-colours</code>, <code>grid</code>,
       <code>skull</code>, <code>landmarks</code>, <code>highlight</code>,
       <code>measure</code>, <code>track</code>, <code>query</code>, <code>notes</code>,
       <code>caption</code> &mdash; so a figure can
@@ -622,6 +660,8 @@
         header and the browser&rsquo;s own chrome go, and the plate, the projection or the
         stack takes the room. <kbd>Esc</kbd> comes back.</dd>
       <dt>Compare</dt><dd>a second plate beside the first, sharing zoom, pan and crosshair</dd>
+      <dt>Colour regions</dt><dd>the whole section filled, no two neighbours alike &mdash; the
+        colours tell them apart and mean nothing else</dd>
       <dt>Notes</dt><dd>your own markers, kept in this browser; export them as JSON to keep them</dd>
       <dt>Meshes</dt><dd>in 3D, the structure as a closed surface interpolated between its plates</dd>
       <dt><kbd>Esc</kbd></dt><dd>come back from the maximised view, drop the selection, or clear a measurement</dd>

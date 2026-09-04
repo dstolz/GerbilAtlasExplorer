@@ -636,6 +636,57 @@ plate 49 the slash of `PM/ Cop` is drawn along the very boundary it names, and a
 threshold that keeps it, two of those five come back. Every one of the 31 occurrences was
 checked against the printed page by eye.
 
+### Colouring the section
+
+The extents tile the plate, which is what lets the app colour it the way a map of countries
+is coloured: fill every region, and give no two regions that touch the same colour. That is
+a rendering, not data — nothing below is written to a file, and the extents are unchanged by
+it — but the two properties it leans on are properties of the extents, so they are recorded
+here.
+
+**Neighbours are read off the vertices, and then off the gaps.** Every boundary between two
+regions is one polyline held twice, once in each, vertex for vertex, so two regions that
+share a boundary share its vertices: index the vertices and the regions filed under each one
+touch there, with no tolerance and no intersection test. That is sound because the extents
+are a clean planar subdivision, which the extraction checks and which holds over all 62
+plates: every stored edge belongs to one region or to two and never to three. Sharing a
+*point* is used rather than sharing an *edge*, deliberately — two regions that meet at a
+single corner would read as one patch if they were painted alike.
+
+The vertex test answers for boundaries the two regions hold in common and for nothing else,
+and a boundary can be missed by a hair without being shared. **Two regions that come within
+0.05 mm of each other — 2.9 px of the 1100 × 703 frame, about a pixel and a half on screen
+at the zoom the plate opens at — are counted as touching too.** Over the atlas 367 pairs are
+near without being shared: a lamina one or two pixels wide (`Py` between `Or` and `Rad` on
+plate 30), a near-corner where two boundaries pass within a fifth of a pixel without meeting
+(9 pairs over the 62 plates), a pinch. 91 of the 367 would have been painted the same colour
+on the vertex test alone, on 44 plates, and would then have read as one patch across a gap
+nobody can see. Folding them in costs nothing: with the rule and without it, the plates need
+the same colours.
+
+**The colours come from a greedy pass in smallest-last order.** Strip the least connected
+region off the graph over and over, and colour them back in the reverse of that order; each
+region then meets its turn with at most as many coloured neighbours as the graph's
+degeneracy, so a flat map cannot exhaust the palette. Five colours are enough for 58 of the
+62 plates and six for the other four. That is the four-colour theorem's neighbourhood reached by
+the cheap route, and it is not a claim to have reached four: a greedy pass does not promise
+it, and this does not go looking for it.
+
+Each region asks first for one colour of the seven, hashed from its abbreviation, and takes
+it wherever a neighbour has not already got it. A free colour is as good as any other free
+colour, so this costs nothing and buys some continuity between levels: **48.1 % of the
+structures drawn on two consecutive plates hold their colour across the step**, against
+23.6 % for the same pass with no preference. It does spend colours the plate did not need —
+55 of the 62 use all seven — which is no worse a picture and arguably a better one. The colouring is a pure function of the extents,
+so a plate is the same picture in every session and in both exports.
+
+Two things are deliberately not painted. The sealed faces the atlas names nothing inside
+(`unassigned`, above) have no region to colour. And structures that lie inside one boundary
+the atlas draws round several names — the `w` flag, above — share one colour between them,
+because a colour change *is* a boundary and that split is this extraction's own. What that
+paints is what the plate prints: one patch per printed boundary, whatever number of names
+the atlas has set inside it.
+
 ## Gross divisions
 
 The atlas names 723 structures and no containers for them. Its Index of structures is flat:

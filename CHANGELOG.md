@@ -6,6 +6,39 @@ carries a `version` block naming the release its derived fields were built for.
 ## [Unreleased]
 
 ### Added
+- **The section as a map: every region coloured, no two neighbours alike.** **Colour regions**
+  over the plate fills all of them at once, and gives no two regions that touch the same
+  colour — the atlas coloured the way a map of countries is. What it shows is the thing the
+  app could not show before: not the one structure you asked about but the whole partition,
+  where each stops and the next starts and which of them are neighbours. On the *Nissl*, the
+  *myelin* and the *MRI*, which print no lines at all, it is the only view that shows any of
+  it. **Wash** sets how strongly the colours are laid on, both ride in the link (`&v=C`,
+  `&cw=`), the second pane is coloured on its own plate, and the PNG and the SVG carry the
+  colours — the SVG as one named group, `region-colours`, one path per region with its name
+  on it.
+
+  Neighbours come off the extents rather than out of a picture: they tile the section, so two
+  regions that share a boundary share its vertices exactly, and the vertex index answers who
+  touches whom with no tolerance at all. A gap thinner than 0.05 mm counts as touching too —
+  a lamina a pixel or two wide is not a boundary the eye can find at the zoom the plate opens
+  at, and one colour on both sides of it would read as one region; 91 pairs over the 62
+  plates would have matched without that, `Py` between `Or` and `Rad` on plate 30 among them.
+  The colours themselves come from a greedy pass in smallest-last order, which is why the
+  palette cannot run out: five colours do 58 of the plates and six the other four, inside a
+  palette of seven.
+
+  **A colour means nothing beyond "not my neighbour"** — not a system, not a division, not a
+  value — and the line under the plate says so. What it does do is stay put: each region asks
+  for one colour of the seven, the same one on every plate it is drawn on, and takes it
+  wherever a neighbour has not got there first, which is 48% of the time, so stepping through
+  the levels is not a kaleidoscope and a plate is the same picture in every session and in
+  both exports. Nothing is painted that the atlas does not draw. The fill carries no outline
+  of its own — the only edge it makes is where one colour stops and the next begins — the
+  names the atlas draws no boundary between share a colour rather than being split by one, so
+  the mediodorsal thalamus is one patch and so are the cerebellar lobules inside one printed
+  line, and the faces the atlas seals and names nothing inside are left unpainted, there
+  being no region there to colour.
+
 - **Landmarks in the 3-D view.** Bregma, lambda, the interaural line and the occipital crest
   are drawn on the plate whose plane they fall in and as reference rules around the
   projections; in 3-D they can now be drawn as what they actually are. Each landmark's
@@ -272,6 +305,13 @@ carries a `version` block naming the release its derived fields were built for.
   What is gone is the two controls.
 
 ### Fixed
+- **The line under the plate lost the "Go to plate" button it had just been given.** Two of
+  the notes it carries are appended to whatever the selection wrote there, and appending with
+  `innerHTML +=` re-parses the line: the button offered when the selected structure is not on
+  this plate came back as fresh markup with no click on it. They are appended as nodes now.
+  Switching the plate between *Labelled*, *Nissl*, *Myelin* and *MRI* also rewrote that line
+  without those notes, so a dashed track lost its explanation on a source switch; it now
+  rewrites the whole line rather than the selection's half of it.
 - **The lean page never refreshed its offline copy, and a rebuilt data file never reached a
   returning visitor.** The service worker took its copy for the cache after handing the
   response back, when the browser already held the body, so the copy threw and the shell in
