@@ -6,6 +6,40 @@ carries a `version` block naming the release its derived fields were built for.
 ## [Unreleased]
 
 ### Changed
+- **A region keeps its color across the whole atlas.** Color regions was solved one plate at
+  a time, and a plate cannot know what its neighbors did: a structure bordering three things
+  on one level and five on the next took whatever slot was free on each, held its color
+  across a step **48% of the time**, and the color a reader had just learned as `CPu` was
+  somebody else's a plate later. Stepping through the levels repainted half the section.
+
+  It is now solved **once, over all 62 plates together**, and the answer is stored --
+  `region_colors` in the database, one palette slot per abbreviation, written by
+  `tools/build_region_colors.py` and carried by the page. A region wears one color and wears
+  it everywhere; **stepping now moves the boundaries and repaints nothing**. The invariant the
+  view exists for is untouched: no two regions that touch -- sharing a point, or with a gap
+  under 0.05 mm -- are ever alike, on any plate.
+
+  Two things pay for it. The palette grows to **eight**, Okabe and Ito's six that read as a
+  wash plus a violet and a brown, because eight regions of this atlas pairwise touch --
+  cortical layers 1, 2 and 3 against `Pir`, `Tu`, `ICj`, `VP` and `AHA` -- so seven cannot
+  hold across the atlas however they are arranged. Eight is found, so eight is exactly the
+  fewest. A plate on its own needed four to six; now 57 of the 62 carry all eight, which is a
+  slightly busier picture bought against the whole section repainting at every step. And the
+  names the atlas draws no boundary between can no longer always share a color. `w` is read
+  off each plate's own ink, and **87 of the 189 pairs that share an unprinted border somewhere
+  are drawn apart by a printed line somewhere else**; one color cannot be both. The printed
+  line wins every time -- erasing a boundary the atlas draws is the worse error -- so 102
+  pairs are candidates to be joined, **74 joins hold and 28 are refused** because a printed
+  boundary would have fallen inside the patch they made. The 688 regions become 631 patches,
+  the largest seven names, and the refusals are listed by name in the block.
+
+  The search moved out of the app with the answer. Coloring the plate no longer builds an
+  adjacency graph in the browser -- **about two seconds over the 62 plates**, on a page that
+  opens from a file -- and the toggle is now a table lookup. The derivation is peeling plus a
+  seeded tabu search on what is left, so a re-run reproduces the block byte for byte and
+  `--check` says whether the committed one is current; CI runs it. `tests/python` re-derives
+  the adjacency from the committed extents and checks the invariant on all 62 plates, and the
+  browser tests check it from the page's own geometry on seven.
 - **Region outlines that do not cross themselves, at four times the resolution.** Two things
   were wrong with the extents, and the second only showed once the first was fixed.
 
