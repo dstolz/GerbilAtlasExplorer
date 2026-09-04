@@ -41,12 +41,15 @@ The pipeline, in order:
   6. Score every polygon by the fraction of its border that lies on ink that
      was actually traced, as opposed to a ridge the watershed invented, and
      write that score out beside the geometry.
-  7. Trace the boundaries on the crack lattice and simplify each shared arc
-     once, at DP_PX with Douglas-Peucker as `brain_outline` already does, so
-     that neighbors come out sharing their boundary exactly rather than
-     approximately -- see regiongeom.py, which is where that has to be right.
-     Store as fractions of the app's 1100 x 703 plate frame, the frame and
-     convention brain_outline already uses.
+  7. Take the pixel-wide burrs off the partition, then trace the boundaries on
+     the crack lattice and simplify each shared arc once, at DP_PX with
+     Douglas-Peucker, so that neighbors come out sharing their boundary exactly
+     rather than approximately -- see regiongeom.py, which is where that has to
+     be right. DP_PX is half a plate pixel, which is the finest tolerance still
+     coarser than the page lattice the boundary is traced on: below it the
+     polygon starts recording the raster's own staircase rather than the line
+     the atlas drew. Store as fractions of the app's 1100 x 703 plate frame,
+     the frame and convention brain_outline already uses.
 
 Reads:  svg/*.svg, data/gerbil_atlas.json, the page-to-plate matrices in data/vec.json
 Writes: data/gerbil_atlas.json (`region_extents`), optional qc/chk_regions_NN.png
@@ -72,7 +75,8 @@ import regiongeom as G                            # noqa: E402
 from atlaslib import xf, inv6, pip, poly_area     # noqa: E402
 
 BRIDGE_PX = 20      # page px; 99% of tracing gaps are under 25, 94% under 12
-DP_PX = 2.0         # plate px, as brain_outline uses: 35 um
+DP_PX = 0.5         # plate px: 9 um, and 1.5 page px, so the tolerance still
+                    # sits above the lattice the boundary is traced on
 MIN_FACE_PX = 400   # page px; below this a face is tracer noise, not a region
 MIN_AREA_PX = 600   # page px; a territory smaller than this is not published
 SEED_PAD = 1.0      # label box is used as the marker at this scale
@@ -380,11 +384,26 @@ def build_plate(plate, DB, VECM, want_qc=False):
         small = np.nonzero(np.bincount(cc.ravel())[1:] < MIN_AREA_PX)[0] + 1
         if small.size:
             byab[sl][sub & np.isin(cc, small)] = 0
-    box = ndimage.find_objects(byab, max_label=nreg)
-
     # one label per unassigned face too, so a junction against one registers
     ua, nua = ndimage.label(interior & (byab == 0))
     LBL = np.where(byab > 0, byab, np.where(ua > 0, ua + nreg, 0)).astype(np.int32)
+
+    # ---- take the pixel-wide burrs off the partition before tracing it ----
+    #
+    # The watershed settles a boundary to the pixel, and at that scale it
+    # leaves slivers: a pixel-wide tongue of one region running along the edge
+    # of another, a pixel of a third where two of them meet diagonally. A third
+    # of a plate pixel is nothing as area, and it is nothing the atlas draws --
+    # but Douglas-Peucker keeps the tip of a tongue however thin the tongue is,
+    # so what a reader gets is a polygon with a spike on it, running out along
+    # the boundary and back across its own outline. Cleaned here, on the
+    # partition rather than on any one region's ring, so it stays a partition:
+    # both owners of a boundary go on tracing the identical chain of corners
+    # and the tiling below is untouched. See regiongeom.deburr.
+    LBL = G.deburr(LBL)
+    byab = np.where(LBL <= nreg, LBL, 0)
+    ua = np.where(LBL > nreg, LBL - nreg, 0)
+    box = ndimage.find_objects(byab, max_label=nreg)
     junc = G.junctions(LBL)
 
     near = ndimage.binary_dilation(traced,

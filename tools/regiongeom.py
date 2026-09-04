@@ -15,11 +15,18 @@ the same places. Each arc is then simplified once. Douglas-Peucker keeps its
 endpoints and is symmetric under reversal, so the two sides of an arc keep the
 same vertices even though they walk it in opposite directions, and the tiling
 survives simplification exactly.
+
+Sharing the boundary exactly is not the same as the boundary being drawable,
+and `deburr` is the second half: the label map the boundary is traced from
+carries pixel-wide burrs, and simplification turns those into spikes. It is
+cleaned before it is traced, as a relabeling, so the partition -- and with it
+the exact sharing above -- is untouched.
 """
 
 import math
 
 import numpy as np
+from scipy import ndimage
 
 # moving along an edge, the region being traced is on the right
 RIGHT = {(0, 1): (1, 0), (1, 0): (0, -1), (0, -1): (-1, 0), (-1, 0): (0, 1)}
@@ -44,6 +51,64 @@ def junctions(lab):
     n += (c != a) & (c != b)
     n += (d != a) & (d != b) & (d != c)
     return n >= 3
+
+
+def deburr(lab, cap=12):
+    """Give every pixel-wide sliver of a label map to the label around it.
+
+    The watershed leaves burrs on the boundaries it settles: a pixel-wide
+    tongue of one region running along the edge of another, a pixel-wide sliver
+    of a third lying inside a fourth, a pixel the two of them meet at
+    diagonally. Each is a third of a plate pixel across -- under the width of
+    the atlas's own line, and under anything the app can draw -- and none
+    survives as area worth having. What they do survive is simplification.
+    Douglas-Peucker keeps whatever lies far from the chord, and the tip of a
+    twenty-pixel tongue is far from it however thin the tongue, so the polygon
+    comes back with a spike on it: an edge that runs out along the boundary and
+    back over itself, crossing the region's own outline. That is what a reader
+    sees, and the geometry underneath it is one pixel of nothing.
+
+    A pixel is thin here when no 2x2 block of its own label contains it, which
+    is the one local test that passes a staircase -- the boundaries are all
+    staircases -- and fails a sliver. Thin pixels go to the nearest label that
+    is not thin. That is a relabeling and not a cut: the map is still a
+    partition of the same ground, so the regions still tile it and the two
+    owners of a boundary still trace the identical chain of corners. Nothing
+    leaves the section, and no boundary the atlas draws moves, because a
+    boundary the atlas draws is wider than this.
+
+    A label with no thick pixel anywhere is left alone rather than dissolved:
+    the extraction found it a pixel wide and that is what it has.
+
+    Run to a fixed point rather than a set number of rounds, because giving a
+    sliver away can leave the pixel beside it thin in turn. It settles fast:
+    over the 62 plates the first round moves a median 394 pixels of an 8 Mpx
+    page, the second 26, and 29 plates want a third that moves one or two.
+    None wants a fourth, so `cap` is a stop rather than a schedule.
+    """
+    lab = np.asarray(lab)
+    for _ in range(cap):
+        a, b = lab[:-1, :-1], lab[:-1, 1:]
+        c, d = lab[1:, :-1], lab[1:, 1:]
+        blk = (a == b) & (a == c) & (a == d) & (a > 0)
+        thick = np.zeros(lab.shape, bool)
+        thick[:-1, :-1] |= blk
+        thick[:-1, 1:] |= blk
+        thick[1:, :-1] |= blk
+        thick[1:, 1:] |= blk
+        thin = (lab > 0) & ~thick
+        held = np.zeros(int(lab.max()) + 1, bool)
+        held[lab[thick]] = True             # labels with ground of their own
+        thin &= held[lab]
+        if not thin.any():
+            break
+        near = ndimage.distance_transform_edt(
+            ~thick, return_distances=False, return_indices=True)
+        out = np.where(thin, lab[near[0], near[1]], lab)
+        if np.array_equal(out, lab):        # thin, but nothing nearer to give it to
+            break
+        lab = out
+    return lab
 
 
 def trace_rings(mask):
@@ -138,7 +203,23 @@ def simplify_ring(ring, junc, eps):
 
     With no junction on the ring -- a region wholly surrounded by one neighbor
     -- the ring is cut at its lexicographically smallest corner instead, which
-    both owners also agree on."""
+    both owners also agree on.
+
+    A ring can pass through the same junction twice, where the region pinches
+    to a corner, and the arc between the two visits is then a closed loop --
+    a lobe hanging off that corner. Douglas-Peucker has no chord to measure
+    against there, only the corner itself, and what it keeps is whatever lies
+    further than `eps` from it. Keep one point of a lobe and the lobe is not a
+    lobe: it is a line drawn out and back over itself, which is the whisker a
+    reader sees crossing the outline. So a lobe is kept when two of its points
+    survive and it still encloses something, and dropped when one does. No
+    threshold of its own -- `eps` decides, as it does everywhere else here.
+
+    Dropping one leaves the arc after it starting where the arc before it
+    ended, so the corner would be written twice with no edge between. Those
+    repeats go too: a zero-length edge is not a boundary, and every consumer --
+    the union of a division's members, the shared-edge check, an SVG export --
+    would have to know to skip it."""
     n = len(ring) - 1                       # ring[-1] == ring[0]
     cuts = [i for i in range(n)
             if junc[int(ring[i][1]), int(ring[i][0])]]
@@ -148,7 +229,13 @@ def simplify_ring(ring, junc, eps):
     for a, b in zip(cuts, cuts[1:] + [cuts[0] + n]):
         arc = [ring[i % n] for i in range(a, b + 1)]
         idx = dp(arc, eps)
-        out.extend(arc[i] for i in idx[:-1])
+        if arc[0] == arc[-1] and len(idx) < 4:
+            idx = [0, len(arc) - 1]
+        for i in idx[:-1]:
+            if not out or arc[i] != out[-1]:
+                out.append(arc[i])
+    while len(out) > 1 and out[0] == out[-1]:
+        out.pop()
     if len(out) < 3:
         return None
     out.append(out[0])

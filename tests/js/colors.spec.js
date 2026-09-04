@@ -160,13 +160,30 @@ test('the SVG export carries the colors as one named group', async ({ page }) =>
 
 test('the PNG export washes the same colors over the same plate', async ({ page }) => {
   const fs = require('fs');
-  // a point that is certainly inside CPu, found the way the app answers a click
+  // A point well inside CPu, not merely inside it: the first hit of a scan sits on the
+  // outline by construction -- it is the first pixel the region reaches -- and the export
+  // draws a boundary there, so what is sampled is the line rather than the wash. Take the
+  // point of the scan furthest from the region's own boundary instead.
   await page.goto(BUNDLE + '#p30');
   const at = await page.evaluate(() => {
     const G = window.__gae, o = G.regBuild(30).by['CPu'];
-    for (let y = o.y0; y <= o.y1; y += 2) for (let x = o.x0; x <= o.x1; x += 2)
-      if (G.regIn(o, x, y)) return [x, y, G.MCPAL[G.mcBuild(30).by['CPu']]];
-    return null;
+    const clear = (x, y) => {
+      let m = Infinity;
+      for (const g of o.gs) for (let i = 0; i < g.length - 1; i++) {
+        const a = g[i], b = g[i + 1];
+        const vx = b[0] - a[0], vy = b[1] - a[1], L = vx * vx + vy * vy;
+        const t = L ? Math.max(0, Math.min(1, ((x - a[0]) * vx + (y - a[1]) * vy) / L)) : 0;
+        m = Math.min(m, Math.hypot(x - (a[0] + t * vx), y - (a[1] + t * vy)));
+      }
+      return m;
+    };
+    let best = null, bd = 0;
+    for (let y = o.y0; y <= o.y1; y += 2) for (let x = o.x0; x <= o.x1; x += 2) {
+      if (!G.regIn(o, x, y)) continue;
+      const d = clear(x, y);
+      if (d > bd) { bd = d; best = [x, y]; }
+    }
+    return best && bd > 4 ? [best[0], best[1], G.MCPAL[G.mcBuild(30).by['CPu']]] : null;
   });
   expect(at).not.toBeNull();
   const [fx, fy, hex] = at;
