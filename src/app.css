@@ -249,6 +249,16 @@ input[type=search]:focus{border-color:var(--accent)}
 /* the strip of controls the view is steered by. Beside the tabs where there is room; its
    own row, scrolling sideways rather than wrapping, where there is not. */
 .vqs{display:flex;flex-wrap:wrap;align-items:center;gap:7px 9px;min-width:0}
+/* A group in the strip keeps its own width. Left to shrink -- which is the flex default,
+   and .vctl carries min-width:0 -- a group narrower than its contents does not scroll,
+   it clips: .seg is overflow:hidden, so the buttons past the cut simply vanish, which is
+   how Myelin went missing from the 3-D strip on a phone. Overflow is the scroll bar's
+   job, not the group's. */
+.vqs>.vctl{flex:none}
+/* and a row that scrolls sideways has to look like one, or a control past its right edge
+   is a control nobody knows is there */
+.vqs.more{-webkit-mask-image:linear-gradient(to right,#000 calc(100% - 26px),transparent);
+  mask-image:linear-gradient(to right,#000 calc(100% - 26px),transparent)}
 .vctl{display:flex;flex-wrap:wrap;align-items:center;gap:7px 9px;min-width:0}
 .vctl[hidden]{display:none}
 .elinkgrp{margin-left:auto;display:inline-flex;align-items:center;gap:6px}

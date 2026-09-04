@@ -532,3 +532,35 @@ test('commentary goes behind the mark, a warning stays under the plate', async (
   await page.click('#oobgo');   // the nearest plate MSO is on, going posterior from 30
   expect(await page.evaluate(() => window.__gae.state().cur)).toBe(44);
 });
+
+test('the control strip scrolls rather than clipping its groups', async ({ browser }) => {
+  // A group in the strip used to be allowed to shrink -- flex's default, and .vctl carries
+  // min-width:0 -- so on a phone the 3-D strip squeezed the source switch from 175px to 108
+  // and .seg's overflow:hidden ate Myelin. A clipped button is not a scrolled one: there is
+  // no gesture that brings it back.
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+  const page = await ctx.newPage();
+  await page.goto(BUNDLE + '#p30&t=v3d');
+  await page.waitForFunction(() => window.__gae && v3ready, null, { timeout: 90000 });
+  const clipped = await page.evaluate(() => [...document.querySelector('.vqs').children]
+    .filter(el => !el.hidden && el.scrollWidth > el.clientWidth + 1)
+    .map(el => el.id || el.className));
+  expect(clipped, 'groups in the strip must never be narrower than their contents').toEqual([]);
+
+  // every source button is whole, and inside the strip's scrollable width
+  const src = await page.evaluate(() => {
+    const q = document.querySelector('.vqs'), s = document.getElementById('srcseg');
+    return { segWhole: s.scrollWidth <= s.clientWidth + 1,
+             fits: s.getBoundingClientRect().width > 150,
+             scrolls: q.scrollWidth > q.clientWidth };
+  });
+  expect(src.segWhole).toBe(true);
+  expect(src.fits).toBe(true);
+  expect(src.scrolls).toBe(true);              // the row does overflow -- that is the point
+
+  // and it says so, until it has been scrolled to the end
+  await expect(page.locator('.vqs')).toHaveClass(/more/);
+  await page.evaluate(() => { const q = document.querySelector('.vqs'); q.scrollLeft = q.scrollWidth; });
+  await expect(page.locator('.vqs')).not.toHaveClass(/more/);
+  await ctx.close();
+});

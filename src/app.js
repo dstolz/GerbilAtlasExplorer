@@ -5520,7 +5520,7 @@ function setTab(t){
   $('advh').hidden = t==='proj';
   /* each view keeps its own staining, so arriving at one puts its own back on screen */
   psrc=PSRC[srcTab()];
-  srcCtl(); srcShow();
+  srcCtl(); srcShow(); vqsEdge();
   hideTip(); pjHide(); v3hide();
   infOpen(false);
   advSync(); vpanSync();
@@ -5590,6 +5590,16 @@ function setSrc(k){
 const srcN = () => [...$('srcseg').children].filter(b=>!b.hidden).length;
 /* the projection plots where labels are printed, not pixels, so no staining applies to it */
 function srcCtl(){ $('ctlSrc').hidden = srcN()<2 || tab==='proj'; }
+
+/* the strip fades at its right edge while there is more of it to reach, and stops fading
+   once it has been scrolled to the end -- the only thing that says a sideways-scrolling row
+   is one, on a touch screen with no scrollbar to see */
+const VQS=$('vqs');
+function vqsEdge(){
+  VQS.classList.toggle('more', VQS.scrollWidth-VQS.clientWidth-VQS.scrollLeft > 2);
+}
+VQS.addEventListener('scroll',vqsEdge,{passive:true});
+new ResizeObserver(vqsEdge).observe(VQS);
 
 /* ---------- the view's controls: docked beside what they drive ----------
    A column to the right of the picture where there is width for one, a row above it where

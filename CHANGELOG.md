@@ -5,6 +5,18 @@ carries a `version` block naming the release its derived fields were built for.
 
 ## [Unreleased]
 
+### Fixed
+- **The source switch was being cut off in the 3-D view on a phone.** A group in the control
+  strip was left free to shrink — flex's default, and `.vctl` carries `min-width:0` — so on a
+  390 px screen the 3-D strip squeezed the switch from its natural 175 px down to 108 and
+  `.seg`'s `overflow:hidden` ate **Myelin**. A clipped button is not a scrolled one: no
+  gesture brings it back. Groups in the strip keep their own width now, and the overflow goes
+  where it belongs, to the strip's own sideways scroll.
+- The strip fades at its right edge while there is more of it to reach, and stops once it has
+  been scrolled to the end. On a touch screen there is no scrollbar to see, so without it a
+  control past the edge is a control nobody knows is there — which is how the switch went
+  missing in the first place.
+
 ### Changed
 - **The controls dock beside the view rather than over it.** They were a popover on a wide
   window and a sheet on a phone, both out of the flow so that opening them could not resize
