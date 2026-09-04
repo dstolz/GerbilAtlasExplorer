@@ -26,6 +26,13 @@ const MRIS={};
 const SRC={drawing:IMG, nissl:window.__NISSL__, myelin:window.__MYELIN__, mri:MRIS};
 const SRCN={drawing:'labeled drawing', nissl:'Nissl section', myelin:'myelin section',
             mri:'MRI plane'};
+/* The plate and the stack are the same 62 sections seen two ways, and they used to share
+   one source on the grounds that a build where the two disagreed would be a puzzle. It is
+   not a puzzle, it is the comparison: reading a Nissl stack against the labeled plate is
+   what having both views is for. So each remembers its own, and `psrc` is whichever one is
+   on screen -- every reader of it below is unchanged, and only setSrc and setTab move it. */
+const PSRC={plate:'drawing', v3d:'drawing'};
+const srcTab = () => tab==='v3d' ? 'v3d' : 'plate';
 let psrc='drawing', pgray=false, pctr=100;
 const srcOK = k => !!(SRC[k] && SRC[k][1]);
 const plateImg = (n,k=psrc) => ((srcOK(k)?SRC[k]:IMG)[n])||'';
@@ -793,12 +800,10 @@ function mark(){
   markSel();
   infArm();
   if(anArm){
-    vpanOpen(false);
     vhTell('Click a point on the plate to place the <b>note</b>.');
     return;
   }
   if(pickArm){
-    vpanOpen(false);
     vhTell('Click a point on the plate to set <b>ML</b> and <b>DV</b>, '+
       'and <b>AP</b> from plate '+cur+'.');
     return;
@@ -1888,7 +1893,7 @@ function drawMeas(){
 function setMeas(on){
   measMode=on; IW.classList.toggle('meas',on);
   if(!on){ mA=mB=mHover=null; }
-  if(on){ setPick(false); anArmSet(false); vpanOpen(false); }   /* all three want the next click; measuring just took it */
+  if(on){ setPick(false); anArmSet(false); }   /* all three want the next click; measuring just took it */
   infArm();
   drawMeas(); hideTip(); fit(); queueHash();
 }
@@ -5041,6 +5046,7 @@ function v3open(){
     try{
       if(!v3init()) throw new Error(v3fail);
       const vol=await v3build(f=>{ if(pg) pg.style.width=(f*100).toFixed(0)+'%'; }, src);
+      v3src=src;
       v3upload(vol);
       if(V3P.some(q=>q.sk)) v3skullBuild();   /* a deep link can ask for bone before GL exists */
       v3ready=true; V3MSG.hidden=true;
@@ -5049,12 +5055,13 @@ function v3open(){
       v3fail=String(err&&err.message||err);
       V3MSG.innerHTML=`<b>3-D could not start</b><span>${esc(v3fail)}</span>`;
     }finally{ v3busy=false; }
-    if(v3ready&&psrc!==src) v3resrc();       /* it changed under the build: read it again */
+    if(v3ready&&PSRC.v3d!==src) v3resrc();   /* it changed under the build: read it again */
   },30);
 }
 new ResizeObserver(()=>{ if(tab==='v3d') v3frame(); }).observe(V3WRAP);
 
 /* ---------- deep links: #p30/MGV, plus the view state when it is not the default ---------- */
+let v3src='drawing';        /* the source the stack currently in the GPU was read from */
 let hashT=null, lastWritten='';
 function queueHash(){ clearTimeout(hashT); hashT=setTimeout(writeHash,180); }
 function writeHash(){
@@ -5074,7 +5081,11 @@ function writeHash(){
      every link that only asks for the colors is the short one it has always looked like */
   if(mcOn&&mcWash!==45) h+='&cw='+mcWash;
   /* ct, not c: c has been the pan center since before there was anything to stretch */
-  if(psrc!=='drawing') h+='&ps='+psrc;
+  if(PSRC.plate!=='drawing') h+='&ps='+PSRC.plate;
+  /* ps has named the plate's source since before the stack had one of its own, so it still
+     does; ps3 is written only where the two differ, and a link without it sets both -- which
+     is exactly what every link written before this meant */
+  if(PSRC.v3d!==PSRC.plate) h+='&ps3='+PSRC.v3d;
   if(pctr!==100) h+='&ct='+pctr;
   if(pview!=='dv') h+='&pj='+pview;
   if(cmpOn) h+='&cmp='+cmpWhat;
@@ -5156,9 +5167,15 @@ function readHash(){
   /* a link can name the MRI before the probe that finds it has come back. Falling to the
      drawing is still right for now -- the images may not be there at all -- so remember
      the ask and let mriLoad honour it if they are. */
-  if(par.ps==='mri' && !srcOK('mri')) mriWant=true;
-  psrc = srcOK(par.ps) ? par.ps : 'drawing';
-  if(v3ready&&psrc!==was) v3resrc();
+  if(!srcOK('mri')){
+    const w=[]; if(par.ps==='mri') w.push('plate');
+    if(par.ps3==='mri' || (!par.ps3 && par.ps==='mri')) w.push('v3d');
+    mriWant = w.length ? w : null;
+  }
+  PSRC.plate = srcOK(par.ps) ? par.ps : 'drawing';
+  PSRC.v3d   = srcOK(par.ps3) ? par.ps3 : PSRC.plate;
+  psrc = PSRC[srcTab()];
+  if(v3ready&&PSRC.v3d!==was) v3resrc();
   /* set before go(), which is what paints the plate: after it the first frame would be
      the plain plate and the second the colored one */
   const cw=Math.round(+par.cw);
@@ -5501,13 +5518,19 @@ function setTab(t){
   $('qs3d').hidden    = $('ctl3d').hidden    = $('adv3d').hidden    = t!=='v3d';
   /* the projection has nothing to tune, so its disclosure goes rather than opening empty */
   $('advh').hidden = t==='proj';
-  /* the projection plots label positions, not pixels, so no image source applies to it */
-  srcCtl();
+  /* each view keeps its own staining, so arriving at one puts its own back on screen */
+  psrc=PSRC[srcTab()];
+  srcCtl(); srcShow();
   hideTip(); pjHide(); v3hide();
   infOpen(false);
   advSync(); vpanSync();
   if(t==='plate'){ fitW=0; fit(); applyView(); }
-  else if(t==='v3d'){ v3note(); v3open(); }
+  else if(t==='v3d'){
+    v3note(); v3open();
+    /* the stack in the GPU was read from whatever was showing when it was built; if this
+       view has been set to something else since, it is a plate short and has to re-read */
+    if(v3ready&&v3src!==psrc) v3resrc();
+  }
   else pjGuide();
   queueHash();
 }
@@ -5550,7 +5573,10 @@ function setSrc(k){
   if(!srcOK(k)&&k!=='drawing') return;
   /* mark() rather than markSel(): the notes under the plate -- the colors, the dashed
      track -- belong to the picture, not to which of the four sources is on it */
-  psrc=k; srcShow(); mark(); v3resrc(); v3note(); queueHash();
+  PSRC[srcTab()]=psrc=k;
+  srcShow(); mark(); v3note(); queueHash();
+  /* only the stack has to be read again, and only when it is the view being set */
+  if(tab==='v3d') v3resrc();
 }
 [...$('srcseg').children].forEach(b=>{
   if(b.dataset.s==='mri') return;              /* decided at run time, not by the build */
@@ -5562,17 +5588,19 @@ function setSrc(k){
    control. The projection plots label positions rather than pixels, so no source applies
    to it either. */
 const srcN = () => [...$('srcseg').children].filter(b=>!b.hidden).length;
-function srcCtl(){ $('ctlSrc').hidden = srcN()<2; }
+/* the projection plots where labels are printed, not pixels, so no staining applies to it */
+function srcCtl(){ $('ctlSrc').hidden = srcN()<2 || tab==='proj'; }
 
-/* ---------- the view's controls: one panel, two presentations ----------
-   A sheet over the picture on a phone, a popover under its own button on a wide window.
-   Out of the flow either way, on purpose: opening it changes nothing #imgbox measures, so
-   fit() does not resize the plate under the pointer. That is also what stopped Add
-   rewrapping the toolbar and moving the picture a frame later.
+/* ---------- the view's controls: docked beside what they drive ----------
+   A column to the right of the picture where there is width for one, a row above it where
+   there is not. Both are in the flow, so opening the panel re-fits the view rather than
+   covering it: the picture gets smaller and stays wholly visible. That is the trade a
+   docked panel makes, and it is why every open and close runs the same re-fit setMax()
+   does -- the plate is sized from the room #imgbox is left with, and the room just changed.
    Whether it is open is how you are looking rather than what you are looking at, so it is
    in neither the link nor storage. Advanced is the other way round -- it says what kind of
    user you are -- so that one is remembered, the way the sidebar's Divisions are. */
-const VPAN=$('vpan'), VPBD=$('vpanbd'), VCTLB=$('vctlb'), ADVH=$('advh'), ADVB=$('advb');
+const VPAN=$('vpan'), VCTLB=$('vctlb'), ADVH=$('advh'), ADVB=$('advb');
 let vpanOn=false, advOn=false, infOn=false;
 try{ advOn=localStorage.getItem('gae-adv')==='1'; }catch(_){}
 
@@ -5602,10 +5630,13 @@ function vpanOpen(on){
   on=!!on;
   if(on===vpanOn) return;
   vpanOn=on;
-  VPAN.hidden=!on; VPBD.hidden=!on;
+  VPAN.hidden=!on;
   VCTLB.setAttribute('aria-expanded',on?'true':'false');
   if(on){ vpanSync(); VPAN.querySelector('.vpanb').scrollTop=0; }
   else try{ VCTLB.focus(); }catch(_){}
+  /* the view has just been given, or given back, the room the panel occupies */
+  hideTip(); fitW=0; fit(); applyView();
+  if(tab==='v3d') v3frame(); else if(tab==='proj') pjGuide();
 }
 VCTLB.onclick=()=>vpanOpen(!vpanOn);
 /* the global key handler steps aside whenever an input has the keyboard, and this panel is
@@ -5613,15 +5644,6 @@ VCTLB.onclick=()=>vpanOpen(!vpanOn);
 VPAN.addEventListener('keydown',e=>{
   if(e.key==='Escape'){ e.stopPropagation(); vpanOpen(false); } });
 $('vpanx').onclick=()=>vpanOpen(false);
-VPBD.onclick=()=>vpanOpen(false);
-/* a click anywhere else puts the popover away, the way a popover should behave -- but not
-   a click inside it, and not the one on the button that is already toggling it */
-addEventListener('pointerdown',e=>{
-  if(!vpanOn) return;
-  if(VPAN.contains(e.target)||VCTLB.contains(e.target)) return;
-  if(matchMedia('(max-width:899px)').matches) return;   /* the backdrop has that job */
-  vpanOpen(false);
-});
 
 /* Advanced: the sidebar's Divisions accordion, relabeled. Same caret, same count, same
    click-and-Enter, same remembered state. */
@@ -5688,7 +5710,9 @@ advSync();
    folder would swear the MRI was there and then fail on every plate. The request is the
    honest form of the question, and one image is the cheapest form of the request. */
 const MRIURL = p => 'data/plates/mri/'+String(p).padStart(2,'0')+'.jpg';
-let mriWant=false;                 /* a deep link that asked for the MRI before it was here */
+/* a deep link can ask for the MRI before the probe that finds it has come back, and it can
+   ask for it on one view or on both -- so what is held is which, not merely that */
+let mriWant=null;
 function mriLoad(){
   const btn=[...$('srcseg').children].find(b=>b.dataset.s==='mri'),
         opt=$('cmpsel').querySelector('option[value="mri"]'), im=new Image();
@@ -5697,7 +5721,12 @@ function mriLoad(){
     if(btn){ btn.hidden=false; btn.onclick=()=>setSrc('mri'); }
     if(opt) opt.hidden=false;
     srcCtl();
-    if(mriWant){ mriWant=false; setSrc('mri'); }
+    if(mriWant){
+      for(const k of mriWant) PSRC[k]='mri';
+      mriWant=null;
+      psrc=PSRC[srcTab()]; srcShow(); mark(); v3note(); queueHash();
+      if(tab==='v3d') v3resrc();
+    }
     else if(cmpWhat==='mri'&&cmpOn) cmpShow();
   };
   im.onerror=()=>{ if(btn) btn.remove(); if(opt) opt.remove();
