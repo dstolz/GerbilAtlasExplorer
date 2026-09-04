@@ -789,6 +789,15 @@
       head at any other angle, describe that angle here and coordinates will be read in
       <em>your</em> frame rather than the atlas&rsquo;s. If all you want is to read from
       <b>lambda</b> instead of bregma, skip to <em>Origin</em> and turn the frame on.</p>
+    <p><b>Flat skull is the case this is for.</b> Radtke-Schuller et al. recommend leveling
+      lambda against the occipital crest to approximate the atlas plane, but a frame with a
+      tooth bar and a nose clamp will not reach that, so the head is leveled
+      <b>bregma to lambda</b> instead. That leaves it pitched relative to the atlas plane by
+      however far the two lines differ, and every published coordinate has to be adjusted for
+      it. Read the pitch off the animal under <em>From measurements</em> rather than assuming
+      one &mdash; for scale, the fitted skull puts bregma 0.22&nbsp;mm below the atlas&rsquo;s
+      dorsal plane and lambda 0.54&nbsp;mm above it, so bregma&ndash;lambda is of the order of
+      10&deg; off, but that is one animal&rsquo;s skull and yours is the one that matters.</p>
 
     <div class="frow">
       <button class="b" id="fon" type="button">Turn on</button>
@@ -830,10 +839,11 @@
       a zero that is not on a landmark can still be named by the nearest one: lambda with an
       AP offset of &minus;0.50 is half a millimeter behind lambda. Anterior, right and dorsal
       are positive, as everywhere else here. Leave them at 0 and zero is the landmark itself.</p>
-    <p>Left on <em>the atlas origin</em> nothing changes: zero stays wherever the rotation
-      carries bregma, which is what the pivot below decides. Name a landmark instead and the
-      pivot stops mattering &mdash; rotating about any point and then re-zeroing on the origin
-      is the same as rotating about the origin.</p>
+    <p>Left on <em>the atlas origin</em> zero stays wherever the rotation carries bregma, which
+      is what the pivot below decides. Name a landmark instead and zero is that point, whatever
+      the tilt did to it &mdash; which is the reading you want if you zeroed the manipulator
+      after the head was already tilted. <em>How the two compose</em>, under the pivot, works
+      through what that leaves.</p>
     <p><b>The landmark itself sets AP only</b>, for the reason a pivot preset does: the atlas
       prints an AP for each of these and neither an ML nor a height. On those two axes the
       offset is the whole story &mdash; leave DV at 0 to zero on the brain&rsquo;s dorsal
@@ -854,7 +864,9 @@
       it in preference to the button.</p>
 
     <h3>Pivot</h3>
-    <p class="fnb" id="fpivn" hidden>An origin is set, so the pivot no longer changes anything.</p>
+    <p class="fnb" id="fpivn" hidden>The head is tilted on the ear bars first and zeroed on the
+      origin second, so this axis is the <b>tilt</b>, not the zero. Set it to describe the rig;
+      <em>how the two compose</em> below works through what the pair of them give.</p>
     <div id="fpivs">
       <div class="fset" id="fset"></div>
       <div class="fgrid">
@@ -881,6 +893,30 @@
       AP is the atlas&rsquo;s own and the height comes off the approximate skull fit.</p>
     <p>Pitch alone ignores the pivot&rsquo;s ML, so a preset puts it on the midline. Roll and yaw
       do use it.</p>
+    <p><b>How the two compose.</b> The tilt axis and the zero are different things, and the
+      order they happen in is what decides how they combine. The gerbil goes on the ear bars and
+      is pitched until bregma and lambda are level: that is the pivot, and it swings the whole
+      head. Only then is the electrode driven to lambda and the manipulator zeroed. Worked
+      through at 17&deg; about an ear-bar axis at AP&nbsp;&minus;7.25 / DV&nbsp;&minus;9.05, with
+      lambda taken at its skull height:</p>
+    <table class="fcmp">
+      <thead><tr><th></th><th>from the ear bars, before the tilt</th><th>after the tilt</th></tr></thead>
+      <tbody>
+        <tr><th>lambda</th><td>+2.80 / 0 / +9.59</td><td>+5.48 / 0 / +8.35</td></tr>
+        <tr><th><code>MSO</code></th><td>&minus;0.70 / &plusmn;1.31 / +0.75</td><td>&minus;0.45 / &plusmn;1.31 / +0.92</td></tr>
+        <tr><th>zeroed on lambda</th><td colspan="2"><code>MSO</code> &minus; lambda =
+          <b>&minus;5.93 / &plusmn;1.31 / &minus;7.43</b></td></tr>
+      </tbody>
+    </table>
+    <p>The axis is in that working &mdash; the middle column is nothing but the pivot &mdash; and
+      it leaves the last line because lambda and the target swung about it <em>together</em>, so
+      it enters the subtraction twice with opposite signs. That is why the numbers stop moving
+      when you drag the pivot around with an origin named: not because the app has confused the
+      two, but because zeroing on a point after turning the head is arithmetically the same as
+      having turned the head about that point. Set the axis anyway &mdash; it is what the rig
+      actually does, and the readout uses it directly the moment the origin is left on
+      <em>the atlas origin</em>, which is the case where you zeroed <em>before</em> tilting. The
+      difference there is 2.6&nbsp;mm of AP at this pitch.</p>
 
     <h3>Offset</h3>
     <div class="fgrid">

@@ -674,9 +674,16 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
 .ffld input:disabled{opacity:.45}
 /* the origin's select stands alone rather than in a .fgrid, so it carries the row gap itself */
 .ffld.solo{margin:0 0 10px}
-/* the pivot has no effect once an origin is named, so the controls say so by fading */
-.fdim{opacity:.45}
+/* the note under a heading that qualifies the fields below it rather than warning about them */
 .fnb{margin:0 0 9px;font-size:11.5px;color:var(--accent);line-height:1.5}
+/* the pivot's worked example: the tilt done longhand, so the composition is shown not asserted */
+.fcmp{border-collapse:collapse;width:100%;margin:0 0 11px;font-size:11.5px;
+  font-variant-numeric:tabular-nums}
+.fcmp th,.fcmp td{border:1px solid var(--line);padding:5px 8px;text-align:left;vertical-align:top}
+.fcmp thead th{color:var(--muted);font-weight:500;font-size:11px}
+.fcmp tbody th{color:var(--ink);font-weight:600;white-space:nowrap}
+.fcmp td{color:var(--muted)}
+.fcmp b{color:var(--accent)}
 .fprev{border:1px solid var(--line);border-radius:9px;background:var(--panel2);
   padding:10px 12px;font-size:12px;color:var(--ink);font-variant-numeric:tabular-nums}
 .fprev b{color:var(--accent);font-weight:600}

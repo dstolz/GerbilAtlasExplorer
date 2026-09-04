@@ -193,10 +193,14 @@ const LMDV=LM.map(([n])=>{ if(!SKLM) return null;
        about the pivot under it. This is the reading you want if you zeroed before tilting.
      org on  -- zero is a named point of the animal: drive to lambda with the head already
        in the frame, zero there, and lambda reads 0/0/0 however the head is turned.
-   The second makes the pivot irrelevant, and not by choice: R(P-piv)+piv - [R(O-piv)+piv]
-   is R(P-O) for every piv, so re-zeroing on a point IS rotating about it. Hence fCen/fAdd
-   rather than two copies of the formulae -- one center to subtract, one vector to add
-   back, and toFrame/fromFrame never learn which mode they are in. */
+   The second is the lab's own order -- pitch the head on the ear bars until bregma and lambda
+   are level, then drive to lambda and zero -- and in it the pivot leaves the arithmetic:
+   R(P-piv)+piv - [R(O-piv)+piv] is R(P-O) for every piv, because the origin and the target
+   swing about the axis together. That is a fact about the order, NOT a claim that the tilt
+   axis and the zero are the same thing; they are separate controls and the dialog keeps both
+   live and works the composition through longhand. Hence fCen/fAdd rather than two copies of
+   the formulae -- one center to subtract, one vector to add back, and toFrame/fromFrame never
+   learn which mode they are in. */
 const FRAME={on:false,pitch:0,roll:0,yaw:0,pap:0,pml:0,pdv:0,dap:0,dml:0,ddv:0,
              org:false,oref:0,oap:0,oml:0,odv:0};
 let FRM=null;
@@ -5817,7 +5821,6 @@ function orgSync(){
   $('forg').value = FRAME.org ? String(FRAME.oref) : '';
   ['foap','foml','fodv'].forEach(k=>$(k).disabled=!FRAME.org);
   $('fpivn').hidden=!FRAME.org;
-  $('fpivs').classList.toggle('fdim',!!FRAME.org);
   hgtRow($('fohgt'), FRAME.org?FRAME.oref:null, FRAME.odv, v=>{ $('fodv').value=v; });
   const N=$('forgn');
   N.hidden=!FRAME.org;
