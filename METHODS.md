@@ -1371,8 +1371,12 @@ point seen end-on in the sagittal projection, and a real line only in the top-do
 In the 3-D view none of that flattening applies, so the four are drawn as what they are:
 each landmark's coronal plane as a rule up the midline, exact because its AP is; a
 three-axis cross on the vault at bregma, lambda and the occipital crest; and the interaural
-line as the ear-bar axis itself, running from canal to canal with a ring at each end and
-out past the brain, where the ML extent of the atlas box cannot hold it. Nothing of it is
+line as the ear-bar axis itself, run laterally right through the head and out the other
+side, with a ring where it passes each canal. The rings are the measured part; where the
+bar ends is not, so it is carried past the widest half-width of the fitted skull — read off
+the top-down silhouette, ±11.9 mm, plus 1.6 mm of margin — rather than stopping at the
+canals at ±10.4, which sit inside the bone and make the axis read as a chord within the
+head instead of a bar going into one. Nothing of it is
 depth-tested — an ear bar is not hidden by the head it goes into, and a reference plane you
 cannot see through the brain is no reference — and **Half** cuts the axis at the midline
 with everything else, which the shared line shader leaves to the geometry. The names ride

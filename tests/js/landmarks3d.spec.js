@@ -72,3 +72,18 @@ test('the midline cut takes the left half of the ear-bar axis with it', async ({
   expect((await panes(page))[0].half).toBe(true);
   expect(await shot(page)).not.toBe(whole);
 });
+
+// The bar goes into the head from outside it. The canals the fit locates sit a fraction of
+// a millimetre inside the bone, so an axis that stopped at them would read as a chord
+// within the skull rather than as an ear bar through it. What a test can hold of that is
+// the reach: it has to clear the widest the fitted skull gets, not just the canals.
+test('the ear-bar axis is carried out past the widest bone', async ({ page }) => {
+  await open(page, '#p30&t=v3d&lm=1');
+  const m = await page.evaluate(() => {
+    const S = window.__SKULL__;
+    const wide = Math.max(...S.sil.ml.flat().map(p => Math.abs(p[1])));
+    return { reach: v3lmReach(S.lm.ear.ml), canal: S.lm.ear.ml, wide };
+  });
+  expect(m.canal).toBeLessThan(m.wide);          // the canals are inside the bone
+  expect(m.reach).toBeGreaterThan(m.wide);       // and the ends of the bar are not
+});

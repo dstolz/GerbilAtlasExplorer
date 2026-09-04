@@ -167,8 +167,8 @@ handful.
   surface at any transparency from a faint shell to solid bone. **Landmarks** stands bregma,
   lambda, the interaural axis and the occipital crest in the stack: each landmark's coronal
   plane as a rule up the midline, a cross on the vault, and the interaural line as the
-  ear-bar axis running out past the brain to a ring at each canal — the one view where it is
-  a line and not a point. **Ortho** switches to a
+  ear-bar axis, run laterally right through the head and out the other side with a ring
+  where it passes each canal — the one view where it is a line and not a point. **Ortho** switches to a
   parallel projection, so nothing is foreshortened. **View** puts the camera on an
   anatomical axis — left, right, rostral, caudal, dorsal or ventral — and the link you
   copy carries it. **Meshes** fetches the closed surfaces built offline from the outlines
