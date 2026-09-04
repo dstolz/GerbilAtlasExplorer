@@ -46,7 +46,8 @@ for (const [name, url] of [['bundle', BUNDLE], ['lean', LEAN]]) {
       expect(await page.evaluate(() => document.querySelectorAll('#pjl circle').length)).toBeGreaterThan(0);
       await page.click('#vseg button[data-t="v3d"]');
       await page.waitForFunction(() => window.__gae && v3ready, null, { timeout: 60000 });
-      await expect(page.locator('#v3nii')).toBeVisible();   // the export appears with the stack
+      // a pane opens ray-marched, and the toolbar says so
+      expect(await page.locator('#m3seg button[data-r="volume"]').getAttribute('class')).toContain('on');
       expect(errors).toEqual([]);
     });
 
@@ -100,15 +101,16 @@ test('the SVG export carries one named group per region', async ({ page }) => {
   expect(svg).toContain('id="region-Mi"');
 });
 
-/* The NIfTI export, checked on a volume made up for the purpose rather than on the plates:
+/* The NIfTI writer, checked on a volume made up for the purpose rather than on the plates:
    what can silently go wrong here is the geometry and the two axis flips, and neither of
    them needs a real stack to catch. Building one takes a minute under swiftshader and the
    test above already waits for one.
 
-   The header is asserted twice over: against the app's own calibration, so a recalibration
-   moves the file with it, and against the plate table's printed APs, so it cannot move
-   somewhere the atlas does not say. */
-test('the NIfTI export writes an RAS volume at the atlas\u2019s own millimetres', async ({ page }) => {
+   The toolbar button that ran this is out for now; the writer is not, and this is what
+   holds it to its header. It is asserted twice over: against the app's own calibration, so
+   a recalibration moves the file with it, and against the plate table's printed APs, so it
+   cannot move somewhere the atlas does not say. */
+test('the NIfTI writer writes an RAS volume at the atlas\u2019s own millimetres', async ({ page }) => {
   await page.goto(BUNDLE + '#p30');
   const r = await page.evaluate(() => {
     const N = V3W * V3H, nv = N * V3D;
@@ -164,36 +166,6 @@ test('the NIfTI export writes an RAS volume at the atlas\u2019s own millimetres'
   // and the AP axis runs from the last plate's printed bregma to the first plate's
   near(r.y[3], r.ap[0]);
   near(r.y[3] + (r.V3D - 1) * r.pixdim[1], r.ap[1]);
-});
-
-/* The export re-reads the 62 plates, which takes a couple of seconds -- long enough that
-   a click with no visible response would read as broken. The button is what the eye is on
-   right after the click, so the feedback goes there first: its own label counts the read
-   up to 100%, names the two short steps after it, and lands back on itself once the file
-   is handed to the browser -- never stuck on a stale percentage or silently re-enabled. */
-test('the NIfTI button shows its own progress while the file is written', async ({ page }) => {
-  await page.goto(BUNDLE + '#p30&t=v3d');
-  await page.waitForFunction(() => window.__gae && v3ready, null, { timeout: 60000 });
-  const btn = page.locator('#v3nii');
-  await expect(btn).toHaveText('NIfTI');
-  await page.evaluate(() => {
-    window.__labels = [];
-    const b = document.getElementById('v3nii');
-    window.__mo = new MutationObserver(() => window.__labels.push(b.textContent));
-    window.__mo.observe(b, { childList: true, characterData: true, subtree: true });
-  });
-  await btn.click();
-  await expect(btn).toBeDisabled();
-  await expect(btn).not.toHaveText('NIfTI');   // some busy label, before the file is ready
-  const dl = await page.waitForEvent('download');
-  expect(dl.suggestedFilename()).toBe('gerbil_atlas_stack_drawing.nii.gz');
-  const labels = await page.evaluate(() => { window.__mo.disconnect(); return window.__labels; });
-  expect(labels[0]).toBe('Reading 0%');
-  expect(labels).toContain('Reading 100%');
-  expect(labels).toContain('Writing…');
-  expect(labels).toContain('Zipping…');
-  expect(labels[labels.length - 1]).toBe('NIfTI');
-  await expect(btn).toBeEnabled();
 });
 
 /* Two different things end in no outline being drawn, and they are encoded differently

@@ -859,8 +859,10 @@ coronal views of the whole thing.
 you open. The 3-D view fetches `data/gerbil_atlas_volumes.json` on demand instead —
 **Meshes** in its controls — when the page is served over HTTP, and offers the file picker
 when it was opened from disk; it draws the selected structure, or a filtered list of up to
-forty, as closed surfaces, says which grade each is and that six planes in seven are
-interpolated, and writes the selected one as STL. The label volume the meshes are cut
+forty, as closed surfaces, and says which grade each is and that six planes in seven are
+interpolated. The **STL** button that wrote the selected mesh out is off the toolbar for
+now; the writer behind it is unchanged and `tools/build_volumes.py --stl` writes the same
+meshes offline. The label volume the meshes are cut
 from is also written out, by `build_volumes.py --nifti`, as `data/gerbil_atlas_labels.nii.gz`:
 one uint16 id per 50 µm voxel, the file's axes in RAS order (x to the animal's right, y
 anterior, z dorsal) with the atlas millimetres in its sform, and `data/gerbil_atlas_labels_lut.csv`
@@ -1246,9 +1248,15 @@ where they belong: each section drawn at its own bregma. The explorer does this 
 ways, all from the plate images already on the page — nothing extra is downloaded, and
 there is no library.
 
+- **Volume** ray-marches the field through a 3-D texture, and is what a pane opens in.
+  The stack of quads below is the honest picture of what the reconstruction is — 62
+  sections and the gaps between them — but at the default oblique angle it is 62 cards
+  seen nearly edge-on, which is not what somebody who has just clicked *3D* is looking
+  for. The march reads the same field and shows the brain as a solid, so that is the
+  first sight of it and the other is one button away. A link that names no mode reads as
+  this one; `&r=contour` and `&r=points` are what a link now carries to say otherwise.
 - **Contours** draws the atlas's own red boundary drawings as a stack. It reads as a
   contour model of the brain because that is exactly what it is.
-- **Volume** ray-marches the same field through a 3-D texture.
 - **Labels** plots all 6,315 printed abbreviations as a stereotaxic point cloud — the
   projection views with the third axis put back. The `auditory` chip lights the whole
   ascending pathway in one rotatable view.
@@ -1307,7 +1315,9 @@ reader of somebody else's link has no other way of knowing.
 
 ### The stack as a NIfTI
 
-**NIfTI** in the 3-D controls writes the stack out as a gzipped NIfTI-1 volume — the
+The **NIfTI** button is off the 3-D toolbar for now, along with **STL**. What it wrote,
+and what the writer behind it still writes, is described here: the stack as a gzipped
+NIfTI-1 volume — the
 reconstruction itself rather than a picture of it, so it opens in ITK-SNAP, FSLeyes,
 Slicer or nibabel and can be resliced, measured, or registered against something else.
 The header is the same 348 bytes of struct `tools/volume.py` writes for the label volume,
@@ -1329,11 +1339,9 @@ writes in too — a re-zero renames coordinates in the app and does not move the
 and a file carrying a private origin would be the one thing about it a reader could not
 check.
 
-The stack is 24 MB and the view hands its only copy to the GPU, so the export reads the 62
+The stack is 24 MB and the view hands its only copy to the GPU, so the export read the 62
 plates again rather than the page holding a second copy for the length of every visit
-against an export most of them never run. It costs the few seconds the view itself cost,
-and the note under the view says so while it runs. Where the browser has no
-`CompressionStream` the volume is written uncompressed as `.nii` rather than not at all.
+against an export most of them never ran.
 
 ### The skull
 
@@ -1359,6 +1367,22 @@ putting bregma 8.8 mm above the ear-bar plane) are read off the fitted mesh. A p
 landmark is drawn only on the plate whose plane it falls in; the interaural line is a
 mediolateral axis, so it is solid in its own plane, a dashed height reference elsewhere, a
 point seen end-on in the sagittal projection, and a real line only in the top-down one.
+
+In the 3-D view none of that flattening applies, so the four are drawn as what they are:
+each landmark's coronal plane as a rule up the midline, exact because its AP is; a
+three-axis cross on the vault at bregma, lambda and the occipital crest; and the interaural
+line as the ear-bar axis itself, running from canal to canal with a ring at each end and
+out past the brain, where the ML extent of the atlas box cannot hold it. Nothing of it is
+depth-tested — an ear bar is not hidden by the head it goes into, and a reference plane you
+cannot see through the brain is no reference — and **Half** cuts the axis at the midline
+with everything else, which the shared line shader leaves to the geometry. The names ride
+over the canvas as text so they stay upright and legible while the marks turn with the
+brain; seen end-on the four land on top of each other, and the nearer name is the one
+written. It belongs to a pane, like the rest of the 3-D toolbar (`&lm=1`, `&lm2=1`), and
+unlike the projection's it is not stood down by a working frame: there the AP rules are
+lines only because a view has flattened an axis away, while here they are the planes
+themselves, turned by the same model matrix as the brain.
+
 Those same heights are what the frame dialog's **Height** buttons offer, so an interaural
 origin or pivot inherits this registration's error rather than being silently 9 mm out.
 

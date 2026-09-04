@@ -102,7 +102,8 @@ the whole atlas (all 186 plate images) lives inside it, 22 MB, most of that the 
 - **Skull** (experimental) traces a CT skull's cut through the current plate, and outlines
   it around either projection — the same surface the 3D view shows.
 - **Landmarks** marks bregma, lambda and the occipital crest where they fall, and draws the
-  interaural line. The APs are the atlas's own; the heights come off the skull fit.
+  interaural line — on the plate, around either projection, and in the 3D view. The APs are
+  the atlas's own; the heights come off the skull fit.
 
 **Plan a track** (experimental) — pick a structure and a hemisphere, set the approach
 angles, and get the entry point, the angles to dial into the manipulator, and how far to
@@ -154,31 +155,32 @@ handful.
   cropped around it; click one to go there.
 - **Projection** plots every printed label in side view (AP × DV) or top-down (AP × ML),
   with your selected structure highlighted, so you can see how it runs through the brain.
-- **3D** stacks the 62 plates where they actually sit: as contours — or as the Nissl or
-  myelin sections themselves — as a ray-marched volume, or as a point cloud of all 6,315
-  labels you can orbit. Clip to a slab or cut
+- **3D** stacks the 62 plates where they actually sit and opens with **Volume**, the stack
+  ray-marched, so the first sight of it is the brain as a solid. **Contours** draws the
+  sections themselves — the atlas's own boundaries, or the Nissl or myelin section — one
+  textured plate at a time, and **Labels** is a point cloud of all 6,315 printed
+  abbreviations you can orbit. Clip to a slab or cut
   it in half at the midline. **Floor**, **Ceiling** and **Gamma** window the tissue before
   **Density** decides how opaque it is drawn — the difference between a grey fog and a
   render you can see a nucleus in, and on the labelled drawing a high floor takes the wash
   away and leaves the contours alone. All four ride in the link. **Skull** (experimental) wraps the stack in a CT skull
-  surface at any transparency from a faint shell to solid bone. **Ortho** switches to a
+  surface at any transparency from a faint shell to solid bone. **Landmarks** stands bregma,
+  lambda, the interaural axis and the occipital crest in the stack: each landmark's coronal
+  plane as a rule up the midline, a cross on the vault, and the interaural line as the
+  ear-bar axis running out past the brain to a ring at each canal — the one view where it is
+  a line and not a point. **Ortho** switches to a
   parallel projection, so nothing is foreshortened. **View** puts the camera on an
   anatomical axis — left, right, rostral, caudal, dorsal or ventral — and the link you
   copy carries it. **Meshes** fetches the closed surfaces built offline from the outlines
-  (20 MB, once) and shows the selected structure — or a short filtered list — as a mesh,
-  with **STL** to download it. Six planes in seven of a mesh are interpolated between
-  sections 350 µm apart; see [METHODS](METHODS.md#the-third-dimension). **NIfTI** writes
-  the whole 62-plate stack out as a gzipped NIfTI-1 volume in the atlas's own millimetres
-  — RAS, 32.4 µm across a plate and 350 µm through it, two volumes on the labelled drawing
-  (the ink, then the drawn contour) and one on a photographed series — so it opens in
-  ITK-SNAP, FSLeyes, Slicer or nibabel; see
-  [METHODS](METHODS.md#the-stack-as-a-nifti). (Needs WebGL 2.)
+  (20 MB, once) and shows the selected structure — or a short filtered list — as a mesh.
+  Six planes in seven of a mesh are interpolated between
+  sections 350 µm apart; see [METHODS](METHODS.md#the-third-dimension). (Needs WebGL 2.)
 - **Split** puts a second 3D view beside the first, sharing the one stack, label cloud and
   set of meshes — so it costs pixels and nothing else. Everything above belongs to a pane
   rather than to the view: **A** and **B** choose which pane the toolbar sets, and each can
-  have its own mode, contrast, slab, midline cut, projection, skull and meshes. Contours
-  beside the volume they came from, a whole brain beside a slab, a structure's mesh beside
-  the section it was built from. Clicking into a pane makes it the one the toolbar is on.
+  have its own mode, contrast, slab, midline cut, projection, skull, landmarks and meshes.
+  The sections beside the volume they came from, a whole brain beside a slab, a structure's
+  mesh beside the section it was built from. Clicking into a pane makes it the one the toolbar is on.
   **Lock** turns, zooms and pans both panes together, holding whatever angle apart they
   were set to — so one pair can be a lateral and a dorsal view of the same brain, moving as
   one. Untick it to rotate them separately; **Reset view** brings a locked pair back onto

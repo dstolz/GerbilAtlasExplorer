@@ -3158,18 +3158,25 @@ const MESHC={};                                  /* abbr -> {va, n, type} on the
 /* ---------- the panes ----------
    Everything the 3-D toolbar sets belongs to a pane and not to the app: what is drawn
    (mode, density, the tissue curve, the slab, the midline cut, the projection, the skull,
-   the meshes) and where it is drawn from (orbit, distance, pan, named viewpoint). One
-   pane is the whole view, which is what this was. A second is the same brain rendered a
-   second way, or seen from a second angle, beside it -- the pair of pictures the printed
-   atlas cannot give you at all, and the reason for splitting rather than switching.
+   the landmarks, the meshes) and where it is drawn from (orbit, distance, pan, named
+   viewpoint). One pane is the whole view, which is what this was. A second is the same
+   brain rendered a second way, or seen from a second angle, beside it -- the pair of
+   pictures the printed atlas cannot give you at all, and the reason for splitting rather
+   than switching.
 
    Both panes read the one volume texture, the one label cloud and the one mesh cache, so
    a second pane costs pixels and nothing else: no second context, no second 24 MB upload.
 
    A pane opens as a copy of the one it was split from. A split that changed the picture
-   would be a split you had to undo before you could compare anything. */
-const v3pane=()=>({mode:'contour', op:.42, t0:0, t1:1, gam:1, a:0, b:61,
-                   half:false, ortho:false, sk:false, sko:.32, m:false, ms:false,
+   would be a split you had to undo before you could compare anything.
+
+   A pane opens ray-marched. The stack of quads is the honest picture of what this is --
+   62 sections and the gaps between them -- but it is not what somebody who has just
+   clicked 3-D is looking for, and at the default oblique angle it is 62 edge-on cards.
+   The march reads the same field and shows the brain as a solid, so that is the first
+   sight of it; Contours is one button away and the note still says what the stack is. */
+const v3pane=()=>({mode:'volume', op:.42, t0:0, t1:1, gam:1, a:0, b:61,
+                   half:false, ortho:false, sk:false, sko:.32, m:false, ms:false, lm:false,
                    az:-.82, el:.30, dist:26, tx:0, ty:0, view:'obl'});
 const V3P=[v3pane(), v3pane()];
 let v3two=false;                   /* the second pane is drawn */
@@ -3519,7 +3526,8 @@ function v3colours(){
     return [(n>>16&255)/255,(n>>8&255)/255,(n&255)/255]; };
   v3col={ ce:hex('--accent'), ti:hex('--cloud2'),
           c0:hex('--cloud'), c1:hex('--cloud2'), c2:hex('--mark'), cg:hex('--markg'),
-          bg:hex('--panel'), bone:hex('--bone'), tg:hex('--targ'), an:hex('--note') };
+          bg:hex('--panel'), bone:hex('--bone'), tg:hex('--targ'), an:hex('--note'),
+          lm:hex('--lmk') };
   for(const k in MESHC) if(MESHC[k].col) MESHC[k].col=null;   /* recoloured on next draw */
 }
 
@@ -3793,6 +3801,7 @@ function v3rects(){
    the canvas as elements rather than drawn into it: they then take the sheet's own colours
    the way the rest of the chrome does, and stay crisp at any device pixel ratio. */
 function v3chrome(R){
+  v3lmLab(R);
   const box=$('v3pn');
   box.hidden=!v3two;
   if(!v3two) return;
@@ -3808,6 +3817,104 @@ function v3chrome(R){
   const r=R[v3ed], o=$('v3on').style;
   o.left=(r[0]+1)+'px'; o.top=(r[1]+1)+'px';
   o.width=Math.max(0,r[2]-2)+'px'; o.height=Math.max(0,r[3]-2)+'px';
+}
+
+/* ---------- the landmarks, in 3-D ----------
+   The four the plate and the projection already draw, standing in the stack instead of
+   flattened onto one of its axes -- which is the only place the interaural line is a line
+   and not a point, and the only place the three vault marks are anywhere at all rather
+   than on the one plate they fall on.
+
+   The APs are the atlas's own printed coordinates, so the coronal plane each landmark sits
+   in is exact: that is the rule drawn up the midline, whatever the skull data says. The
+   heights are published nowhere and come off the same approximate skull fit the shell
+   does, so the mark on the vault and the ear-bar axis carry that fit's caveat, the note
+   says so, and without the fit they are simply not drawn.
+
+   Nothing here is depth-tested, deliberately. An ear bar is not hidden by the head it goes
+   into, and a reference plane you cannot see through the brain is no reference at all. */
+const v3lmSK = () => { const S=window.__SKULL__; return (S&&S.lm)||null; };
+/* one landmark's height, or null where the fit has none: the ear-bar axis for the
+   interaural line, the vault for the other three */
+function v3lmDV(k){
+  const lm=v3lmSK(); if(!lm) return null;
+  const v = k==='interaural' ? (lm.ear&&lm.ear.dv) : (lm.vault&&lm.vault[k]);
+  return Number.isFinite(v) ? v : null;
+}
+/* where each name is written: on its mark where there is one, at the top of the midline
+   rule where the fit gives no height and the rule is all there is to name */
+function v3lmMarks(){
+  return LM.map(([nm,off])=>{ const k=nm.toLowerCase(), h=v3lmDV(k);
+    return {n:k, p:[0, h===null?w3y(V3Y1):w3y(h), w3z(-off)]}; });
+}
+function v3lmDraw(Q,M){
+  if(!Q.lm) return;
+  const U=(p,n)=>gl.getUniformLocation(p,n);
+  const yb=w3y(V3Y0), yt=w3y(V3Y1), r=.55;
+  const rule=[], mark=[];
+  const seg=(into,a,b)=>into.push(a[0],a[1],a[2], b[0],b[1],b[2]);
+  LM.forEach(([nm,off])=>{
+    const k=nm.toLowerCase(), z=w3z(-off), h=v3lmDV(k);
+    seg(rule,[0,yb,z],[0,yt,z]);
+    if(h===null) return;
+    const y=w3y(h);
+    if(k!=='interaural'){                    /* the vault point, as a three-axis cross */
+      seg(mark,[-r,y,z],[r,y,z]); seg(mark,[0,y-r,z],[0,y+r,z]); seg(mark,[0,y,z-r],[0,y,z+r]);
+      return;
+    }
+    /* the ear-bar axis, out past the brain to the canals it is set in, with a ring on
+       each. Half cuts it at the midline like everything else: the shared line shader has
+       no clip of its own, so the geometry is what stops there. */
+    const w=v3lmSK().ear.ml;
+    if(!Number.isFinite(w)) return;          /* a height with no span is not an axis */
+    seg(mark,[Q.half?0:-w,y,z],[w,y,z]);
+    for(const sd of (Q.half?[1]:[-1,1])){
+      const x=sd*w;
+      for(let i=0;i<24;i++){ const t=i/24*6.2832, u=(i+1)/24*6.2832;
+        seg(mark,[x,y+r*Math.cos(t),z+r*Math.sin(t)],[x,y+r*Math.cos(u),z+r*Math.sin(u)]); }
+    }
+  });
+  const pass=[[rule,.30],[mark,.95]].filter(([a])=>a.length);
+  if(!pass.length) return;
+  gl.useProgram(pLine);
+  const vb=gl.createBuffer(), va=gl.createVertexArray();
+  gl.bindVertexArray(va); gl.bindBuffer(gl.ARRAY_BUFFER,vb);
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(pass[0][0]),gl.STREAM_DRAW);
+  gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0,3,gl.FLOAT,false,0,0);
+  gl.uniformMatrix4fv(U(pLine,'u_mvp'),false,M);
+  gl.uniform3fv(U(pLine,'u_c'),v3col.lm);
+  pass.forEach(([arr,a],i)=>{
+    if(i) gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(arr),gl.STREAM_DRAW);
+    gl.uniform1f(U(pLine,'u_a'),a);
+    gl.drawArrays(gl.LINES,0,arr.length/3);
+  });
+  gl.deleteBuffer(vb); gl.deleteVertexArray(va);
+}
+/* The names. The marks turn with the brain because they are in it; a name has to stay
+   upright to be read, so it rides over the canvas as text and is placed from the same
+   projection the mark was drawn with -- and is dropped rather than clamped where that
+   puts it outside its own pane, which is the one thing a label must never lie about. */
+function v3lmLab(R){
+  const W=$('v3lw'), on=R.some((_,i)=>V3P[i].lm);
+  W.hidden=!on||!v3ready;
+  if(W.hidden){ if(W.innerHTML) W.innerHTML=''; return; }
+  const o=[];
+  R.forEach((r,i)=>{
+    const Q=V3P[i]; if(!Q.lm) return;
+    const M=v3mvp(Q,r[2],r[3]), put=[];
+    /* nearest first, because seen end-on -- which is what the rostral and caudal views are
+       -- the four land within a few pixels of each other, and one name written over another
+       is worse than three of them left to the mark they are written beside and to the note */
+    const at=v3lmMarks().map(m=>({n:m.n, s:v3proj(Q,r,M,m.p)}))
+      .filter(m=>m.s).sort((a,b)=>a.s[2]-b.s[2]);
+    for(const {n,s} of at){
+      if(s[0]<r[0]+30||s[0]>r[0]+r[2]-30||s[1]<r[1]+16||s[1]>r[1]+r[3]-4) continue;
+      if(put.some(q=>Math.abs(q[0]-s[0])<58&&Math.abs(q[1]-s[1])<16)) continue;
+      put.push(s);
+      o.push(`<span style="left:${s[0].toFixed(1)}px;top:${(s[1]-8).toFixed(1)}px">${esc(n)}</span>`);
+    }
+  });
+  W.innerHTML=o.join('');
 }
 
 function v3render(){
@@ -3994,6 +4101,7 @@ function v3draw(Q,w,h,dpr){
     gl.deleteBuffer(vb); gl.deleteVertexArray(va);
   }
 
+  v3lmDraw(Q,M);
   skull(true);
 
   /* the labels ride along in every mode; alone, they are the mode */
@@ -4205,6 +4313,7 @@ function v3ui(){
   $('v3a').value=Q.a+1; $('v3al').textContent=Q.a+1;
   $('v3b').value=Q.b+1; $('v3bl').textContent=Q.b+1;
   $('v3s').checked=Q.sk; $('v3sol').hidden=!Q.sk; $('v3so').value=Math.round(Q.sko*100);
+  $('v3lm').checked=Q.lm;
   $('v3h').checked=Q.half;
   $('v3o').checked=Q.ortho;
   $('v3m').checked=Q.m; $('v3msw').hidden=!Q.m; $('v3ms').checked=Q.ms;
@@ -4257,6 +4366,11 @@ $('v3s').onchange=e=>{ const Q=v3E(); Q.sk=e.target.checked;
   if(Q.sk&&Q.dist<34) v3move(v3ed,q=>{ q.dist=38; });
   $('v3sol').hidden=!Q.sk; v3note(); v3frame(); queueHash(); };
 $('v3so').oninput=e=>{ v3E().sko=+e.target.value/100; v3frame(); queueHash(); };
+/* Unlike the projection's, this one is not stood down by a working frame. There the AP
+   rules are lines only because the view has flattened an axis away, and a tilt takes that
+   from them; here they are the coronal planes themselves, turned by the same model matrix
+   as the brain, so a turned frame is exactly where they belong. */
+$('v3lm').onchange=e=>{ v3E().lm=e.target.checked; v3note(); v3frame(); queueHash(); };
 $('v3a').oninput=e=>{ const Q=v3E(); Q.a=Math.min(+e.target.value-1,Q.b); e.target.value=Q.a+1;
   $('v3al').textContent=Q.a+1; v3note(); v3frame(); queueHash(); };
 $('v3b').oninput=e=>{ const Q=v3E(); Q.b=Math.max(+e.target.value-1,Q.a); e.target.value=Q.b+1;
@@ -4421,7 +4535,12 @@ function meshDraw(Q,M){
 /* the selection's mesh as a binary STL, in atlas millimetres (ML, DV, AP). A
    superstructure writes every mesh it is drawn from into the one file, as separate shells
    in one solid -- which is what it is: there is no surface of a division that the atlas
-   drew, only its members' surfaces standing together. */
+   drew, only its members' surfaces standing together.
+
+   The STL button that ran this is out of the toolbar for now, along with the NIfTI one
+   below. Both writers stay: they are the part that is hard to get right, nothing about
+   either file has changed, and what reaches them meanwhile is the __gae handle at the foot
+   of the file. */
 function meshSTL(){
   const keys = isGrp(sel) ? meshList() : (meshKey(sel)?[meshKey(sel)]:[]);
   if(!keys.length) return;
@@ -4454,7 +4573,6 @@ function meshSTL(){
 $('v3m').onchange=e=>{ const Q=v3E(); Q.m=e.target.checked; if(Q.m) meshLoad();
   $('v3msw').hidden=!Q.m; v3flags(); v3note(); v3frame(); queueHash(); };
 $('v3ms').onchange=e=>{ v3E().ms=e.target.checked; v3frame(); };
-$('v3stl').onclick=meshSTL;
 $('v3mfb').onclick=()=>$('v3mfile').click();
 
 /* ---------- the stack as a NIfTI ----------
@@ -4473,12 +4591,10 @@ $('v3mfb').onclick=()=>$('v3mfile').click();
    Nothing the toolbar sets is written in: not the slab, not the midline cut, not the
    tissue curve. Those say what is drawn, and this is what they are drawn from.
 
-   Read again from the plates rather than kept from the build. The stack is 24 MB and the
-   view hands its only copy to the GPU; holding a second one in the page for every visit,
-   against an export most of them never run, is the wrong side of that trade. So it costs
-   the few seconds the view itself cost, and the note says so while it runs. */
-let niiBusy='', niiFail='';
-const NIIMSG='Reading the 62 plates again to write the volume';
+   The NIfTI button that ran this is out of the toolbar for now, as the STL one above is.
+   The writer stays -- the header is the part that is hard to get right, and is what the
+   test holds to this geometry -- and takes its volume from v3build(); both reach it
+   through the __gae handle at the foot of the file. */
 function v3niiBuf(vol,src){
   /* On the labelled drawing the red contour ink is a picture in its own right, so it goes
      out as a second volume beside the tissue. A photographed section has no contour
@@ -4534,38 +4650,6 @@ function v3niiBuf(vol,src){
   for(let i=0;i<3;i++) v.setUint8(344+i,'n+1'.charCodeAt(i));   /* magic */
   return buf;
 }
-async function v3niiSave(){
-  if(niiBusy||v3busy||!v3ready) return;
-  const b=$('v3nii'), src=psrc;          /* the source it was asked for, not whichever is
-                                            current when the last plate finally decodes */
-  /* the button is what the eye is on right after the click, so the state goes on its own
-     label first -- disabled and dimmed like any other busy control here, but also saying
-     what it is doing, the way the plate-count label already does while the stack itself
-     is first built. The longer form still goes into the note beside it, for whichever of
-     the two a given reader actually looks at. */
-  const lbl=t=>{ b.textContent=t; };
-  niiFail=''; niiBusy=NIIMSG+'\u2026 0%'; b.disabled=true; lbl('Reading 0%'); v3note();
-  try{
-    const vol=await v3build(f=>{ const pc=Math.round(f*100);
-      niiBusy=NIIMSG+'\u2026 '+pc+'%'; lbl('Reading '+pc+'%'); v3note(); }, src, null);
-    niiBusy='Writing the volume\u2026'; lbl('Writing\u2026'); v3note();
-    await new Promise(r=>setTimeout(r,20));      /* let that line paint before the loop */
-    let blob=new Blob([v3niiBuf(vol,src)],{type:'application/octet-stream'}), ext='.nii';
-    /* gzipped where the browser can and plain where it cannot: a .nii every reader takes
-       is better than no file at all */
-    if(typeof CompressionStream==='function'){
-      niiBusy='Compressing the volume\u2026'; lbl('Zipping\u2026'); v3note();
-      await new Promise(r=>setTimeout(r,20));
-      blob=await new Response(blob.stream().pipeThrough(new CompressionStream('gzip'))).blob();
-      ext='.nii.gz';
-    }
-    const u=URL.createObjectURL(blob);
-    dl('gerbil_atlas_stack_'+src+ext,u,u);
-  }catch(err){
-    niiFail='The volume could not be written ('+(err&&err.message||err)+').';
-  }finally{ niiBusy=''; lbl('NIfTI'); b.disabled=false; v3note(); }
-}
-$('v3nii').onclick=v3niiSave;
 
 function v3note(){
   const N=$('v3n');
@@ -4579,11 +4663,6 @@ function v3note(){
     ? (v3lock ? ` The two panes are locked: they turn, zoom and pan together, holding whatever`+
                 ` angle apart they were set to. Reset view brings both back onto the default.`
               : ` The two panes turn independently.`) : '';
-  $('v3stl').hidden=!(Q.m&&MESH&&(isGrp(sel)?meshList().length:meshKey(sel)));
-  /* the export writes the stack, so it appears with the stack and not with a pane: there
-     is one volume behind both, and only one file to write from it */
-  $('v3nii').hidden=!v3ready;
-  const nii = niiBusy ? ' '+niiBusy : (niiFail ? ' '+niiFail : '');
   /* the slab's own AP bounds, quoted from wherever zero is -- a re-zero does not move the
      plates, only what their APs are called, and this line is the only place the 3-D view
      names one */
@@ -4592,6 +4671,12 @@ function v3note(){
       ` ${sgn(axTo('ap',P[Q.a].bregma))} to ${sgn(axTo('ap',P[Q.b].bregma))} mm).` : '';
   const half = Q.half ? ' Cut at the midline.' : '';
   const bone = Q.sk ? ' Skull fit is experimental and approximate.' : '';
+  /* the APs are printed and the heights are not, so the line has to say which half of each
+     mark is the atlas and which is the fit -- the same split the plate and the projection
+     already spell out under their own Landmarks */
+  const land = Q.lm ? ' Landmarks: bregma, lambda, the interaural axis and the occipital'+
+    ' crest. The AP planes are the atlas\u2019s own; the heights come off the registered'+
+    ' skull \u2014 approximate.' : '';
   const proj = Q.ortho ? ' Parallel projection: equal lengths read equally at any depth.' : '';
   /* a windowed render is a picture of the tissue after something was done to it, and this
      is the line where the view says what. Quoted whenever the curve is off the identity --
@@ -4651,7 +4736,7 @@ function v3note(){
         `${new Set(q.map(t=>t.p)).size} plate${new Set(q.map(t=>t.p)).size>1?'s':''}, against all 6,220. `
       : `All 6,220 printed labels at their stereotaxic positions. `)+
       `A dot is where an abbreviation is <em>printed</em> — close to its structure, not its centre. `+
-      `Hover to read one, click to open its plate.`+slab+half+proj+turn+bone+mesh+pair+nii;
+      `Hover to read one, click to open its plate.`+slab+half+proj+turn+bone+land+mesh+pair;
     return;
   }
   const q=(sel&&ptsOf[sel])||[];
@@ -4661,7 +4746,7 @@ function v3note(){
   N.innerHTML = who + (Q.mode==='contour'
     ? `${what}, each at its true bregma. It reads as a stack because that is what it is — 62 sections, 350 µm apart.`
     : `The same field ray-marched. Sampling along the brain is 20× coarser than across it, so the streaks are interpolation, not anatomy.`)+
-    on+` The ring marks plate ${cur}.`+tone+slab+half+proj+turn+bone+mesh+pair+nii;
+    on+` The ring marks plate ${cur}.`+tone+slab+half+proj+turn+bone+land+mesh+pair;
 }
 
 /* changing the plate source changes what the stack is made of, so it is read again from
@@ -4745,7 +4830,10 @@ function writeHash(){
   V3P.forEach((Q,i)=>{
     if(i&&!v3two) return;
     const x=i?'2':'';
-    if(Q.mode!=='contour') h+='&r'+x+'='+Q.mode;
+    /* the default is the ray-march, so it is the one mode a link leaves unsaid. A link
+       written while Contours was the default carried no r either and now reads as the
+       volume -- the same field, marched instead of stacked, which is what changed here */
+    if(Q.mode!=='volume') h+='&r'+x+'='+Q.mode;
     /* the tissue curve, as density, floor, ceiling and gamma in hundredths -- four numbers
        because they are one setting, and a render tuned to show a nucleus is worth sending
        with the viewpoint that shows it. Written only when one of them is off its default,
@@ -4756,6 +4844,7 @@ function writeHash(){
     if(Q.ortho) h+='&or'+x+'=1';
     if(Q.view&&Q.view!=='obl') h+='&vp'+x+'='+Q.view;
     if(Q.sk) h+='&sk'+x+'='+Math.round(Q.sko*100);
+    if(Q.lm) h+='&lm'+x+'=1';
     if(Q.m) h+='&mh'+x+'=1';
   });
   if(v3two){ h+='&sp='+(1+v3ed); if(!v3lock) h+='&lk=0'; }
@@ -4825,7 +4914,7 @@ function readHash(){
   V3P.forEach((Q,i)=>{
     if(i&&!v3two) return;
     const x=i?'2':'';
-    Q.mode = par['r'+x]==='volume'||par['r'+x]==='points' ? par['r'+x] : 'contour';
+    Q.mode = par['r'+x]==='contour'||par['r'+x]==='points' ? par['r'+x] : 'volume';
     /* read positionally and a short list forgiven, the way fr and tg are: a link carrying
        only a density still sets one. Missing altogether, all four go back to the values
        this view has always drawn with, so a bare #p30 arriving by hashchange clears a
@@ -4849,6 +4938,7 @@ function readHash(){
     const sk=parseInt(par['sk'+x],10);
     Q.sk = Number.isFinite(sk)&&sk>=6&&sk<=100;
     if(Q.sk){ Q.sko=sk/100; if(gl) v3skullBuild(); if(Q.dist<34) Q.dist=38; }
+    Q.lm = par['lm'+x]==='1';
     Q.m = par['mh'+x]==='1';
     if(Q.m) meshLoad();
   });
@@ -5153,10 +5243,12 @@ function srcShow(){
   $('ckgy').closest('.tg').title = grey
     ? 'The '+SRCN[psrc]+' is printed in grey already'
     : 'Read every source the same way: the drawing loses its colour';
-  /* the first 3-D mode draws one textured quad per plate. On the drawing what that shows
-     is the contours, and the button has always said so; on a section it shows the section,
-     so the button says that instead rather than naming something that is not there. */
-  const c=$('m3seg').firstElementChild;
+  /* the stacked-quad mode draws one textured quad per plate. On the drawing what that
+     shows is the contours, and the button has always said so; on a section it shows the
+     section, so the button says that instead rather than naming something that is not
+     there. Found by what it is rather than by where it sits, now that the mode a pane
+     opens in is no longer the first button along. */
+  const c=$('m3seg').querySelector('[data-r="contour"]');
   c.textContent = grey ? 'Slices' : 'Contours';
   c.title = grey
     ? 'Each section drawn where it sits, one plate at a time'
@@ -5811,7 +5903,7 @@ window.__gae={toFrame,fromFrame,writeHash,readHash,tgSolve,tgPath,tgFootprint,pl
   select,go,clear,frameSet,frameApply,FRAME,frmBuild,BUILD,S,P,byAb,ptsOf,regBuild,plateAt,inBrain,
   coordsOf,tgJSON,tgNotes,meshList,setCmp,anMake,notes:()=>NOTES,mesh:()=>MESH,
   v3split,v3edit,v3rects,panes:()=>V3P.map(q=>({...q})),
-  v3build,v3niiBuf,
+  v3build,v3niiBuf,meshSTL,
   GRP,isGrp,regIn,grpsOf,
   setMax,
   state:()=>({cur,sel,zoom,tab,smode,psrc,tgProbe,tgFoot,cmpOn,anShow,maxed,targSide,tgTilt,tgRoll,tgYaw,tgPlate,tgOff,fview,fvOn:fvOn(),v3two,v3ed,v3lock})};

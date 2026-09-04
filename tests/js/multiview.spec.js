@@ -56,30 +56,30 @@ test.describe('the second 3-D pane', () => {
   test('the second pane opens as a copy, then holds its own properties', async ({ page }) => {
     await open(page, '#p30&t=v3d');
     // set the one pane away from the defaults first, so a copy is visibly a copy
-    await page.click('#m3seg button[data-r="volume"]');
+    await page.click('#m3seg button[data-r="contour"]');
     await page.click('#v3h');
     await page.click('#v3sp');
     let p = await panes(page);
-    expect(p[1].mode).toBe('volume');
+    expect(p[1].mode).toBe('contour');
     expect(p[1].half).toBe(true);
 
-    // now B alone goes back to contours over a slab; A must not move
+    // now B alone goes back to the ray-march over a slab; A must not move
     await page.click('#v3pseg button[data-p="1"]');
-    await page.click('#m3seg button[data-r="contour"]');
+    await page.click('#m3seg button[data-r="volume"]');
     // the slab ends are range inputs, so the value is set and the event sent by hand
     await page.evaluate(() => {
       const s = document.getElementById('v3a');
       s.value = '20'; s.dispatchEvent(new Event('input', { bubbles: true }));
     });
     p = await panes(page);
-    expect(p[0].mode).toBe('volume');
+    expect(p[0].mode).toBe('contour');
     expect(p[0].a).toBe(0);
-    expect(p[1].mode).toBe('contour');
+    expect(p[1].mode).toBe('volume');
     expect(p[1].a).toBe(19);
 
     // and the toolbar reads back whichever pane it is on
     await page.click('#v3pseg button[data-p="0"]');
-    expect(await page.locator('#m3seg button[data-r="volume"]').getAttribute('class')).toContain('on');
+    expect(await page.locator('#m3seg button[data-r="contour"]').getAttribute('class')).toContain('on');
     expect(await page.locator('#v3a').inputValue()).toBe('1');
   });
 
@@ -117,20 +117,20 @@ test.describe('the second 3-D pane', () => {
   });
 
   test('a link carries both panes, and a one-pane link is the link it always was', async ({ page }) => {
-    await open(page, '#p30&t=v3d&r2=volume&sl2=20,45&hf2=1&vp2=dors&sp=2&lk=0');
+    await open(page, '#p30&t=v3d&r2=contour&sl2=20,45&hf2=1&vp2=dors&sp=2&lk=0');
     const s = await st(page), p = await panes(page);
     expect(s.v3two).toBe(true);
     expect(s.v3ed).toBe(1);                             // sp=2: the toolbar was on B
     expect(s.v3lock).toBe(false);
-    expect(p[0]).toMatchObject({ mode: 'contour', a: 0, b: 61, half: false, view: 'obl' });
-    expect(p[1]).toMatchObject({ mode: 'volume', a: 19, b: 44, half: true, view: 'dors' });
+    expect(p[0]).toMatchObject({ mode: 'volume', a: 0, b: 61, half: false, view: 'obl' });
+    expect(p[1]).toMatchObject({ mode: 'contour', a: 19, b: 44, half: true, view: 'dors' });
     // the toolbar is showing B, not A
     expect(await page.locator('#v3b').inputValue()).toBe('45');
     expect(await page.locator('#v3h').isChecked()).toBe(true);
 
     await page.evaluate(() => window.__gae.writeHash());
     expect(await page.evaluate(() => location.hash))
-      .toBe('#p30&t=v3d&r2=volume&sl2=20,45&hf2=1&vp2=dors&sp=2&lk=0');
+      .toBe('#p30&t=v3d&r2=contour&sl2=20,45&hf2=1&vp2=dors&sp=2&lk=0');
 
     // fold the second pane away and the link is the one pane it has always been
     await page.click('#v3sp');
@@ -147,7 +147,7 @@ test.describe('the second 3-D pane', () => {
     await page.click('#v3sp');
     const both = await shot();
     await page.click('#v3pseg button[data-p="1"]');
-    await page.click('#m3seg button[data-r="volume"]');
+    await page.click('#m3seg button[data-r="contour"]');
     const mixed = await shot();
     expect(mixed).not.toBe(both);                       // B changed, so the canvas did
 
