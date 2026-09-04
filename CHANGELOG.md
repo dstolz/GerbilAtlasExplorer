@@ -6,6 +6,48 @@ carries a `version` block naming the release its derived fields were built for.
 ## [Unreleased]
 
 ### Changed
+- **Region outlines that do not cross themselves, at four times the resolution.** Two things
+  were wrong with the extents, and the second only showed once the first was fixed.
+
+  The first is a burr. The watershed settles a boundary to the pixel of the 8 Mpx page it is
+  cut on, and at that scale it leaves pixel-wide slivers along the boundaries it settles: a
+  tongue of one region running twenty pixels down the edge of another, a sliver of a third
+  lying inside a fourth, a pixel two of them meet at diagonally. As area those are nothing —
+  a third of a plate pixel, under the width of the line the atlas prints — but Douglas-Peucker
+  keeps whatever lies far from the chord, and the tip of a twenty-pixel tongue is far from it
+  however thin the tongue is. So each one came out as a **spike**: an edge running out along
+  the boundary and back over itself, across the region's own outline. It is what a reader saw
+  as a stray whisker off the top of `FrA` on plate 9, and it was not rare — **9% of polygons
+  crossed themselves** (594 of 6,564, 1,293 crossings), and **2,722 vertices were repeats of
+  the one before them**, zero-length edges every consumer had to know to skip.
+
+  `regiongeom.deburr` takes them off before the boundary is traced. A pixel is thin when no
+  2 × 2 block of its own label contains it — the one local test that passes a staircase, which
+  every boundary here is, and fails a sliver — and thin pixels go to the nearest label that is
+  not. It is a relabeling rather than a cut, so the map is still a partition of the same
+  ground: the regions still tile the section, both owners of a boundary still trace the
+  identical chain of corners, and `boundary_edges_shared_exactly` stays at **1.0**. A burr is
+  given away rather than thrown away — what one region loses its neighbor gains — so nothing
+  leaves the section and no entry loses its ground: the same 3,065 structure-plate entries,
+  every one of them still with an area.
+
+  The second is the tolerance. It was 2 plate px — 35 µm, the figure `brain_outline` uses —
+  and at that setting the polygon visibly cuts the corners of the line it is tracing. It is
+  now **0.5 px, 9 µm**. The floor is the page lattice the boundary is traced on: at 0.35 px
+  the tolerance drops under the raster step and the polygon starts recording the staircase
+  instead of the line, at seven times the points for nothing. At 0.5 px it does not.
+
+  Together: **166,899 points over 5,882 polygons** where there were 77,453 over 5,630, a
+  median traced share of **1.00** where it was 0.98, 81% of polygons at or above 0.90 where
+  it was 78%, the worst plate's section-area residual **2.4%** where it was 3.0%, and **two
+  polygons of 7,048 crossing themselves** where 594 of 6,564 did. Every area is redrawn
+  against the pixels it was cut from rather than a 2 px smoothing of them: 2,868 mm² over all
+  the entries becomes 2,871, the median entry moves 2.3%, and the ones that move most are the
+  thin ones a coarse tolerance had folded — `IG` on plate 25, 0.022 mm² of indusium griseum,
+  comes back at 0.035. `w` is carried by 294 entries rather than 312 (21 out, 3 in), because a
+  polygon that tracks the ink to half a pixel has more of its border on the ink.
+  `data/gerbil_atlas.json` grows 2.7 MB → 4.7 MB and `index.html` 5.5 → 7.4 MB; the meshes,
+  the label volume, the GeoJSON and the structure table are rebuilt from the new extents.
 - **The picture first, and the controls on call.** Every control for the current view used to
   sit in one wrapping row above it. That works at 1440 px and does not work on a phone: at
   390 × 844 the row ran to six lines on the plate and twelve in the 3-D view, where it was

@@ -411,7 +411,7 @@ fractions of the frame-cropped image — the same frame and the same convention
 `brain_outline` uses, so the app's existing point-in-polygon test reads them unchanged.
 **3,065 structure-plate entries carry an area**, 96% of the 3,203 the label pass located
 and 91% of the 3,365 the published index lists — both counted over the structures that are
-regions — as 5,630 polygons over 77,453 points. Where
+regions — as 5,882 polygons over 166,899 points. Where
 the atlas prints two names as one label the two share an entry, so a name having no entry of
 its own does not mean it has no area — see step 8. Twenty of the 723 names have no entry
 anywhere, and never could: they name no region — see step 7.
@@ -494,12 +494,13 @@ The steps, in order, run by `tools/build_region_extents.py`:
 9. **Score each polygon** by the share of its border lying within 3 px of ink the tracing
    *actually drew*, as opposed to a ridge the watershed invented, walked at one pixel so it
    is length-weighted.
-10. **Trace and simplify on the crack lattice**, Douglas-Peucker at 2 px as `brain_outline`
-    already does.
+10. **Take the pixel-wide burrs off the partition, then trace and simplify on the crack
+    lattice**, Douglas-Peucker at 0.5 plate px — 9 µm, and a pixel and a half of the page
+    the boundary is traced on.
 
 **Step 10 is not the obvious thing, and the obvious thing is wrong.** Contouring each region
 on its own and simplifying its ring gives two different polylines for the same shared
-boundary, because Douglas-Peucker is global to the ring it is handed; at a 2 px tolerance
+boundary, because Douglas-Peucker is global to the ring it is handed; at any useful tolerance
 they cross, and the regions then overlap and leave slivers. So the boundary is traced on the
 lattice *between* pixels, where both neighbors see the identical chain of corners, and it
 is cut at the corners where three or more regions meet — a purely local test, so both sides
@@ -507,17 +508,43 @@ cut in the same places. Each arc is simplified once. Douglas-Peucker keeps its e
 is symmetric under reversal, so the two owners of an arc keep the same vertices although
 they walk it in opposite directions.
 
+**Sharing a boundary exactly is not the same as it being drawable, which is the other half
+of the step.** The watershed settles a boundary to the pixel and at that scale it leaves
+burrs: a pixel-wide tongue of one region running along the edge of another, a pixel-wide
+sliver of a third lying inside a fourth, a pixel the two meet at diagonally. As area they
+are nothing — a third of a plate pixel across, under the width of the atlas's own line —
+but Douglas-Peucker keeps whatever lies far from the chord, and the tip of a twenty-pixel
+tongue is far from it however thin the tongue. What came out was a polygon with a spike on
+it, running out along the boundary and back over itself: **9% of polygons crossed their own
+outline**, and 2,722 vertices were repeats of the one before them, with nothing between.
+So the burrs come off first. A pixel is thin when no 2×2 block of its own label contains it
+— the one local test that passes a staircase, which every boundary here is, and fails a
+sliver — and thin pixels go to the nearest label that is not. That is a relabeling and not a
+cut: the map is still a partition of the same ground, so the regions still tile it and both
+owners of a boundary still trace the same chain of corners. That alone takes the crossings
+to **0.7% of polygons** and the repeated vertices to none.
+
+**And the tolerance is 0.5 plate px rather than the 2 px `brain_outline` uses**, which is
+the difference between a polygon that reads as the line the atlas drew and one that visibly
+cuts its corners. The floor is the page lattice: at 0.35 px the tolerance drops below the
+raster step and the polygon starts recording the staircase rather than the line, at seven
+times the points. At 0.5 it does not — 166,899 points against the 77,453 the 2 px pass
+wrote, for a median traced share of **1.00** where it was 0.98, and it takes the last of the
+crossings with it: **0.03% of polygons**, two of 7,048, against 9% before either change.
+A thin structure is what a coarse tolerance cannot draw without folding its two sides
+together, so most of what was left after the burrs came off was that.
+
 Three checks, none of which the extraction was tuned to pass:
 
 | Check | Extracted |
 | --- | --- |
 | Every boundary between two regions stored as one polyline, twice | **100%** of directed boundary edges have their reverse in exactly one neighbor, so the regions tile the section — a point is inside exactly one, or inside none |
 | Printed labels inside the region they name | **97%**, read at the end of the label's line where the atlas draws one |
-| Regions plus unassigned faces against the section area | within **3.0%** on the worst plate (an earlier figure of 4.5% omitted the closing edge of the outline rings, which `brain_outline` stores unclosed) |
+| Regions plus unassigned faces against the section area | within **2.4%** on the worst plate (an earlier figure of 4.5% omitted the closing edge of the outline rings, which `brain_outline` stores unclosed) |
 
 **What the numbers do not say is which boundaries are real, so every polygon carries that
-too.** `s` is the traced share of that polygon's border: median **0.98**, 78% at or above
-0.90, 89% at or above 0.75, **3% below 0.50**. A polygon at 0.98 is the boundary the atlas
+too.** `s` is the traced share of that polygon's border: median **1.00**, 81% at or above
+0.90, 90% at or above 0.75, **3% below 0.50**. A polygon at 0.98 is the boundary the atlas
 prints. A polygon at 0.16 is a split the extraction had to invent because the drawing does
 not separate those structures, and it should be read as an estimate — the app dashes those
 outlines and says so rather than presenting them as drawn. The weak ones are where a reader
@@ -527,7 +554,7 @@ pages bound with faint or dashed print, if at all. Step 7 took this figure down 
 polygons to 3%: a lobule cut back to a wedge of itself by `cbw` was mostly boundary the
 extraction had invented, and it is now mostly the fissure line the atlas draws.
 
-**And 312 entries have no boundary of their own at all, which `w` says outright.** A face
+**And 294 entries have no boundary of their own at all, which `w` says outright.** A face
 carrying several abbreviations was split in step 6, and that split is one of two quite
 different things. Either the atlas *does* print the boundary and the tracing missed it —
 two faces merged through a gap, the ridge on the distance transform found the ink again,
@@ -539,9 +566,11 @@ structure can have a drawn rim and an invented inner wall. So the split itself i
 the share of the wall the watershed put *inside* a face that lands on traced ink. Below
 half, nobody drew it — and an entry that sits only in faces like that, and whose own border
 is under three-quarters drawn, carries `w`. That is the cerebellar lobules against each
-other, the mediodorsal thalamus, the lateral hypothalamic zones, and little else: **312 of
-3,065 entries**, against 1,551 that share a face at all. It used to be 372: 63 left and 3
-arrived. The 63 are lobules — with `cbw` out of the way in step 7, a lobule's outline is the
+other, the mediodorsal thalamus, the lateral hypothalamic zones, and little else: **294 of
+3,065 entries**, against 1,551 that share a face at all. It used to be 372: 63 left, 3
+arrived, and 18 more left when step 10 was tightened — a polygon that tracks the ink to half
+a pixel has more of its border *on* the ink, so an entry whose own border was just under
+three-quarters drawn crosses the line. The 63 are lobules — with `cbw` out of the way in step 7, a lobule's outline is the
 fissure lines the atlas draws rather than a split against the white matter inside it. Two of
 the three are the far side of splitting a compound label: `9aCb` and `9N` are named only
 inside `9a,bCb` and `9/11N`, so each now seeds a face it shares with its neighbors and takes
