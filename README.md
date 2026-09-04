@@ -33,11 +33,11 @@ the whole atlas (all 186 plate images) lives inside it, 22 MB, most of that the 
   the atlas's printed coordinate box and were cropped to it, so they are registered exactly:
   the grid, the measure tool, the circled structure and the hover labels are all still in
   the right place on a section with nothing printed on it.
-- **MRI** appears as a fourth source where the atlas's own reference MRI has been built
-  beside the app (`tools/build_mri.py`). It is already in the atlas's coordinates, one
-  slice per plate, so the outlines and the readout land on it unchanged — but it is the
-  whole head rather than a cut section, and its voxels are 117 µm against the drawing's 18.
-  The volume is not distributed here; without it the button is simply not there.
+- **MRI** is a fourth source: the atlas's own reference MRI, the imaging half of the
+  "CT/MRI-aided" in its title. It is already in the atlas's coordinates, one slice per
+  plate, so the outlines and the readout land on it unchanged. Two things it is not — the
+  whole head rather than a cut section, so there is skull, scalp and eye in the picture;
+  and 117 µm voxels against the drawing's 18, so it is soft where the drawing is sharp.
 - **Grey** drops the drawing's colour so the three read alike, and **Contrast** stretches
   whichever one is showing. Both carry into the PNG.
 
