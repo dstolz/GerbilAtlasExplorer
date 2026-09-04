@@ -47,6 +47,26 @@ carries a `version` block naming the release its derived fields were built for.
   you are switching to — the rest is what gave way to make room for it.
 
 ### Fixed
+- **The optic chiasm had no area on plate 22.** `och` is printed and outlined there, and the
+  published index gives it as plates 21–25, but `region_extents` had it on 21, 23, 24 and 25
+  only, so the app could show no area for it on the one plate in the middle. The cause was in
+  `brain_outline`: the atlas draws the chiasm on plate 22 as a closed island standing clear of
+  the section, and the outline derivation keeps a connected component only if it is bigger
+  than `max(400 px, 2% of the largest)`. At 3,515 px the island is well over the 400 px floor
+  and under the 2% one — 4,331 px — so it was dropped for being small beside a whole section
+  rather than for being noise. `build_region_extents.py` fills the outline for the section
+  interior, so a face outside it can never be named, and the structure came out with a hole in
+  the middle of its run. The island's contour is now traced by the same steps
+  `brain_outline.derivation` describes and stored as the plate's second polygon: re-deriving
+  every other plate that way reproduces the committed vertices exactly, which is what says the
+  convention is right.
+
+  `och` on plate 22 is 0.98 mm² with its boundary 100% on ink the tracing drew — no inferred
+  split anywhere on it. In three dimensions it goes from two disconnected pieces spanning
+  21–25 with a gap, centred off the midline at ML −0.58 and +0.09 mm, to one piece over the
+  whole run centred at ML −0.01, which is where a chiasm belongs. A sweep of all 62 plates
+  found exactly two components the 2% rule drops that hold a printed label; this is one of
+  them.
 - A control group carrying `hidden` was drawn anyway. `.grp{display:flex}` is an author rule
   and the browser's own `[hidden]{display:none}` is not, so the author rule won and the
   panel's *Viewpoint and panes* heading stood over nothing whenever its controls were in the

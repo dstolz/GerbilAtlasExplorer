@@ -375,12 +375,23 @@ connected components of what the paper did not reach that are larger than
 `max(400 px scaled to full resolution, 2% of the largest)`. Holes are filled, so a
 ventricle counts as brain. The boundary of each surviving component is traced and
 simplified by Douglas-Peucker at 2 px — 35 µm, well inside the atlas's own error — giving
-81 polygons over the 62 plates, 8,815 points in all.
+82 polygons over the 62 plates, 8,829 points in all.
+
+**One component that rule culls is kept anyway.** On plate 22 the atlas draws the optic
+chiasm as a closed island below the section and prints `och` inside it. At 3,515 px it is
+well over the 400 px floor and under the 2% one — 4,331 px — so the size rule drops it for
+being small beside a whole section rather than for being noise. Dropped, it costs `och` the
+plate: `region_extents` fills the outline for the section interior, so a face outside it
+can never be named, and the structure came out with a hole at plate 22 in a run the
+published index gives as 21–25. Its contour is traced by the steps above and stored as the
+plate's second polygon. A sweep of all 62 plates found exactly one other component the 2%
+rule drops that holds a printed label: the mammillary body on plate 36.
 
 **Most plates give one polygon, and the ones that give more do so anatomically.** The
 interhemispheric fissure separates the two hemispheres on plates 10–14, the cortex parts
-from the midbrain on 37–42, and the cerebellum from the brainstem on 56–59. A reader that
-kept only the largest blob would silently lose a hemisphere.
+from the midbrain on 37–42, the cerebellum from the brainstem on 56–59, and the optic
+chiasm stands clear of the section on plate 22. A reader that kept only the largest blob
+would silently lose a hemisphere.
 
 **No morphological opening.** The drawing prints some abbreviations beside the section and
 points at them, and the flood runs a few pixels out along those leader lines. An opening
@@ -397,11 +408,11 @@ Three checks, none of which the extraction was tuned to pass:
 | --- | --- | --- |
 | Highest point of any outline | DV 0 is the plane through the most dorsal points of cerebrum and cerebellum | **DV −0.06 mm** — reaches it, never crosses it |
 | Lowest point of any outline | the deepest printed label sits at DV −9.02 | **DV −9.09 mm** — just below it |
-| Printed labels inside their own plate's outline | — | **98.7%** (6,232 of 6,315) |
+| Printed labels inside their own plate's outline | — | **98.7%** (6,233 of 6,315) |
 
-Of the 83 labels that fall outside, the largest group is on the olfactory bulb plates 5–9,
+Of the 82 labels that fall outside, the largest group is on the olfactory bulb plates 5–9,
 where the section is small and the drawing prints the labels beside it; the median one is
-0.10 mm out, and the 90th percentile 0.22 mm.
+0.10 mm out, and the 90th percentile 0.21 mm.
 
 ## Region extents
 
@@ -409,9 +420,9 @@ where the section is small and the drawing prints the labels beside it; the medi
 *names*: the area of each structure on each plate, as a list of closed polygons of `[x, y]`
 fractions of the frame-cropped image — the same frame and the same convention
 `brain_outline` uses, so the app's existing point-in-polygon test reads them unchanged.
-**3,065 structure-plate entries carry an area**, 96% of the 3,203 the label pass located
+**3,066 structure-plate entries carry an area**, 96% of the 3,203 the label pass located
 and 91% of the 3,365 the published index lists — both counted over the structures that are
-regions — as 5,882 polygons over 166,899 points. Where
+regions — as 5,884 polygons over 166,950 points. Where
 the atlas prints two names as one label the two share an entry, so a name having no entry of
 its own does not mean it has no area — see step 8. Twenty of the 723 names have no entry
 anywhere, and never could: they name no region — see step 7.
@@ -434,7 +445,7 @@ The steps, in order, run by `tools/build_region_extents.py`:
 3. **Close against `brain_outline`**, inverse-transformed into the page frame, and fill it
    for the section interior.
 4. **Cut the empty space into faces.** A face sealed by traced ink and holding exactly one
-   abbreviation is that structure's area *as drawn*, and that is 3,477 of the faces. A label
+   abbreviation is that structure's area *as drawn*, and that is 3,478 of the faces. A label
    the atlas set outside its region is seeded at the end of the line it draws rather than on
    the word — see [Where the name is not the place](#where-the-name-is-not-the-place). 212
    labels are, and seeding those on the word puts them in a neighbor's face.
@@ -528,7 +539,7 @@ to **0.7% of polygons** and the repeated vertices to none.
 the difference between a polygon that reads as the line the atlas drew and one that visibly
 cuts its corners. The floor is the page lattice: at 0.35 px the tolerance drops below the
 raster step and the polygon starts recording the staircase rather than the line, at seven
-times the points. At 0.5 it does not — 166,899 points against the 77,453 the 2 px pass
+times the points. At 0.5 it does not — 166,950 points against the 77,453 the 2 px pass
 wrote, for a median traced share of **1.00** where it was 0.98, and it takes the last of the
 crossings with it: **0.03% of polygons**, two of 7,048, against 9% before either change.
 A thin structure is what a coarse tolerance cannot draw without folding its two sides
@@ -567,7 +578,7 @@ the share of the wall the watershed put *inside* a face that lands on traced ink
 half, nobody drew it — and an entry that sits only in faces like that, and whose own border
 is under three-quarters drawn, carries `w`. That is the cerebellar lobules against each
 other, the mediodorsal thalamus, the lateral hypothalamic zones, and little else: **294 of
-3,065 entries**, against 1,551 that share a face at all. It used to be 372: 63 left, 3
+3,066 entries**, against 1,551 that share a face at all. It used to be 372: 63 left, 3
 arrived, and 18 more left when step 10 was tightened — a polygon that tracks the ink to half
 a pixel has more of its border *on* the ink, so an entry whose own border was just under
 three-quarters drawn crosses the line. The 63 are lobules — with `cbw` out of the way in step 7, a lobule's outline is the
@@ -606,12 +617,12 @@ two wins the point, which is the right tie-break everywhere else; the other four
 compound labels — `9a,bCb`, `9/11N`, `3/4Cb`, `S1J/BF`, `RSGb/c` — where two names hold the
 one box and the first answers for both, with the region they share.
 
-212 of the 6,312 printed labels are set outside their region with a line drawn back into
+212 of the 6,313 printed labels are set outside their region with a line drawn back into
 it, and are seeded at the end of that line. A further 201 sit outside the face they name
 with no line this pass could follow — printed on a boundary, or beside the section on a line
 the tracing runs along — and are pulled to the largest face within a millimeter; most of
 those are on the olfactory bulb plates 5–9, where the section is small and the drawing sets
-the abbreviations beside it. Following the lines took that fallback down from 262. Three
+the abbreviations beside it. Following the lines took that fallback down from 262. Two
 labels could not be resolved at all and have no extent.
 
 `qc/chk_regions_NN.png` overlays the result on the plate for five levels, tinted green where

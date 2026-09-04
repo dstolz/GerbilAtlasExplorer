@@ -254,7 +254,10 @@ def test_brain_outline(db):
             for x, y in g:
                 dv = fr.dv_f(y)
                 top, bottom = max(top, dv), min(bottom, dv)
-    assert rings == 81
+    # 82: one polygon per plate, plus the hemispheres parted on 10-14, the cortex
+    # off the midbrain on 37-42, the cerebellum off the brainstem on 56-59, and the
+    # optic chiasm standing clear of the section on 22 -- see `brain_outline.note`.
+    assert rings == 82
     assert -0.1 <= top <= 0.0          # reaches the dorsal plane, never crosses it
     assert -9.2 <= bottom <= -9.0      # just below the deepest printed label
 
