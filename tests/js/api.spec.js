@@ -1,6 +1,8 @@
 // The pure parts of the app, through the window.__gae handle: the frame transform
 // inverts, the deep link round-trips, and every structure solves to a bounded plan.
 const { test, expect } = require('@playwright/test');
+/* the controls these specs drive live in the view's panel, which opens closed */
+const panel = p => p.evaluate(() => window.__gae.vpan(true));
 const path = require('path');
 
 const BUNDLE = 'file://' + path.join(__dirname, '..', '..', 'gerbil_atlas_explorer.html');
@@ -94,6 +96,7 @@ test('the track is mirrored onto the comparison plate, ghosted against its own p
   const tk2 = () => page.evaluate(() => document.getElementById('tk2').innerHTML);
   expect(await tk2()).toBe('');                        // compare is off: nothing to mirror it onto
 
+  await panel(page);                                    // compare lives in the view's panel
   await page.check('#ckcmp');                           // default: the same plate, another stain
   expect(await tk2()).toBe(await tk());                 // so the same plane, the same drawing
 
