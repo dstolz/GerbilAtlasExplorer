@@ -121,8 +121,12 @@ the whole atlas (all 186 plate images) lives inside it, 22 MB, most of that the 
   beside each says how much is set in there, and a link that carried any of it opens
   Advanced on arrival.
 - The **i** in the picture's bottom-right corner says what the view is showing and how to
-  read it. What cannot wait to be asked for stays under the plate: the coordinate readout,
-  the running measurement, and anything the app needs to warn you about.
+  read it. What cannot wait to be asked for is not put behind it: the coordinate readout and
+  the running measurement stay under the plate, and anything the app needs to warn you about
+  — a structure that is not on this level, an import that failed — is laid over the top of
+  the picture, thin enough to read the section through and with an **×** to put it away. It
+  is over the plate rather than under it so that its coming and going never resizes what you
+  are looking at.
 - **Maximize** (the corners button, or <kbd>F</kbd>) gives the whole window to whichever
   view is open — plate, projection or 3D. The search column, the header and the footer
   step out, and the browser is asked for its own chrome as well, so a rig screen or a

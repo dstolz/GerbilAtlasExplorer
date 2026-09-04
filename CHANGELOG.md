@@ -6,6 +6,26 @@ carries a `version` block naming the release its derived fields were built for.
 ## [Unreleased]
 
 ### Changed
+- **A notice is laid over the plate instead of pushing it around.** The one line the app
+  writes when something needs saying — this structure is not on this plate, that import was
+  not JSON, the image has not arrived yet — sat under the picture in the column flow, so it
+  took its height out of `#imgbox`, which is what `fit()` measures. Selecting a structure on
+  another level therefore answered by shrinking the section you were reading and moving it up
+  the screen, and dismissing the notice moved it back: on a phone, where the plate is 249 px
+  tall, a two-line warning cost it a tenth of that and a jump each way. The notice is now a
+  child of `.imgwrap`, like the scale bar and the **i**, so it floats at the top of the plate
+  and takes height from nothing. It is laid on thinly enough to read the drawing through, it
+  is outside `.pan` so zooming and panning leave it where it is, and its events stop at its
+  own edge so the **Go to plate** button inside it is not a click on the section behind it.
+
+  Because it is now covering something, it can be put away: an **×** at its end. Each notice
+  carries a key saying what it is *about* rather than how it is worded, and the × holds down
+  that key — so stepping through the plates with a structure that is on none of them keeps
+  the notice down instead of putting it back a plate at a time, while anything else the app
+  has to say is shown. Picking a structure lets it back up, on the grounds that asking about
+  something is asking to be answered. Nothing about the line's content changed, and it keeps
+  the live region that announces it.
+
 - **A region keeps its color across the whole atlas.** Color regions was solved one plate at
   a time, and a plate cannot know what its neighbors did: a structure bordering three things
   on one level and five on the next took whatever slot was free on each, held its color

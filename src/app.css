@@ -524,17 +524,43 @@ label.z.anlab{display:inline-block;cursor:pointer}
   font-variant-numeric:tabular-nums;min-height:1.5em;flex:none}
 .rdout b{color:var(--ink);font-weight:600}
 .rdout.ms b{color:var(--meas)}
-/* one line, always the same height, so the plate does not resize under a selection */
-.vhint{margin:0 14px;padding:3px 0 8px;font-size:11.5px;color:var(--muted);
-  text-align:center;flex:none;line-height:1.5}
-.vhint b{color:var(--ink);font-weight:600}
-.vhint.warn{background:var(--accent-soft);color:var(--accent);border-radius:7px;
-  padding:4px 10px;margin-bottom:7px}
+/* ---------- the notice over the plate ----------
+   It used to sit under the picture, in the column flow, where its appearing and going
+   again resized the plate: select a structure that is not on this level and the section
+   you were reading jumped and shrank to make room for the sentence saying so. So it
+   floats over the top of the plate instead, laid on it thinly enough to read the drawing
+   through, and takes no height from anything. It is set over the plate rather than the
+   page, which is white under either theme, so its colors are fixed the way .sbar's and
+   .cmplab's are and for the same reason.
+   Above .vinf (5) and .vinfp (6), which is the order they are wanted in: the panel opens
+   because you asked it to, the notice arrived on its own and can be put away.
+   Left and right are both set and the width shrinks to fit inside them, so auto margins
+   center it: left:50% would have offered the notice half the plate to wrap in, which on a
+   phone is a paragraph where a line would fit. */
+.vhint{position:absolute;z-index:7;top:8px;left:8px;right:8px;
+  width:fit-content;max-width:min(560px,calc(100% - 16px));margin:0 auto;
+  display:flex;align-items:center;gap:2px;
+  padding:4px 4px 4px 11px;border-radius:9px;
+  font-size:11.5px;line-height:1.5;text-align:center;
+  color:#4a443b;background:rgba(255,255,255,.84);border:1px solid rgba(27,26,23,.10);
+  box-shadow:0 1px 3px rgba(0,0,0,.10),0 6px 18px rgba(0,0,0,.08);
+  -webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px)}
+.vhint[hidden]{display:none}
+.vht{min-width:0}
+.vhint b{color:#1b1a17;font-weight:600}
+.vhint.warn{background:rgba(250,231,227,.86);color:#96311f;
+  border-color:rgba(176,58,46,.28)}
 .vhint.warn b{color:inherit}
-.vhint button{border:1px solid currentColor;background:transparent;color:inherit;
+.vht button{border:1px solid currentColor;background:rgba(255,255,255,.5);color:inherit;
   border-radius:6px;padding:1px 7px;font-size:11.5px;cursor:pointer;font-family:inherit;
   margin-left:5px;white-space:nowrap}
-.vhint button:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
+.vht button:hover{background:#b03a2e;color:#fff;border-color:#b03a2e}
+/* the way out of it: the notice is over the picture, so putting it away has to be one
+   click and has to be where the notice is */
+.vhx{flex:none;border:0;background:transparent;color:inherit;opacity:.6;cursor:pointer;
+  font:600 15px/1 ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  padding:3px 6px;border-radius:6px;align-self:flex-start}
+.vhx:hover{opacity:1;background:rgba(27,26,23,.09)}
 /* a class that sets display outranks the UA rule for [hidden], and the scale bar
    would otherwise sit on the plate as an empty chip */
 .sbar[hidden],.vctl[hidden]{display:none}
@@ -844,7 +870,6 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
   .row{gap:8px}
   .nm{font-size:13px}
   .pane,.row,.rrow,.det,.vbar,.vctx,.vbot,.rdout{padding-left:11px;padding-right:11px}
-  .vhint{margin-left:11px;margin-right:11px}
   .pjw,.pjn{padding-left:10px;padding-right:10px}
 }
 /* touch pointers need larger targets than a mouse does */
