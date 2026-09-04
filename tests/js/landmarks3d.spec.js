@@ -2,6 +2,10 @@
 // the canvas as text, so what is checked here is that both appear together, that the
 // setting belongs to a pane rather than to the view, and that it rides in the link.
 const { test, expect } = require('@playwright/test');
+/* the controls these specs drive live in the view's panel, which opens closed */
+const panel = p => p.evaluate(() => window.__gae.vpan(true));
+const adv   = p => p.evaluate(() => window.__gae.adv(true));
+
 const path = require('path');
 
 const BUNDLE = 'file://' + path.join(__dirname, '..', '..', 'gerbil_atlas_explorer.html');
@@ -23,7 +27,7 @@ test('the marks and their names come on together, and change the picture', async
   expect(await page.locator('#v3lw').isVisible()).toBe(false);
   const off = await shot(page);
 
-  await page.click('#v3lm');
+  await panel(page); await page.click('#v3lm');
   expect((await panes(page))[0].lm).toBe(true);
   expect(await page.locator('#v3lw').isVisible()).toBe(true);
   // all four are named, and the atlas's own spelling of each is what is written. They come
@@ -32,7 +36,7 @@ test('the marks and their names come on together, and change the picture', async
     .toEqual(['bregma', 'interaural', 'lambda', 'occipital crest']);
   expect(await shot(page)).not.toBe(off);
 
-  await page.click('#v3lm');                    // and back off, cleanly
+  await panel(page); await page.click('#v3lm');                    // and back off, cleanly
   expect(await page.locator('#v3lw').isVisible()).toBe(false);
   expect(await names(page)).toEqual([]);
 });
@@ -41,7 +45,7 @@ test('the setting belongs to a pane, and rides in the link', async ({ page }) =>
   await open(page, '#p30&t=v3d');
   await page.click('#v3sp');                    // two panes, both without landmarks
   await page.click('#v3pseg button[data-p="1"]');
-  await page.click('#v3lm');
+  await panel(page); await page.click('#v3lm');
   let p = await panes(page);
   expect(p[0].lm).toBe(false);
   expect(p[1].lm).toBe(true);
@@ -68,7 +72,7 @@ test('the setting belongs to a pane, and rides in the link', async ({ page }) =>
 test('the midline cut takes the left half of the ear-bar axis with it', async ({ page }) => {
   await open(page, '#p30&t=v3d&lm=1&vp=rost&or=1');
   const whole = await shot(page);
-  await page.click('#v3h');
+  await panel(page); await page.click('#v3h');
   expect((await panes(page))[0].half).toBe(true);
   expect(await shot(page)).not.toBe(whole);
 });

@@ -135,110 +135,83 @@
     <div class="vbar">
       <span class="seg" id="vseg">
         <button type="button" class="on" data-t="plate">Plate</button>
-        <button type="button" data-t="proj">Projection</button>
+        <button type="button" data-t="proj"><span class="wide">Projection</span><span class="narrow">Proj</span></button>
         <button type="button" data-t="v3d">3D</button>
       </span>
-      <span class="vctl" id="ctlSrc">
-        <span class="tsep"></span>
-        <span class="seg" id="srcseg">
-          <button type="button" class="on" data-s="drawing" title="The atlas's own drawing: contours and printed abbreviations">Labelled</button>
-          <button type="button" data-s="nissl" title="The unlabelled Nissl-stained section at this level, printed in the same coordinate box">Nissl</button>
-          <button type="button" data-s="myelin" title="The unlabelled Gallyas myelin-stained section at this level, printed in the same coordinate box">Myelin</button>
-          <button type="button" data-s="mri" hidden title="The atlas's own MRI at this level, resampled into the same coordinate box. 117 µm in plane against the drawing's 18, so it is soft where the drawing is sharp — and it is the animal's head, not a cut section">MRI</button>
+
+      <!-- What the view is steered by, and nothing else. One row beside the tabs on a wide
+           window; its own scrolling row on a phone. Never a wrapping block: the block is
+           what used to push the picture off the first screen. Everything that is set once
+           and then read rather than driven lives in the panel below. -->
+      <span class="vqs" id="vqs">
+        <span class="vctl" id="qsPlate">
+          <span class="vctl" id="ctlSrc">
+            <span class="seg" id="srcseg">
+              <button type="button" class="on" data-s="drawing" title="The atlas's own drawing: contours and printed abbreviations">Labelled</button>
+              <button type="button" data-s="nissl" title="The unlabelled Nissl-stained section at this level, printed in the same coordinate box">Nissl</button>
+              <button type="button" data-s="myelin" title="The unlabelled Gallyas myelin-stained section at this level, printed in the same coordinate box">Myelin</button>
+              <button type="button" data-s="mri" hidden title="The atlas's own MRI at this level, resampled into the same coordinate box. 117 &micro;m in plane against the drawing's 18, so it is soft where the drawing is sharp &mdash; and it is the animal's head, not a cut section">MRI</button>
+            </span>
+          </span>
+          <span class="tsep"></span>
+          <!-- A finger has a better zoom than these buttons are: the pinch is anchored on
+               the fingers rather than on the box centre, and pinching in clamps at exactly
+               100% with the pan zeroed, which is what Fit writes. So the group is hidden
+               under 900px rather than shown to a thumb. Hidden, never removed -- applyView()
+               writes to all three of these on every pan. -->
+          <span class="zg">
+            <button class="z" id="zo" type="button" title="Zoom out">&minus;</button>
+            <span class="zlv" id="zl">100%</span>
+            <button class="z" id="zi" type="button" title="Zoom in">+</button>
+            <button class="z" id="zf" type="button" title="Fit the whole plate">Fit</button>
+          </span>
+          <span class="tsep"></span>
+          <label class="tg" title="Read bregma / ML / DV under the pointer"><input type="checkbox" id="ckc">Coords</label>
+          <label class="tg" title="1 mm stereotaxic grid"><input type="checkbox" id="ckg">Grid</label>
         </span>
-        <label class="tg" title="Read every source the same way: the drawing loses its colour"><input type="checkbox" id="ckgy">Grey</label>
-        <label class="lb3" id="ctrw" title="Stretch the contrast of whichever plate is showing. The 3-D view stretches its own tissue with Floor, Ceiling and Gamma, so this is left off it."
-          >Contrast <input type="range" id="ctrs" min="60" max="260" step="5" value="100"><b id="ctrl">1.0&times;</b></label>
+
+        <span class="vctl" id="qsProj" hidden>
+          <span class="seg" id="pjseg">
+            <button type="button" class="on" data-v="dv">sagittal &middot; AP &times; DV</button>
+            <button type="button" data-v="ml">top-down &middot; AP &times; ML</button>
+          </span>
+          <span class="tsep"></span>
+          <label class="tg" id="pjfw" hidden title="Draw this view in your working frame instead of the atlas’s — the rotation you set, put on the picture. Appears once a pitch, roll or yaw is set."><input type="checkbox" id="ckpf">In frame</label>
+        </span>
+
+        <span class="vctl" id="qs3d" hidden>
+          <span class="seg" id="m3seg">
+            <button type="button" data-r="contour">Contours</button>
+            <button type="button" class="on" data-r="volume">Volume</button>
+            <button type="button" data-r="points">Labels</button>
+          </span>
+          <span class="tsep"></span>
+          <label class="lb3" title="Look at the brain from a named direction"
+            >View <select id="v3v">
+              <option value="obl">Oblique</option>
+              <option value="left">Left</option>
+              <option value="right">Right</option>
+              <option value="rost">Rostral &middot; front</option>
+              <option value="caud">Caudal &middot; back</option>
+              <option value="dors">Dorsal &middot; top</option>
+              <option value="vent">Ventral &middot; bottom</option>
+              <option value="" disabled>Custom</option>
+            </select></label>
+          <span class="tsep"></span>
+          <label class="tg" title="A second 3-D view beside this one, sharing the stack and the meshes: the same brain rendered a second way, or seen from a second angle. It opens as a copy of this one."><input type="checkbox" id="v3sp">Split</label>
+          <span class="seg" id="v3pseg" hidden aria-label="Which pane these controls set">
+            <button type="button" class="on" data-p="0" title="Set the left or upper pane">A</button>
+            <button type="button" data-p="1" title="Set the right or lower pane">B</button>
+          </span>
+          <label class="tg" id="v3lkw" hidden title="Turn, zoom and pan both panes together, holding whatever angle apart they were set to. Untick to rotate them independently; Reset view brings a locked pair back onto the one default."><input type="checkbox" id="v3lk" checked>Lock</label>
+          <label class="tg" id="v3fw" hidden title="Draw this view in your working frame instead of the atlas’s — the rotation you set, put on the picture. Appears once a pitch, roll or yaw is set."><input type="checkbox" id="v3f">In frame</label>
+        </span>
       </span>
-      <span class="vctl" id="ctlPlate">
-        <span class="zg">
-          <button class="z" id="zo" type="button" title="Zoom out">&minus;</button>
-          <span class="zlv" id="zl">100%</span>
-          <button class="z" id="zi" type="button" title="Zoom in">+</button>
-          <button class="z" id="zf" type="button" title="Fit the whole plate">Fit</button>
-        </span>
-        <span class="tsep"></span>
-        <label class="tg" title="Read bregma / ML / DV under the pointer"><input type="checkbox" id="ckc">Coords</label>
-        <label class="tg" title="1 mm stereotaxic grid"><input type="checkbox" id="ckg">Grid</label>
-        <label class="tg" title="Scale bar"><input type="checkbox" id="cks">Scale</label>
-        <label class="tg" title="Click two points on the plate to measure between them"><input type="checkbox" id="ckm">Measure</label>
-        <span class="tgw"><label class="tg" title="Trace the skull's cut through this coronal plane"><input type="checkbox" id="cksk">Skull</label><button type="button" class="ast" title="Skull alignment is approximate — read the note" aria-label="Note on skull alignment">*</button></span>
-        <label class="tg" title="Bregma, lambda and the occipital crest where they fall, and the interaural line"><input type="checkbox" id="cklm">Landmarks</label>
-        <span class="tsep"></span>
-        <label class="tg" title="A second plate beside this one, sharing zoom, pan and crosshair: the other histology of this level, the drawing, or the plate before or after"><input type="checkbox" id="ckcmp">Compare</label>
-        <select class="csel" id="cmpsel" hidden aria-label="What the second pane shows">
-          <option value="nissl">Nissl</option><option value="myelin">Myelin</option><option value="drawing">Labelled</option>
-          <option value="mri" hidden>MRI</option>
-          <option value="prev">Plate before</option><option value="next">Plate after</option>
-        </select>
-        <label class="tg" title="Your own markers on the plates"><input type="checkbox" id="ckan">Notes</label>
-        <button class="z" id="anadd" type="button" hidden title="Click, then click the plate where the note belongs" aria-pressed="false">Add</button>
-        <span class="tsep"></span>
-        <button class="z" id="epng" type="button" title="Download this plate as a PNG with the current overlays and coordinates">PNG</button>
-        <button class="z" id="esvg" type="button" title="Download this plate as an editable SVG: the regional outlines as vector paths, with the current overlays and coordinates">SVG</button>
-      </span>
-      <span class="vctl" id="ctlProj" hidden>
-        <span class="seg" id="pjseg">
-          <button type="button" class="on" data-v="dv">sagittal &middot; AP &times; DV</button>
-          <button type="button" data-v="ml">top-down &middot; AP &times; ML</button>
-        </span>
-        <span class="tsep"></span>
-        <span class="tgw"><label class="tg" title="Outline the skull around the cloud, widening the axes to fit it"><input type="checkbox" id="ckpk">Skull</label><button type="button" class="ast" title="Skull alignment is approximate — read the note" aria-label="Note on skull alignment">*</button></span>
-        <label class="tg" title="Bregma, lambda, interaural and the occipital crest as reference lines"><input type="checkbox" id="ckplm">Landmarks</label>
-        <label class="tg" id="pjfw" hidden title="Draw this view in your working frame instead of the atlas’s — the rotation you set, put on the picture. Appears once a pitch, roll or yaw is set."><input type="checkbox" id="ckpf">In frame</label>
-      </span>
-      <span class="vctl" id="ctl3d" hidden>
-        <label class="tg" title="A second 3-D view beside this one, sharing the stack and the meshes: the same brain rendered a second way, or seen from a second angle. It opens as a copy of this one."><input type="checkbox" id="v3sp">Split</label>
-        <span class="seg" id="v3pseg" hidden aria-label="Which pane these controls set">
-          <button type="button" class="on" data-p="0" title="Set the left or upper pane">A</button>
-          <button type="button" data-p="1" title="Set the right or lower pane">B</button>
-        </span>
-        <label class="tg" id="v3lkw" hidden title="Turn, zoom and pan both panes together, holding whatever angle apart they were set to. Untick to rotate them independently; Reset view brings a locked pair back onto the one default."><input type="checkbox" id="v3lk" checked>Lock</label>
-        <span class="tsep"></span>
-        <span class="seg" id="m3seg">
-          <button type="button" data-r="contour">Contours</button>
-          <button type="button" class="on" data-r="volume">Volume</button>
-          <button type="button" data-r="points">Labels</button>
-        </span>
-        <span class="tsep"></span>
-        <label class="lb3" title="How strongly each slice contributes, once the curve below has said what its tissue is worth"
-          >Density <input type="range" id="v3op" min="4" max="100" value="42"></label>
-        <label class="lb3" title="Tissue at or below this counts for nothing — the control that clears the pale wash a photographed section fogs the stack with"
-          >Floor <input type="range" id="v3t0" min="0" max="100" value="0"><b id="v3t0l">0%</b></label>
-        <label class="lb3" title="Tissue at or above this counts for all, so whatever is left between the two spans the full range. Bring it down to the floor for a hard threshold."
-          >Ceiling <input type="range" id="v3t1" min="0" max="100" value="100"><b id="v3t1l">100%</b></label>
-        <label class="lb3" title="The curve between floor and ceiling: under 1 lifts faint tissue, over 1 keeps only the dense"
-          >Gamma <input type="range" id="v3gm" min="40" max="250" step="5" value="100"><b id="v3gml">1.00</b></label>
-        <button class="z" id="v3tr" type="button" hidden title="Density, floor, ceiling and gamma back to the values this view draws with untouched">Reset contrast</button>
-        <label class="lb3" title="Anterior edge of the slab that is drawn"
-          >Plates <input type="range" id="v3a" min="1" max="62" value="1"><b id="v3al">1</b></label>
-        <label class="lb3" title="Posterior edge of the slab that is drawn"
-          >&ndash; <input type="range" id="v3b" min="1" max="62" value="62"><b id="v3bl">62</b></label>
-        <span class="tsep"></span>
-        <span class="tgw"><label class="tg" title="Show the skull surface around the atlas"><input type="checkbox" id="v3s">Skull</label><button type="button" class="ast" title="Skull alignment is approximate — read the note" aria-label="Note on skull alignment">*</button></span>
-        <label class="lb3" id="v3sol" hidden title="How opaque the skull is drawn"
-          >Bone <input type="range" id="v3so" min="6" max="100" value="32"></label>
-        <span class="tgw"><label class="tg" title="Bregma, lambda, the interaural axis and the occipital crest, standing where they sit in the stack"><input type="checkbox" id="v3lm">Landmarks</label><button type="button" class="ast" title="Landmark heights come off the same approximate skull fit — read the note" aria-label="Note on landmark heights">*</button></span>
-        <label class="tg" title="Cut at the midline to see inside"><input type="checkbox" id="v3h">Half</label>
-        <label class="tg" title="Parallel projection — no perspective foreshortening, so equal lengths read equally wherever they sit"><input type="checkbox" id="v3o">Ortho</label>
-        <label class="tg" id="v3fw" hidden title="Draw this view in your working frame instead of the atlas’s — the rotation you set, put on the picture. Appears once a pitch, roll or yaw is set."><input type="checkbox" id="v3f">In frame</label>
-        <label class="tg" title="The brain surface and one mesh per structure, built offline from the extents and fetched on first use (20 MB). Interpolated between sections 350 µm apart: not a segmentation."><input type="checkbox" id="v3m">Meshes</label>
-        <span class="tgw" id="v3msw" hidden><label class="tg" title="The interpolated brain surface as a faint shell"><input type="checkbox" id="v3ms">Surface</label>
-        <span id="v3mf" hidden><button class="z" id="v3mfb" type="button" title="Open data/gerbil_atlas_volumes.json from the repository">Load file</button><input type="file" id="v3mfile" accept="application/json,.json" hidden></span></span>
-        <label class="lb3" title="Look at the brain from a named direction"
-          >View <select id="v3v">
-            <option value="obl">Oblique</option>
-            <option value="left">Left</option>
-            <option value="right">Right</option>
-            <option value="rost">Rostral &middot; front</option>
-            <option value="caud">Caudal &middot; back</option>
-            <option value="dors">Dorsal &middot; top</option>
-            <option value="vent">Ventral &middot; bottom</option>
-            <option value="" disabled>Custom</option>
-          </select></label>
-        <button class="z" id="v3r" type="button" title="Back to the default viewpoint">Reset view</button>
-      </span>
+
       <span class="elinkgrp">
+        <button class="z cbtn" id="vctlb" type="button" aria-expanded="false" aria-controls="vpan"
+          title="Everything else this view is set by. C opens it, Esc closes it."
+          >Controls<b class="bdg" id="vctln" hidden></b></button>
         <button class="z" id="emax" type="button" aria-pressed="false"
           title="Give the view the whole window: the search column, the header and the browser's own chrome step out of the way. F, or Esc to come back."
           aria-label="Maximise the view"><svg class="ic i1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
@@ -253,7 +226,105 @@
           aria-label="Open the wiki documentation (opens in a new tab)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></a>
       </span>
+
+      <!-- One panel, two presentations: a sheet over the picture on a phone, a popover
+           anchored under its button on a wide window. Out of the flow either way, so
+           opening it never changes what #imgbox measures and the plate never resizes
+           under the pointer. -->
+      <div class="vpan" id="vpan" hidden aria-labelledby="vpanh">
+        <div class="vpanh">
+          <b id="vpanh">Plate controls</b>
+          <button class="z" id="vpanx" type="button" aria-label="Close the controls">&times;</button>
+        </div>
+        <div class="vpanb">
+          <div class="vctl" id="ctlPlate">
+            <div class="grp"><h4>Overlays</h4><div class="in">
+              <label class="tg" title="Scale bar"><input type="checkbox" id="cks">Scale</label>
+              <label class="tg" title="Click two points on the plate to measure between them"><input type="checkbox" id="ckm">Measure</label>
+            </div></div>
+            <div class="grp"><h4>Reference</h4><div class="in">
+              <span class="tgw"><label class="tg" title="Trace the skull's cut through this coronal plane"><input type="checkbox" id="cksk">Skull</label><button type="button" class="ast" title="Skull alignment is approximate &mdash; read the note" aria-label="Note on skull alignment">*</button></span>
+              <label class="tg" title="Bregma, lambda and the occipital crest where they fall, and the interaural line"><input type="checkbox" id="cklm">Landmarks</label>
+            </div></div>
+            <div class="grp"><h4>Compare</h4><div class="in">
+              <label class="tg" title="A second plate beside this one, sharing zoom, pan and crosshair: the other histology of this level, the drawing, or the plate before or after"><input type="checkbox" id="ckcmp">Compare</label>
+              <select class="csel" id="cmpsel" hidden aria-label="What the second pane shows">
+                <option value="nissl">Nissl</option><option value="myelin">Myelin</option><option value="drawing">Labelled</option>
+                <option value="mri" hidden>MRI</option>
+                <option value="prev">Plate before</option><option value="next">Plate after</option>
+              </select>
+            </div></div>
+            <div class="grp"><h4>Notes and export</h4><div class="in">
+              <label class="tg" title="Your own markers on the plates"><input type="checkbox" id="ckan">Notes</label>
+              <button class="z" id="anadd" type="button" hidden title="Click, then click the plate where the note belongs" aria-pressed="false">Add</button>
+              <button class="z" id="epng" type="button" title="Download this plate as a PNG with the current overlays and coordinates">PNG</button>
+              <button class="z" id="esvg" type="button" title="Download this plate as an editable SVG: the regional outlines as vector paths, with the current overlays and coordinates">SVG</button>
+            </div></div>
+          </div>
+
+          <div class="vctl" id="ctlProj" hidden>
+            <div class="grp"><h4>Reference</h4><div class="in">
+              <span class="tgw"><label class="tg" title="Outline the skull around the cloud, widening the axes to fit it"><input type="checkbox" id="ckpk">Skull</label><button type="button" class="ast" title="Skull alignment is approximate &mdash; read the note" aria-label="Note on skull alignment">*</button></span>
+              <label class="tg" title="Bregma, lambda, interaural and the occipital crest as reference lines"><input type="checkbox" id="ckplm">Landmarks</label>
+            </div></div>
+          </div>
+
+          <div class="vctl" id="ctl3d" hidden>
+            <div class="grp"><h4>Reference</h4><div class="in">
+              <span class="tgw"><label class="tg" title="Show the skull surface around the atlas"><input type="checkbox" id="v3s">Skull</label><button type="button" class="ast" title="Skull alignment is approximate &mdash; read the note" aria-label="Note on skull alignment">*</button></span>
+              <label class="lb3" id="v3sol" hidden title="How opaque the skull is drawn"
+                >Bone <input type="range" id="v3so" min="6" max="100" value="32"></label>
+              <span class="tgw"><label class="tg" title="Bregma, lambda, the interaural axis and the occipital crest, standing where they sit in the stack"><input type="checkbox" id="v3lm">Landmarks</label><button type="button" class="ast" title="Landmark heights come off the same approximate skull fit &mdash; read the note" aria-label="Note on landmark heights">*</button></span>
+              <label class="tg" title="The brain surface and one mesh per structure, built offline from the extents and fetched on first use (20 MB). Interpolated between sections 350 &micro;m apart: not a segmentation."><input type="checkbox" id="v3m">Meshes</label>
+              <span class="tgw" id="v3msw" hidden><label class="tg" title="The interpolated brain surface as a faint shell"><input type="checkbox" id="v3ms">Surface</label>
+              <span id="v3mf" hidden><button class="z" id="v3mfb" type="button" title="Open data/gerbil_atlas_volumes.json from the repository">Load file</button><input type="file" id="v3mfile" accept="application/json,.json" hidden></span></span>
+            </div></div>
+            <div class="grp"><h4>Camera</h4><div class="in">
+              <label class="tg" title="Cut at the midline to see inside"><input type="checkbox" id="v3h">Half</label>
+              <label class="tg" title="Parallel projection &mdash; no perspective foreshortening, so equal lengths read equally wherever they sit"><input type="checkbox" id="v3o">Ortho</label>
+              <button class="z" id="v3r" type="button" title="Back to the default viewpoint">Reset view</button>
+            </div></div>
+          </div>
+
+          <!-- The tuning: set once and then read rather than driven, so it is folded away.
+               The count says how much of it is off its default, and readHash() opens this
+               on arrival when a link carried any of it -- a folded section must never be
+               changing the picture with nothing to show for it. -->
+          <div class="ghead adv" id="advh" role="button" tabindex="0" aria-expanded="false"
+               aria-controls="advb" title="Contrast, tone and the slab: the settings you make once"
+            ><span class="gcar">&#9656;</span>Advanced<b id="advn" hidden></b></div>
+          <div class="advb" id="advb" hidden>
+            <div class="vctl" id="advPlate">
+              <div class="grp"><h4>Image rendering</h4><div class="in col">
+                <label class="tg" title="Read every source the same way: the drawing loses its colour"><input type="checkbox" id="ckgy">Grey</label>
+                <label class="lb3" id="ctrw" title="Stretch the contrast of whichever plate is showing. The 3-D view stretches its own tissue with Floor, Ceiling and Gamma, so this is left off it."
+                  >Contrast <input type="range" id="ctrs" min="60" max="260" step="5" value="100"><b id="ctrl">1.0&times;</b></label>
+              </div></div>
+            </div>
+            <div class="vctl" id="adv3d" hidden>
+              <div class="grp"><h4>Contrast</h4><div class="in col">
+                <label class="lb3" title="How strongly each slice contributes, once the curve below has said what its tissue is worth"
+                  >Density <input type="range" id="v3op" min="4" max="100" value="42"></label>
+                <label class="lb3" title="Tissue at or below this counts for nothing &mdash; the control that clears the pale wash a photographed section fogs the stack with"
+                  >Floor <input type="range" id="v3t0" min="0" max="100" value="0"><b id="v3t0l">0%</b></label>
+                <label class="lb3" title="Tissue at or above this counts for all, so whatever is left between the two spans the full range. Bring it down to the floor for a hard threshold."
+                  >Ceiling <input type="range" id="v3t1" min="0" max="100" value="100"><b id="v3t1l">100%</b></label>
+                <label class="lb3" title="The curve between floor and ceiling: under 1 lifts faint tissue, over 1 keeps only the dense"
+                  >Gamma <input type="range" id="v3gm" min="40" max="250" step="5" value="100"><b id="v3gml">1.00</b></label>
+                <button class="z" id="v3tr" type="button" hidden title="Density, floor, ceiling and gamma back to the values this view draws with untouched">Reset contrast</button>
+              </div></div>
+              <div class="grp"><h4>Slab</h4><div class="in col">
+                <label class="lb3" title="Anterior edge of the slab that is drawn"
+                  >Plates <input type="range" id="v3a" min="1" max="62" value="1"><b id="v3al">1</b></label>
+                <label class="lb3" title="Posterior edge of the slab that is drawn"
+                  >&ndash; <input type="range" id="v3b" min="1" max="62" value="62"><b id="v3bl">62</b></label>
+              </div></div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
+    <div class="vpanbd" id="vpanbd" hidden></div>
 
     <div class="vctx">
       <span class="pnum" id="pn">Plate 30</span>
@@ -288,7 +359,14 @@
               <button type="button" class="z" id="andel">Delete</button>
               <button type="button" class="z" id="ancan">Cancel</button>
             </form>
+            <button class="vinf" id="vinfb" type="button" aria-expanded="false" aria-controls="vinfp"
+              aria-label="About this view" title="About this view">i</button>
           </div>
+          <!-- The panel sits beside the plate box rather than inside it: .imgwrap is
+               overflow:hidden for the pan transform, and anything hanging off its edge
+               would be cut. #imgbox does not clip, and an absolute child changes nothing
+               fit() measures. -->
+          <div class="vinfp" id="vinfp" hidden role="note"><div id="vinfo"></div></div>
           <div class="imgwrap cmp" id="iw2" hidden>
             <div class="pan" id="pan2">
               <img id="pi2" alt="">
@@ -303,7 +381,7 @@
         </div>
         <div class="rdout" id="rd" hidden aria-live="polite"></div>
         <div class="rdout ms" id="rm" hidden></div>
-        <p class="vhint" id="vhint" aria-live="polite"></p>
+        <p class="vhint" id="vhint" hidden aria-live="polite"></p>
       </div>
 
       <div class="view" id="projview">
@@ -321,8 +399,10 @@
             <circle id="pjhi" r="9" style="display:none"></circle>
           </svg>
           <div class="tip" id="pjt" hidden></div>
+          <button class="vinf" id="pjnb" type="button" aria-expanded="false" aria-controls="pjnp"
+              aria-label="About this view" title="About this view">i</button>
+          <div class="vinfp" id="pjnp" hidden role="note"><p class="pjn" id="pjn"></p></div>
         </div>
-        <p class="pjn" id="pjn"></p>
       </div>
 
       <div class="view" id="v3dview">
@@ -332,8 +412,10 @@
           <div class="v3pn" id="v3pn" hidden aria-hidden="true"><span class="v3dv" id="v3dv"></span><span class="v3on" id="v3on"></span><span class="v3lb on" id="v3lb0">A</span><span class="v3lb" id="v3lb1">B</span></div>
           <div class="tip" id="v3t" hidden></div>
           <div class="v3msg" id="v3msg" hidden aria-live="polite"></div>
+          <button class="vinf" id="v3nb" type="button" aria-expanded="false" aria-controls="v3np"
+              aria-label="About this view" title="About this view">i</button>
         </div>
-        <p class="v3n" id="v3n"></p>
+        <div class="vinfp" id="v3np" hidden role="note"><p class="v3n" id="v3n"></p></div>
       </div>
     </div>
 
@@ -615,6 +697,13 @@
       <dt><kbd>Home</kbd> <kbd>End</kbd></dt><dd>the first and the last plate</dd>
       <dt><kbd>/</kbd></dt><dd>jump to the search box</dd>
       <dt><kbd>?</kbd></dt><dd>open this panel</dd>
+      <dt><kbd>C</kbd></dt><dd>the view&rsquo;s controls &mdash; everything the bar above the
+        picture does not have room for. <b>Advanced</b> inside it holds the contrast, the
+        tone curve and the slab: the settings you make once.</dd>
+      <dt>two fingers</dt><dd>pinch the plate to zoom, anchored between them; pinch back in
+        to fit. One finger drags once you are in. The &minus; / + / <b>Fit</b> buttons are
+        there for a mouse, on a window wide enough to spare them the room.</dd>
+      <dt><b>i</b> on the picture</dt><dd>what this view is showing, and how to read it</dd>
       <dt><kbd>F</kbd></dt><dd>give the view the whole window &mdash; the search column, the
         header and the browser&rsquo;s own chrome go, and the plate, the projection or the
         stack takes the room. <kbd>Esc</kbd> comes back.</dd>

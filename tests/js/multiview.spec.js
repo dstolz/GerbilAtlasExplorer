@@ -1,5 +1,9 @@
 // Two 3-D panes on one canvas: what each pane holds of its own, and what the lock shares.
 const { test, expect } = require('@playwright/test');
+/* the controls these specs drive live in the view's panel, which opens closed */
+const panel = p => p.evaluate(() => window.__gae.vpan(true));
+const adv   = p => p.evaluate(() => window.__gae.adv(true));
+
 const path = require('path');
 
 const BUNDLE = 'file://' + path.join(__dirname, '..', '..', 'gerbil_atlas_explorer.html');
@@ -57,7 +61,7 @@ test.describe('the second 3-D pane', () => {
     await open(page, '#p30&t=v3d');
     // set the one pane away from the defaults first, so a copy is visibly a copy
     await page.click('#m3seg button[data-r="contour"]');
-    await page.click('#v3h');
+    await panel(page); await page.click('#v3h');
     await page.click('#v3sp');
     let p = await panes(page);
     expect(p[1].mode).toBe('contour');
@@ -109,7 +113,7 @@ test.describe('the second 3-D pane', () => {
     for (const p of await panes(page)) expect(Math.abs(p.el)).toBeLessThanOrEqual(1.5531);
 
     // reset is the one that converges them: back to the one default
-    await page.click('#v3r');
+    await panel(page); await page.click('#v3r');
     const p3 = await panes(page);
     expect(p3[0].az).toBe(p3[1].az);
     expect(p3[0].el).toBe(p3[1].el);

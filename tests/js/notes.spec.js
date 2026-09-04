@@ -8,6 +8,10 @@
 // The second half of it is geometry: the box clips what overhangs it, and a form placed
 // against its right edge lost the very buttons you were trying to press.
 const { test, expect } = require('@playwright/test');
+/* the controls these specs drive live in the view's panel, which opens closed */
+const panel = p => p.evaluate(() => window.__gae.vpan(true));
+const adv   = p => p.evaluate(() => window.__gae.adv(true));
+
 const path = require('path');
 
 const BUNDLE = 'file://' + path.join(__dirname, '..', '..', 'gerbil_atlas_explorer.html');
@@ -29,6 +33,7 @@ async function open(page, url, hash) {
    rewraps the toolbar, which resizes the box a frame later, so the box is measured after
    that has settled rather than before. */
 async function place(page, fx, fy) {
+  await panel(page);
   await page.check('#ckan');
   await page.click('#anadd');
   await page.waitForTimeout(300);

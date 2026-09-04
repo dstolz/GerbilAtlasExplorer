@@ -5,6 +5,61 @@ carries a `version` block naming the release its derived fields were built for.
 
 ## [Unreleased]
 
+### Changed
+- **The picture first, and the controls on call.** Every control for the current view used to
+  sit in one wrapping row above it. That works at 1440 px and does not work on a phone: at
+  390 × 844 the row ran to six lines on the plate and twelve in the 3-D view, where it was
+  taller than the canvas it drove, and the picture started 290 px down a 844 px screen. The
+  row now holds only what steers the view — the tabs, the source or render switch, the pane
+  controls — in a strip that scrolls sideways rather than wrapping. Everything else moved
+  into one panel, presented as a sheet over the picture on a phone and a popover under its
+  button on a wide window; inside it, **Advanced** folds away the settings that are made once
+  rather than driven: contrast, the tone curve, the slab. Measured at 390 × 844: the control
+  bar 290 px → 94, the top of the plate 290 → 157, the plate itself 352 × 225 → 390 × 249,
+  and the 3-D canvas 250 → 400. Nothing was removed, and no control id changed, so every
+  deep link written before this still opens the view it named.
+
+  The panel is out of the flow in both presentations, which is the point: `#imgbox` is what
+  `fit()` measures, so opening it cannot resize the plate under the pointer. That also fixes
+  a long-standing twitch — revealing **Add** when Notes was ticked used to rewrap the toolbar
+  and move the picture a frame later, which `tests/js/notes.spec.js` had to wait out.
+- **The zoom buttons come off a phone.** The plate has had a real two-finger pinch since the
+  pan and zoom were written; it anchors between the fingers rather than on the box centre,
+  and `zoomAt` clamps at 1, so pinching in lands on exactly the state **Fit** writes. Under
+  900 px the − / 100% / + / Fit cluster is therefore hidden — hidden, not removed, because
+  `applyView()` writes to all three of those elements on every pan. A wide window keeps them,
+  because a mouse has no pinch. The gesture was never documented; it is now, in About and in
+  the README.
+- **What each view is showing moved onto the picture.** The line under each graphic cost that
+  graphic its height on every view — in the 3-D stack it reached 1,059 characters, about
+  eighteen lines on a phone, taller than the canvas it described. It is now behind an **i** in
+  the corner the scale bar does not use. Only the commentary moved: the coordinate readout,
+  the running measurement and every warning stay in flow, because a warning is the only place
+  the app says a structure is not on this plate — and it carries the **Go to plate** button
+  that fixes it — and because the measurement counts up as you move to the second point,
+  which a panel you have to hold open cannot do.
+- **The 3-D view no longer crops the brain because its box is tall.** The projection took a
+  fixed vertical field and derived the horizontal one from the aspect, so a viewport taller
+  than it was wide cut the ends off the stack rather than showing more of it. That is exactly
+  the shape a pane takes once the view is split, and the shape the whole view takes on a
+  phone. The binding axis is now the one held: at or above 1:1 nothing changes, and below it
+  the vertical field opens by 1/aspect so the horizontal extent stays put. Found because the
+  taller canvas this release gives the split view dropped the occipital crest off the end of
+  it.
+
+### Fixed
+- Two 3-D specs read the canvas with `toDataURL()` immediately after `v3frame()`, which only
+  schedules a render for the next animation frame — so they were comparing two empty 20 kB
+  buffers and passing on the difference between them. They call `v3render()` now, the way
+  `landmarks3d.spec.js` always did and the way their own comment says they meant to, and the
+  blank-buffer guard went from 5 kB to 100 kB, which is the difference between an empty
+  buffer and a rendered frame.
+
+### Changed
+- Below 560 px the cards take the phone's full width and the header buttons get compact
+  padding, so the header stops wrapping to two lines and the plate gets the margins back.
+  Nothing is hidden to achieve either.
+
 ### Added
 - **Landmarks in the 3-D view.** Bregma, lambda, the interaural line and the occipital crest
   are drawn on the plate whose plane they fall in and as reference rules around the

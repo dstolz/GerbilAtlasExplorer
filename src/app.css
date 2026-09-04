@@ -69,6 +69,9 @@ h1{margin:0;font-size:clamp(15.5px,.3vw + 14px,18px);font-weight:650;letter-spac
 .seg button:hover{color:var(--accent)}
 .seg button.on{background:var(--chip-on);color:var(--chip-on-ink)}
 .seg button b{font-weight:600;font-variant-numeric:tabular-nums}
+/* one label, two lengths: the tab row and the link group have to share a line on a phone,
+   and "Projection" is the only word in either wide enough to stop them */
+.narrow{display:none}
 .seg.full{display:flex;width:100%}
 .seg.full button{flex:1;min-width:0;text-align:center;padding:6px 8px;
   overflow:hidden;text-overflow:ellipsis}
@@ -242,10 +245,22 @@ input[type=search]:focus{border-color:var(--accent)}
 
 /* ---------- viewer chrome ---------- */
 .vbar{display:flex;flex-wrap:wrap;align-items:center;gap:7px 9px;
-  padding:8px 14px;border-bottom:1px solid var(--line);flex:none}
+  padding:8px 14px;border-bottom:1px solid var(--line);flex:none;position:relative}
+/* the strip of controls the view is steered by. Beside the tabs where there is room; its
+   own row, scrolling sideways rather than wrapping, where there is not. */
+.vqs{display:flex;flex-wrap:wrap;align-items:center;gap:7px 9px;min-width:0}
 .vctl{display:flex;flex-wrap:wrap;align-items:center;gap:7px 9px;min-width:0}
 .vctl[hidden]{display:none}
 .elinkgrp{margin-left:auto;display:inline-flex;align-items:center;gap:6px}
+/* the button that opens the panel, and the count of what is set inside it: a closed panel
+   must never be the reason the picture looks like that */
+.cbtn{display:inline-flex;align-items:center;gap:5px}
+.cbtn[aria-expanded="true"]{border-color:var(--accent);color:var(--accent);
+  background:var(--accent-soft)}
+.bdg{font-size:10px;font-weight:600;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+  background:var(--accent);color:var(--chip-on-ink);border-radius:999px;padding:1px 5px;
+  min-width:15px;text-align:center;line-height:1.4}
+.bdg[hidden]{display:none}
 #elink,#ewiki,#emax{display:inline-flex;align-items:center;justify-content:center;
   padding:5px;line-height:0}
 #elink svg,#ewiki svg,#emax svg{width:14px;height:14px;display:block}
@@ -291,11 +306,75 @@ button.z.armed,button.z.armed:hover{background:var(--accent);border-color:var(--
 .zg{display:inline-flex;align-items:center;gap:4px}
 .zlv{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;
   min-width:3.4em;text-align:center}
+/* ---------- what the view is showing, on the picture rather than under it ----------
+   The line that used to sit below each graphic cost it that height on every view; in the
+   stack it ran to eighteen lines on a phone. It is read once and then ignored, so it goes
+   behind a mark in the corner .sbar does not use. What stays under the plate is what
+   cannot wait to be asked for: the coordinates, the running measurement, and a warning. */
+.vinf{position:absolute;right:8px;bottom:8px;z-index:5;width:22px;height:22px;padding:0;
+  border:1px solid var(--line);border-radius:50%;background:rgba(255,255,255,.86);
+  color:#1b1a17;font:italic 600 12.5px/1 Georgia,"Times New Roman",serif;
+  display:grid;place-items:center;cursor:pointer}
+.vinf[hidden]{display:none}
+.vinf:hover{border-color:var(--accent);color:var(--accent)}
+.vinf[aria-expanded="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+/* the stack is drawn on black in either theme, so this pair is fixed rather than themed --
+   the same reason .sbar's is, one theme up */
+.v3w .vinf{background:rgba(30,28,23,.82);border-color:#4a453a;color:#ece7dc}
+.v3w .vinf:hover{color:var(--accent)}
+.vinfp{position:absolute;right:9px;bottom:38px;z-index:6;
+  width:min(360px,calc(100% - 18px));max-height:min(60%,320px);overflow:auto;
+  background:var(--panel);color:var(--muted);border:1px solid var(--line);border-radius:10px;
+  box-shadow:var(--shadow);padding:10px 13px;font-size:12px;line-height:1.55;text-align:left}
+.vinfp[hidden]{display:none}
+.vinfp b{color:var(--ink);font-weight:600}
+.vinfp p{margin:0}
+.vinfp kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chip);
+  padding:1px 5px;border-radius:4px;color:var(--ink)}
+/* the two views whose note is a sibling of the drawing rather than a child of it */
+.view{position:relative}
+.img{position:relative}
+
 .vctx{display:flex;align-items:baseline;gap:10px;padding:5px 14px;
   border-bottom:1px solid var(--line);min-width:0;flex:none}
 .pnum{font-size:14px;font-weight:650;font-variant-numeric:tabular-nums;flex:none}
 .coord{font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums;
   min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* ---------- the view's controls ----------
+   One panel, two presentations. Out of the flow in both, so opening it changes nothing
+   #imgbox measures and fit() never resizes the plate under the pointer -- which is also
+   what stopped Add rewrapping the toolbar and moving the picture a frame later. */
+.vpan{display:flex;flex-direction:column;background:var(--panel);
+  border:1px solid var(--line);box-shadow:var(--shadow);z-index:22;overflow:hidden}
+.vpan[hidden]{display:none}
+.vpanh{display:flex;align-items:center;gap:10px;padding:10px 14px;flex:none;
+  border-bottom:1px solid var(--line);background:var(--panel)}
+.vpanh b{font-size:13.5px;font-weight:650;margin-right:auto}
+.vpanb{padding:12px 14px 16px;overflow:auto;overscroll-behavior:contain;
+  display:flex;flex-direction:column;gap:14px}
+.vpanbd{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:21}
+.vpanbd[hidden]{display:none}
+/* a labelled block of controls: the dialog's own heading treatment, so the panel reads
+   like the rest of the app rather than like a new kind of surface */
+.grp{display:flex;flex-direction:column;gap:9px}
+.grp h4{margin:0;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--muted)}
+.grp .in{display:flex;flex-wrap:wrap;align-items:center;gap:9px 14px}
+/* sliders want the width, so they stack and stretch rather than sitting in a row */
+.grp .in.col{flex-direction:column;align-items:stretch;gap:9px}
+.grp .in.col .lb3{justify-content:space-between}
+.grp .in.col .lb3 input[type=range]{flex:1;min-width:0;width:auto;margin:0 9px}
+.grp .in.col>.z{align-self:flex-start}
+/* Advanced: the Divisions accordion from the sidebar, relabelled -- same caret, same
+   count, same keyboard. Its state is a preference, so it is remembered. */
+.ghead.adv{border-bottom:0;border-top:1px solid var(--line);background:transparent;
+  padding:11px 0 0;margin-top:2px}
+.ghead.adv b{margin-left:auto;background:var(--accent-soft);color:var(--accent);
+  border-radius:999px;padding:1px 7px;font-size:10px;letter-spacing:0}
+.ghead.adv b[hidden]{display:none}
+.advb{display:flex;flex-direction:column;gap:14px;padding-top:12px}
+.advb[hidden]{display:none}
+
 .vbot{display:flex;align-items:center;gap:10px;padding:7px 14px 9px;
   border-top:1px solid var(--line);flex:none}
 input[type=range]{accent-color:var(--accent)}
@@ -681,6 +760,41 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
 @media (max-width:899px){
   .viewer{order:-1}
   input[type=search]{font-size:16px}   /* <16px makes iOS zoom the page on focus */
+  /* the strip takes a row of its own and scrolls sideways rather than wrapping: a
+     wrapping block is what put the picture below the fold */
+  .vqs{flex-basis:100%;order:3;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;
+    -webkit-overflow-scrolling:touch}
+  .vqs::-webkit-scrollbar{display:none}
+  .vbar{gap:6px 9px;padding-bottom:0}
+  .vqs>.vctl{flex-wrap:nowrap;padding-bottom:8px}
+  /* a finger has a better zoom than these have: the pinch anchors between the fingers and
+     clamps at exactly 100%, which is what Fit writes. Hidden, not removed -- applyView()
+     writes to all three of them on every pan. */
+  .zg{display:none}
+  /* The plate is bound by its own aspect ratio; the projection and the stack are bound by
+     nothing, so on a page that scrolls they would collapse to whatever their content asked
+     for. Give them the room instead -- this is the view, and the room is what it is for. */
+  #projview .pjw,#v3dview .v3w{min-height:min(50dvh,400px)}
+  /* the plate number rides with the stepper rather than taking a strip of its own */
+  .vctx{order:2;border-bottom:0;border-top:1px solid var(--line);padding-bottom:2px}
+  .stage{order:1}
+  .vbot{order:3;border-top:0;padding-top:4px}
+  /* the sheet: over the picture, never pushing it */
+  .vpan{position:fixed;left:0;right:0;bottom:0;max-height:72dvh;
+    border-radius:15px 15px 0 0;border-bottom:0;
+    padding-bottom:env(safe-area-inset-bottom,0px)}
+  .vpanh{padding-top:16px;position:relative}
+  .vpanh::before{content:"";position:absolute;top:6px;left:50%;transform:translateX(-50%);
+    width:38px;height:4px;border-radius:2px;background:var(--line)}
+}
+/* wide enough for the panel to sit beside what it drives: a popover under its own button,
+   overlaying the top-right of the view rather than taking width off the picture */
+@media (min-width:900px){
+  .vpan{position:absolute;top:calc(100% + 6px);right:14px;width:min(340px,42vw);
+    /* .viewer is overflow:hidden, so the popover has to stay inside the card rather than
+       rely on being able to hang out of it */
+    max-height:min(560px,60dvh);border-radius:12px}
+  .vpanbd{display:none}
 }
 /* given a window with room, the app fills it: every pane scrolls itself and the page
    does not scroll at all, so the plate gets each pixel nothing else is using */
@@ -698,17 +812,27 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
 /* narrow phones: hand the structure name the room the columns were wasting */
 @media (max-width:560px){
   .sub{display:none}
+  .wide{display:none}
+  .narrow{display:inline}
+  /* the header fits one line by getting smaller rather than by hiding anything: every
+     button a wide window has is still here, and still a comfortable tap */
+  header{padding:6px var(--pad)}
+  h1{font-size:15px}
+  .hbtns{gap:5px}
+  .hbtns .b{padding:6px 8px;font-size:12px}
+  /* and the cards give the phone its edges: 390px of plate rather than 368 */
+  .wrap{padding-left:0;padding-right:0}
+  .card{border-radius:0;border-left:0;border-right:0}
   .vbar{gap:6px 8px}
   .vbar .tsep{display:none}
   .tg{font-size:12px;gap:4px}
   .seg button{font-size:11.5px}
-  .zlv{min-width:3em;font-size:11.5px}
-  /* the control group fills a line on its own, so let Copy link share the tab row
-     rather than take a fifth one to itself */
-  .vbar>.seg{order:1}
-  .elinkgrp{order:2;margin-left:0}
   #elink,#ewiki,#emax{padding:7px}
-  .vctl{order:3;width:100%}
+  #vctlb{padding:5px 8px}
+  /* the last of the margins between the plate and the edge of the phone: 390px of picture
+     instead of 352, which is 249px of height instead of 225 */
+  .img{padding-left:0;padding-right:0}
+  .imgwrap{border-radius:0}
 }
 @media (max-width:420px){
   .row,.rrow{grid-template-columns:56px minmax(0,1fr) auto;gap:2px 8px}
@@ -726,7 +850,8 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
   .seg button{padding:8px 12px}
 }
 @media print{
-  header,.vbar,.vbot,.side,.rdout,.vhint,.pjn,.fsep,.flink{display:none}
+  header,.vbar,.vbot,.side,.rdout,.vhint,.pjn,.v3n,.vinf,.vinfp,.vpan,.vpanbd,
+  .fsep,.flink{display:none}
   html,body{height:auto}
   body{display:block;overflow:visible}
   .wrap{grid-template-columns:minmax(0,1fr);padding:0;height:auto}

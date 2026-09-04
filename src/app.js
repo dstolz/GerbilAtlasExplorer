@@ -763,18 +763,41 @@ const hintTxt = () => 'Click a result to outline it here \u00b7 '+
       ? 'hover a printed label to read it, click it to select it'
       : 'hover where the drawing prints an abbreviation to read it, click it to select it')+
   ' \u00b7 <kbd>\u2190</kbd> <kbd>\u2192</kbd> step through plates';
+/* ---------- where a line about the view goes ----------
+   Two different things were sharing the strip under the plate. Commentary -- what is
+   outlined, how much of its boundary the atlas actually draws, how to read this view -- is
+   looked at once and then ignored, so it goes behind the mark on the picture and costs the
+   plate no height. A warning is the opposite: this is the only place the app says a
+   structure is not on this plate, or that an import failed, or that the image has not
+   arrived, and the button that fixes the first of those lives in it. That stays in flow,
+   keeps the accent box, and keeps the live region that announces it.
+   Three writers, so no branch has to remember which kind it is producing. */
+const VHINT=$('vhint'), VINFO=$('vinfo');
+function vhSay(html){                     /* commentary: behind the mark */
+  VINFO.innerHTML=html; VHINT.className='vhint'; VHINT.innerHTML=''; VHINT.hidden=true;
+}
+function vhTell(html){                    /* an instruction for an armed plate: in flow */
+  VINFO.innerHTML=hintTxt(); VHINT.className='vhint'; VHINT.innerHTML=html; VHINT.hidden=false;
+}
+function vhWarn(html){                    /* in flow, and marked */
+  VINFO.innerHTML=hintTxt(); VHINT.className='vhint warn'; VHINT.innerHTML=html;
+  VHINT.hidden=false;
+}
+const vhAdd=html=>{ VINFO.innerHTML+=html; };
+
 /* while the plate is armed for a pick it has one job, so it says so and nothing else */
 function mark(){
   markSel();
+  infArm();
   if(anArm){
-    const vh=$('vhint'); vh.className='vhint';
-    vh.innerHTML='Click a point on the plate to place the <b>note</b>.';
+    vpanOpen(false);
+    vhTell('Click a point on the plate to place the <b>note</b>.');
     return;
   }
   if(pickArm){
-    const vh=$('vhint'); vh.className='vhint';
-    vh.innerHTML='Click a point on the plate to set <b>ML</b> and <b>DV</b>, '+
-      'and <b>AP</b> from plate '+cur+'.';
+    vpanOpen(false);
+    vhTell('Click a point on the plate to set <b>ML</b> and <b>DV</b>, '+
+      'and <b>AP</b> from plate '+cur+'.');
     return;
   }
   /* A pure tilt moves the track in AP and not in ML, so on a coronal plate it draws as a
@@ -783,14 +806,14 @@ function mark(){
      Appended here rather than in tgDraw() because this line has one owner: written from
      two places it would double up, and go stale the moment the planner was put away. */
   if(tgOffPlate())
-    $('vhint').innerHTML+=' · <b>track</b> dashed where it passes in front of or'+
-      ' behind this plate';
+    vhAdd(' \u00b7 <b>track</b> dashed where it passes in front of or'+
+      ' behind this plate');
 }
 function markSel(){
-  const ov=$('om'), vh=$('vhint');
-  ov.innerHTML=''; vh.className='vhint';
+  const ov=$('om');
+  ov.innerHTML='';
   cmpMark();
-  if(!sel){ vh.innerHTML=hintTxt(); return; }
+  if(!sel){ vhSay(hintTxt()); return; }
   const r=byAb[sel];
   /* a superstructure is outlined in its own colour and never circled: it has no printed
      name to circle, and where its members are drawn it always has an outline */
@@ -815,7 +838,7 @@ function markSel(){
   }).join('');
   if(rg){
     ov.innerHTML=`<path d="${regD(rg)}"${regEst(rg)?' class="est"':''}></path>`;
-    vh.innerHTML=`<b>${esc(sel)}</b> outlined${blkTxt(rg)} \u00b7 ${regTxt(rg)}`;
+    vhSay(`<b>${esc(sel)}</b> outlined${blkTxt(rg)} \u00b7 ${regTxt(rg)}`);
     /* what has to be in view is the outline, so it is the outline's centre and the ends of
        the labels' lines that count: a label set outside its region with a line drawn back
        in would otherwise centre the view on the paper beside the section */
@@ -826,55 +849,53 @@ function markSel(){
     ov.innerHTML=ell;
     const led=bs.filter((_b,i)=>ldAt(cur,sel,i)).length;
     const how=led===bs.length?(bs.length>1?'each ':''):`${led} of them `;
-    vh.innerHTML=`<b>${esc(sel)}</b> circled \u00b7 ${bs.length} label${bs.length>1?'s':''} printed on plate ${cur}`
+    vhSay(`<b>${esc(sel)}</b> circled \u00b7 ${bs.length} label${bs.length>1?'s':''} printed on plate ${cur}`
       +(led?` \u00b7 ${how}circled at the end of the line the atlas draws from the word`:'')
       +(isFeat(sel)?` \u00b7 ${featTxt(sel)}, so the atlas draws it no boundary and none is `+
             `drawn here \u2014 the ground it lies in belongs to the regions around it`:'')
       +(und?` \u00b7 ${und.mm2.toFixed(und.mm2<1?3:2)} mm\u00b2 of section here, but every label of it `+
             `is printed inside a boundary the atlas draws round more than one name, so it has `+
-            `no outline of its own to draw`:'');
+            `no outline of its own to draw`:''));
     ensureVisible(at);
     return;
   }
-  if(!r){ vh.innerHTML=hintTxt(); return; }
-  vh.className='vhint warn';
+  if(!r){ vhSay(hintTxt()); return; }
   if(r.plates.includes(cur)){
-    vh.innerHTML=`<b>${esc(sel)}</b> is at this level, but its printed label was not located on plate ${cur}.`;
+    vhWarn(`<b>${esc(sel)}</b> is at this level, but its printed label was not located on plate ${cur}.`);
     return;
   }
   /* off this plate: say which way to go, how far, and offer to go there */
   const near=r.plates.reduce((a,b)=>Math.abs(b-cur)<Math.abs(a-cur)?b:a);
   const d=Math.abs(near-cur), dir=near<cur?'anterior':'posterior';
-  vh.innerHTML=`<b>${esc(sel)}</b> is not on plate ${cur} \u2014 ${d} plate${d===1?'':'s'} ${dir},`+
+  vhWarn(`<b>${esc(sel)}</b> is not on plate ${cur} \u2014 ${d} plate${d===1?'':'s'} ${dir},`+
     ` ${(d*0.35).toFixed(2)} mm away; it spans plates ${r.first_plate}\u2013${r.last_plate}.`+
-    `<button type="button" id="oobgo">Go to plate ${near}</button>`;
+    `<button type="button" id="oobgo">Go to plate ${near}</button>`);
   $('oobgo').onclick=()=>go(near);
 }
 /* the same job for a superstructure, which answers differently in every branch: it is
    never circled, its area is a sum over the members drawn here, and being off the plate
    means the division is not at this level rather than that a name was not printed. */
 function markGrp(g){
-  const ov=$('om'), vh=$('vhint'), rg=regBy[g.key];
+  const ov=$('om'), rg=regBy[g.key];
   if(rg){
     ov.innerHTML=`<path class="grp${regEst(rg)?' est':''}" d="${regD(rg)}"></path>`;
-    vh.innerHTML=`<b>${esc(g.name)}</b> outlined · ${grpTxt(rg,g)}`;
+    vhSay(`<b>${esc(g.name)}</b> outlined · ${grpTxt(rg,g)}`);
     ensureVisible([[(rg.x0+rg.x1)/2/NW,(rg.y0+rg.y1)/2/NH,
                     (rg.x1-rg.x0)/NW,(rg.y1-rg.y0)/NH]]);
     return;
   }
-  vh.className='vhint warn';
-  if(!ROK){ vh.innerHTML=`<b>${esc(g.name)}</b> selected. This build carries no regional `+
-    `outlines, so there is nothing to draw it from.`; return; }
+  if(!ROK){ vhWarn(`<b>${esc(g.name)}</b> selected. This build carries no regional `+
+    `outlines, so there is nothing to draw it from.`); return; }
   if(g.plates.includes(cur)){
-    vh.innerHTML=`<b>${esc(g.name)}</b> is at this level, but none of its structures `+
-      `has an outline on plate ${cur}.`;
+    vhWarn(`<b>${esc(g.name)}</b> is at this level, but none of its structures `+
+      `has an outline on plate ${cur}.`);
     return;
   }
   const near=g.plates.reduce((a,b)=>Math.abs(b-cur)<Math.abs(a-cur)?b:a);
   const d=Math.abs(near-cur), dir=near<cur?'anterior':'posterior';
-  vh.innerHTML=`<b>${esc(g.name)}</b> is not on plate ${cur} — ${d} plate${d===1?'':'s'} `+
+  vhWarn(`<b>${esc(g.name)}</b> is not on plate ${cur} — ${d} plate${d===1?'':'s'} `+
     `${dir}, ${(d*PSTEP).toFixed(2)} mm away; it spans plates ${g.first_plate}–${g.last_plate}.`+
-    `<button type="button" id="oobgo">Go to plate ${near}</button>`;
+    `<button type="button" id="oobgo">Go to plate ${near}</button>`);
   $('oobgo').onclick=()=>go(near);
 }
 /* when zoomed in, bring the thing that was just selected into the viewport */
@@ -1441,7 +1462,7 @@ addEventListener('resize',()=>{ hideTip(); pjHide();
    is next redrawn or after a moment, whichever is first */
 let hintT=null;
 function hintWarn(msg){
-  const vh=$('vhint'); vh.className='vhint warn'; vh.textContent=msg;
+  vhWarn(esc(msg));
   clearTimeout(hintT); hintT=setTimeout(()=>{ hintT=null; mark(); },4000);
 }
 
@@ -1667,7 +1688,8 @@ function drawMeas(){
 function setMeas(on){
   measMode=on; IW.classList.toggle('meas',on);
   if(!on){ mA=mB=mHover=null; }
-  if(on){ setPick(false); anArmSet(false); }   /* all three want the next click; measuring just took it */
+  if(on){ setPick(false); anArmSet(false); vpanOpen(false); }   /* all three want the next click; measuring just took it */
+  infArm();
   drawMeas(); hideTip(); fit(); queueHash();
 }
 
@@ -3248,10 +3270,16 @@ function v3mvp(Q,w,h){
   v3dep=v3unmod(v3mo,[c[0]/L,c[1]/L,c[2]/L]);
   const V=m3look(c,[0,0,0],[0,1,0]);
   V[12]+=Q.tx; V[13]+=Q.ty;
-  /* the parallel view is framed to match the perspective one at the pivot plane, so
-     switching between them neither jumps nor rescales and the wheel still zooms */
-  const P = Q.ortho ? m3ortho(Q.dist*Math.tan(.36), w/h, -400, 400)
-                    : m3persp(.72, w/h, .4, 400);
+  /* The field is vertical, so a pane taller than it is wide crops the brain at its ends
+     rather than showing more of it -- and a pane is exactly that shape once the view is
+     split, or on a phone. So the binding axis is the one held: at or above 1:1 this is the
+     .72 rad it always was, and below it the vertical field opens by 1/aspect, which keeps
+     the horizontal extent -- and the occipital crest with it -- exactly where it was.
+     The parallel view is framed to match the perspective one at the pivot plane, so
+     switching between them neither jumps nor rescales and the wheel still zooms. */
+  const asp=w/h, th=asp<1 ? Math.tan(.36)/asp : Math.tan(.36);
+  const P = Q.ortho ? m3ortho(Q.dist*th, asp, -400, 400)
+                    : m3persp(2*Math.atan(th), asp, .4, 400);
   const M=m3mul(P, V);
   return v3mo ? m3mul(M, v3mo) : M;
 }
@@ -4792,6 +4820,9 @@ new ResizeObserver(()=>{ if(tab==='v3d') v3frame(); }).observe(V3WRAP);
 let hashT=null, lastWritten='';
 function queueHash(){ clearTimeout(hashT); hashT=setTimeout(writeHash,180); }
 function writeHash(){
+  /* every setting that changes queues a hash write, so this is where the counts on the
+     Controls button and on Advanced are kept honest without a second list of triggers */
+  vpanSync();
   let h='p'+cur; if(sel) h+='/'+encodeURIComponent(sel);
   /* the plate is display:none behind the other tabs and measures nothing then; its
      fitted width is what the pan was set against, so it stands in */
@@ -4990,6 +5021,9 @@ function readHash(){
   tgSync();
   if(par.an) anFromHash(par.an);
   setTab(par.t==='proj'?'proj':(par.t==='v3d'?'v3d':'plate'));
+  /* a link that carried a contrast, a tone curve or a slab has to show what it set: a
+     folded section must never be the unexplained reason the picture looks like that */
+  if(par.ct||par.tf||par.tf2||par.sl||par.sl2) advOpen(true);
   return true;
 }
 addEventListener('hashchange',()=>{ if(location.hash!==lastWritten) readHash(); });
@@ -5157,13 +5191,18 @@ addEventListener('keydown',e=>{
      it is also a way of asking for it back */
   if(e.key==='/'){ e.preventDefault(); setMax(false); setMode('find'); $('q').focus(); $('q').select(); }
   if(e.key==='?'){ e.preventDefault(); openAbout(); }
+  /* bare C only: the modified ones are the browser's, and Ctrl-C is a copy */
+  if((e.key==='c'||e.key==='C')&&!e.ctrlKey&&!e.metaKey&&!e.altKey){
+    e.preventDefault(); vpanOpen(!vpanOn); }
   /* bare F only: Ctrl-F and Cmd-F belong to the browser's own find */
   if((e.key==='f'||e.key==='F')&&!e.ctrlKey&&!e.metaKey&&!e.altKey){ e.preventDefault(); MAXB.click(); }
   if(e.key==='Home'){ e.preventDefault(); go(1); }
   if(e.key==='End'){ e.preventDefault(); go(62); }
   /* what Escape drops is whatever is most recently in the way: a click the plate is
      waiting for, then a half-made measurement, then the maximised view, then the selection */
-  if(e.key==='Escape'){ if(pickArm) setPick(false);
+  if(e.key==='Escape'){ if(infOn) infOpen(false);
+                        else if(vpanOn) vpanOpen(false);
+                        else if(pickArm) setPick(false);
                         else if(measMode&&mA){ mA=mB=mHover=null; drawMeas(); }
                         else if(maxed) MAXB.click();
                         else clear(); }
@@ -5206,14 +5245,19 @@ function setTab(t){
   $('plateview').classList.toggle('on',t==='plate');
   $('projview').classList.toggle('on',t==='proj');
   $('v3dview').classList.toggle('on',t==='v3d');
-  $('ctlPlate').hidden = t!=='plate';
-  $('ctlProj').hidden  = t!=='proj';
-  $('ctl3d').hidden    = t!=='v3d';
+  /* three containers a view now: what steers it, in the bar; what sets it, in the panel;
+     and what tunes it, behind Advanced. Contrast used to be hidden off the plate by hand --
+     it lives in a per-tab container now, so the container does it. */
+  $('qsPlate').hidden = $('ctlPlate').hidden = $('advPlate').hidden = t!=='plate';
+  $('qsProj').hidden  = $('ctlProj').hidden  = t!=='proj';
+  $('qs3d').hidden    = $('ctl3d').hidden    = $('adv3d').hidden    = t!=='v3d';
+  /* the projection has nothing to tune, so its disclosure goes rather than opening empty */
+  $('advh').hidden = t==='proj';
   /* the projection plots label positions, not pixels, so no image source applies to it */
   srcCtl();
-  /* contrast is a screen filter on the plate image; the stack has Density for the same job */
-  $('ctrw').hidden = t!=='plate';
   hideTip(); pjHide(); v3hide();
+  infOpen(false);
+  advSync(); vpanSync();
   if(t==='plate'){ fitW=0; fit(); applyView(); }
   else if(t==='v3d'){ v3note(); v3open(); }
   else pjGuide();
@@ -5268,7 +5312,113 @@ function setSrc(k){
    control. The projection plots label positions rather than pixels, so no source applies
    to it either. */
 const srcN = () => [...$('srcseg').children].filter(b=>!b.hidden).length;
-function srcCtl(){ $('ctlSrc').hidden = srcN()<2 || tab==='proj'; }
+function srcCtl(){ $('ctlSrc').hidden = srcN()<2; }
+
+/* ---------- the view's controls: one panel, two presentations ----------
+   A sheet over the picture on a phone, a popover under its own button on a wide window.
+   Out of the flow either way, on purpose: opening it changes nothing #imgbox measures, so
+   fit() does not resize the plate under the pointer. That is also what stopped Add
+   rewrapping the toolbar and moving the picture a frame later.
+   Whether it is open is how you are looking rather than what you are looking at, so it is
+   in neither the link nor storage. Advanced is the other way round -- it says what kind of
+   user you are -- so that one is remembered, the way the sidebar's Divisions are. */
+const VPAN=$('vpan'), VPBD=$('vpanbd'), VCTLB=$('vctlb'), ADVH=$('advh'), ADVB=$('advb');
+let vpanOn=false, advOn=false, infOn=false;
+try{ advOn=localStorage.getItem('gae-adv')==='1'; }catch(_){}
+
+/* Every one of these is the test writeHash() already uses to decide whether a setting is
+   worth putting in a link, so a count and a link can never disagree about what is set. */
+const ctrDef  = ()=>pctr===100;
+const slabDef = Q=>Q.a===0&&Q.b===61;
+function advCount(){
+  if(tab==='plate') return (ctrDef()?0:1)+((pgrey&&psrc==='drawing')?1:0);
+  if(tab==='v3d'){ const Q=v3E(); return (v3tdef(Q)?0:1)+(slabDef(Q)?0:1); }
+  return 0;
+}
+function vpanCount(){
+  if(tab==='plate') return [showSB,measMode,showSK,showLM,cmpOn,anShow].filter(Boolean).length;
+  if(tab==='proj')  return [pjsk,pjlm].filter(Boolean).length;
+  const Q=v3E(); return [Q.sk,Q.lm,Q.m,Q.half,Q.ortho].filter(Boolean).length;
+}
+/* the two counts are shown apart: the badge on the button answers "is anything set in
+   there", and the one on Advanced answers it again for the half that is folded away */
+function vpanSync(){
+  const n=vpanCount()+advCount(), b=$('vctln');
+  b.textContent=n; b.hidden=!n;
+  const a=advCount(), ab=$('advn');
+  ab.textContent=a; ab.hidden=!a;
+}
+function vpanOpen(on){
+  on=!!on;
+  if(on===vpanOn) return;
+  vpanOn=on;
+  VPAN.hidden=!on; VPBD.hidden=!on;
+  VCTLB.setAttribute('aria-expanded',on?'true':'false');
+  if(on){ vpanSync(); VPAN.querySelector('.vpanb').scrollTop=0; }
+  else try{ VCTLB.focus(); }catch(_){}
+}
+VCTLB.onclick=()=>vpanOpen(!vpanOn);
+/* the global key handler steps aside whenever an input has the keyboard, and this panel is
+   made of inputs -- so it closes itself rather than waiting for a handler that will not run */
+VPAN.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){ e.stopPropagation(); vpanOpen(false); } });
+$('vpanx').onclick=()=>vpanOpen(false);
+VPBD.onclick=()=>vpanOpen(false);
+/* a click anywhere else puts the popover away, the way a popover should behave -- but not
+   a click inside it, and not the one on the button that is already toggling it */
+addEventListener('pointerdown',e=>{
+  if(!vpanOn) return;
+  if(VPAN.contains(e.target)||VCTLB.contains(e.target)) return;
+  if(matchMedia('(max-width:899px)').matches) return;   /* the backdrop has that job */
+  vpanOpen(false);
+});
+
+/* Advanced: the sidebar's Divisions accordion, relabelled. Same caret, same count, same
+   click-and-Enter, same remembered state. */
+function advSync(){
+  ADVH.classList.toggle('open',advOn);
+  ADVH.setAttribute('aria-expanded',advOn?'true':'false');
+  ADVB.hidden = !advOn || tab==='proj';
+  vpanSync();
+}
+function advOpen(on){
+  advOn=!!on;
+  try{ localStorage.setItem('gae-adv',advOn?'1':'0'); }catch(_){}
+  advSync();
+}
+ADVH.onclick=()=>advOpen(!advOn);
+ADVH.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); advOpen(!advOn); } };
+
+/* ---------- the mark on the picture ----------
+   One button a view, each inside its own graphic; the panel it opens is a sibling of that
+   graphic rather than a child, because .imgwrap and .v3w are both overflow:hidden for the
+   transforms they carry and would cut whatever hung off the edge. */
+const INFB=[['vinfb','vinfp'],['pjnb','pjnp'],['v3nb','v3np']];
+function infOpen(on){
+  infOn=!!on;
+  for(const [b,pn] of INFB){
+    $(pn).hidden=!infOn;
+    $(b).setAttribute('aria-expanded',infOn?'true':'false');
+  }
+}
+for(const [b] of INFB) $(b).onclick=()=>infOpen(!infOn);
+/* While the plate is waiting for a click -- a note, a measurement, a picked coordinate --
+   the whole box has that one job, and a 22px button in the corner would swallow the click
+   meant for the section under it. So the mark steps off the plate until the job is done. */
+function infArm(){
+  const armed = anArm||pickArm||measMode;
+  $('vinfb').hidden = armed;
+  if(armed) infOpen(false);
+}
+/* #iw and .pjw both answer a click themselves -- one places notes and measure points, the
+   other jumps to a plate -- so a button sitting on either has to take its events out of
+   their way, exactly as the note form does. The 3-D handlers are on the canvas rather than
+   on the wrapper, so that one needs nothing. */
+for(const id of ['vinfb','pjnb'])
+  for(const ev of ['pointerdown','pointermove','pointerup','click','dblclick','wheel'])
+    $(id).addEventListener(ev,e=>e.stopPropagation());
+$('vinfb').addEventListener('pointerenter',hideTip);
+advSync();
 
 /* ---------- the MRI, which arrives after the page does ----------
    62 images under data/plates/mri, one per plate, resampled into this same coordinate box
@@ -5906,4 +6056,5 @@ window.__gae={toFrame,fromFrame,writeHash,readHash,tgSolve,tgPath,tgFootprint,pl
   v3build,v3niiBuf,meshSTL,
   GRP,isGrp,regIn,grpsOf,
   setMax,
-  state:()=>({cur,sel,zoom,tab,smode,psrc,tgProbe,tgFoot,cmpOn,anShow,maxed,targSide,tgTilt,tgRoll,tgYaw,tgPlate,tgOff,fview,fvOn:fvOn(),v3two,v3ed,v3lock})};
+  vpan:on=>vpanOpen(on), adv:on=>advOpen(on), inf:on=>infOpen(on),
+  state:()=>({cur,sel,zoom,tab,smode,psrc,tgProbe,tgFoot,cmpOn,anShow,maxed,targSide,tgTilt,tgRoll,tgYaw,tgPlate,tgOff,fview,fvOn:fvOn(),v3two,v3ed,v3lock,vpanOn,advOn,infOn})};

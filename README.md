@@ -88,7 +88,19 @@ the whole atlas (all 186 plate images) lives inside it, 22 MB, most of that the 
   structure's own card says which divisions it is in.
 - **At a coordinate** — go the other way: type bregma / ML / DV and get the structures
   nearest that point. Or hit **Pick on the plate** and just click where you're aiming.
-- Step through the 62 plates, zoom and pan, **Fit** to reset.
+- Step through the 62 plates and pan around them. **Pinch** to zoom on a touch screen — the
+  zoom anchors between your fingers, and pinching back in stops at exactly 100% with the pan
+  cleared, which is what **Fit** does. A window wide enough to have a mouse on it also gets
+  the − / + / **Fit** buttons; a phone does not, because the fingers already do it better.
+- **Controls** (or <kbd>C</kbd>) opens everything the bar above the picture does not have
+  room for — the overlays, Compare, the notes and the exports. It is a sheet over the
+  picture on a phone and a popover on a wide window, and it never resizes the view it is
+  covering. Inside it, **Advanced** folds away the settings you make once: the contrast, the
+  3-D tone curve and the slab. The count beside each says how much is set in there, and a
+  link that carried any of it opens Advanced on arrival.
+- The **i** in the picture's bottom-right corner says what the view is showing and how to
+  read it. What cannot wait to be asked for stays under the plate: the coordinate readout,
+  the running measurement, and anything the app needs to warn you about.
 - **Maximise** (the corners button, or <kbd>F</kbd>) gives the whole window to whichever
   view is open — plate, projection or 3D. The search column, the header and the footer
   step out, and the browser is asked for its own chrome as well, so a rig screen or a
