@@ -168,6 +168,33 @@ def impressions(DB, plate, boxes):
     return [v for v in out.values() if len(v) > 1]
 
 
+# The mirror of REJECT: a line the shape tests found and attached correctly, whose *end*
+# the march could not see. `march` advances its answer only on ink the tracing did not
+# draw, so where a leader ends inside a region narrower than twice the skirt
+# `label_blocks.traced_mask` puts round the drawing, the last stretch of the line is
+# masked out with the wall it runs through, and the tip is left on the near side of that
+# wall -- in the neighbouring region, which is the one failure this pass exists to
+# prevent. Marching the leader's own black ink instead of "ink the tracing did not draw"
+# would find it, and would move 47 of the 215 lines, four of them over 35 px; that is 47
+# lines to put beside the printed page before any of them could be trusted. This is the
+# one that was read, with what the page says.
+TIP_READ = {
+    (5, 'E', 0): ((0.5258, 0.6339),
+                  "the right-hand E/OV line ends inside the olfactory ventricle, which is "
+                  "4 px of section between two drawn walls -- narrower than the skirt, so "
+                  "the last 19 px of the line is masked and the march stops 6.9 px short, "
+                  "outside the ventricle and in the band around aci. Read off the print: "
+                  "the line's own black ink runs to here, and the left-hand line, whose "
+                  "ventricle is wider, needs no correction."),
+}
+
+
+def tip_read(plate, ab, index):
+    """The tip a reader took off the printed page, or None. See TIP_READ."""
+    got = TIP_READ.get((plate, ab, index))
+    return got[0] if got else None
+
+
 def rejected(plate, ab, index):
     """Why a label's line was put aside on reading the page, or None.
 
@@ -500,14 +527,19 @@ def main():
             continue
         oneword = impressions(DB, p, boxes)
         found, _free = leaders(page, tr, boxes, joined(DB, p, boxes), oneword)
-        keep, off, cut = [], 0, 0
+        keep, off, cut, hand = [], 0, 0, 0
         for o in found:
             ab, j = idx[o['i']]
             if rejected(p, ab, j):
                 cut += 1
                 continue
-            x, y = from_native(*o['tip'])
-            fx, fy = x / NW, y / NH
+            read = tip_read(p, ab, j)
+            if read:
+                fx, fy = read
+                hand += 1
+            else:
+                x, y = from_native(*o['tip'])
+                fx, fy = x / NW, y / NH
             if not inside(outline.get(p, []), fx, fy):
                 off += 1                          # a line points into the brain
                 continue
@@ -532,9 +564,10 @@ def main():
             data[str(p)] = {k: sorted(v) for k, v in sorted(d.items())}
         rows.append((p, len(boxes), len(keep), off, cut,
                      [r for *_x, r in keep]))
-        print('plate %2d: %3d labels %3d leaders%s%s%s  %s'
+        print('plate %2d: %3d labels %3d leaders%s%s%s%s  %s'
               % (p, len(boxes), len(keep),
                  (' (%d shared across a joined label)' % shared) if shared else '',
+                 (' (%d tip read off the page)' % hand) if hand else '',
                  (' (%d off-section)' % off) if off else '',
                  (' (%d read against the page and rejected)' % cut) if cut else '',
                  ' '.join(sorted({ab for ab, *_ in keep}))))

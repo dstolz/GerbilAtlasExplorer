@@ -72,6 +72,14 @@ carries a `version` block naming the release its derived fields were built for.
   is what finds plate 5's right-hand line at all: it passes 1.4 px off the corner of `E` on
   its way to the gap between the two words. 215 lines answer for 233 boxes.
 
+  That left the right-hand `OV` outlining the band around `aci` rather than the ventricle,
+  because the line ends *inside* a ventricle 4 px wide and the march advances only on ink
+  the tracing did not draw — so the last 19 px of the line was masked out with the wall it
+  runs through, and the tip stopped 6.9 px short, on the near side of that wall. Marching
+  the leader's own black ink would find it and move 47 of the 215 tips, four by over 35 px,
+  which is 47 lines to read against the page first; this one was read, and sits in
+  `TIP_READ` with what the page says.
+
   Layer `1` was missing from plate 17 and half-missing from plate 18 — not geometry but
   reading: none of plate 17's four printed `1`s had a box. A bare `1` cannot be found by
   matching the word, scoring 0.98 against the 1 inside `S1DZ`, `M1` and `Cg1` and against the
