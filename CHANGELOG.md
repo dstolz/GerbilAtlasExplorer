@@ -11,10 +11,13 @@ carries a `version` block naming the release its derived fields were built for.
   projections; in 3-D they can now be drawn as what they actually are. Each landmark's
   coronal plane is a rule up the midline, exact because the atlas's printed AP for it is
   exact. Bregma, lambda and the occipital crest carry a three-axis cross on the vault. The
-  interaural line is the ear-bar axis itself, running canal to canal with a ring at each
-  end and out past the brain — this is the one view in the app where it is a line and not a
-  point seen end-on. Nothing of it is depth-tested, deliberately: an ear bar is not hidden
-  by the head it goes into. The names ride over the canvas as text so they stay upright and
+  interaural line is the ear-bar axis itself, run laterally right through the head and out
+  the other side the way the bars themselves go, with a ring where it passes each canal —
+  this is the one view in the app where it is a line and not a point seen end-on. Only the
+  rings are a measurement: they are where the fit puts the canals, which sit a fraction of
+  a millimetre inside the bone, so the bar is carried clear of the widest of it rather than
+  stopping there and reading as a chord inside the head. Nothing of it is depth-tested,
+  deliberately: an ear bar is not hidden by the head it goes into. The names ride over the canvas as text so they stay upright and
   legible while the marks turn with the brain, and where two land on top of each other —
   which is what a rostral or caudal view does to all four — the nearer name is the one
   written. **Half** cuts the ear-bar axis at the midline with everything else. The heights

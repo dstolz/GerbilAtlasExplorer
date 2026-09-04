@@ -3841,6 +3841,20 @@ function v3lmDV(k){
   const v = k==='interaural' ? (lm.ear&&lm.ear.dv) : (lm.vault&&lm.vault[k]);
   return Number.isFinite(v) ? v : null;
 }
+/* How far out to carry the ear-bar axis. The canals are where the fit puts them and the
+   rings are drawn there; the ends of the bar are not a landmark at all -- a bar comes from
+   outside the head -- so they are set from the skull's own widest half-width plus a margin,
+   which puts them clear of the bone from any angle rather than a fraction of a millimetre
+   inside it, where the canals themselves sit. Read off the top-down silhouette, which is a
+   hundred-odd points already in hand, rather than off the decoded mesh. */
+let v3lmW=0;
+function v3lmReach(w){
+  if(v3lmW) return v3lmW;
+  const S=window.__SKULL__, sil=(S&&S.sil&&S.sil.ml)||[];
+  let m=w;
+  for(const lp of sil) for(const p of lp) m=Math.max(m,Math.abs(p[1]));
+  return v3lmW=m+1.6;
+}
 /* where each name is written: on its mark where there is one, at the top of the midline
    rule where the fit gives no height and the rule is all there is to name */
 function v3lmMarks(){
@@ -3862,12 +3876,14 @@ function v3lmDraw(Q,M){
       seg(mark,[-r,y,z],[r,y,z]); seg(mark,[0,y-r,z],[0,y+r,z]); seg(mark,[0,y,z-r],[0,y,z+r]);
       return;
     }
-    /* the ear-bar axis, out past the brain to the canals it is set in, with a ring on
-       each. Half cuts it at the midline like everything else: the shared line shader has
-       no clip of its own, so the geometry is what stops there. */
+    /* the ear-bar axis, run laterally right through the head and out the other side the
+       way the bars themselves go, with a ring where it passes the canal it seats in. Half
+       cuts it at the midline like everything else: the shared line shader has no clip of
+       its own, so the geometry is what stops there. */
     const w=v3lmSK().ear.ml;
     if(!Number.isFinite(w)) return;          /* a height with no span is not an axis */
-    seg(mark,[Q.half?0:-w,y,z],[w,y,z]);
+    const e=v3lmReach(w);
+    seg(mark,[Q.half?0:-e,y,z],[e,y,z]);
     for(const sd of (Q.half?[1]:[-1,1])){
       const x=sd*w;
       for(let i=0;i<24;i++){ const t=i/24*6.2832, u=(i+1)/24*6.2832;
