@@ -73,7 +73,7 @@ OV,olfactory ventricle (olfactory part of lateral ventricle),4,0,6.75,0.97,0.97,
 OV,olfactory ventricle (olfactory part of lateral ventricle),4,1,6.75,-1.42,1.42,-6.75,leader tip,0.3873,0.7114,0.0102,0.0119,0.3991,0.6818
 aci,"anterior commissure, intrabulbar part",4,0,6.75,1.34,1.34,-5.11,leader tip,0.5901,0.5427,0.0098,0.0119,0.5424,0.5492
 aci,"anterior commissure, intrabulbar part",4,1,6.75,-1.28,1.28,-5.13,leader tip,0.3541,0.5438,0.0098,0.0119,0.4064,0.5506
-E,ependyma and subependymal layer,5,0,6.4,1.09,1.09,-6.28,leader tip,0.5503,0.7174,0.0036,0.0114,0.5291,0.6434
+E,ependyma and subependymal layer,5,0,6.4,1.02,1.02,-6.16,leader tip,0.5503,0.7174,0.0036,0.0114,0.5258,0.6339
 E,ependyma and subependymal layer,5,1,6.4,-1.15,1.15,-6.12,leader tip,0.3751,0.7188,0.004,0.0119,0.4133,0.631
 EPl,external plexiform layer of the olfactory bulb,5,0,6.4,-1.99,1.99,-5.6,label box,0.3697,0.5889,0.0105,0.0119,,
 EPl,external plexiform layer of the olfactory bulb,5,1,6.4,1.82,1.82,-5.64,label box,0.5672,0.592,0.0109,0.0114,,
@@ -97,7 +97,7 @@ MiA,mitral cell layer of the accessory olfactory bulb,5,1,6.4,1.07,1.07,-4.78,le
 ON,olfactory nerve layer,5,0,6.4,-0.47,0.47,-7.35,label box,0.4484,0.7304,0.0102,0.0119,,
 ON,olfactory nerve layer,5,1,6.4,0.39,0.39,-7.33,label box,0.4927,0.7287,0.0102,0.0119,,
 OV,olfactory ventricle (olfactory part of lateral ventricle),5,0,6.4,-1.15,1.15,-6.12,leader tip,0.3858,0.7188,0.0102,0.0119,0.4133,0.631
-OV,olfactory ventricle (olfactory part of lateral ventricle),5,1,6.4,1.09,1.09,-6.28,leader tip,0.5608,0.7205,0.0102,0.0119,0.5291,0.6434
+OV,olfactory ventricle (olfactory part of lateral ventricle),5,1,6.4,1.02,1.02,-6.16,leader tip,0.5608,0.7205,0.0102,0.0119,0.5258,0.6339
 aci,"anterior commissure, intrabulbar part",5,0,6.4,-1.4,1.4,-5.32,leader tip,0.3526,0.5478,0.0098,0.0119,0.4003,0.5659
 dlo,dorsal lateral olfactory tract,5,0,6.4,1.25,1.25,-4.99,leader tip,0.591,0.5222,0.0105,0.0114,0.5374,0.5396
 dlo,dorsal lateral olfactory tract,5,1,6.4,-1.52,1.52,-4.8,leader tip,0.3572,0.5052,0.0102,0.0119,0.3939,0.524
