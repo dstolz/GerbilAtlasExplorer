@@ -4305,20 +4305,24 @@ function v3draw(Q,w,h,dpr){
   v3lmDraw(Q,M);
   skull(true);
 
-  /* the labels ride along in every mode; alone, they are the mode */
-  gl.useProgram(pPts); gl.bindVertexArray(vaoP);
-  gl.uniformMatrix4fv(U(pPts,'u_mvp'),false,M);
-  gl.uniform1f(U(pPts,'u_size'), (Q.mode==='points'?4.6:3.4)*dpr);
-  gl.uniform1f(U(pPts,'u_half'),Q.half?1:0);
-  gl.uniform1f(U(pPts,'u_zl'),w3z(P[Q.a].bregma)-.02);
-  gl.uniform1f(U(pPts,'u_zh'),w3z(P[Q.b].bregma)+.02);
-  gl.uniform1f(U(pPts,'u_only'),Q.mode==='points'?0:1);
-  gl.uniform1f(U(pPts,'u_ow'), Q.ortho ? Q.dist : 0);
-  gl.uniform3fv(U(pPts,'u_c0'),v3col.c0);
-  gl.uniform3fv(U(pPts,'u_c1'),v3col.c1);
-  gl.uniform3fv(U(pPts,'u_c2'),isGrp(sel)?v3col.cg:v3col.c2);
-  gl.drawArrays(gl.POINTS,0,nPT);
-  gl.bindVertexArray(null);
+  /* the labels ride along in every mode; alone, they are the mode -- except with the mesh
+     on, where they are just a fog of dots duplicating shapes the mesh already draws, so
+     the mesh takes over showing where each structure is and the cloud stands down */
+  if(!Q.m||Q.mode==='points'){
+    gl.useProgram(pPts); gl.bindVertexArray(vaoP);
+    gl.uniformMatrix4fv(U(pPts,'u_mvp'),false,M);
+    gl.uniform1f(U(pPts,'u_size'), (Q.mode==='points'?4.6:3.4)*dpr);
+    gl.uniform1f(U(pPts,'u_half'),Q.half?1:0);
+    gl.uniform1f(U(pPts,'u_zl'),w3z(P[Q.a].bregma)-.02);
+    gl.uniform1f(U(pPts,'u_zh'),w3z(P[Q.b].bregma)+.02);
+    gl.uniform1f(U(pPts,'u_only'),Q.mode==='points'?0:1);
+    gl.uniform1f(U(pPts,'u_ow'), Q.ortho ? Q.dist : 0);
+    gl.uniform3fv(U(pPts,'u_c0'),v3col.c0);
+    gl.uniform3fv(U(pPts,'u_c1'),v3col.c1);
+    gl.uniform3fv(U(pPts,'u_c2'),isGrp(sel)?v3col.cg:v3col.c2);
+    gl.drawArrays(gl.POINTS,0,nPT);
+    gl.bindVertexArray(null);
+  }
 }
 /* The pane chrome is elements and not pixels, so it is put right here rather than only in
    the draw: a rebuild leaves the last frame on the canvas with nothing scheduled to
