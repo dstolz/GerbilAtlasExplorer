@@ -273,6 +273,18 @@
                 </form>
                 <button class="vinf" id="vinfb" type="button" aria-expanded="false" aria-controls="vinfp"
                   aria-label="About this view" title="About this view">i</button>
+                <!-- The one line the app writes over the picture rather than beside it: a
+                     structure that is not on this plate, an import that failed, an image
+                     that has not arrived. Written under the plate it took that height out
+                     of the plate, and the picture resized every time one appeared. It is
+                     a child of .imgwrap, like the scale bar and the i, so it is measured
+                     against the plate rather than the box the plate is centered in; it is
+                     not inside .pan, so the zoom leaves it where it is. -->
+                <div class="vhint" id="vhint" hidden aria-live="polite">
+                  <span class="vht" id="vht"></span>
+                  <button type="button" class="vhx" id="vhx" title="Hide this message"
+                    aria-label="Hide this message">×</button>
+                </div>
               </div>
               <!-- The panel sits beside the plate box rather than inside it: .imgwrap is
                    overflow:hidden for the pan transform, and anything hanging off its edge
@@ -295,7 +307,6 @@
             </div>
             <div class="rdout" id="rd" hidden aria-live="polite"></div>
             <div class="rdout ms" id="rm" hidden></div>
-            <p class="vhint" id="vhint" hidden aria-live="polite"></p>
       </div>
 
       <div class="view" id="projview">

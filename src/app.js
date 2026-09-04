@@ -594,7 +594,10 @@ function extTxt(x){
   return `ML ${ml} · DV ${sgn(x.dv0)}${x.dv1-x.dv0<.005?'':' to '+sgn(x.dv1)} mm`;
 }
 function select(a){
-  sel=a; const r=byAb[a]; const D=$('det'); D.hidden=false;
+  /* picking something is the reader asking about it, so whatever notice they put away is
+     let back up: otherwise selecting a structure that is on no nearby plate would answer
+     with a plate that has nothing on it and no word about why */
+  sel=a; vhOff=''; const r=byAb[a]; const D=$('det'); D.hidden=false;
   const g=r.grp?r:null;
   const c=coordsOf(a), x=extentOf(a);
   const fc=FRAME.on?coordsOf(a,1):null, fx=FRAME.on?extentOf(a,1):null;
@@ -777,20 +780,44 @@ const hintTxt = () => 'Click a result to outline it here \u00b7 '+
    looked at once and then ignored, so it goes behind the mark on the picture and costs the
    plate no height. A warning is the opposite: this is the only place the app says a
    structure is not on this plate, or that an import failed, or that the image has not
-   arrived, and the button that fixes the first of those lives in it. That stays in flow,
-   keeps the accent box, and keeps the live region that announces it.
-   Three writers, so no branch has to remember which kind it is producing. */
-const VHINT=$('vhint'), VINFO=$('vinfo');
+   arrived, and the button that fixes the first of those lives in it. That is shown, keeps
+   the accent box, and keeps the live region that announces it -- but over the plate rather
+   than under it, because written into the flow it took its height out of the picture and
+   the plate resized every time one appeared or went.
+   Three writers, so no branch has to remember which kind it is producing.
+
+   A notice laid over the picture is covering something, so it can be put away. Each one
+   is written with a key saying what it is about -- the structure, not the sentence -- and
+   the X holds down that key rather than that wording: step through the plates with a
+   structure that is off all of them and the notice stays down, because it is still the
+   same notice about the same structure. Anything else to say clears the key, so the next
+   notice is shown and dismissing one never silences the ones after it. */
+const VHINT=$('vhint'), VHT=$('vht'), VINFO=$('vinfo');
+let vhKey='', vhOff='';
+/* the shared tail of the two that show: write it either way, so a button written into a
+   notice the reader has already put away is still there to be wired up, and show it
+   unless this is the one they put away */
+function vhPut(cls,html,key){
+  VINFO.innerHTML=hintTxt(); VHT.innerHTML=html; vhKey=key||'';
+  if(vhKey&&vhKey===vhOff){ VHINT.hidden=true; return; }
+  vhOff=''; VHINT.className=cls; VHINT.hidden=false;
+}
 function vhSay(html){                     /* commentary: behind the mark */
-  VINFO.innerHTML=html; VHINT.className='vhint'; VHINT.innerHTML=''; VHINT.hidden=true;
+  VINFO.innerHTML=html; VHINT.className='vhint'; VHT.innerHTML='';
+  VHINT.hidden=true; vhKey=''; vhOff='';
 }
-function vhTell(html){                    /* an instruction for an armed plate: in flow */
-  VINFO.innerHTML=hintTxt(); VHINT.className='vhint'; VHINT.innerHTML=html; VHINT.hidden=false;
+function vhTell(html,key){                /* an instruction for an armed plate: over the plate */
+  vhPut('vhint',html,key);
 }
-function vhWarn(html){                    /* in flow, and marked */
-  VINFO.innerHTML=hintTxt(); VHINT.className='vhint warn'; VHINT.innerHTML=html;
-  VHINT.hidden=false;
+function vhWarn(html,key){                /* over the plate, and marked */
+  vhPut('vhint warn',html,key);
 }
+$('vhx').onclick=()=>{ vhOff=vhKey; VHINT.hidden=true; };
+/* #iw answers a click itself, and takes pointer capture doing it, so a control sitting on
+   the plate has to take its events out of the way exactly as the note form and the i do */
+for(const ev of ['pointerdown','pointermove','pointerup','click','dblclick','wheel'])
+  VHINT.addEventListener(ev,e=>e.stopPropagation());
+VHINT.addEventListener('pointerenter',()=>hideTip());
 /* insertAdjacentHTML rather than innerHTML +=, which re-parses the line it is adding to
    and would take the click off any button already written into it */
 const vhAdd=html=>{ VINFO.insertAdjacentHTML('beforeend',html); };
@@ -800,12 +827,12 @@ function mark(){
   markSel();
   infArm();
   if(anArm){
-    vhTell('Click a point on the plate to place the <b>note</b>.');
+    vhTell('Click a point on the plate to place the <b>note</b>.','arm:note');
     return;
   }
   if(pickArm){
     vhTell('Click a point on the plate to set <b>ML</b> and <b>DV</b>, '+
-      'and <b>AP</b> from plate '+cur+'.');
+      'and <b>AP</b> from plate '+cur+'.','arm:pick');
     return;
   }
   /* A pure tilt moves the track in AP and not in ML, so on a coronal plate it draws as a
@@ -870,7 +897,8 @@ function markSel(){
   }
   if(!r){ vhSay(hintTxt()); return; }
   if(r.plates.includes(cur)){
-    vhWarn(`<b>${esc(sel)}</b> is at this level, but its printed label was not located on plate ${cur}.`);
+    vhWarn(`<b>${esc(sel)}</b> is at this level, but its printed label was not located on plate ${cur}.`,
+      'unplaced:'+sel);
     return;
   }
   /* off this plate: say which way to go, how far, and offer to go there */
@@ -878,7 +906,7 @@ function markSel(){
   const d=Math.abs(near-cur), dir=near<cur?'anterior':'posterior';
   vhWarn(`<b>${esc(sel)}</b> is not on plate ${cur} \u2014 ${d} plate${d===1?'':'s'} ${dir},`+
     ` ${(d*0.35).toFixed(2)} mm away; it spans plates ${r.first_plate}\u2013${r.last_plate}.`+
-    `<button type="button" id="oobgo">Go to plate ${near}</button>`);
+    `<button type="button" id="oobgo">Go to plate ${near}</button>`, 'off:'+sel);
   $('oobgo').onclick=()=>go(near);
 }
 /* the same job for a superstructure, which answers differently in every branch: it is
@@ -894,17 +922,17 @@ function markGrp(g){
     return;
   }
   if(!ROK){ vhWarn(`<b>${esc(g.name)}</b> selected. This build carries no regional `+
-    `outlines, so there is nothing to draw it from.`); return; }
+    `outlines, so there is nothing to draw it from.`, 'noreg:'+g.key); return; }
   if(g.plates.includes(cur)){
     vhWarn(`<b>${esc(g.name)}</b> is at this level, but none of its structures `+
-      `has an outline on plate ${cur}.`);
+      `has an outline on plate ${cur}.`, 'unplaced:'+g.key);
     return;
   }
   const near=g.plates.reduce((a,b)=>Math.abs(b-cur)<Math.abs(a-cur)?b:a);
   const d=Math.abs(near-cur), dir=near<cur?'anterior':'posterior';
   vhWarn(`<b>${esc(g.name)}</b> is not on plate ${cur} — ${d} plate${d===1?'':'s'} `+
     `${dir}, ${(d*PSTEP).toFixed(2)} mm away; it spans plates ${g.first_plate}–${g.last_plate}.`+
-    `<button type="button" id="oobgo">Go to plate ${near}</button>`);
+    `<button type="button" id="oobgo">Go to plate ${near}</button>`, 'off:'+g.key);
   $('oobgo').onclick=()=>go(near);
 }
 /* when zoomed in, bring the thing that was just selected into the viewport */
@@ -1569,7 +1597,7 @@ addEventListener('resize',()=>{ hideTip(); pjHide();
    is next redrawn or after a moment, whichever is first */
 let hintT=null;
 function hintWarn(msg){
-  vhWarn(esc(msg));
+  vhWarn(esc(msg),'say:'+msg);
   clearTimeout(hintT); hintT=setTimeout(()=>{ hintT=null; mark(); },4000);
 }
 
