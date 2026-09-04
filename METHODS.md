@@ -411,7 +411,7 @@ fractions of the frame-cropped image — the same frame and the same convention
 `brain_outline` uses, so the app's existing point-in-polygon test reads them unchanged.
 **3,065 structure-plate entries carry an area**, 96% of the 3,203 the label pass located
 and 91% of the 3,365 the published index lists — both counted over the structures that are
-regions — as 5,630 polygons over 77,453 points. Where
+regions — as 5,882 polygons over 166,899 points. Where
 the atlas prints two names as one label the two share an entry, so a name having no entry of
 its own does not mean it has no area — see step 8. Twenty of the 723 names have no entry
 anywhere, and never could: they name no region — see step 7.
@@ -494,12 +494,13 @@ The steps, in order, run by `tools/build_region_extents.py`:
 9. **Score each polygon** by the share of its border lying within 3 px of ink the tracing
    *actually drew*, as opposed to a ridge the watershed invented, walked at one pixel so it
    is length-weighted.
-10. **Trace and simplify on the crack lattice**, Douglas-Peucker at 2 px as `brain_outline`
-    already does.
+10. **Take the pixel-wide burrs off the partition, then trace and simplify on the crack
+    lattice**, Douglas-Peucker at 0.5 plate px — 9 µm, and a pixel and a half of the page
+    the boundary is traced on.
 
 **Step 10 is not the obvious thing, and the obvious thing is wrong.** Contouring each region
 on its own and simplifying its ring gives two different polylines for the same shared
-boundary, because Douglas-Peucker is global to the ring it is handed; at a 2 px tolerance
+boundary, because Douglas-Peucker is global to the ring it is handed; at any useful tolerance
 they cross, and the regions then overlap and leave slivers. So the boundary is traced on the
 lattice *between* pixels, where both neighbors see the identical chain of corners, and it
 is cut at the corners where three or more regions meet — a purely local test, so both sides
@@ -507,17 +508,43 @@ cut in the same places. Each arc is simplified once. Douglas-Peucker keeps its e
 is symmetric under reversal, so the two owners of an arc keep the same vertices although
 they walk it in opposite directions.
 
+**Sharing a boundary exactly is not the same as it being drawable, which is the other half
+of the step.** The watershed settles a boundary to the pixel and at that scale it leaves
+burrs: a pixel-wide tongue of one region running along the edge of another, a pixel-wide
+sliver of a third lying inside a fourth, a pixel the two meet at diagonally. As area they
+are nothing — a third of a plate pixel across, under the width of the atlas's own line —
+but Douglas-Peucker keeps whatever lies far from the chord, and the tip of a twenty-pixel
+tongue is far from it however thin the tongue. What came out was a polygon with a spike on
+it, running out along the boundary and back over itself: **9% of polygons crossed their own
+outline**, and 2,722 vertices were repeats of the one before them, with nothing between.
+So the burrs come off first. A pixel is thin when no 2×2 block of its own label contains it
+— the one local test that passes a staircase, which every boundary here is, and fails a
+sliver — and thin pixels go to the nearest label that is not. That is a relabeling and not a
+cut: the map is still a partition of the same ground, so the regions still tile it and both
+owners of a boundary still trace the same chain of corners. That alone takes the crossings
+to **0.7% of polygons** and the repeated vertices to none.
+
+**And the tolerance is 0.5 plate px rather than the 2 px `brain_outline` uses**, which is
+the difference between a polygon that reads as the line the atlas drew and one that visibly
+cuts its corners. The floor is the page lattice: at 0.35 px the tolerance drops below the
+raster step and the polygon starts recording the staircase rather than the line, at seven
+times the points. At 0.5 it does not — 166,899 points against the 77,453 the 2 px pass
+wrote, for a median traced share of **1.00** where it was 0.98, and it takes the last of the
+crossings with it: **0.03% of polygons**, two of 7,048, against 9% before either change.
+A thin structure is what a coarse tolerance cannot draw without folding its two sides
+together, so most of what was left after the burrs came off was that.
+
 Three checks, none of which the extraction was tuned to pass:
 
 | Check | Extracted |
 | --- | --- |
 | Every boundary between two regions stored as one polyline, twice | **100%** of directed boundary edges have their reverse in exactly one neighbor, so the regions tile the section — a point is inside exactly one, or inside none |
 | Printed labels inside the region they name | **97%**, read at the end of the label's line where the atlas draws one |
-| Regions plus unassigned faces against the section area | within **3.0%** on the worst plate (an earlier figure of 4.5% omitted the closing edge of the outline rings, which `brain_outline` stores unclosed) |
+| Regions plus unassigned faces against the section area | within **2.4%** on the worst plate (an earlier figure of 4.5% omitted the closing edge of the outline rings, which `brain_outline` stores unclosed) |
 
 **What the numbers do not say is which boundaries are real, so every polygon carries that
-too.** `s` is the traced share of that polygon's border: median **0.98**, 78% at or above
-0.90, 89% at or above 0.75, **3% below 0.50**. A polygon at 0.98 is the boundary the atlas
+too.** `s` is the traced share of that polygon's border: median **1.00**, 81% at or above
+0.90, 90% at or above 0.75, **3% below 0.50**. A polygon at 0.98 is the boundary the atlas
 prints. A polygon at 0.16 is a split the extraction had to invent because the drawing does
 not separate those structures, and it should be read as an estimate — the app dashes those
 outlines and says so rather than presenting them as drawn. The weak ones are where a reader
@@ -527,7 +554,7 @@ pages bound with faint or dashed print, if at all. Step 7 took this figure down 
 polygons to 3%: a lobule cut back to a wedge of itself by `cbw` was mostly boundary the
 extraction had invented, and it is now mostly the fissure line the atlas draws.
 
-**And 312 entries have no boundary of their own at all, which `w` says outright.** A face
+**And 294 entries have no boundary of their own at all, which `w` says outright.** A face
 carrying several abbreviations was split in step 6, and that split is one of two quite
 different things. Either the atlas *does* print the boundary and the tracing missed it —
 two faces merged through a gap, the ridge on the distance transform found the ink again,
@@ -539,9 +566,11 @@ structure can have a drawn rim and an invented inner wall. So the split itself i
 the share of the wall the watershed put *inside* a face that lands on traced ink. Below
 half, nobody drew it — and an entry that sits only in faces like that, and whose own border
 is under three-quarters drawn, carries `w`. That is the cerebellar lobules against each
-other, the mediodorsal thalamus, the lateral hypothalamic zones, and little else: **312 of
-3,065 entries**, against 1,551 that share a face at all. It used to be 372: 63 left and 3
-arrived. The 63 are lobules — with `cbw` out of the way in step 7, a lobule's outline is the
+other, the mediodorsal thalamus, the lateral hypothalamic zones, and little else: **294 of
+3,065 entries**, against 1,551 that share a face at all. It used to be 372: 63 left, 3
+arrived, and 18 more left when step 10 was tightened — a polygon that tracks the ink to half
+a pixel has more of its border *on* the ink, so an entry whose own border was just under
+three-quarters drawn crosses the line. The 63 are lobules — with `cbw` out of the way in step 7, a lobule's outline is the
 fissure lines the atlas draws rather than a split against the white matter inside it. Two of
 the three are the far side of splitting a compound label: `9aCb` and `9N` are named only
 inside `9a,bCb` and `9/11N`, so each now seeds a face it shares with its neighbors and takes
@@ -639,10 +668,15 @@ checked against the printed page by eye.
 ### Coloring the section
 
 The extents tile the plate, which is what lets the app color it the way a map of countries
-is colored: fill every region, and give no two regions that touch the same color. That is
-a rendering, not data — nothing below is written to a file, and the extents are unchanged by
-it — but the two properties it leans on are properties of the extents, so they are recorded
-here.
+is colored: fill every region, and give no two regions that touch the same color. Where a
+map of countries and a stack of coronal sections part company is that there are 62 of these
+and a structure runs through many of them, so the coloring is a question about the atlas
+rather than about a plate. Asked plate by plate it has 62 answers: a region bordering three
+things on one level and five on the next takes whatever was free on each, half the section
+repaints as you step, and the color just learned as `CPu` belongs to something else a plate
+later. Asked once over all 62 plates together it has one answer, and that is what is stored:
+`region_colors`, a palette slot per abbreviation, held wherever that abbreviation is drawn.
+`tools/build_region_colors.py` is the derivation; the app carries the result and paints it.
 
 **Neighbors are read off the vertices, and then off the gaps.** Every boundary between two
 regions is one polyline held twice, once in each, vertex for vertex, so two regions that
@@ -656,36 +690,56 @@ single corner would read as one patch if they were painted alike.
 The vertex test answers for boundaries the two regions hold in common and for nothing else,
 and a boundary can be missed by a hair without being shared. **Two regions that come within
 0.05 mm of each other — 2.9 px of the 1100 × 703 frame, about a pixel and a half on screen
-at the zoom the plate opens at — are counted as touching too.** Over the atlas 367 pairs are
-near without being shared: a lamina one or two pixels wide (`Py` between `Or` and `Rad` on
-plate 30), a near-corner where two boundaries pass within a fifth of a pixel without meeting
-(9 pairs over the 62 plates), a pinch. 91 of the 367 would have been painted the same color
-on the vertex test alone, on 44 plates, and would then have read as one patch across a gap
-nobody can see. Folding them in costs nothing: with the rule and without it, the plates need
-the same colors.
+at the zoom the plate opens at — are counted as touching too.** Over the atlas 4,434 pairs
+of names touch on at least one plate; 4,187 of them share a vertex somewhere and 247 never
+do, meeting only across a gap under the tolerance — 526 plate-by-plate occurrences, on all
+62 plates. Those are laminae one or two pixels wide (`Py` between `Or` and `Rad` on plate
+30), near-corners where two boundaries pass within a fifth of a pixel without meeting, and
+pinches. **62 of the 247 would be painted alike on the vertex test alone**, and would then
+have read as one region across a gap nobody can see. Folding them in costs nothing: with the
+rule and without it, the atlas needs the same eight colors.
 
-**The colors come from a greedy pass in smallest-last order.** Strip the least connected
-region off the graph over and over, and color them back in the reverse of that order; each
-region then meets its turn with at most as many colored neighbors as the graph's
-degeneracy, so a flat map cannot exhaust the palette. Five colors are enough for 58 of the
-62 plates and six for the other four. That is the four-color theorem's neighborhood reached by
-the cheap route, and it is not a claim to have reached four: a greedy pass does not promise
-it, and this does not go looking for it.
+**The atlas is what decides where a color may change.** Some entries lie inside one boundary
+the atlas draws round several names and print nothing within — the `w` flag, above — and a
+color change through the middle of those draws a line the atlas does not have. So pairs like
+that are joined into one patch and painted as one. What makes this a decision rather than a
+rule is that `w` is read off each plate's own ink: **87 of the 189 pairs that share an
+unprinted border somewhere are drawn apart by a printed line somewhere else**, and one color
+cannot be both. The printed line wins every time. Merging such a pair would erase a boundary
+the atlas draws; splitting it draws a color change where the atlas prints nothing, which is
+the milder error and the honest one, since the color change is then telling the truth about
+the other plate. So the candidates are the 102 pairs with no printed boundary anywhere, and
+even those only as far as they can be taken without a printed boundary falling *inside* a
+patch along a chain of merges: **74 joins hold, 28 are refused**, and the 688 regions of the
+atlas become 631 patches, the largest of them seven names.
 
-Each region asks first for one color of the seven, hashed from its abbreviation, and takes
-it wherever a neighbor has not already got it. A free color is as good as any other free
-color, so this costs nothing and buys some continuity between levels: **48.1 % of the
-structures drawn on two consecutive plates hold their color across the step**, against
-23.6 % for the same pass with no preference. It does spend colors the plate did not need —
-55 of the 62 use all seven — which is no worse a picture and arguably a better one. The coloring is a pure function of the extents,
-so a plate is the same picture in every session and in both exports.
+**The patches are colored with eight colors, which is the fewest.** Eight regions of this
+atlas pairwise touch — cortical layers 1, 2 and 3 against `Pir`, `Tu`, `ICj`, `VP` and `AHA`
+— so seven cannot be enough, and eight is found, so eight is exactly enough. It is reached
+by peeling: strip every patch with fewer than eight neighbors off the graph until none is
+left, color what remains by tabu search from a DSATUR start, and put the peeled ones back in
+the reverse of the order they came off, where a slot is always free for them. The search is
+seeded, so a re-run reproduces the block byte for byte, and `--check` says whether the
+committed one is current. Which of the eight slots a patch takes is settled last and changes
+no boundary: every region asks for the slot hashed from its abbreviation, and the assignment
+granting the most asks — 117 of the 688 — is the one taken.
 
-Two things are deliberately not painted. The sealed faces the atlas names nothing inside
-(`unassigned`, above) have no region to color. And structures that lie inside one boundary
-the atlas draws round several names — the `w` flag, above — share one color between them,
-because a color change *is* a boundary and that split is this extraction's own. What that
-paints is what the plate prints: one patch per printed boundary, whatever number of names
-the atlas has set inside it.
+**Eight is what holding a color still costs.** A plate on its own needs four colors on 10 of
+the 62, five on 45 and six on 7; under the atlas-wide solve 4 plates carry six colors, one
+carries seven and 57 carry all eight. That is a slightly busier picture per plate, bought
+against the whole section repainting at every step, and the trade is not close.
+
+Two things are still not painted. The sealed faces the atlas names nothing inside
+(`unassigned`, above) have no region to color. And a patch is one color across the whole of
+it, however many names the atlas has set inside the one printed outline. What that paints is
+what the plate prints: one patch per printed boundary.
+
+The block records all of it — the joins, the 28 refusals by name, the patch every region
+belongs to, and the slot it wears. `tests/python/test_data.py` re-derives the adjacency from
+the committed extents and checks the two things that matter: that no two regions touching on
+any plate wear the same slot, and that no pair sharing a patch is ever drawn apart by a
+printed line. The browser tests check the same invariant from the page's own geometry on
+seven plates, and that a region's color never moves as the plate steps.
 
 ## Gross divisions
 

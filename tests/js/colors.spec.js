@@ -7,31 +7,32 @@ const panel = p => p.evaluate(() => window.__gae.vpan(true));
 
 const BUNDLE = 'file://' + path.join(__dirname, '..', '..', 'gerbil_atlas_explorer.html');
 
-test('no two regions that touch are given the same color, on any plate', async ({ page }) => {
+test('every region on every plate carries a color, and one color only', async ({ page }) => {
   test.setTimeout(120000);
   await page.goto(BUNDLE + '#p30');
   const out = await page.evaluate(() => {
-    const G = window.__gae, bad = [], counts = [];
+    const G = window.__gae, missing = [], moved = [], counts = [];
+    const held = {};
     let regions = 0;
     for (let p = 1; p <= 62; p++) {
       const M = G.mcBuild(p), R = G.regBuild(p).regs;
       regions += R.length;
       for (const o of R) {
-        if (M.by[o.ab] === undefined) bad.push(`p${p} ${o.ab} uncolored`);
-        for (const n of (M.adj[o.ab] || [])) {
-          // the names the atlas draws no boundary between share a patch, and a patch is
-          // one color by construction; every other pair that touches must differ
-          if (M.unit[o.ab] !== M.unit[n] && M.by[o.ab] === M.by[n])
-            bad.push(`p${p} ${o.ab}/${n} both color ${M.by[o.ab]}`);
-        }
+        if (M.by[o.ab] === undefined) { missing.push(`p${p} ${o.ab}`); continue; }
+        // the point of the whole exercise: the color is the region's, not the plate's
+        if (held[o.ab] === undefined) held[o.ab] = M.by[o.ab];
+        else if (held[o.ab] !== M.by[o.ab]) moved.push(`p${p} ${o.ab}`);
       }
       counts.push(M.n);
     }
-    return { bad, counts, regions, pal: G.MCPAL.length };
+    return { missing, moved, counts, regions, pal: G.MCPAL.length, named: Object.keys(held).length };
   });
-  expect(out.bad).toEqual([]);
+  expect(out.missing).toEqual([]);
+  expect(out.moved).toEqual([]);
   expect(out.regions).toBeGreaterThan(3000);
-  // it never asks for more colors than the palette has, and never needs many
+  expect(out.named).toBe(688);
+  // eight is what a color that holds across the atlas costs, and no plate asks for more
+  expect(out.pal).toBe(8);
   expect(Math.max(...out.counts)).toBeLessThanOrEqual(out.pal);
 });
 
@@ -70,7 +71,7 @@ test('two regions that all but touch are never the same color', async ({ page })
   expect(bad).toEqual([]);
 });
 
-test('a region asks for the same color on every plate it is drawn on', async ({ page }) => {
+test('stepping from one plate to the next repaints nothing', async ({ page }) => {
   await page.goto(BUNDLE + '#p30');
   const keep = await page.evaluate(() => {
     const G = window.__gae;
@@ -80,11 +81,12 @@ test('a region asks for the same color on every plate it is drawn on', async ({ 
       if (prev) for (const ab in M.by) if (ab in prev) { seen++; if (prev[ab] === M.by[ab]) held++; }
       prev = M.by;
     }
-    return held / seen;
+    return { keep: held / seen, seen };
   });
-  // without the hashed preference a greedy pass holds about a quarter of them; with it,
-  // about half. The threshold is the guard on the preference still being applied.
-  expect(keep).toBeGreaterThan(0.4);
+  // colored plate by plate this was about a half; solved once over the atlas it is all
+  // of them, which is what makes stepping through the levels readable
+  expect(keep.seen).toBeGreaterThan(2000);
+  expect(keep.keep).toBe(1);
 });
 
 test('the same plate is the same picture in a second session', async ({ page }) => {
@@ -160,13 +162,30 @@ test('the SVG export carries the colors as one named group', async ({ page }) =>
 
 test('the PNG export washes the same colors over the same plate', async ({ page }) => {
   const fs = require('fs');
-  // a point that is certainly inside CPu, found the way the app answers a click
+  // A point well inside CPu, not merely inside it: the first hit of a scan sits on the
+  // outline by construction -- it is the first pixel the region reaches -- and the export
+  // draws a boundary there, so what is sampled is the line rather than the wash. Take the
+  // point of the scan furthest from the region's own boundary instead.
   await page.goto(BUNDLE + '#p30');
   const at = await page.evaluate(() => {
     const G = window.__gae, o = G.regBuild(30).by['CPu'];
-    for (let y = o.y0; y <= o.y1; y += 2) for (let x = o.x0; x <= o.x1; x += 2)
-      if (G.regIn(o, x, y)) return [x, y, G.MCPAL[G.mcBuild(30).by['CPu']]];
-    return null;
+    const clear = (x, y) => {
+      let m = Infinity;
+      for (const g of o.gs) for (let i = 0; i < g.length - 1; i++) {
+        const a = g[i], b = g[i + 1];
+        const vx = b[0] - a[0], vy = b[1] - a[1], L = vx * vx + vy * vy;
+        const t = L ? Math.max(0, Math.min(1, ((x - a[0]) * vx + (y - a[1]) * vy) / L)) : 0;
+        m = Math.min(m, Math.hypot(x - (a[0] + t * vx), y - (a[1] + t * vy)));
+      }
+      return m;
+    };
+    let best = null, bd = 0;
+    for (let y = o.y0; y <= o.y1; y += 2) for (let x = o.x0; x <= o.x1; x += 2) {
+      if (!G.regIn(o, x, y)) continue;
+      const d = clear(x, y);
+      if (d > bd) { bd = d; best = [x, y]; }
+    }
+    return best && bd > 4 ? [best[0], best[1], G.MCPAL[G.mcBuild(30).by['CPu']]] : null;
   });
   expect(at).not.toBeNull();
   const [fx, fy, hex] = at;

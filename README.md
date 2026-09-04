@@ -59,11 +59,14 @@ the whole atlas (all 186 plate images) lives inside it, 22 MB, most of that the 
   the only view that shows any of it. **Wash** sets how strongly the colors are laid on, and
   both ride into the PNG and the SVG. A color means nothing beyond "not my neighbor": it is
   not a system or a division, and two regions of one color have nothing in common except
-  that they do not touch. Each region does ask for the same color on every plate it is drawn
-  on, and gets it about half the time, so stepping through the levels is not a kaleidoscope.
-  Nothing is painted that the atlas does not draw — the names it draws no boundary between
-  share a color rather than being split by one, and the faces it seals and names nothing
-  inside are left unpainted.
+  that they do not touch. A region wears one color and wears it on every plate it is drawn
+  on, so stepping through the levels moves the boundaries and repaints nothing; that is
+  settled once over all 62 plates rather than plate by plate, and eight colors is what it
+  costs, against the five or six a single plate needs. Nothing is painted that the atlas
+  does not draw — several names inside one printed outline are one patch in one color, and
+  the faces it seals and names nothing inside are left unpainted. Where the atlas draws a
+  boundary on one plate and none on another, the printed boundary decides: those two names
+  differ in color everywhere, rather than a line the atlas prints being painted away.
 
 **Find things**
 - **Hover anywhere on a structure** — the printed abbreviation included — to read what it
@@ -125,8 +128,12 @@ the whole atlas (all 186 plate images) lives inside it, 22 MB, most of that the 
   beside each says how much is set in there, and a link that carried any of it opens
   Advanced on arrival.
 - The **i** in the picture's bottom-right corner says what the view is showing and how to
-  read it. What cannot wait to be asked for stays under the plate: the coordinate readout,
-  the running measurement, and anything the app needs to warn you about.
+  read it. What cannot wait to be asked for is not put behind it: the coordinate readout and
+  the running measurement stay under the plate, and anything the app needs to warn you about
+  — a structure that is not on this level, an import that failed — is laid over the top of
+  the picture, thin enough to read the section through and with an **×** to put it away. It
+  is over the plate rather than under it so that its coming and going never resizes what you
+  are looking at.
 - **Maximize** (the corners button, or <kbd>F</kbd>) gives the whole window to whichever
   view is open — plate, projection or 3D. The search column, the header and the footer
   step out, and the browser is asked for its own chrome as well, so a rig screen or a

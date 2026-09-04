@@ -176,7 +176,9 @@ def dumps(o):
 _PER_PLATE = {('brain_outline', 'data'), ('label_blocks', 'data'), ('label_leaders', 'data'),
               ('region_extents', 'data'), ('region_extents', 'unassigned')}
 _COMPACT = {('region_extents', 'grades'), ('region_extents', 'summary'),
-            ('label_leaders', 'summary'), ('plate_registration', 'data')}
+            ('label_leaders', 'summary'), ('plate_registration', 'data'),
+            ('region_colors', 'summary'), ('region_colors', 'refused'),
+            ('region_colors', 'merged'), ('region_colors', 'data')}
 
 
 def render_db(db):
@@ -478,9 +480,13 @@ def vec_payload():
 
 
 def region_payload(db):
-    """`window.__REGION__`: extents, unnamed faces, the grades, and the joined labels."""
+    """`window.__REGION__`: extents, unnamed faces, the grades, the joined labels, and
+    the map coloring -- a palette slot per region and, where more than one name shares
+    one patch, the patch it belongs to."""
     r = db['region_extents']
-    return {'r': r['data'], 'u': r['unassigned'], 'k': r['grades'], 'b': db['label_blocks']['data']}
+    c = db.get('region_colors', {})
+    return {'r': r['data'], 'u': r['unassigned'], 'k': r['grades'], 'b': db['label_blocks']['data'],
+            'c': c.get('data', {}), 'm': c.get('merged', {})}
 
 
 def blob_js(name, obj):

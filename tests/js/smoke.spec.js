@@ -557,7 +557,7 @@ test('a link that carried tuning opens Advanced to show it', async ({ page }) =>
   await expect(page.locator('#advn')).toBeHidden();
 });
 
-test('commentary goes behind the mark, a warning stays under the plate', async ({ page }) => {
+test('commentary goes behind the mark, a warning goes over the plate', async ({ page }) => {
   await page.goto(BUNDLE + '#p46/MSO');
   await page.waitForTimeout(900);
   await expect(page.locator('#vinfo')).toContainText('MSO outlined');
@@ -565,7 +565,7 @@ test('commentary goes behind the mark, a warning stays under the plate', async (
   await page.click('#vinfb');
   await expect(page.locator('#vinfp')).toBeVisible();
   await expect(page.locator('#vinfp')).toContainText('MSO outlined');
-  // off this plate is not commentary: it stays in flow, and so does the way out of it
+  // off this plate is not commentary: it is shown, and so is the way out of it
   await page.goto(BUNDLE + '#p30/MSO');
   await page.waitForTimeout(900);
   await expect(page.locator('#vhint')).toBeVisible();
@@ -666,4 +666,33 @@ test('the strip hands what it cannot hold to the panel, and takes it back', asyn
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.waitForTimeout(400);
   expect(await where()).toBe('panel');                  // and back, without flapping
+});
+
+test('the warning is laid over the plate, costs it no height, and can be put away',
+  async ({ page }) => {
+  await page.goto(BUNDLE + '#p30');
+  await page.waitForTimeout(900);
+  const plate = () => page.locator('#iw').boundingBox();
+  const before = await plate();
+  // the notice is a child of the plate box, so it can only be over the picture
+  expect(await page.locator('#vhint').evaluate(el => el.closest('.imgwrap').id)).toBe('iw');
+  await page.evaluate(() => window.__gae.select('MSO'));
+  await page.waitForTimeout(500);
+  await expect(page.locator('#vhint')).toBeVisible();
+  const box = await page.locator('#vhint').boundingBox();
+  const after = await plate();
+  expect(Math.abs(after.height - before.height)).toBeLessThan(1);   // the plate did not resize
+  expect(box.y).toBeGreaterThanOrEqual(after.y - 1);                // and it sits on the plate
+  expect(box.y + box.height).toBeLessThanOrEqual(after.y + after.height + 1);
+  // put away, it stays away while the same structure stays off the plates being stepped
+  await page.click('#vhx');
+  await expect(page.locator('#vhint')).toBeHidden();
+  await page.evaluate(() => window.__gae.go(31));
+  await page.waitForTimeout(400);
+  await expect(page.locator('#vhint')).toBeHidden();
+  // asking again is asking again: picking the structure lets the notice back up
+  await page.evaluate(() => window.__gae.select('MSO'));
+  await page.waitForTimeout(400);
+  await expect(page.locator('#vhint')).toBeVisible();
+  await expect(page.locator('#vhint')).toContainText('is not on plate 31');
 });

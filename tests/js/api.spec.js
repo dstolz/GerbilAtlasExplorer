@@ -1,6 +1,8 @@
 // The pure parts of the app, through the window.__gae handle: the frame transform
 // inverts, the deep link round-trips, and every structure solves to a bounded plan.
 const { test, expect } = require('@playwright/test');
+/* the controls these specs drive live in the view's panel, which opens closed */
+const panel = p => p.evaluate(() => window.__gae.vpan(true));
 const path = require('path');
 
 const BUNDLE = 'file://' + path.join(__dirname, '..', '..', 'gerbil_atlas_explorer.html');
@@ -85,6 +87,27 @@ test('the along-track path ends in the target and the probe tip is read at its d
   expect(o.tip.to).toBeGreaterThanOrEqual(3);
   const rows = await page.locator('#tpath .tprow').count();
   expect(rows).toBeGreaterThan(5);
+});
+
+test('the track is mirrored onto the comparison plate, ghosted against its own plane', async ({ page }) => {
+  await page.goto(BUNDLE + '#p46/MSO&tg=MSO,R,0,0,0,0,0,0,0,3');
+  await page.waitForTimeout(400);
+  const tk = () => page.evaluate(() => document.getElementById('tk').innerHTML);
+  const tk2 = () => page.evaluate(() => document.getElementById('tk2').innerHTML);
+  expect(await tk2()).toBe('');                        // compare is off: nothing to mirror it onto
+
+  await panel(page);                                    // compare lives in the view's panel
+  await page.check('#ckcmp');                           // default: the same plate, another stain
+  expect(await tk2()).toBe(await tk());                 // so the same plane, the same drawing
+
+  await page.selectOption('#cmpsel', 'next');            // now a different plate is beside it
+  const [a, b] = [await tk(), await tk2()];
+  expect(b).not.toBe('');
+  expect(b).not.toBe(a);                                // its own ghosting, not a copy of the first
+  expect(b).toContain('class="gh"');                     // this track never touches plate 47
+
+  await page.uncheck('#ckcmp');
+  expect(await tk2()).toBe('');                          // and it clears when compare goes off
 });
 
 test('the labels CSV has one row per located label of the list', async ({ page }) => {

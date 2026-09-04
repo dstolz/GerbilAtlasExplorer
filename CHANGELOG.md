@@ -68,6 +68,112 @@ carries a `version` block naming the release its derived fields were built for.
   missing in the first place.
 
 ### Changed
+
+- **A notice is laid over the plate instead of pushing it around.** The one line the app
+  writes when something needs saying — this structure is not on this plate, that import was
+  not JSON, the image has not arrived yet — sat under the picture in the column flow, so it
+  took its height out of `#imgbox`, which is what `fit()` measures. Selecting a structure on
+  another level therefore answered by shrinking the section you were reading and moving it up
+  the screen, and dismissing the notice moved it back: on a phone, where the plate is 249 px
+  tall, a two-line warning cost it a tenth of that and a jump each way. The notice is now a
+  child of `.imgwrap`, like the scale bar and the **i**, so it floats at the top of the plate
+  and takes height from nothing. It is laid on thinly enough to read the drawing through, it
+  is outside `.pan` so zooming and panning leave it where it is, and its events stop at its
+  own edge so the **Go to plate** button inside it is not a click on the section behind it.
+
+  Because it is now covering something, it can be put away: an **×** at its end. Each notice
+  carries a key saying what it is *about* rather than how it is worded, and the × holds down
+  that key — so stepping through the plates with a structure that is on none of them keeps
+  the notice down instead of putting it back a plate at a time, while anything else the app
+  has to say is shown. Picking a structure lets it back up, on the grounds that asking about
+  something is asking to be answered. Nothing about the line's content changed, and it keeps
+  the live region that announces it.
+
+- **The planned track is drawn on the comparison plate too.** `tgDraw()` put the track into
+  the main pane only, so turning compare on gave you two plates and one track. The per-plate
+  rendering is now `tgTrackSVG(o, ap0)`, keyed on the bregma of whichever plate is being
+  drawn, and it fills both panes: the current plate, and whatever compare is showing beside
+  it — the same section under another stain, or the one before or after. Each pane ghosts the
+  track against its own plane rather than copying the first, so a track that never reaches
+  plate 47 shows ghosted there while it is solid on 46, and `tgFootPlate()` takes the same
+  `ap0` so the footprint sphere is cut by the right plane on each side.
+
+- **A region keeps its color across the whole atlas.** Color regions was solved one plate at
+  a time, and a plate cannot know what its neighbors did: a structure bordering three things
+  on one level and five on the next took whatever slot was free on each, held its color
+  across a step **48% of the time**, and the color a reader had just learned as `CPu` was
+  somebody else's a plate later. Stepping through the levels repainted half the section.
+
+  It is now solved **once, over all 62 plates together**, and the answer is stored --
+  `region_colors` in the database, one palette slot per abbreviation, written by
+  `tools/build_region_colors.py` and carried by the page. A region wears one color and wears
+  it everywhere; **stepping now moves the boundaries and repaints nothing**. The invariant the
+  view exists for is untouched: no two regions that touch -- sharing a point, or with a gap
+  under 0.05 mm -- are ever alike, on any plate.
+
+  Two things pay for it. The palette grows to **eight**, Okabe and Ito's six that read as a
+  wash plus a violet and a brown, because eight regions of this atlas pairwise touch --
+  cortical layers 1, 2 and 3 against `Pir`, `Tu`, `ICj`, `VP` and `AHA` -- so seven cannot
+  hold across the atlas however they are arranged. Eight is found, so eight is exactly the
+  fewest. A plate on its own needed four to six; now 57 of the 62 carry all eight, which is a
+  slightly busier picture bought against the whole section repainting at every step. And the
+  names the atlas draws no boundary between can no longer always share a color. `w` is read
+  off each plate's own ink, and **87 of the 189 pairs that share an unprinted border somewhere
+  are drawn apart by a printed line somewhere else**; one color cannot be both. The printed
+  line wins every time -- erasing a boundary the atlas draws is the worse error -- so 102
+  pairs are candidates to be joined, **74 joins hold and 28 are refused** because a printed
+  boundary would have fallen inside the patch they made. The 688 regions become 631 patches,
+  the largest seven names, and the refusals are listed by name in the block.
+
+  The search moved out of the app with the answer. Coloring the plate no longer builds an
+  adjacency graph in the browser -- **about two seconds over the 62 plates**, on a page that
+  opens from a file -- and the toggle is now a table lookup. The derivation is peeling plus a
+  seeded tabu search on what is left, so a re-run reproduces the block byte for byte and
+  `--check` says whether the committed one is current; CI runs it. `tests/python` re-derives
+  the adjacency from the committed extents and checks the invariant on all 62 plates, and the
+  browser tests check it from the page's own geometry on seven.
+- **Region outlines that do not cross themselves, at four times the resolution.** Two things
+  were wrong with the extents, and the second only showed once the first was fixed.
+
+  The first is a burr. The watershed settles a boundary to the pixel of the 8 Mpx page it is
+  cut on, and at that scale it leaves pixel-wide slivers along the boundaries it settles: a
+  tongue of one region running twenty pixels down the edge of another, a sliver of a third
+  lying inside a fourth, a pixel two of them meet at diagonally. As area those are nothing —
+  a third of a plate pixel, under the width of the line the atlas prints — but Douglas-Peucker
+  keeps whatever lies far from the chord, and the tip of a twenty-pixel tongue is far from it
+  however thin the tongue is. So each one came out as a **spike**: an edge running out along
+  the boundary and back over itself, across the region's own outline. It is what a reader saw
+  as a stray whisker off the top of `FrA` on plate 9, and it was not rare — **9% of polygons
+  crossed themselves** (594 of 6,564, 1,293 crossings), and **2,722 vertices were repeats of
+  the one before them**, zero-length edges every consumer had to know to skip.
+
+  `regiongeom.deburr` takes them off before the boundary is traced. A pixel is thin when no
+  2 × 2 block of its own label contains it — the one local test that passes a staircase, which
+  every boundary here is, and fails a sliver — and thin pixels go to the nearest label that is
+  not. It is a relabeling rather than a cut, so the map is still a partition of the same
+  ground: the regions still tile the section, both owners of a boundary still trace the
+  identical chain of corners, and `boundary_edges_shared_exactly` stays at **1.0**. A burr is
+  given away rather than thrown away — what one region loses its neighbor gains — so nothing
+  leaves the section and no entry loses its ground: the same 3,065 structure-plate entries,
+  every one of them still with an area.
+
+  The second is the tolerance. It was 2 plate px — 35 µm, the figure `brain_outline` uses —
+  and at that setting the polygon visibly cuts the corners of the line it is tracing. It is
+  now **0.5 px, 9 µm**. The floor is the page lattice the boundary is traced on: at 0.35 px
+  the tolerance drops under the raster step and the polygon starts recording the staircase
+  instead of the line, at seven times the points for nothing. At 0.5 px it does not.
+
+  Together: **166,899 points over 5,882 polygons** where there were 77,453 over 5,630, a
+  median traced share of **1.00** where it was 0.98, 81% of polygons at or above 0.90 where
+  it was 78%, the worst plate's section-area residual **2.4%** where it was 3.0%, and **two
+  polygons of 7,048 crossing themselves** where 594 of 6,564 did. Every area is redrawn
+  against the pixels it was cut from rather than a 2 px smoothing of them: 2,868 mm² over all
+  the entries becomes 2,871, the median entry moves 2.3%, and the ones that move most are the
+  thin ones a coarse tolerance had folded — `IG` on plate 25, 0.022 mm² of indusium griseum,
+  comes back at 0.035. `w` is carried by 294 entries rather than 312 (21 out, 3 in), because a
+  polygon that tracks the ink to half a pixel has more of its border on the ink.
+  `data/gerbil_atlas.json` grows 2.7 MB → 4.7 MB and `index.html` 5.5 → 7.4 MB; the meshes,
+  the label volume, the GeoJSON and the structure table are rebuilt from the new extents.
 - **The controls dock beside the view rather than over it.** They were a popover on a wide
   window and a sheet on a phone, both out of the flow so that opening them could not resize
   the picture. They are furniture now: a column to the right of the view where there is
