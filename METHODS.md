@@ -357,6 +357,18 @@ name in it. Only one box can be the one the march reached, and without that the 
 kept the printed position and seeded itself where the word is set, which for a label
 printed beside its section is not a near miss but another region entirely.
 
+One tip was read off the page rather than marched to. The march advances its answer
+only on ink the tracing did not draw, so where a leader ends inside a region narrower
+than twice the skirt the tracing is subtracted with, the last stretch of the line is
+masked out along with the wall it runs through and the tip is left on the *near* side
+of that wall — in the neighbour, which is the one failure this pass exists to prevent.
+The right-hand `E/OV` on plate 5 ends inside an olfactory ventricle 4 px wide, and its
+seed landed 6.9 px short, in the band around `aci`. Marching the leader's own black ink
+instead — the lines are black and the drawing is red, so the two separate cleanly —
+finds it, and moves 47 of the 215 tips, four of them by over 35 px. That is 47 lines to
+put beside the printed page before any of them could be trusted, so the rule is not
+taken and the one line that *was* read sits in `TIP_READ` with what the page says.
+
 The box stays what it was. It is where the word is printed, so it is still what the app hit
 tests when you hover, and `window.__BOX__` is unchanged. What moves is the *position*: the
 seed the extraction drops, the coordinate the app quotes, the point the planner aims at, and
@@ -422,7 +434,7 @@ fractions of the frame-cropped image — the same frame and the same convention
 `brain_outline` uses, so the app's existing point-in-polygon test reads them unchanged.
 **3,066 structure-plate entries carry an area**, 96% of the 3,204 the label pass located
 and 91% of the 3,365 the published index lists — both counted over the structures that are
-regions — as 5,880 polygons over 166,837 points. Where
+regions — as 5,879 polygons over 166,793 points. Where
 the atlas prints two names as one label the two share an entry, so a name having no entry of
 its own does not mean it has no area — see step 8. Twenty of the 723 names have no entry
 anywhere, and never could: they name no region — see step 7.
@@ -539,7 +551,7 @@ to **0.7% of polygons** and the repeated vertices to none.
 the difference between a polygon that reads as the line the atlas drew and one that visibly
 cuts its corners. The floor is the page lattice: at 0.35 px the tolerance drops below the
 raster step and the polygon starts recording the staircase rather than the line, at seven
-times the points. At 0.5 it does not — 166,837 points against the 77,453 the 2 px pass
+times the points. At 0.5 it does not — 166,793 points against the 77,453 the 2 px pass
 wrote, for a median traced share of **1.00** where it was 0.98, and it takes the last of the
 crossings with it: **0.03% of polygons**, two of 7,048, against 9% before either change.
 A thin structure is what a coarse tolerance cannot draw without folding its two sides
