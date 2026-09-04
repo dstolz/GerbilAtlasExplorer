@@ -20,6 +20,7 @@ anyone check any of them, so they are here as code, in the order they run.
 | `find_compounds.py` | The join `label_blocks.py` cannot see: a mark *inside* one token, joining two names neither of which is printed whole — `9a,bCb` is 9aCb and 9bCb, `9/11N` is 9N and 11N. Elides every pair the index lists on a plate with one of them unlocated, composes that token and matches it. Writes the token's box into `label_positions` for each member that has none of its own on it, and the pair into `label_blocks`. Needs the source PDF. |
 | `label_leaders.py` | Follows the line the atlas draws from a label it could not fit inside the region it names, and writes where that line ends into `label_leaders`. For those 212 labels the box is where the word is; this is where the structure is, and it is what everything downstream seeds and aims at. Needs the source PDF. |
 | `build_region_extents.py` | Cuts `region_extents` out of the tracings in `svg/` and the located abbreviations in `label_positions`, and writes it into `data/gerbil_atlas.json`. Also writes `features`, the twenty names the atlas prints that are no region — the fissures and sulci, `cbw`, the vessels — from `atlaslib.FEATURES`, because this is the script whose behavior that table is: they are seeded and then emptied, and the ground goes to the regions around them. |
+| `build_region_colors.py` | The color every region wears, everywhere it is drawn: `region_colors`, one palette slot per abbreviation, solved once over all 62 plates at the same time because a color that holds across the atlas cannot be found one plate at a time. Reads `region_extents` and nothing else. `--report` prints the patches, the joins it had to refuse and the colors each plate carries; `--check` exits non-zero if the committed block is stale. The palette itself stays in the app; this knows only that there are eight slots. Stdlib only. |
 | `regiongeom.py` | The boundary geometry: crack-lattice tracing, junction detection, arc-wise Douglas-Peucker, and the deburring that takes the pixel-wide slivers off the label map before any of it — a burr is nothing as area and a spike across the outline once simplified. Kept apart because it is the part that has to be right for the regions to tile. |
 | `build_volumes.py` | Stacks the 62 plates, interpolates between them, and writes the brain surface and one mesh per structure to `data/gerbil_atlas_volumes.json`; `--stl DIR` writes the same meshes as STL, `--nifti PATH` the label volume they were cut from as a gzipped NIfTI-1 file with a lookup table beside it. |
 | `volume.py` | The voxel geometry: the even-odd fill, the distance fields, marching cubes, hulls. Kept apart for the same reason `regiongeom.py` is — it holds the part that decides whether the regions still partition the volume. |
@@ -43,11 +44,14 @@ python3 tools/build_volumes.py --stl out/              # the same meshes as STL
 python3 tools/build_volumes.py --nifti data/gerbil_atlas_labels.nii.gz   # the label volume as NIfTI
 python3 tools/build_groups.py --report                 # the divisions and their members
 python3 tools/build_groups.py                          # writes the `groups` block
+python3 tools/build_region_colors.py                   # writes the `region_colors` block
+python3 tools/build_region_colors.py --report          # the patches, the refusals, the plates
 python3 tools/export_tables.py --refresh-db            # the CSVs, the tables, the GeoJSON
 python3 tools/build_app.py --lean                      # then rebuild both pages
 python3 tools/build_app.py --check                     # are the committed pages a fresh build
 python3 tools/export_tables.py --check                 # are the committed tables current
 python3 tools/build_groups.py --check                  # are the committed divisions current
+python3 tools/build_region_colors.py --check           # is the committed coloring current
 python3 -m pytest tests/python                         # the data's own promises, as tests
 ```
 
@@ -112,7 +116,8 @@ back with the same vertices and a different triangle order under a different
 scikit-image, which is why the pins are `==`.
 
 GitHub Actions runs `check_indexes.py`, `export_tables.py --check`, `build_groups.py
---check`, `build_app.py --check`, the Python tests and the browser tests on every push
+--check`, `build_region_colors.py --check`, `build_app.py --check`, the Python tests and the
+browser tests on every push
 (`.github/workflows/ci.yml`);
 `pages.yml` builds the site for GitHub Pages and attaches the bundle to a release on a
 version tag.

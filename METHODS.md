@@ -668,10 +668,15 @@ checked against the printed page by eye.
 ### Coloring the section
 
 The extents tile the plate, which is what lets the app color it the way a map of countries
-is colored: fill every region, and give no two regions that touch the same color. That is
-a rendering, not data — nothing below is written to a file, and the extents are unchanged by
-it — but the two properties it leans on are properties of the extents, so they are recorded
-here.
+is colored: fill every region, and give no two regions that touch the same color. Where a
+map of countries and a stack of coronal sections part company is that there are 62 of these
+and a structure runs through many of them, so the coloring is a question about the atlas
+rather than about a plate. Asked plate by plate it has 62 answers: a region bordering three
+things on one level and five on the next takes whatever was free on each, half the section
+repaints as you step, and the color just learned as `CPu` belongs to something else a plate
+later. Asked once over all 62 plates together it has one answer, and that is what is stored:
+`region_colors`, a palette slot per abbreviation, held wherever that abbreviation is drawn.
+`tools/build_region_colors.py` is the derivation; the app carries the result and paints it.
 
 **Neighbors are read off the vertices, and then off the gaps.** Every boundary between two
 regions is one polyline held twice, once in each, vertex for vertex, so two regions that
@@ -685,36 +690,56 @@ single corner would read as one patch if they were painted alike.
 The vertex test answers for boundaries the two regions hold in common and for nothing else,
 and a boundary can be missed by a hair without being shared. **Two regions that come within
 0.05 mm of each other — 2.9 px of the 1100 × 703 frame, about a pixel and a half on screen
-at the zoom the plate opens at — are counted as touching too.** Over the atlas 367 pairs are
-near without being shared: a lamina one or two pixels wide (`Py` between `Or` and `Rad` on
-plate 30), a near-corner where two boundaries pass within a fifth of a pixel without meeting
-(9 pairs over the 62 plates), a pinch. 91 of the 367 would have been painted the same color
-on the vertex test alone, on 44 plates, and would then have read as one patch across a gap
-nobody can see. Folding them in costs nothing: with the rule and without it, the plates need
-the same colors.
+at the zoom the plate opens at — are counted as touching too.** Over the atlas 4,434 pairs
+of names touch on at least one plate; 4,187 of them share a vertex somewhere and 247 never
+do, meeting only across a gap under the tolerance — 526 plate-by-plate occurrences, on all
+62 plates. Those are laminae one or two pixels wide (`Py` between `Or` and `Rad` on plate
+30), near-corners where two boundaries pass within a fifth of a pixel without meeting, and
+pinches. **62 of the 247 would be painted alike on the vertex test alone**, and would then
+have read as one region across a gap nobody can see. Folding them in costs nothing: with the
+rule and without it, the atlas needs the same eight colors.
 
-**The colors come from a greedy pass in smallest-last order.** Strip the least connected
-region off the graph over and over, and color them back in the reverse of that order; each
-region then meets its turn with at most as many colored neighbors as the graph's
-degeneracy, so a flat map cannot exhaust the palette. Five colors are enough for 58 of the
-62 plates and six for the other four. That is the four-color theorem's neighborhood reached by
-the cheap route, and it is not a claim to have reached four: a greedy pass does not promise
-it, and this does not go looking for it.
+**The atlas is what decides where a color may change.** Some entries lie inside one boundary
+the atlas draws round several names and print nothing within — the `w` flag, above — and a
+color change through the middle of those draws a line the atlas does not have. So pairs like
+that are joined into one patch and painted as one. What makes this a decision rather than a
+rule is that `w` is read off each plate's own ink: **87 of the 189 pairs that share an
+unprinted border somewhere are drawn apart by a printed line somewhere else**, and one color
+cannot be both. The printed line wins every time. Merging such a pair would erase a boundary
+the atlas draws; splitting it draws a color change where the atlas prints nothing, which is
+the milder error and the honest one, since the color change is then telling the truth about
+the other plate. So the candidates are the 102 pairs with no printed boundary anywhere, and
+even those only as far as they can be taken without a printed boundary falling *inside* a
+patch along a chain of merges: **74 joins hold, 28 are refused**, and the 688 regions of the
+atlas become 631 patches, the largest of them seven names.
 
-Each region asks first for one color of the seven, hashed from its abbreviation, and takes
-it wherever a neighbor has not already got it. A free color is as good as any other free
-color, so this costs nothing and buys some continuity between levels: **48.1 % of the
-structures drawn on two consecutive plates hold their color across the step**, against
-23.6 % for the same pass with no preference. It does spend colors the plate did not need —
-55 of the 62 use all seven — which is no worse a picture and arguably a better one. The coloring is a pure function of the extents,
-so a plate is the same picture in every session and in both exports.
+**The patches are colored with eight colors, which is the fewest.** Eight regions of this
+atlas pairwise touch — cortical layers 1, 2 and 3 against `Pir`, `Tu`, `ICj`, `VP` and `AHA`
+— so seven cannot be enough, and eight is found, so eight is exactly enough. It is reached
+by peeling: strip every patch with fewer than eight neighbors off the graph until none is
+left, color what remains by tabu search from a DSATUR start, and put the peeled ones back in
+the reverse of the order they came off, where a slot is always free for them. The search is
+seeded, so a re-run reproduces the block byte for byte, and `--check` says whether the
+committed one is current. Which of the eight slots a patch takes is settled last and changes
+no boundary: every region asks for the slot hashed from its abbreviation, and the assignment
+granting the most asks — 117 of the 688 — is the one taken.
 
-Two things are deliberately not painted. The sealed faces the atlas names nothing inside
-(`unassigned`, above) have no region to color. And structures that lie inside one boundary
-the atlas draws round several names — the `w` flag, above — share one color between them,
-because a color change *is* a boundary and that split is this extraction's own. What that
-paints is what the plate prints: one patch per printed boundary, whatever number of names
-the atlas has set inside it.
+**Eight is what holding a color still costs.** A plate on its own needs four colors on 10 of
+the 62, five on 45 and six on 7; under the atlas-wide solve 4 plates carry six colors, one
+carries seven and 57 carry all eight. That is a slightly busier picture per plate, bought
+against the whole section repainting at every step, and the trade is not close.
+
+Two things are still not painted. The sealed faces the atlas names nothing inside
+(`unassigned`, above) have no region to color. And a patch is one color across the whole of
+it, however many names the atlas has set inside the one printed outline. What that paints is
+what the plate prints: one patch per printed boundary.
+
+The block records all of it — the joins, the 28 refusals by name, the patch every region
+belongs to, and the slot it wears. `tests/python/test_data.py` re-derives the adjacency from
+the committed extents and checks the two things that matter: that no two regions touching on
+any plate wear the same slot, and that no pair sharing a patch is ever drawn apart by a
+printed line. The browser tests check the same invariant from the page's own geometry on
+seven plates, and that a region's color never moves as the plate steps.
 
 ## Gross divisions
 
