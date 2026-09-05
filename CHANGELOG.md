@@ -37,7 +37,17 @@ carries a `version` block naming the release its derived fields were built for.
 
   The site build gained what the page reads: `svg/`, `data/facemaps/` and `data/geojson/`
   are copied into it, and `build_app.py --check` now covers `fixer.html` as it covers the
-  other two pages.
+  other two pages, stamp and all -- because the page needs its build for more than a
+  footer. `sw.js` caches everything under `data/` cache-first, names the cache for the
+  build it was filled for, and drops it when a new worker activates; but only `index.html`
+  registers that worker, so a reader who opens the fixer and not the atlas could be held on
+  one from an older build and handed that build's database under this build's face maps --
+  one plate drawn from two cuts, and nothing on the page to say so. The fixer asks for
+  `data/` with the build in the query, which such a cache has never seen, so it misses and
+  goes to the network; inside one build the query is stable and the cache still serves. The
+  test puts a real worker from a made-up older build in control with that build's database
+  poisoned in its cache, checks it does serve that to anything asking plainly, and then
+  checks the page reads past it.
 - **A wrong region can be marked in a browser now, with the extraction answering for
   itself.** `tools/atlasfix.py` serves one plate on `127.0.0.1` -- the drawing under the
   tracing, dashed where the atlas prints it dashed; every region's outline as it stands;

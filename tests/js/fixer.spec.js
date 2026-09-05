@@ -361,3 +361,73 @@ test('Save on the published page hands over the file itself', async ({ page }) =
   expect(doc.plate).toBe(19);
   expect(doc.seeds).toHaveLength(1);
 });
+
+
+// -------------------------------------------------------------- the stale worker
+//
+// sw.js caches everything under data/ cache-first, names the cache for the build it was
+// filled for, and drops the old one when a new worker activates -- but only index.html
+// registers it. So a reader who opens fixer.html and not the atlas can be held on a
+// worker from an older build, and would be handed that build's database under this
+// build's face maps: one plate drawn from two cuts, with nothing to say so.
+//
+// The page asks for data/ with the build in the query, which a cache filled for another
+// build has never seen. This puts that in front of a real worker with a real poisoned
+// cache, and checks the worker is still controlling the page while it fails to serve it
+// -- otherwise the test would pass for the wrong reason.
+
+const STALE = 'a-previous-build';
+
+// the worker an older build left behind, controlling this page, with that build's
+// database still in its cache. Started from fixer.html because it registers no worker
+// of its own -- from index.html the current build's worker keeps control and the
+// premise never holds.
+async function underAnOldWorker(page) {
+  await page.goto(PUBLISHED);
+  await page.waitForFunction(() => document.title.includes('atlas region fixer'));
+  const active = await page.evaluate(async (v) => {
+    await navigator.serviceWorker.register('sw.js?v=' + v);
+    await navigator.serviceWorker.ready;
+    if (!navigator.serviceWorker.controller) {
+      await new Promise((r) =>
+        navigator.serviceWorker.addEventListener('controllerchange', r, {once: true}));
+    }
+    const c = await caches.open('gae-' + v);
+    await c.put(new Request(new URL('data/gerbil_atlas.json', location.href).href),
+      new Response('{"stale":true}', {headers: {'Content-Type': 'application/json'}}));
+    const reg = await navigator.serviceWorker.getRegistration();
+    return reg.active.scriptURL;
+  }, STALE);
+  expect(active).toContain('sw.js?v=' + STALE);          // it, and not the current one
+}
+
+test('a worker from an older build cannot serve this page a stale database',
+  async ({ page }) => {
+    await underAnOldWorker(page);
+
+    // the premise: that worker does serve its cached data/ to anything that asks plainly
+    expect(await page.evaluate(async () =>
+      (await (await fetch('data/gerbil_atlas.json')).text()).slice(0, 20))).toBe('{"stale":true}');
+
+    const asked = [];
+    page.on('request', (r) => {
+      const u = new URL(r.url());
+      if (u.pathname.includes('/data/')) asked.push(u.pathname + u.search);
+    });
+    await page.reload();
+    await page.waitForFunction(() => document.title.includes('atlas region fixer'));
+
+    // the page read past it -- this is what fails when the build is not in the query
+    await expect(page.locator('#regfact')).toContainText('0.6143 mm² in 2 rings');
+    await clickAt(page, SEED);
+    await expect(page.locator('#report')).toContainText('face #55 of 4608 px');
+
+    const build = await page.evaluate(() =>
+      document.querySelector('meta[name="gae-build"]').content.trim().split(/\s+/)[0]);
+    expect(build).toMatch(/^[0-9a-zA-Z-]{4,40}$/);
+    expect(asked).toContain('/data/gerbil_atlas.json?v=' + build);
+    expect(asked.filter((u) => u.includes('/facemaps/') && !u.endsWith('?v=' + build))).toEqual([]);
+    // the plate images are the atlas's own scans, the same in every build, so they are
+    // deliberately not versioned: 186 of them is not a download to spend on a stamp
+    expect(asked.some((u) => /\/data\/plates\/.*\.jpg$/.test(u))).toBe(true);
+  });

@@ -161,14 +161,23 @@ def render(db=None, lean=False, dev=False, commit='{{BUILD_HASH}}', date='{{BUIL
                 .replace('{{BUILD_TIME}}', time).replace('{{BUILD_ISO}}', moment(date, time)))
 
 
-def fixer():
+def fixer(commit='{{BUILD_HASH}}', date='{{BUILD_DATE}}'):
     """The region fixer as one file, for the site to serve.
 
     `src/fixer.html` links `fixer.css` and `fixer.js` beside it, which is how
     `tools/atlasfix.py` serves them; here the two are inlined so Pages has one file to
     serve and the page has one thing to fetch. The page is the same either way -- which
-    of its two backends it uses it settles for itself, by asking for /api/boot and
-    seeing whether anything answers.
+    of its two backends it uses it settles for itself, from a marker the local tool
+    writes into the copy it serves.
+
+    The build is stamped in as it is in the other two pages, and this page needs it for
+    more than a footer: `sw.js` caches everything under `data/` cache-first, keyed by
+    the build the cache was filled for, and only `index.html` registers that worker. So
+    a reader who opens this page and not the atlas can be held on a worker from an
+    older build, which would hand back that build's database under this build's face
+    maps. The page asks for `data/` with the build in the query, which a cache filled
+    for another build has never seen, so it misses and goes to the network. An
+    unstamped render keeps the token, as `render` does, so two builds still compare.
     """
     text = read('fixer.html')
     for tag, wrap in (('<link rel="stylesheet" href="fixer.css">', '<style>\n%s</style>'),
@@ -177,7 +186,9 @@ def fixer():
             sys.exit('build_app: src/fixer.html no longer links %s' % tag.split('"')[1])
         name = 'fixer.css' if 'css' in tag else 'fixer.js'
         text = text.replace(tag, wrap % read(name))
-    return text
+    if '{{BUILD_HASH}}' not in text:
+        sys.exit('build_app: src/fixer.html carries no gae-build meta to stamp')
+    return text.replace('{{BUILD_HASH}}', commit).replace('{{BUILD_DATE}}', date)
 
 
 def write(path, text):
@@ -204,7 +215,7 @@ def unstamp(text):
 def check(db):
     """Compare the committed pages with fresh renders; report what is stale."""
     stale = 0
-    if not os.path.exists(FIXER) or open(FIXER, encoding='utf8', newline='').read() != fixer():
+    if not os.path.exists(FIXER) or unstamp(open(FIXER, encoding='utf8', newline='').read()) != fixer():
         print('fixer.html: %s -- run tools/build_app.py'
               % ('absent' if not os.path.exists(FIXER) else 'STALE'))
         stale += 1
@@ -272,7 +283,7 @@ def site(out, db, commit, date, time):
           render(db, commit=commit, date=date, time=time))
     write(os.path.join(out, 'index.html'),
           render(db, lean=True, commit=commit, date=date, time=time))
-    write(os.path.join(out, 'fixer.html'), fixer())
+    write(os.path.join(out, 'fixer.html'), fixer(commit, date))
     for name in SITE_FILES:
         src = os.path.join(A.ROOT, name)
         if os.path.exists(src) and name not in ('gerbil_atlas_explorer.html', 'index.html'):
@@ -321,7 +332,7 @@ def main():
     write(a.out or BUNDLE, render(db, commit=commit, date=date, time=time))
     print('wrote %s (build %s, %s %s)'
           % (os.path.relpath(a.out or BUNDLE, A.ROOT), commit, date, time))
-    write(FIXER, fixer())
+    write(FIXER, fixer(commit, date))
     print('wrote fixer.html')
     if a.lean:
         write(LEAN, render(db, lean=True, commit=commit, date=date, time=time))

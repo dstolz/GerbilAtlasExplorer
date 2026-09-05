@@ -157,6 +157,16 @@ which face a point falls in and which labels seed it are the pipeline's own answ
 rather than recomputed. `tests/js/fixer.spec.js` drives both pages against one plate and
 asserts the two answers are the same string.
 
+The build is stamped into the page, and its requests for `data/` carry it. `sw.js` caches
+everything under `data/` cache-first and names the cache for the build it was filled for,
+dropping the old one when a new worker activates -- but only `index.html` registers that
+worker, so a reader who opens the fixer and not the atlas can still be held on one from an
+older build, and would be handed that build's database under this build's face maps: one
+plate drawn from two cuts, with nothing to say so. A query a cache filled for another build
+has never seen misses it and goes to the network, and because the query is the build rather
+than the moment, a second visit inside one build is still served from the cache. The plate
+images are left unversioned: they are the atlas's own scans, the same in every build.
+
 Which of the two it is, the page settles for itself: `atlasfix.py` writes a marker into the
 copy it serves. What the published one cannot do is run `build_region_extents`, so
 **Inspect**, **Recut** and **QC image** are off and say why, and **Commit** goes through the

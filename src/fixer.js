@@ -140,8 +140,30 @@ const BASE = location.pathname.replace(/[^/]*$/, '');
 let DB = null;                          // data/gerbil_atlas.json, fetched once
 const FACES = new Map();                // plate -> {ids, sizes, labels, page}
 
+/* The build this page was made in, which its requests for data/ carry.
+ *
+ * sw.js caches everything under data/ cache-first and names the cache for the build it
+ * was filled for; a new build is a new worker, and activating it drops the old cache.
+ * But only index.html registers that worker, so a reader who opens this page and not
+ * the atlas can still be on one from an older build -- and would be handed that
+ * build's database under this build's face maps, which is one plate drawn from two
+ * cuts. A query string the old cache has never seen misses it and goes to the network,
+ * so the answer is one build's throughout; and because the query is the build and not
+ * the moment, a second visit inside the same build is still served from the cache.
+ *
+ * Empty where the page is served by tools/atlasfix.py, which leaves the token in place
+ * and does not use this backend anyway. */
+const BUILD = (() => {
+  const m = document.querySelector('meta[name="gae-build"]');
+  const v = ((m && m.content) || '').trim().split(/\s+/)[0];
+  return /^[0-9a-zA-Z-]{4,40}$/.test(v) ? v : '';
+})();
+
 async function grab(rel, how) {
-  const r = await fetch(BASE + rel);
+  // the plate images are not versioned: they are the atlas's own scans, the same in
+  // every build, and 186 of them is not a download to spend on a stamp
+  const url = BASE + rel + (BUILD && rel.startsWith('data/') ? '?v=' + BUILD : '');
+  const r = await fetch(url);
   if (!r.ok) throw new Error(rel + ': ' + r.status);
   return how === 'text' ? r.text() : how === 'buf' ? r.arrayBuffer() : r.json();
 }
