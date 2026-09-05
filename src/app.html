@@ -454,6 +454,18 @@
                 <label class="lb3" title="Posterior edge of the slab that is drawn"
                   >&ndash; <input type="range" id="v3b" min="1" max="62" value="62"><b id="v3bl">62</b></label>
               </div></div>
+              <!-- shown only while the meshes are: two controls that set nothing
+                   otherwise, and a folded section is the last place to put those -->
+              <div class="grp" id="adv3m" hidden><h4>Meshes</h4><div class="in col">
+                <label class="lb3" title="How opaque the structure meshes are drawn. Below the top of the range they are composited back to front and stop hiding each other, so what is inside one shows through it."
+                  >Opacity <input type="range" id="v3mop" min="10" max="100" value="92"><b id="v3mopl">92%</b></label>
+                <label class="lb3" title="What decides a mesh&rsquo;s color"
+                  >Color <select id="v3mcol">
+                    <option value="sel">Selection</option>
+                    <option value="plate">Plate colors</option>
+                    <option value="each">One per structure</option>
+                  </select></label>
+              </div></div>
             </div>
           </div>
         </div>
