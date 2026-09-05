@@ -53,12 +53,20 @@ runs*. This class lets you say it on the plate, in millimetres, and sends it.
 - **To commit without a clone**: a fine-grained personal access token for
   `dstolz/GerbilAtlasExplorer` with *Contents: read and write*, in the environment as
   `GITHUB_TOKEN` (or `A.Token = '...'` for the session).
-- **Once, on the repository**, for the workflow that applies corrections: install the
-  Claude GitHub App (`claude /install-github-app` from a terminal, or
-  https://github.com/apps/claude) and add the secret it needs -- `CLAUDE_CODE_OAUTH_TOKEN`
-  from `claude setup-token`, or `ANTHROPIC_API_KEY`. Optionally, Settings → General →
-  *Allow auto-merge* and a branch-protection rule on `main` requiring the two CI jobs;
-  without them the workflow waits on the checks itself before merging.
+- **Once, on the repository**, for the workflow that applies corrections: run `claude
+  /install-github-app` from a local terminal in the clone, taking the subscription option.
+  It installs the Claude GitHub App *and* writes the one secret the workflow reads,
+  `CLAUDE_CODE_OAUTH_TOKEN`, and offers a pull request adding `.github/workflows/claude.yml`
+  -- the separate "@claude on a pull request" workflow, worth keeping. It needs a browser,
+  repository admin and `gh auth login`, so it cannot be run from a cloud session. By hand it
+  is `claude setup-token`, `gh secret set CLAUDE_CODE_OAUTH_TOKEN`, and installing the App
+  from https://github.com/apps/claude. The token lasts a year and is tied to whoever ran the
+  command; when it lapses the *Apply them* step fails to authenticate and the correction sits
+  untouched on its branch.
+- **Also once**: Settings → General → *Allow auto-merge*, and a branch-protection rule on
+  `main` requiring `python-checks (3.11)`, `python-checks (3.12)` and `browser-tests`, with
+  approvals at zero so the workflow can merge unattended. Without the rule GitHub refuses to
+  arm auto-merge and the workflow idles on the checks itself instead.
 
 ## A worked example
 

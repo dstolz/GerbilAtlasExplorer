@@ -755,7 +755,7 @@ classdef AtlasRegionFix < handle
                 opts.Overlay (1,1) logical = true
             end
             F = A.faceMap();
-            rep = struct('seeds', {{}}, 'boundaries', {{}});
+            rep = struct('seeds', {{}}, 'boundaries', {{}}, 'extents', {{}});
             fprintf('plate %d, %s: %d faces of %d page px or more\n', A.Plate, A.Abbr, sum(F.fsize >= A.MinFacePx), A.MinFacePx);
             if isempty(A.Draft.seeds) && isempty(A.Draft.boundaries) && isempty(A.Draft.extents)
                 fprintf('  nothing marked yet\n');
@@ -829,6 +829,7 @@ classdef AtlasRegionFix < handle
                 xy = e.page_px;
                 s = AtlasRegionFix.sampleRing(xy);
                 off = A.offInk(F.dist, s);
+                rep.extents{end+1} = struct('abbr', e.abbr, 'vertices', size(xy, 1), 'off_ink', mean(off));
                 fprintf('  extent %d (%s): %d vertices; %.0f%% of its outline is off the traced ink -- that part is what gets traced\n', ...
                     k, e.abbr, size(xy, 1), 100 * mean(off));
             end
@@ -859,7 +860,6 @@ classdef AtlasRegionFix < handle
                 allpts = [allpts; A.Paths(k).pts]; %#ok<AGROW>
                 id = [id; repmat(n, size(A.Paths(k).pts, 1), 1)]; %#ok<AGROW>
             end
-            traced = wall;
             sect = false(H, W);
             for k = 1:numel(A.Outline)
                 pts = A.mmToPage(A.Outline{k});
@@ -870,6 +870,13 @@ classdef AtlasRegionFix < handle
                 allpts = [allpts; pts]; %#ok<AGROW>
                 id = [id; repmat(n, size(pts, 1), 1)]; %#ok<AGROW>
             end
+            % The section outline counts as ink the atlas drew, which is why the pipeline
+            % rasterises it into `traced` before it copies `wall` off it. Taking the copy
+            % a loop earlier left offInk() measuring an extent that runs along the brain
+            % surface as entirely off the ink, where the pipeline scores that boundary as
+            % drawn. The bridges and any drafted boundary stay out: neither is ink the
+            % tracing drew.
+            traced = wall;
             % the draft boundaries are ink too
             for k = 1:numel(A.Draft.boundaries)
                 b = A.Draft.boundaries{k};
@@ -885,7 +892,19 @@ classdef AtlasRegionFix < handle
                 allpts = [allpts; pts]; %#ok<AGROW>
                 id = [id; repmat(n, size(pts, 1), 1)]; %#ok<AGROW>
             end
-            % bridge the dangling ends to the nearest point on another path within BridgePx
+            % Bridge the dangling ends to the nearest point on another path within
+            % BridgePx. One residue lives here and is not closeable from MATLAB: where
+            % two points on different paths are exactly equidistant from an endpoint,
+            % the pipeline takes whichever cKDTree's traversal hands back first and this
+            % takes the lowest index, and integer coordinates make exact ties common
+            % enough to matter -- 1,993 of the atlas's 17,872 open endpoints have one,
+            % 59 of them inside BridgePx. It comes to five endpoints over the 62 plates
+            % where the two rules pick different points, and one of those changes a face:
+            % on plate 34 the endpoint at (1083, 1331) has two candidates 9*sqrt(2) away,
+            % and the bridge the pipeline draws seals Or off from GrDG and MoDG where the
+            % one drawn here does not. Four printed labels of 6,337, all on that plate.
+            % Matching it would mean reimplementing scipy's traversal order; the honest
+            % alternative is to say where it bites.
             for e = 1:size(open, 1)
                 k = open(e, 1);
                 if k > 0, pts = A.Paths(k).pts; else, pts = A.Draft.boundaries{-k}.page_px; end
@@ -921,8 +940,8 @@ classdef AtlasRegionFix < handle
             fx(T.has_line) = T.leader_tip_x_frac(T.has_line);
             fy(T.has_line) = T.leader_tip_y_frac(T.has_line);
             [x, y] = A.plateToPage(fx * A.Frame.width_px, fy * A.Frame.height_px);
-            xi = round(x) + 1;
-            yi = round(y) + 1;
+            xi = AtlasRegionFix.roundeven(x) + 1;
+            yi = AtlasRegionFix.roundeven(y) + 1;
             face = zeros(height(T), 1);
             ok = xi >= 1 & xi <= F.W & yi >= 1 & yi <= F.H;
             face(ok) = F.faces(sub2ind(size(F.faces), yi(ok), xi(ok)));
@@ -943,8 +962,8 @@ classdef AtlasRegionFix < handle
         end
 
         function off = offInk(A, dist, s)
-            xi = round(s(:, 1)) + 1;
-            yi = round(s(:, 2)) + 1;
+            xi = AtlasRegionFix.roundeven(s(:, 1)) + 1;
+            yi = AtlasRegionFix.roundeven(s(:, 2)) + 1;
             off = true(size(xi));
             ok = xi >= 1 & xi <= size(dist, 2) & yi >= 1 & yi <= size(dist, 1);
             off(ok) = dist(sub2ind(size(dist), yi(ok), xi(ok))) > A.SupportPx;
@@ -953,13 +972,48 @@ classdef AtlasRegionFix < handle
 
     methods (Static, Access = private)
         function mask = paint(mask, pts)
-            % A polyline as a one-pixel, eight-connected wall: points every half pixel
-            % along it, rounded onto the lattice (page px are 0-based; the array is not).
-            s = AtlasRegionFix.sampleRing(pts, false);
-            xi = round(s(:, 1)) + 1;
-            yi = round(s(:, 2)) + 1;
-            ok = xi >= 1 & xi <= size(mask, 2) & yi >= 1 & yi <= size(mask, 1);
-            mask(sub2ind(size(mask), yi(ok), xi(ok))) = true;
+            % A polyline as a one-pixel, eight-connected wall, stepped exactly as
+            % build_region_extents.rasterize steps it: max(|dx|, |dy|) + 1 samples per
+            % segment, each rounded onto the lattice (page px are 0-based; the array is
+            % not). The step has to be that one and not something finer. Sampling the
+            % whole polyline every half pixel instead lays down a wall 16% thicker --
+            % 30,037 page px against 25,780 on plate 19 -- which eats into every face
+            % and drops two of them under MIN_FACE_PX, so preview() answers 81 faces and
+            % a 4,558 px face where the pipeline has 83 and 4,608.
+            %
+            % Rounded the way Python rounds, which is not the way MATLAB does -- see
+            % roundeven(). A half has to break to the even neighbour or the wall parts
+            % company with the pipeline's on the plates where it matters.
+            for i = 1:size(pts, 1) - 1
+                d = pts(i+1, :) - pts(i, :);
+                n = floor(max(abs(d))) + 1;
+                t = (0:n)' / n;
+                xi = AtlasRegionFix.roundeven(pts(i, 1) + d(1) * t) + 1;
+                yi = AtlasRegionFix.roundeven(pts(i, 2) + d(2) * t) + 1;
+                ok = xi >= 1 & xi <= size(mask, 2) & yi >= 1 & yi <= size(mask, 1);
+                mask(sub2ind(size(mask), yi(ok), xi(ok))) = true;
+            end
+        end
+
+        function r = roundeven(v)
+            % Python's round(), which breaks a half to the even neighbour where MATLAB's
+            % breaks it away from zero. Every page coordinate that lands on the lattice
+            % goes through this, because the difference is not cosmetic: `rasterize`
+            % walks x0 + dx*k/n, so a segment between integer endpoints with an even n
+            % puts a sample on exactly .5, and .5, .25 and .75 are binary-exact -- the
+            % tie is real, not a float artefact. 7,382 of the 5.17 million coordinates
+            % rounded over the 62 plates are exact halves.
+            %
+            % One of them is the midpoint of the (1267,1162)-(1266,1163) bridge on plate
+            % 33. Breaking it away from zero takes the other corner of that diagonal,
+            % which leaves the bridge 8-connected instead of 4-connected, and the wall
+            % it was drawn to seal simply opens: the face that should be {MGD, SG} comes
+            % back as {MGD, Po, PoT, SG}. Thirteen printed labels over plates 33, 34 and
+            % 39 land in a face with a different name-set on that one rule, which is
+            % preview() giving the wrong answer rather than an approximate one.
+            r = round(v);
+            tie = abs(v - fix(v)) == 0.5;
+            r(tie) = 2 * round(v(tie) / 2);
         end
 
         function s = sampleRing(pts, closed)
@@ -1051,8 +1105,12 @@ classdef AtlasRegionFix < handle
                 out = fullfile(A.CacheDir, 'corrections');
                 if ~isfolder(out), mkdir(out); end
                 AtlasRegionFix.writeText(fullfile(out, [id '.json']), json);
-                if ~isempty(png), AtlasRegionFix.writeBytes(fullfile(out, [id '.png']), png); end
                 fprintf('dry run: wrote %s\n', fullfile(out, [id '.json']));
+                if ~isempty(png)
+                    AtlasRegionFix.writeBytes(fullfile(out, [id '.png']), png);
+                    fprintf('           and %s\n', fullfile(out, [id '.png']));
+                end
+                fprintf('nothing was pushed; drop DryRun to send it\n');
                 r.path = fullfile(out, [id '.json']);
                 return
             end
@@ -1138,8 +1196,9 @@ classdef AtlasRegionFix < handle
 
         function [pts, closed] = flatten(d)
             % FLATTEN  An M/C/Z path (absolute, as the tracer writes it) to a polyline, the
-            % cubics cut as build_region_extents.flatten cuts them, so a preview raster
-            % here is the raster there. L is read too, for the app's own SVG exports.
+            % cubics cut as build_region_extents.flatten cuts them -- same chord, same
+            % segment count -- so a preview raster here is the raster there to within the
+            % rounding note in paint(). L is read too, for the app's own SVG exports.
             toks = regexp(d, '[MLCZmlcz]|-?\d*\.?\d+(?:e-?\d+)?', 'match');
             pts = zeros(0, 2);
             closed = false;

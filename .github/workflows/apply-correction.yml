@@ -6,15 +6,22 @@
 # the last step merges the pull request once CI is green. GitHub Pages serves main, so the
 # site updates on the merge.
 #
-# Setup, once: install the Claude GitHub App on the repository (`claude
-# /install-github-app`, or https://github.com/apps/claude) and add the secret it needs,
-# CLAUDE_CODE_OAUTH_TOKEN (from `claude setup-token`) or ANTHROPIC_API_KEY. Pushes made
-# through the App's token run ci.yml; pushes made with the default GITHUB_TOKEN would not,
-# which is why the action is not handed one.
+# Setup, once: `claude /install-github-app` from a local terminal, taking the subscription
+# option. That installs the Claude GitHub App on the repository and writes the one secret
+# this reads, CLAUDE_CODE_OAUTH_TOKEN; by hand it is `claude setup-token` and `gh secret
+# set`. The token lasts a year, and a lapsed one shows up as the `Apply them` step failing
+# to authenticate with the branch and its correction untouched.
+#
+# The action is deliberately handed no `github_token`: without one it exchanges this
+# workflow's OIDC token (hence `id-token: write`) for a short-lived App installation token,
+# and pushes made with that token start ci.yml, where pushes made with the default
+# GITHUB_TOKEN would not -- so the correction's own pull request would never get a check to
+# wait for.
 #
 # The session's own commits touch data/, svg/, tools/ and the docs, never corrections/, so
-# the paths filter keeps them from starting this again; the actor guard is the belt to
-# that brace.
+# the paths filter is what keeps them from starting this again. The actor guard is the belt
+# to that brace and not the thing relied on: the actor string on an App-token push is read
+# off the App's slug rather than documented anywhere.
 name: Apply correction
 
 on:
@@ -85,7 +92,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          # `actions: read` above is the workflow's own grant; the token the action mints
+          # for itself is scoped by this, and without it the session cannot read the CI it
+          # is trying to get green.
+          additional_permissions: |
+            actions: read
           prompt: |
             Branch ${{ github.ref_name }} of ${{ github.repository }} carries a correction to
             how a region of the atlas is drawn: ${{ steps.files.outputs.list }}
