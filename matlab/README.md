@@ -3,6 +3,12 @@
 `AtlasRegionFix.m` is how a wrong region gets reported from MATLAB and fixed on the
 site without anyone drawing a polygon into the data by hand.
 
+> `tools/atlasfix.py` does the same job in a browser, with no MATLAB and no toolbox,
+> and writes the same file. It is the one to reach for unless you are already in
+> MATLAB: because it runs inside the repository it calls the extraction itself rather
+> than re-implementing it, so **Recut** shows the outlines the pipeline would write
+> rather than an estimate of them. See [`tools/README.md`](../tools/README.md).
+
 The app draws no region by hand. `region_extents` is cut by `tools/build_region_extents.py`
 from the traced outlines in `svg/` and the printed labels (the seeds), so a region that
 comes out wrong is one of those inputs being wrong: a run of boundary the tracing missed,

@@ -43,6 +43,11 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+          cache: pip
+          cache-dependency-path: tools/requirements.txt
+      # the fixer server playwright.config.js starts for tests/js/fixer.spec.js cuts a
+      # plate, so it needs the pinned packages; the page build itself does not
+      - run: pip install -r tools/requirements.txt
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
