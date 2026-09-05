@@ -1,0 +1,30 @@
+{
+  // A Codespace with the pipeline in it: the pinned packages, Node for the browser
+  // tests, and port 8770 forwarded so `python3 tools/atlasfix.py <plate>` opens the
+  // region fixer in your browser -- or on your phone, through the same forwarded URL,
+  // which is private to your GitHub account until you say otherwise.
+  //
+  //   Code -> Codespaces -> Create codespace on this branch, then in its terminal:
+  //     python3 tools/atlasfix.py 19 --abbr S1DZ --no-browser
+  //   and open the port 8770 link the Ports panel offers.
+  //
+  // This is the whole tool, not a cut-down one: Recut runs build_region_extents here
+  // exactly as it does on a laptop, and `git push` uses the Codespace's own token, so
+  // Commit needs no personal access token.
+  "name": "Gerbil Atlas Explorer",
+  "image": "mcr.microsoft.com/devcontainers/python:3.12",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": { "version": "22" }
+  },
+  "postCreateCommand": "pip install --user -r tools/requirements.txt && npm ci",
+  "forwardPorts": [8770],
+  "portsAttributes": {
+    "8770": { "label": "atlas region fixer", "onAutoForward": "openBrowserOnce" }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": ["ms-python.python", "ms-playwright.playwright"],
+      "settings": { "python.defaultInterpreterPath": "/usr/local/bin/python" }
+    }
+  }
+}

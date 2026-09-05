@@ -25,6 +25,7 @@ anyone check any of them, so they are here as code, in the order they run.
 | `build_volumes.py` | Stacks the 62 plates, interpolates between them, and writes the brain surface and one mesh per structure to `data/gerbil_atlas_volumes.json`; `--stl DIR` writes the same meshes as STL, `--nifti PATH` the label volume they were cut from as a gzipped NIfTI-1 file with a lookup table beside it. |
 | `volume.py` | The voxel geometry: the even-odd fill, the distance fields, marching cubes, hulls. Kept apart for the same reason `regiongeom.py` is — it holds the part that decides whether the regions still partition the volume. |
 | `atlasfix.py` | The interactive fixer: serves `src/fixer.html` on `127.0.0.1` and answers for it, so a wrong region is marked on the plate in a browser -- a seed where the region is, the run of boundary the tracing missed, the outline it should have -- and committed as `corrections/<id>.json` on a branch of its own. It says what a mark would do with the extraction's own code rather than a copy of it: the face map is cut with `build_region_extents`'s rasterizer over `BRIDGE_PX`, and **Recut** applies the draft with `corrections.apply` and builds the plate again with `build_region_extents.build_plate` against a scratch tree, so what a reader sees before committing is what the workflow builds after. The alternative to `matlab/AtlasRegionFix.m`, with no MATLAB in it. |
+| `build_facemaps.py` | The page cut into faces -- ink, bridged ends, section interior -- published per plate under `data/facemaps/` so the fixer's page can answer **Pick** where there is no Python to cut with. A JavaScript copy of the cut would drift from the pipeline the first time a constant moved; this is the cut itself, and `--check` is what holds the committed maps to the tracing they came from. 23 to 100 KB a plate, 3.4 MB for all 62, half a minute to rebuild. |
 | `corrections.py` | A correction to how a region is drawn, read in from the plate view (`corrections/<id>.json`, written by `tools/atlasfix.py` or `matlab/AtlasRegionFix.m`), against the extraction: `inspect` says where each seed lands today and in whose face, how far a drawn boundary's ends sit from traced ink, and which runs of a corrected extent lie off it, and draws all of it over the plate; `apply` writes boundaries into the plate's SVG as cubics the pipeline reads and seeds into `seed_overrides`. Then the pipeline, in the order below. |
 | `inline_region_extents.py` | Retired; a shim that runs `build_app.py` (or its `--check`), so an old command still does the right thing. |
 
@@ -39,6 +40,8 @@ python3 tools/find_compounds.py --pdf GerbilAtlas4Analysis.pdf --sheet /tmp/c.pn
 python3 tools/label_blocks.py --pdf GerbilAtlas4Analysis.pdf   # rewrites label_blocks
 python3 tools/label_leaders.py --pdf GerbilAtlas4Analysis.pdf  # rewrites label_leaders
 python3 tools/atlasfix.py 19 --abbr S1DZ                # mark what is wrong with a region, in a browser
+python3 tools/build_facemaps.py                        # the face maps the published page reads
+python3 tools/build_facemaps.py --check                # are the committed face maps a fresh cut
 python3 tools/corrections.py inspect corrections/ID.json --qc   # a correction against the extraction
 python3 tools/corrections.py apply corrections/ID.json          # into svg/ and seed_overrides; then the pipeline
 python3 tools/build_region_extents.py                  # all 62 plates, ~5 min, rewrites the JSON
@@ -143,7 +146,27 @@ screen; the bar says which region and tool are in hand, and opens the tools when
 wanted. A tap does what a click does, a drag pans, two fingers pinch, and a boundary or an
 extent is finished from a bar on the plate itself rather than with **Enter** -- so the
 marks a phone can make are all of them. **Recut** takes its ten seconds on the machine
-running the tool, not on the phone. **Save** and **Open** keep a draft between
+running the tool, not on the phone.
+
+### Without a clone at all
+
+`fixer.html` is the same page built into the site, and GitHub Pages serves it with nothing
+behind it. It draws from what the site already publishes -- `data/gerbil_atlas.json`, the
+tracings in `svg/`, the plate images -- and answers **Pick** from `data/facemaps/`, so
+which face a point falls in and which labels seed it are the pipeline's own answers, read
+rather than recomputed. `tests/js/fixer.spec.js` drives both pages against one plate and
+asserts the two answers are the same string.
+
+Which of the two it is, the page settles for itself: `atlasfix.py` writes a marker into the
+copy it serves. What the published one cannot do is run `build_region_extents`, so
+**Inspect**, **Recut** and **QC image** are off and say why, and **Commit** goes through the
+GitHub API with a fine-grained token (Contents: read and write) kept in the browser's local
+storage -- *Forget the token* clears it. **Save** hands you the file instead of writing one.
+
+A Codespace is the other way to it: `.devcontainer/` installs the pinned packages and
+forwards port 8770, so `python3 tools/atlasfix.py 19` in its terminal is the whole tool,
+Recut included, reachable from a phone through the forwarded URL and pushing with the
+Codespace's own credentials. **Save** and **Open** keep a draft between
 sessions — a draft is a correction file like any other.
 
 `--dry-run` reports and touches nothing. `--qc` writes `qc/chk_regions_NN.png`, the plate

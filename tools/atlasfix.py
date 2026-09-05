@@ -77,6 +77,7 @@ TOOL = 'atlasfix %s' % VERSION
 SRC = os.path.join(A.ROOT, 'src')
 LAYERS = ('drawing', 'nissl', 'myelin', 'mri')
 ASSETS = {'/': ('text/html; charset=utf-8', 'fixer.html'),
+          '/fixer.html': ('text/html; charset=utf-8', 'fixer.html'),
           '/fixer.css': ('text/css; charset=utf-8', 'fixer.css'),
           '/fixer.js': ('application/javascript; charset=utf-8', 'fixer.js')}
 
@@ -655,7 +656,14 @@ class Handler(http.server.BaseHTTPRequestHandler):
             if path in ASSETS:
                 ctype, name = ASSETS[path]
                 with open(os.path.join(SRC, name), encoding='utf8') as f:
-                    return self.send(200, ctype, f.read())
+                    text = f.read()
+                # The one difference between this page and the one Pages serves: with a
+                # pipeline behind it, it uses the pipeline. The page reads the marker
+                # rather than probing /api, which would log a 404 on every published load.
+                if name == 'fixer.html':
+                    text = text.replace('</head>',
+                                        '<script>window.__ATLASFIX_LOCAL__=1;</script>\n</head>', 1)
+                return self.send(200, ctype, text)
             if path == '/api/boot':
                 return self.json(self.boot)
             m = re.fullmatch(r'/api/plate/(\d+)', path)
@@ -798,8 +806,9 @@ def main(argv=None):
         near = [a for a in S.names if abbr.lower() in a.lower()][:8]
         ap.error('no structure is abbreviated %s%s'
                  % (abbr, ' -- did you mean %s?' % ', '.join(near) if near else ''))
-    boot = {'tool': TOOL, 'plates': [{'plate': p['plate'], 'bregma': p['bregma']}
-                                     for p in S.DB['plates']],
+    boot = {'tool': TOOL, 'author': author_name(),
+            'plates': [{'plate': p['plate'], 'bregma': p['bregma']}
+                       for p in S.DB['plates']],
             'structures': [{'abbr': a, 'name': n} for a, n in sorted(S.names.items())],
             'features': sorted(A.FEATURES), 'layers': list(LAYERS),
             'start': {'plate': plate, 'abbr': abbr, 'layer': args.layer, 'draft': draft},

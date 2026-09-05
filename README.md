@@ -350,7 +350,7 @@ plate range is malformed, and which are printed on one plate more than it gives 
 | --- | --- |
 | `index.html` | The app, built: 5 MB, loads the plates as it needs them, works offline after a visit. What the link above opens. |
 | `gerbil_atlas_explorer.html` | The same app as one self-contained file (22 MB: 186 plate images, the vectorized outlines and the skull mesh) for a computer with no internet. Both pages are built by `tools/build_app.py` from `src/` and `data/`; a commit and date are stamped into each. |
-| `src/` | The app's source: `app.html`, `app.css`, `app.js`. `python3 tools/build_app.py --dev` writes `build/dev.html`, which links these directly, so code edits need no rebuild. `fixer.html`, `fixer.css` and `fixer.js` beside them are the region fixer's page, served by `tools/atlasfix.py` and not part of either published page. |
+| `src/` | The app's source: `app.html`, `app.css`, `app.js`. `python3 tools/build_app.py --dev` writes `build/dev.html`, which links these directly, so code edits need no rebuild. `fixer.html`, `fixer.css` and `fixer.js` beside them are the region fixer's page, which `tools/atlasfix.py` serves as three files and `build_app.py` inlines into the site's `fixer.html`. |
 | `METHODS.md` | How everything here was derived, and what its accuracy is. |
 | `TARGETING_PLAN.md` | The design behind the track planner. |
 | `data/gerbil_atlas.json` | Full database: structures, coordinates, label positions, brain outlines, region extents, the page-to-plate registration, calibration, a version stamp. |
@@ -360,6 +360,7 @@ plate range is malformed, and which are printed on one plate more than it gives 
 | `data/gerbil_atlas_labels.csv` | One row per printed label — 6,315 stereotaxic triplets, read at the end of the label's leader line where the atlas draws one. |
 | `data/gerbil_atlas_plates.csv` | One row per plate: bregma / lambda / interaural / occipital-crest AP. |
 | `data/geojson/plate_NN.geojson` | The regional outlines of one plate in millimeters, one feature per structure, with the unnamed faces and the section outline. |
+| `data/facemaps/plate_NN.{u16.gz,json}` | The page cut into faces, as `tools/build_region_extents.py` cuts it: the face of every page pixel, and which printed labels seed each. What the region fixer's published page answers **Pick** from, so that answer is the extraction's and not a copy of it. Written by `tools/build_facemaps.py`; CI checks it is a fresh cut. |
 | `data/gerbil_atlas_labels.nii.gz`, `data/gerbil_atlas_labels_lut.csv` | The label volume the meshes were cut from, as a NIfTI file at 50 µm: one id per voxel in RAS (x right, y anterior, z dorsal) with the atlas millimeters in its sform, and the table that names each id. Interpolated between sections 350 µm apart, like the meshes. |
 | `data/plates/{drawing,nissl,myelin}/NN.jpg` | The 186 plate images, cropped to the atlas's printed coordinate box. |
 | `data/vec.json`, `data/skull.json` | The traced outlines with their per-plate registration, and the CT skull surface: the two assets no script here regenerates. |
@@ -371,6 +372,8 @@ plate range is malformed, and which are printed on one plate more than it gives 
 | `qc/` | Verification renders kept from the build; [`qc/README.md`](qc/README.md) says which script writes each. Not used by the app. |
 | `tools/` | The derivations that read something off the page rather than fitting a number to it, the shared library they use, the build, and the table exports. See [`tools/README.md`](tools/README.md). |
 | `tests/` | The data's own promises as `pytest` tests, and the built pages in a browser under Playwright. GitHub Actions runs both on every push. |
+| `fixer.html` | The region fixer as one file, for the site to serve: mark a wrong region on a plate in a browser and send it, with no clone and no Python. Built from `src/fixer.*` by `tools/build_app.py`; the same file `tools/atlasfix.py` serves locally, which is where **Recut** works. |
+| `.devcontainer/` | What a GitHub Codespace needs to run the whole pipeline, the tests and the fixer: the pinned packages, Node, and port 8770 forwarded. |
 | `matlab/` | `AtlasRegionFix.m`: the same job from MATLAB, for anyone already there. See [`matlab/README.md`](matlab/README.md). |
 | `corrections/` | The corrections sent that way, one file each, as [`corrections/README.md`](corrections/README.md) describes; applied by `tools/corrections.py`. |
 | `.claude/skills/` | What a Claude Code session follows to take a correction to a finished pull request. |
@@ -395,8 +398,22 @@ of it: **Pick** says which face a point falls in and which printed labels seed t
 cut with `build_region_extents`'s own rasterizer, and **Recut** applies the draft to a
 scratch tree and builds the plate again, so the outlines shown before committing are the
 ones the pipeline will write after. `--host 0.0.0.0` puts the page on the network for a
-phone or a tablet to read the plate on, behind a key it prints. `matlab/AtlasRegionFix.m`
-writes the same file from MATLAB, for anyone already there.
+phone or a tablet to read the plate on, behind a key it prints.
+
+There are two ways to reach it without a clone, and one without a browser:
+
+- **[the published page](https://dstolz.github.io/GerbilAtlasExplorer/fixer.html)** —
+  `fixer.html` on the site. The same page with nothing behind it: it draws from what the
+  site publishes and answers **Pick** from `data/facemaps/`, which is the pipeline's own
+  cut of every plate, so that answer is not a re-implementation. **Commit** goes through
+  the GitHub API with a fine-grained token you supply. What it cannot do is run the
+  pipeline, so **Inspect** and **Recut** are off; the session that applies the correction
+  runs them and says what it found in the pull request.
+- **a Codespace** — *Code → Codespaces → Create codespace*, then
+  `python3 tools/atlasfix.py 19` in its terminal and open the forwarded port. The whole
+  tool, Recut included, on GitHub's machine and reachable from a phone; the Codespace's
+  own token pushes, so no personal access token is involved.
+- **MATLAB** — `matlab/AtlasRegionFix.m` writes the same file, for anyone already there.
 
 A workflow then hands the file to a Claude Code session that follows
 [`.claude/skills/atlas-region-fix`](.claude/skills/atlas-region-fix/SKILL.md): it reads

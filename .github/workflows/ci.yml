@@ -30,6 +30,8 @@ jobs:
         run: python tools/build_groups.py --check
       - name: The map coloring is a fresh build of the extents
         run: python tools/build_region_colors.py --check
+      - name: The published face maps are a fresh cut of the tracing
+        run: python tools/build_facemaps.py --check
       - name: The committed pages are a fresh build
         run: python tools/build_app.py --check
       - name: Data invariants and the shared library

@@ -6,6 +6,38 @@ carries a `version` block naming the release its derived fields were built for.
 ## [Unreleased]
 
 ### Added
+- **The fixer is on the site now, and in a Codespace, so correcting a region needs no
+  clone.** `fixer.html` is the same page `tools/atlasfix.py` serves, built into the site by
+  `build_app.py` with its stylesheet and script inlined. Opened from GitHub Pages it has no
+  server behind it at all: it draws from what the site already publishes -- the database,
+  the tracings in `svg/`, the plate images -- takes the same three marks, and writes
+  `corrections/<id>.json` on a branch `correction/<id>` through the GitHub API with a
+  fine-grained token the reader supplies, which starts the same workflow. Which of its two
+  backends a copy is using it settles for itself, from a marker the local tool writes into
+  the page it serves.
+
+  **Pick** is the part that could not be faked. Saying which face a point falls in, how big
+  it is and which printed labels seed it is `build_region_extents`'s cut of the plate, and a
+  copy of that cut written in JavaScript would drift from the pipeline the first time
+  `BRIDGE_PX` or `MIN_FACE_PX` moved. So the cut is published instead:
+  `tools/build_facemaps.py` writes `data/facemaps/plate_NN.u16.gz` -- the face of every page
+  pixel, gzipped, 23 to 100 KB a plate and 3.4 MB for all 62 -- with the face each printed
+  label seeds beside it, and CI checks the committed maps are a fresh cut of the tracing.
+  What the page reads is the extraction's own answer. `tests/js/fixer.spec.js` drives the
+  published page and the local one against one point and asserts the two reports are the
+  same string, and against one draft and asserts the two correction files are the same
+  document.
+
+  What the published page cannot do is run the pipeline, so **Inspect**, **Recut** and **QC
+  image** are off and say why rather than failing; the session that applies the correction
+  runs them and reports in the pull request. To get them back without a local clone there is
+  `.devcontainer/`: a Codespace with the pinned packages, Node and port 8770 forwarded, where
+  `python3 tools/atlasfix.py 19` is the whole tool -- Recut included, pushing with the
+  Codespace's own credentials, and reachable from a phone through the forwarded URL.
+
+  The site build gained what the page reads: `svg/`, `data/facemaps/` and `data/geojson/`
+  are copied into it, and `build_app.py --check` now covers `fixer.html` as it covers the
+  other two pages.
 - **A wrong region can be marked in a browser now, with the extraction answering for
   itself.** `tools/atlasfix.py` serves one plate on `127.0.0.1` -- the drawing under the
   tracing, dashed where the atlas prints it dashed; every region's outline as it stands;

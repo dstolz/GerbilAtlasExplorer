@@ -9,6 +9,8 @@
 const { test, expect, devices } = require('@playwright/test');
 
 const APP = 'http://127.0.0.1:8771/';
+// the same page as build_app.py builds it into the site, with no server behind it
+const PUBLISHED = 'http://127.0.0.1:8765/fixer.html?plate=19&abbr=S1DZ';
 const SEED = [1079, 955];                 // page px inside the left S1DZ strip
 const GAP = [[1162, 1043], [1186, 1061]]; // the run of dashed boundary the tracing missed
 
@@ -234,4 +236,128 @@ test('a boundary is drawn by tapping and finished from the plate', async ({ brow
     await expect(page.locator('#drawbar')).toBeHidden();
     await expect(page.locator('#sheetwhat')).toContainText('1 mark');
   });
+});
+
+
+// --------------------------------------------------------------- the published page
+//
+// The copy GitHub Pages serves is the same file with nothing behind it. It draws from
+// what the site publishes and answers Pick from data/facemaps/, which
+// tools/build_facemaps.py cut with the pipeline -- so that answer has to be the one the
+// pipeline gave, to the character. What it cannot do is run build_region_extents, so
+// Inspect and Recut are off and say why.
+
+async function published(page) {
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(String(e)));
+  page.on('response', (r) => { if (r.status() >= 400) errors.push(r.status() + ' ' + r.url()); });
+  await page.goto(PUBLISHED);
+  await page.waitForFunction(() => document.title.includes('atlas region fixer'));
+  page.errors = errors;
+  return page;
+}
+
+// the correction as either backend would write it, with what cannot match taken out
+async function documentOf(page) {
+  const doc = await page.evaluate(async () => (await SRC.document(S.draft)).doc);
+  for (const k of ['id', 'created', 'author', 'source']) delete doc[k];
+  return doc;
+}
+
+async function markTheCase(page) {
+  await page.fill('#problem', 'S1DZ on the left is a scrap; S1J bulges through the gap.');
+  await page.click('[data-t="seed"]');
+  await clickAt(page, SEED);
+  await page.click('[data-t="boundary"]');
+  await page.click('#opts [data-s="dashed"]');
+  await clickAt(page, GAP[0]);
+  await clickAt(page, GAP[1]);
+  await page.keyboard.press('Enter');
+}
+
+test('the published page draws the plate with no server behind it', async ({ page }) => {
+  await published(page);
+  expect(await page.evaluate(() => SRC.pipeline)).toBe(false);
+  await expect(page.locator('#where')).toContainText('plate 19, bregma +1.50 mm');
+  await expect(page.locator('#regfact')).toContainText('0.6143 mm² in 2 rings');
+  await expect(page.locator('#regions .row.on .ab')).toHaveText('S1DZ');
+  expect(page.errors).toEqual([]);            // and nothing 404s on the way
+});
+
+test('Pick on the published page is the answer the pipeline gave', async ({ page }) => {
+  const probed = (p) => p.waitForFunction(
+    () => document.getElementById('report').textContent.startsWith('ML '), null, {timeout: 20000});
+
+  await published(page);
+  await clickAt(page, SEED);
+  await probed(page);
+  const there = await page.textContent('#report');
+
+  const local = await page.context().newPage();
+  await open(local);
+  await clickAt(local, SEED);
+  await probed(local);
+  const here = await local.textContent('#report');
+  await local.close();
+
+  expect(there).toBe(here);                   // to the character, not merely close
+  expect(there).toContain('face #55 of 4608 px (0.227 mm²), seeded by S1DZ');
+});
+
+test('the two backends write one correction', async ({ page }) => {
+  await published(page);
+  await markTheCase(page);
+  const there = await documentOf(page);
+
+  const local = await page.context().newPage();
+  await open(local);
+  await markTheCase(local);
+  const here = await documentOf(local);
+  await local.close();
+
+  expect(there).toEqual(here);
+  expect(there.seeds[0].page_px).toEqual([1079, 955]);
+  expect(there.boundaries[0].style).toBe('dashed');
+  expect(there.hemisphere).toBe('left');
+});
+
+test('what needs the pipeline is off, and says so', async ({ page }) => {
+  await published(page);
+  for (const id of ['#inspectb', '#recutb', '#qcb']) {
+    await expect(page.locator(id)).toBeDisabled();
+    expect(await page.locator(id).getAttribute('title')).toContain('build_region_extents');
+  }
+  await expect(page.locator('#report')).toContainText('no pipeline behind it');
+  await expect(page.locator('#report')).toContainText('data/facemaps/');
+});
+
+test('committing from the published page asks for a token and sends nothing without one',
+  async ({ page }) => {
+    await published(page);
+    await markTheCase(page);
+    await page.evaluate(() => localStorage.removeItem('atlasfix.token'));
+    await page.click('#commitb');
+    await expect(page.locator('#mjson')).toContainText('"schema": "gerbil-atlas-correction/1"');
+    await page.click('#mbtns button:last-child');           // Commit and push
+    await expect(page.locator('#mtitle')).toHaveText('A token to push with');
+    await expect(page.locator('#mbody')).toContainText('Contents: read and write');
+    await page.click('#mbtns button:first-child');          // Cancel
+    await expect(page.locator('#report')).toContainText('no token: nothing was sent');
+    expect(page.errors.filter((e) => !String(e).includes('no token'))).toEqual([]);
+  });
+
+test('Save on the published page hands over the file itself', async ({ page }) => {
+  await published(page);
+  await markTheCase(page);
+  const [download] = await Promise.all([
+    page.waitForEvent('download'),
+    page.click('#saveb').then(() => page.click('#mbtns button:last-child')),
+  ]);
+  expect(download.suggestedFilename()).toMatch(/\.json$/);
+  const path = await download.path();
+  const fs = require('fs');
+  const doc = JSON.parse(fs.readFileSync(path, 'utf8'));
+  expect(doc.schema).toBe('gerbil-atlas-correction/1');
+  expect(doc.plate).toBe(19);
+  expect(doc.seeds).toHaveLength(1);
 });
