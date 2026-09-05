@@ -72,6 +72,140 @@ carries a `version` block naming the release its derived fields were built for.
   you are switching to — the rest is what gave way to make room for it.
 
 ### Fixed
+- **`E/OV` follows its own leader on the rest of the olfactory bulb, and `IEn` gets a
+  hemisphere back.** The atlas cannot fit `E/OV` inside the olfactory ventricle on any of
+  plates 1–5, so it prints the label outside the section with a line drawn back in; where
+  that line was read, `E` is the slit the line ends in, and where it was not, the printed box
+  seeded a scrap of the section's own border with the word sitting on it. Plate 5 was settled
+  in #78 and plate 3 above; this is plates 2, 4 and 13.
+
+  Two of the four fixes are a tip the march recorded in the wrong place, and one is a line it
+  never proposed. On **plate 4** the left-hand line was found from `OV` and stopped 45.6 px
+  from the word — barely past `MINTIP`, and in the 28,726 px face `EPl`'s own word seeds, so
+  `E` drew a band down the medial edge of the bulb. Its black ink runs 209 px and ends in the
+  1,085 px ventricle face that mirrors the one the right-hand line already reaches: `E` goes
+  0.881 to 0.133 mm², a slit on each hemisphere, and `EPl` takes back the band it had been
+  holding, 1.078 to 1.886. On **plate 13** both the left-hand `E/OV` line and `IEn`'s ended
+  in the one face `DEn`'s own word seeds, and with three names in it `IEn` lost the left
+  hemisphere outright. The reading is taken from the plate's own mirror: on the right the ink
+  ends inside a 211 px sliver too small to seed and the recorded tip sits 6.5 px back from
+  it, on the compartment side of that sliver's wall, which is the answer; 8 px back on the
+  left is the same reading. `E` moves into the compartment its line points at (0.136 to
+  0.165 mm²) and `IEn` is drawn on both hemispheres for the first time, 0.042 to 0.102.
+
+  **Plate 2** is where the honest answer is a gap. Both of its lines are now read — the
+  right-hand one had no piece survive the straightness test, the left-hand one stopped 24 px
+  short out in the granule layer — but the ventricle on the left hemisphere is cut by the
+  tracing into beads of 41 to 1,363 px, and the bead its line ends in is under `MIN_AREA_PX`.
+  So `E` keeps one entry there rather than two, 0.135 to 0.029 mm². That is worse as
+  coverage and better as a claim: what it gave up was the printed word and the border under
+  it. **Plate 1**'s right hemisphere is left exactly as it was for the same reason carried one
+  step further — its beads are 96 to 300 px, all under `MIN_FACE_PX`, so a correct tip snaps
+  to the granule layer and `E` swells to 0.79 mm². Neither is a hole a connector would close:
+  overlaid on the printed page the traced lines through both hairpins wander between the
+  walls, cross the ependymal band and swap sides, so there is no missing run to add and the
+  repair would mean replacing tracing rather than completing it. A 24 px connector on plate 2
+  was written, ink-checked at a median 1 px against a traced control's 0 and a blank control's
+  5, and reverted when it moved not one face.
+
+  Two labels were added with them, and they are not bookkeeping: `OV` on plates 1 and 2, the
+  right-hand half of `E/OV`, printed once per hemisphere and read on one side only. The
+  leader march aims at the *whole* of a joined label, so with only `E` boxed the line arrives
+  between the two names and reaches nothing — locating `OV` on plate 2 is what recovers that
+  plate's left-hand line at all. 6,337 labels are located now, over the same 3,344
+  structure-plate pairs, and 240 of them are set outside their region on a line.
+
+- **Five more regions the app drew wrongly, and no two for the same reason.** All five were
+  reported from the plate view, and each is fixed at its input rather than in the extents.
+
+  `E/OV` on **plate 3** was wrong on both hemispheres, and differently on each. The atlas
+  draws the olfactory ventricle as a slit inside the granule layer and prints `E/OV` beside
+  the section with a line back to it. On the left the line was found and its recorded end
+  stopped 24 px short — the slit is narrower than twice the skirt the tracing is subtracted
+  with, so the march loses the line's last stretch along with the wall it crosses, which is
+  plate 5's failure exactly. On the right no line was found at all: it runs the length of the
+  bulb and every wall it crosses cuts it, so what reached the straightness test was a string
+  of fragments, and the box seeded a sliver of the section's own edge where the word is
+  printed. Both ends were read off the page by marching the leader's own black ink, and the
+  same march reproduces the one tip a reader had already written into `TIP_READ` by hand to
+  0.0001 of the frame. `E` goes 0.67 to 0.0669 mm² — the two ventricles, with their borders
+  100% on drawn ink instead of 93.4%. The ground it gives up does not become unassigned: it
+  goes to `aci`, which seeds the same face, and which grows 0.74 to 1.29 mm². `aci`'s own
+  line stops short in the same way — 53 px on one side and 30 on the other — but reading its
+  ink to the end does not put it in the commissure it names: on the left the end lands in the
+  ependymal band round the ventricle and on the right in the granule layer it started in.
+  Both circles are still unnamed. So `aci` is left as it is rather than moved somewhere the
+  page does not support, and the two circles stay unassigned, which is the honest answer
+  until someone can say what the line means there.
+
+  `lo` on **plate 13** outlined the paper its own name is set on. The atlas prints `lo`
+  clear of the section with a 15 px line back to the lateral olfactory tract, which is under
+  `MINTIP` — the floor that stops a hyphen or a bracket being read as a leader, and the right
+  reading for those. Left on its box the seed landed outside the drawn border, in the
+  crescent between it and the published outline, so the region was a scrap of white paper
+  wrapped round the words `lo` and `lEn`. Its end is read off the page and the entry is now
+  the band inside the border its line points at.
+
+  `S1DZ` on **plate 23** was cut short of the external capsule on one hemisphere. The atlas
+  draws the dysgranular zone as a narrow strip between two dashed lines that both end on `ec`
+  with a tick; the tracing stopped the lateral wall 35 px above it, and the bridge welded
+  that dangling end sideways to the *medial* wall 17 px away, sealing the strip early and
+  handing its ventral end to `S1BF`. The missing run is traced now: the printed dashes sit a
+  median 0 px off it, against no ink at all within 12 px of a control chord beside it.
+  `S1DZ` goes 0.478 to 0.501 mm² with its third polygon's support 0.975 to 0.992, and `S1BF`
+  gives back the same ground. The other hemisphere was already right and did not move.
+
+  `STLP` on **plate 23** had no entry because it had no label. It is printed once per
+  hemisphere, it is in the published index for plates 23–24, and neither box had been read;
+  cut from plate 24 and matched back they score 0.700 and 0.681 on ink at 0.25 and 0.24.
+  `STLP` is 0.4931 mm², both polygons 100% on drawn ink.
+
+  `InWh` on **plate 34** had taken the lateral third of `InG` on one hemisphere. The atlas
+  draws the boundary between them as a dashed line and the tracing has it, but its lateral
+  end stopped 21 px from the solid line it meets — one pixel past `BRIDGE_PX` — so nothing
+  sealed and the watershed drew the split itself. Twenty-five pixels of connector close it.
+  `InG` goes 0.715 to 0.821 mm² and `InWh` 0.955 to 0.847, and both supports rise. The
+  boundary is untraced on the other hemisphere as well; that split is still the watershed's
+  own and is left as it was rather than re-traced by hand.
+
+  Two labels were added with them: `OV` on plate 3, the right-hand half of the label `E/OV`,
+  matched from its own located copy at 0.997; and the two `STLP` boxes above. 6,335 labels
+  are located now over 3,344 structure-plate pairs.
+
+- **`SHy` is in the atlas, and was in neither of its indexes.** The septohypothalamic nucleus
+  is printed on plates 22 to 25 — once per hemisphere on 22, 23 and 25, twice per hemisphere
+  on 24 — and the published index carries no row for it at all: both the Index of structures
+  and the Index of abbreviations run septofimbrial to septohippocampal to simple lobule with
+  nothing in between. The glyph was read at 16× against the label face to rule out a Greek
+  gamma, and neither raw index transcription holds a single non-ASCII abbreviation, so the
+  omission is the paper's. Every audit this repository runs is answerable to the index, which
+  is why nothing had caught it: the twenty-unlettered-structures pass walks the index, and
+  `label_positions` holds only pairs the index lists.
+
+  Following the index here would mean dropping a structure the atlas draws, names and letters
+  ten times over, so `SHy` is carried instead — the one place the database holds a structure
+  the published index does not list, recorded in `verification.known_source_discrepancies`
+  with what the page says. Its labels were composed from located glyphs by
+  `tools/find_unlettered.py` and every candidate read against the printed page; its extents
+  follow like any other, at 0.39, 1.03, 0.36 and 1.76 mm², the last carrying `w` because on
+  plate 25 the atlas prints the name and draws it no boundary. It takes ground from `AHA`
+  (1.75 to 0.36 mm² on plate 25) and `MPO` (1.56 to 1.19) where those had been holding it.
+  `index_entries_checked` stays 3,510: the index is what it is.
+
+- **The color search restarts somewhere new, instead of a thousand times from the same
+  place.** Only the tabu tenure was seeded, so every restart set out from the one DSATUR
+  coloring; where that start sits in a bad basin they all stall in it together and the search
+  reports a color count that is too high. Adding `SHy` did exactly that — 1,024 restarts and
+  twenty million moves, two conflicts short of eight — and a ninth color is not a thing this
+  app can render: `MCPAL` in `src/app.js` holds exactly eight, and a region in slot 8 comes
+  out `undefined` with no test to catch it. It was never the atlas asking, either: an exact
+  maximum-clique search over the 631 patches returns eight. Restarts now kick a share of the
+  start's patches to random slots, cycling the strength, and the eighth color comes back.
+  The kick has to be hard — a twentieth, a tenth, a seventh and a third each found nothing in
+  twenty tries, and half to three quarters found it — which is why the strengths are cycled
+  rather than picked. `SEEDS` is back to 256 and the first restart is still the plain DSATUR
+  start. 689 regions in 8 colors, `colors_are_the_fewest` true, and every plate repaints, as
+  it does whenever the coloring is re-solved.
 - **Four regions the app drew wrongly, and the four different reasons.** Each was reported
   from the plate view, and no two share a cause.
 

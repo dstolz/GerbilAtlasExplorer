@@ -18,10 +18,12 @@ def db():
 
 def test_structures(db):
     S = db['structures']
-    assert len(S) == 723
+    # 724 rather than the published index's 723: SHy is printed on plates 22-25 and
+    # neither index lists it. See verification.known_source_discrepancies.
+    assert len(S) == 724
     abbrs = [s['abbr'] for s in S]
-    assert len(set(abbrs)) == 723
-    assert len({s['name'] for s in S}) == 723
+    assert len(set(abbrs)) == 724
+    assert len({s['name'] for s in S}) == 724
     for s in S:
         assert s['plates'] == sorted(s['plates'])
         assert s['first_plate'] == s['plates'][0] and s['last_plate'] == s['plates'][-1]
@@ -61,8 +63,8 @@ def test_label_positions(db):
             for b in boxes:
                 assert len(b) == 4 and all(0 <= v <= 1 for v in b)
                 n += 1
-    assert n == db['verification']['label_positions_located'] == 6322
-    assert sum(len(d) for d in LP.values()) == db['verification']['ocr_confirmed'] == 3339
+    assert n == db['verification']['label_positions_located'] == 6337
+    assert sum(len(d) for d in LP.values()) == db['verification']['ocr_confirmed'] == 3344
 
 
 def test_leaders(db):
@@ -75,7 +77,7 @@ def test_leaders(db):
                 assert 0 <= i < len(LP[p][ab])
                 assert 0 <= x <= 1 and 0 <= y <= 1
                 n += 1
-    assert n == db['label_leaders']['summary']['leaders_found'] == 233
+    assert n == db['label_leaders']['summary']['leaders_found'] == 240
 
 
 def test_no_leader_tip_lands_on_another_name(db):
@@ -351,7 +353,9 @@ def test_volumes_consistent(db):
     # word. It had never had an extent anywhere -- its seed was inside the oval
     # RPO is printed in, so it held RPO's face until RPO was located and then
     # held nothing.
-    assert V['summary']['structures'] == len(V['data']) == 688
+    # 689 rather than 688: SHy, which the published index does not list, is drawn and
+    # lettered on plates 22-25 and takes an extent on all four.
+    assert V['summary']['structures'] == len(V['data']) == 689
     assert not (have & set(db['features']['data']))
     assert 'little-endian' in V['note']
     for ab, e in V['data'].items():

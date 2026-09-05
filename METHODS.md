@@ -105,7 +105,7 @@ against the fit alone: midline structures (`3V`, `Aq`, `4V`, `cc`, `MnR`) land w
 0.10 mm of ML 0, and bilateral pairs come out symmetric at the published widths —
 `MSO` ±1.33, `LSO` ±1.67, `CIC` ±1.93, `Au1` ±6.48 (mean distance from the midline).
 
-With AP coming from the plate, this gives every one of the 6,322 located labels a full
+With AP coming from the plate, this gives every one of the 6,337 located labels a full
 stereotaxic triplet.
 
 ## Plate images
@@ -163,7 +163,7 @@ quantitative should go back to the source volume rather than to these. See
 
 Registration between them is by construction rather than by fitting. Every page carries
 the atlas's own printed ML/DV box, and each page is cropped to *its own* box by the same
-detector, so all three land in the coordinate frame above — the frame the 6,322 label
+detector, so all three land in the coordinate frame above — the frame the 6,337 label
 positions are recorded in. Nothing is warped, translated or scaled to match anything else.
 
 Three things had to be got right, and each is checked rather than assumed:
@@ -239,8 +239,10 @@ on, each in its own named group, with the same caption the PNG carries.
 `label_positions` in the JSON records where each abbreviation is printed on each
 plate, as `[cx, cy, w, h]` fractions of the frame-cropped image. Most structures
 appear twice, once per hemisphere; layered ones such as cerebellar white matter
-appear many more times. 6,322 individual labels are located, covering 3,339 of the
-3,510 structure-plate entries (95%). These drive the circling, the hover tooltips and
+appear many more times. 6,337 individual labels are located, covering 3,340 of the
+3,510 structure-plate entries (95%) and four more for `SHy`, which the published index
+does not list at all — see [Known discrepancies](#known-discrepancies-with-the-published-index).
+These drive the circling, the hover tooltips and
 click-to-select in the HTML app and can be reused for annotation overlays elsewhere.
 
 The labels were read twice. The first pass OCR'd 300 dpi renders with Tesseract and
@@ -314,9 +316,9 @@ A label is not always on the thing it names. Where a region is small, or crowded
 against the edge of the section, the atlas cannot fit the word inside it: it sets the name
 outside and draws a thin line from the word back into the region. `VMHSh` on plate 30 is
 printed clear of the brain altogether, with its line running back up into the shell of the
-ventromedial nucleus. **233 of the 6,322 located labels are set that way, on 47 of the 62
+ventromedial nucleus. **240 of the 6,337 located labels are set that way, on 47 of the 62
 plates.** For those the box says where the word is and not where the structure is, and the
-two are a median 0.56 mm apart, a sixth of them over a millimeter.
+two are a median 0.57 mm apart, a fifth of them over a millimeter.
 
 That gap is not a rounding error anywhere downstream. A seed dropped on the word lands on
 the far side of a boundary, so the extraction below hands the region to whichever name the
@@ -350,24 +352,41 @@ beside the printed plate and read**, and the ten that turned out to be somebody 
 are listed in the tool with what they were. Nine of the ten are one failure: a line drawn
 past a label on its way somewhere else, close enough and straight enough to be that label's.
 Two more were dropped for pointing outside the section, which a leader never does. 215
-survive, and every one of them was seen on the plate. Those 215 lines answer for 233
+survive, and every one of them was seen on the plate. Those 215 lines, and the two below
+that the shape tests never proposed at all, answer for 236
 boxes: where the atlas typesets several names as one label — `E/OV` on the olfactory
 bulb plates — the line is drawn from the whole label, so it is recorded against every
 name in it. Only one box can be the one the march reached, and without that the other
 kept the printed position and seeded itself where the word is set, which for a label
 printed beside its section is not a near miss but another region entirely.
 
-One tip was read off the page rather than marched to. The march advances its answer
+Four lines were read off the page rather than marched to, and they fail in two ways.
+
+**Two ended where the march could not follow.** It advances its answer
 only on ink the tracing did not draw, so where a leader ends inside a region narrower
 than twice the skirt the tracing is subtracted with, the last stretch of the line is
 masked out along with the wall it runs through and the tip is left on the *near* side
 of that wall — in the neighbour, which is the one failure this pass exists to prevent.
 The right-hand `E/OV` on plate 5 ends inside an olfactory ventricle 4 px wide, and its
-seed landed 6.9 px short, in the band around `aci`. Marching the leader's own black ink
+seed landed 6.9 px short, in the band around `aci`; the left-hand `E/OV` on plate 3 is
+the same failure at 24 px, its recorded tip out in the granule layer with the ventricle
+still to come. Marching the leader's own black ink
 instead — the lines are black and the drawing is red, so the two separate cleanly —
-finds it, and moves 47 of the 215 tips, four of them by over 35 px. That is 47 lines to
+finds them, and moves 47 of the 215 tips, four of them by over 35 px. That is 47 lines to
 put beside the printed page before any of them could be trusted, so the rule is not
-taken and the one line that *was* read sits in `TIP_READ` with what the page says.
+taken and the two lines that *were* read sit in `TIP_READ` with what the page says.
+
+**Two were never proposed.** A piece is kept only if it is long, thin and straight, and a
+tip nearer its word than `MINTIP` is read as a mark beside the word rather than a line out
+of it — which is the right reading for a hyphen or a bracket and is worth keeping as it is.
+The right-hand `E/OV` on plate 3 runs the length of the olfactory bulb and every wall it
+crosses cuts it, so what reaches the straightness test is a string of fragments; `lo` on
+plate 13 draws 15 px back to the lateral olfactory tract, under the floor. Left on their
+boxes both seeded outside the section — `lo` outlined the paper its own name is set on —
+and both are in `TIP_HAND`, read the same way and with the same account of the page. The
+same march, run against the plate-5 line a reader had already written into `TIP_READ` by
+hand, lands 0.0001 of the frame from it, which is what says these readings are the page's
+and not the reader's.
 
 The box stays what it was. It is where the word is printed, so it is still what the app hit
 tests when you hover, and `window.__BOX__` is unchanged. What moves is the *position*: the
@@ -426,7 +445,7 @@ Three checks, none of which the extraction was tuned to pass:
 | --- | --- | --- |
 | Highest point of any outline | DV 0 is the plane through the most dorsal points of cerebrum and cerebellum | **DV −0.06 mm** — reaches it, never crosses it |
 | Lowest point of any outline | the deepest printed label sits at DV −9.02 | **DV −9.09 mm** — just below it |
-| Printed labels inside their own plate's outline | — | **98.8%** (6,245 of 6,322) |
+| Printed labels inside their own plate's outline | — | **98.8%** (6,258 of 6,335) |
 
 Of the 77 labels that fall outside, the largest group is on the olfactory bulb plates 5–9,
 where the section is small and the drawing prints the labels beside it; the median one is
@@ -442,7 +461,7 @@ fractions of the frame-cropped image — the same frame and the same convention
 and 91% of the 3,365 the published index lists — both counted over the structures that are
 regions — as 5,881 polygons over 166,844 points. Where
 the atlas prints two names as one label the two share an entry, so a name having no entry of
-its own does not mean it has no area — see step 8. Twenty of the 723 names have no entry
+its own does not mean it has no area — see step 8. Twenty of the 724 names have no entry
 anywhere, and never could: they name no region — see step 7.
 
 The atlas publishes no segmentation. What it does publish is a line drawing in which every
@@ -623,10 +642,10 @@ all, no area, no volume and no mesh. Collapsing the second into the first would 
 back the 170 mm² of cerebellum step 7 exists to take off it. Plate 52 carries one of each,
 and `tests/js/smoke.spec.js` tests them separately for that reason.
 
-End to end, in the app: pointing at each of the 6,322 printed labels in turn resolves to a
-structure every time, and to the name pointed at 6,297 times. **5,346 of them are answered
-with an outline.** 549 are answered with the printed name because the entry carries `w` and
-there is no boundary to draw, and 423 because there is no extent to give — 297 of those being
+End to end, in the app: pointing at each of the 6,335 printed labels in turn resolves to a
+structure every time, and to the name pointed at 6,309 times. **5,356 of them are answered
+with an outline.** 551 are answered with the printed name because the entry carries `w` and
+there is no boundary to draw, and 424 because there is no extent to give — 297 of those being
 the names that are no region, which is not a shortfall but the point of step 7, and the other
 126 structures no extent could be cut for. Of the 18 that answer with another name, four are
 places where one located box sits inside another (`StA` around `STMA` on plate 23, `PVP`
@@ -635,7 +654,7 @@ two wins the point, which is the right tie-break everywhere else; the other four
 compound labels — `9a,bCb`, `9/11N`, `3/4Cb`, `S1J/BF`, `RSGb/c` — where two names hold the
 one box and the first answers for both, with the region they share.
 
-233 of the 6,322 printed labels are set outside their region with a line drawn back into
+240 of the 6,337 printed labels are set outside their region with a line drawn back into
 it, and are seeded at the end of that line. A further 192 sit outside the face they name
 with no line this pass could follow — printed on a boundary, or beside the section on a line
 the tracing runs along — and are pulled to the largest face within a millimeter; most of
@@ -767,7 +786,7 @@ the atlas draws; splitting it draws a color change where the atlas prints nothin
 the milder error and the honest one, since the color change is then telling the truth about
 the other plate. So the candidates are the 102 pairs with no printed boundary anywhere, and
 even those only as far as they can be taken without a printed boundary falling *inside* a
-patch along a chain of merges: **74 joins hold, 28 are refused**, and the 688 regions of the
+patch along a chain of merges: **74 joins hold, 28 are refused**, and the 689 regions of the
 atlas become 631 patches, the largest of them seven names.
 
 **The patches are colored with eight colors, which is the fewest.** Eight regions of this
@@ -779,7 +798,20 @@ the reverse of the order they came off, where a slot is always free for them. Th
 seeded, so a re-run reproduces the block byte for byte, and `--check` says whether the
 committed one is current. Which of the eight slots a patch takes is settled last and changes
 no boundary: every region asks for the slot hashed from its abbreviation, and the assignment
-granting the most asks — 117 of the 688 — is the one taken.
+granting the most asks — 116 of the 689 — is the one taken.
+
+**Every restart begins somewhere else, and that is what keeps the eighth color findable.**
+Only the tabu tenure was seeded at first, so every restart set out from the one DSATUR
+coloring; where that start sits in a bad basin the restarts all stall in it together, and
+what comes out is a ninth color the app's palette has not got. Adding `SHy` produced exactly
+that — 1,024 restarts, twenty million moves, two conflicts short — and it was not the atlas
+asking for a ninth: an exact maximum-clique search over the 631 patches returns eight, and
+an eight-coloring is found in seconds once a restart may start from somewhere new. The kick
+has to be hard to be worth anything. Kicking a twentieth, a tenth, a seventh or a third of
+the start's patches to random slots found nothing in twenty tries at each; kicking half to
+three quarters found it; kicking everything — which is no start at all — found nothing
+again. The strengths are cycled across restarts and the first restart still uses the plain
+DSATUR start, so anything the old search found immediately is still found immediately.
 
 **Eight is what holding a color still costs.** A plate on its own needs four colors on 10 of
 the 62, five on 45 and six on 7; under the atlas-wide solve 4 plates carry six colors, one
@@ -800,7 +832,7 @@ seven plates, and that a region's color never moves as the plate steps.
 
 ## Gross divisions
 
-The atlas names 723 structures and no containers for them. Its Index of structures is flat:
+The atlas indexes 723 structures and no containers for them. Its Index of structures is flat:
 there is no "hippocampus" in it, only CA1, CA2, CA3, DG and their layers, and no "pons",
 only the pontine nuclei, the reticular nuclei, the parabrachial nuclei and the rest. Asking
 for a whole division is a thing people want to do and the published data cannot answer.
@@ -1060,7 +1092,7 @@ anything readable off a manipulator. Nothing in the atlas records which way a gi
 is tilted, so the app cannot check a sign; the dialog shows what the frame does to a
 familiar structure and the sign is confirmed by reading that back against anatomy.
 
-This is worth more than it might look. At 17° of pitch about the atlas origin the 6,322
+This is worth more than it might look. At 17° of pitch about the atlas origin the 6,337
 labels move a **median of 2.20 mm** — `MSO` goes from AP −7.95 / DV −8.30 to AP −10.05 /
 DV −5.64. The displacement grows with distance from the pivot, so the pivot matters more
 than the angles do.
@@ -1142,7 +1174,7 @@ drawn as the line where that section's plane cuts the middle of the brain, tilte
 the part of the rotation those two axes can see, and clicking it still lands on its plate —
 the click is read back through the rotation at the same depth the line is drawn at.
 
-In the 3-D view the whole scene — the 62-section stack, the 6,322 labels, the CT shell, the
+In the 3-D view the whole scene — the 62-section stack, the 6,337 labels, the CT shell, the
 plate ring and any planned track — is held in one world built affinely out of atlas
 millimeters, so the turn is a model matrix in front of the camera rather than a rebuild of any
 of it, and three transformed basis vectors are the whole of that matrix. It is taken about the
@@ -1298,8 +1330,8 @@ the section spacing however smooth the drawn line looks.
 Two things the panel says rather than hides. The **entry on the flank** — the track went
 in through the side of the head, not the top — is found by asking what the dorsal surface
 directly above the entry is: more than 0.5 mm of brain above it and the entry is not a
-dorsal approach. And a **target outside its own outline**, which is the case for 18 of the
-723 structures, whose labels the drawing prints beside the section and points at.
+dorsal approach. And a **target outside its own outline**, which is the case for 18
+structures, whose labels the drawing prints beside the section and points at.
 
 Across all 703 structures that have located labels, at three angle settings each, all
 2,109 solves return finite, bounded numbers; 7 return no entry at all, every one of them a
@@ -1419,7 +1451,7 @@ there is no library.
   this one; `&r=contour` and `&r=points` are what a link now carries to say otherwise.
 - **Contours** draws the atlas's own red boundary drawings as a stack. It reads as a
   contour model of the brain because that is exactly what it is.
-- **Labels** plots all 6,322 printed abbreviations as a stereotaxic point cloud — the
+- **Labels** plots all 6,337 printed abbreviations as a stereotaxic point cloud — the
   projection views with the third axis put back. The `auditory` chip lights the whole
   ascending pathway in one rotatable view.
 
@@ -1603,7 +1635,8 @@ until a skull control is first turned on.
 
 ## Known discrepancies with the published index
 
-`label_positions` holds only structure-plate pairs the published index lists. Two
+`label_positions` holds only structure-plate pairs the published index lists, with one
+exception. Two
 abbreviations are printed beyond their published range with nothing in the index's own
 typography to justify extending it, and are recorded under
 `verification.known_source_discrepancies` instead: **cg** on plate 35 (index: 17–34)
@@ -1611,6 +1644,23 @@ and **Sol** on 52 and 59 (49–50). Both were confirmed by eye on the plate; the
 follows the published index for them. `Sol` in particular is printed inside longer
 abbreviations that *are* listed at those levels — `5Sol` on 52, `SolM` and `SolC` on 59
 — so what is printed there may not be the abbreviation `Sol` at all.
+
+**`SHy` is the exception, and a different kind of discrepancy.** The septohypothalamic
+nucleus is printed on plates 22 to 25 — once per hemisphere on 22, 23 and 25 and twice
+per hemisphere on 24 — and *neither* printed index carries a row for it: both run
+septofimbrial (`SFi`) to septohippocampal (`SHi`) to simple lobule (`Sim`) with nothing
+in between. The glyph was read at 16× against the label face to rule out a Greek gamma,
+and neither raw index transcription contains a single non-ASCII abbreviation, so the
+omission is the paper's and not a transcription of one. Unlike `cg` and `Sol`, there is
+no published range to follow here: following the index would mean dropping a structure
+the atlas draws, names and letters ten times over. So `SHy` is carried as a structure
+with the range read off the plates — the one place the database holds a structure the
+published index does not list — and `verification.index_entries_checked` stays 3,510,
+the index being what it is. Its labels were found by the composed-template pass
+(`tools/find_unlettered.py`), read against the printed page, and its extents follow from
+them like any other: 0.39, 1.03, 0.36 and 1.76 mm² over the four plates, the last
+carrying `w` because on plate 25 the atlas prints the name without drawing a boundary
+for it.
 
 The four abbreviations whose published range is itself malformed are a separate case and
 are handled above, under [Where the index gives itself away](#where-the-index-gives-itself-away).

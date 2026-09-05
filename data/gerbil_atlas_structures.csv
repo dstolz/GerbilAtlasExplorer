@@ -595,6 +595,7 @@ SFO,subfornical organ,25,25,1,-0.6,-0.6,ventricular,25
 SG,suprageniculate thalamic nucleus,33,36,4,-3.4,-4.45,auditory;thalamus,33 34 35 36
 SGe,supragenual nucleus,46,46,1,-7.95,-7.95,brainstem,46
 SHi,septohippocampal nucleus,18,25,8,1.85,-0.6,hippocampal,18 19 20 21 22 23 24 25
+SHy,septohypothalamic nucleus,22,25,4,0.45,-0.6,basal_forebrain;hypothalamus,22 23 24 25
 SIB,"substantia innominata, basal part",21,24,4,0.8,-0.25,basal_forebrain,21 22 23 24
 Sim,simple lobule,43,49,7,-6.9,-9.0,cerebellum,43 44 45 46 47 48 49
 simf,simplex fissure,47,49,3,-8.3,-9.0,cerebellum,47 48 49

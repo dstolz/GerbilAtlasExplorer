@@ -57,7 +57,7 @@ def test_payloads():
     db = A.load_db()
     a = A.atlas_payload(db)
     assert list(a['plate_frame']) == list(A._ATLAS_PF)
-    assert len(a['structures']) == 723 and list(a['structures'][0]) == list(A._ATLAS_STRUCT)
+    assert len(a['structures']) == 724 and list(a['structures'][0]) == list(A._ATLAS_STRUCT)
     assert a['version']['version']
     for kind in A.KINDS:
         lean = A.images_payload(kind, lean=True)
@@ -119,6 +119,6 @@ def test_labels_table_rows():
     text = E.labels_csv(db)
     rows = text.split('\r\n')
     assert rows[0].startswith('abbr,name,plate,label_index,ap_bregma_mm,ml_mm')
-    assert len([r for r in rows[1:] if r]) == 6322
+    assert len([r for r in rows[1:] if r]) == 6337
     mso = [r for r in rows if r.startswith('MSO,')]
     assert len(mso) == 7
