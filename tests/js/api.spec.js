@@ -189,5 +189,7 @@ test('listing a division filters the structure list to its members', async ({ pa
   const text = require('fs').readFileSync(await dl.path(), 'utf8');
   expect(text.trim().split('\n').length).toBe(9);   // header + the eight temporal fields
   await page.click('#gunf');
-  await expect(page.locator('#cnt')).toContainText('723 of 723');
+  // 724 rather than the published index's 723: SHy is drawn, named and lettered on
+  // plates 22-25 and neither printed index lists it. See known_source_discrepancies.
+  await expect(page.locator('#cnt')).toContainText('724 of 724');
 });
