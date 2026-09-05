@@ -755,7 +755,7 @@ classdef AtlasRegionFix < handle
                 opts.Overlay (1,1) logical = true
             end
             F = A.faceMap();
-            rep = struct('seeds', {{}}, 'boundaries', {{}});
+            rep = struct('seeds', {{}}, 'boundaries', {{}}, 'extents', {{}});
             fprintf('plate %d, %s: %d faces of %d page px or more\n', A.Plate, A.Abbr, sum(F.fsize >= A.MinFacePx), A.MinFacePx);
             if isempty(A.Draft.seeds) && isempty(A.Draft.boundaries) && isempty(A.Draft.extents)
                 fprintf('  nothing marked yet\n');
@@ -829,6 +829,7 @@ classdef AtlasRegionFix < handle
                 xy = e.page_px;
                 s = AtlasRegionFix.sampleRing(xy);
                 off = A.offInk(F.dist, s);
+                rep.extents{end+1} = struct('abbr', e.abbr, 'vertices', size(xy, 1), 'off_ink', mean(off));
                 fprintf('  extent %d (%s): %d vertices; %.0f%% of its outline is off the traced ink -- that part is what gets traced\n', ...
                     k, e.abbr, size(xy, 1), 100 * mean(off));
             end
@@ -953,13 +954,28 @@ classdef AtlasRegionFix < handle
 
     methods (Static, Access = private)
         function mask = paint(mask, pts)
-            % A polyline as a one-pixel, eight-connected wall: points every half pixel
-            % along it, rounded onto the lattice (page px are 0-based; the array is not).
-            s = AtlasRegionFix.sampleRing(pts, false);
-            xi = round(s(:, 1)) + 1;
-            yi = round(s(:, 2)) + 1;
-            ok = xi >= 1 & xi <= size(mask, 2) & yi >= 1 & yi <= size(mask, 1);
-            mask(sub2ind(size(mask), yi(ok), xi(ok))) = true;
+            % A polyline as a one-pixel, eight-connected wall, stepped exactly as
+            % build_region_extents.rasterize steps it: max(|dx|, |dy|) + 1 samples per
+            % segment, each rounded onto the lattice (page px are 0-based; the array is
+            % not). The step has to be that one and not something finer. Sampling the
+            % whole polyline every half pixel instead lays down a wall 16% thicker --
+            % 30,037 page px against 25,780 on plate 19 -- which eats into every face
+            % and drops two of them under MIN_FACE_PX, so preview() answers 81 faces and
+            % a 4,558 px face where the pipeline has 83 and 4,608.
+            %
+            % Within a pixel rather than identical, still: MATLAB rounds a half away from
+            % zero where Python rounds it to even, so a sample landing exactly on .5
+            % takes the other pixel. The tracing is written to two decimals, so that is
+            % rare and never more than one pixel of wall.
+            for i = 1:size(pts, 1) - 1
+                d = pts(i+1, :) - pts(i, :);
+                n = floor(max(abs(d))) + 1;
+                t = (0:n)' / n;
+                xi = round(pts(i, 1) + d(1) * t) + 1;
+                yi = round(pts(i, 2) + d(2) * t) + 1;
+                ok = xi >= 1 & xi <= size(mask, 2) & yi >= 1 & yi <= size(mask, 1);
+                mask(sub2ind(size(mask), yi(ok), xi(ok))) = true;
+            end
         end
 
         function s = sampleRing(pts, closed)
@@ -1051,8 +1067,12 @@ classdef AtlasRegionFix < handle
                 out = fullfile(A.CacheDir, 'corrections');
                 if ~isfolder(out), mkdir(out); end
                 AtlasRegionFix.writeText(fullfile(out, [id '.json']), json);
-                if ~isempty(png), AtlasRegionFix.writeBytes(fullfile(out, [id '.png']), png); end
                 fprintf('dry run: wrote %s\n', fullfile(out, [id '.json']));
+                if ~isempty(png)
+                    AtlasRegionFix.writeBytes(fullfile(out, [id '.png']), png);
+                    fprintf('           and %s\n', fullfile(out, [id '.png']));
+                end
+                fprintf('nothing was pushed; drop DryRun to send it\n');
                 r.path = fullfile(out, [id '.json']);
                 return
             end
@@ -1138,8 +1158,9 @@ classdef AtlasRegionFix < handle
 
         function [pts, closed] = flatten(d)
             % FLATTEN  An M/C/Z path (absolute, as the tracer writes it) to a polyline, the
-            % cubics cut as build_region_extents.flatten cuts them, so a preview raster
-            % here is the raster there. L is read too, for the app's own SVG exports.
+            % cubics cut as build_region_extents.flatten cuts them -- same chord, same
+            % segment count -- so a preview raster here is the raster there to within the
+            % rounding note in paint(). L is read too, for the app's own SVG exports.
             toks = regexp(d, '[MLCZmlcz]|-?\d*\.?\d+(?:e-?\d+)?', 'match');
             pts = zeros(0, 2);
             closed = false;
