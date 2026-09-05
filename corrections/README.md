@@ -1,7 +1,7 @@
 # corrections
 
-One file per correction to how a region is drawn, as written by `matlab/AtlasRegionFix.m`
-and read by `tools/corrections.py`. A file is what a reader said on the plate -- a point
+One file per correction to how a region is drawn, as written by `tools/atlasfix.py` (in a
+browser) or `matlab/AtlasRegionFix.m` (in MATLAB) and read by `tools/corrections.py`. A file is what a reader said on the plate -- a point
 inside a region, a run of boundary the tracing missed, the outline a region should have --
 and not a change to the data: the change is one edit to a pipeline input (`svg/`,
 `seed_overrides`, `brain_outline`, `label_positions`), made from it, and the extents are

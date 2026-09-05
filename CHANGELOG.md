@@ -6,6 +6,36 @@ carries a `version` block naming the release its derived fields were built for.
 ## [Unreleased]
 
 ### Added
+- **A wrong region can be marked in a browser now, with the extraction answering for
+  itself.** `tools/atlasfix.py` serves one plate on `127.0.0.1` -- the drawing under the
+  tracing, dashed where the atlas prints it dashed; every region's outline as it stands;
+  each printed label with the line and tip where the atlas draws one -- and takes the three
+  marks `matlab/AtlasRegionFix.m` takes: a seed for the name a face should carry, the run
+  of boundary the tracing missed, the outline a region should have. **Commit** builds
+  `corrections/<id>.json` in a temporary git worktree cut from `origin/main` and pushes the
+  branch, so the checkout being read from is untouched and
+  `.github/workflows/apply-correction.yml` starts on the same file it always did: same
+  schema, same page frame, same id. It needs the pinned packages and nothing else -- no
+  MATLAB, no Image Processing Toolbox, no license.
+
+  What is different is where its answers come from. MATLAB is outside the repository, so to
+  say what a mark would do it has to re-implement the extraction -- its own rasterizer, its
+  own bridging, its own watershed -- and that copy drifts from the pipeline the moment a
+  constant moves. This one runs inside the repository and calls it. **Pick** cuts the page
+  into faces with `build_region_extents`'s own rasterizer over its own `BRIDGE_PX`, and says
+  which face a point falls in, how big it is, which printed labels seed it and which region
+  holds the point today. **Recut** goes the whole way: it runs `corrections.apply` and
+  `build_region_extents.build_plate` against a scratch copy of the plate's SVG and a copy of
+  the database in memory -- the two calls the workflow makes -- and draws the outlines that
+  come back, naming every region whose area moved. So what a reader looks at before
+  committing is what the pipeline writes after, rather than an estimate of it, and the
+  working tree is not touched either way. `tests/python/test_atlasfix.py` holds it to that:
+  the page's face map is `build_plate`'s face map, pixel for pixel.
+
+  The page is `src/fixer.html`, `src/fixer.css` and `src/fixer.js`, served by the tool and
+  built into neither published page; `tests/js/fixer.spec.js` drives it in CI, which is why
+  the browser job now installs `tools/requirements.txt`. The MATLAB class stays as it is,
+  for anyone already in MATLAB.
 - **A region drawn wrongly can be corrected from MATLAB, and the correction becomes a pull
   request on its own.** `matlab/AtlasRegionFix.m` brings a plate down from the site -- the
   drawing, the tracing, the extents as they stand, the printed labels and their lines --

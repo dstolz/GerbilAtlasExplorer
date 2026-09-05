@@ -1,6 +1,6 @@
 ---
 name: atlas-region-fix
-description: Take a correction to how a region of the gerbil atlas is drawn -- a corrections/<id>.json written from MATLAB by matlab/AtlasRegionFix.m, or a report that a region on a plate has the wrong outline, the wrong area or no area -- to a finished pull request. Diagnoses which pipeline input is at fault (the tracing, the section outline, a seed, a label box), fixes that input and nothing downstream by hand, rebuilds the extents and everything cut from them, runs every check, and writes it up in the repository's voice. Use when a correction/* branch carries a corrections file, when asked to fix, correct or redraw a region, extent, outline or seed on a plate, or when a structure has no area on a plate where the atlas prints it.
+description: Take a correction to how a region of the gerbil atlas is drawn -- a corrections/<id>.json written by tools/atlasfix.py or matlab/AtlasRegionFix.m, or a report that a region on a plate has the wrong outline, the wrong area or no area -- to a finished pull request. Diagnoses which pipeline input is at fault (the tracing, the section outline, a seed, a label box), fixes that input and nothing downstream by hand, rebuilds the extents and everything cut from them, runs every check, and writes it up in the repository's voice. Use when a correction/* branch carries a corrections file, when asked to fix, correct or redraw a region, extent, outline or seed on a plate, or when a structure has no area on a plate where the atlas prints it.
 ---
 
 # Fixing how a region is drawn

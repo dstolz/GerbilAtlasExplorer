@@ -1,5 +1,6 @@
-# A correction to how a region is drawn, pushed from MATLAB (matlab/AtlasRegionFix.m) as
-# corrections/<id>.json on a branch correction/<id>, is applied here: a Claude Code session
+# A correction to how a region is drawn, pushed as corrections/<id>.json on a branch
+# correction/<id> -- from the browser (tools/atlasfix.py) or from MATLAB
+# (matlab/AtlasRegionFix.m) -- is applied here: a Claude Code session
 # follows .claude/skills/atlas-region-fix/SKILL.md -- diagnoses the input at fault, fixes
 # it, rebuilds the extents and everything cut from them, runs every check, writes the
 # CHANGELOG and METHODS entries, pushes to the same branch and opens a pull request -- and

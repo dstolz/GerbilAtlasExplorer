@@ -24,7 +24,8 @@ anyone check any of them, so they are here as code, in the order they run.
 | `regiongeom.py` | The boundary geometry: crack-lattice tracing, junction detection, arc-wise Douglas-Peucker, and the deburring that takes the pixel-wide slivers off the label map before any of it — a burr is nothing as area and a spike across the outline once simplified. Kept apart because it is the part that has to be right for the regions to tile. |
 | `build_volumes.py` | Stacks the 62 plates, interpolates between them, and writes the brain surface and one mesh per structure to `data/gerbil_atlas_volumes.json`; `--stl DIR` writes the same meshes as STL, `--nifti PATH` the label volume they were cut from as a gzipped NIfTI-1 file with a lookup table beside it. |
 | `volume.py` | The voxel geometry: the even-odd fill, the distance fields, marching cubes, hulls. Kept apart for the same reason `regiongeom.py` is — it holds the part that decides whether the regions still partition the volume. |
-| `corrections.py` | A correction to how a region is drawn, read in from the plate view (`corrections/<id>.json`, written by `matlab/AtlasRegionFix.m`), against the extraction: `inspect` says where each seed lands today and in whose face, how far a drawn boundary's ends sit from traced ink, and which runs of a corrected extent lie off it, and draws all of it over the plate; `apply` writes boundaries into the plate's SVG as cubics the pipeline reads and seeds into `seed_overrides`. Then the pipeline, in the order below. |
+| `atlasfix.py` | The interactive fixer: serves `src/fixer.html` on `127.0.0.1` and answers for it, so a wrong region is marked on the plate in a browser -- a seed where the region is, the run of boundary the tracing missed, the outline it should have -- and committed as `corrections/<id>.json` on a branch of its own. It says what a mark would do with the extraction's own code rather than a copy of it: the face map is cut with `build_region_extents`'s rasterizer over `BRIDGE_PX`, and **Recut** applies the draft with `corrections.apply` and builds the plate again with `build_region_extents.build_plate` against a scratch tree, so what a reader sees before committing is what the workflow builds after. The alternative to `matlab/AtlasRegionFix.m`, with no MATLAB in it. |
+| `corrections.py` | A correction to how a region is drawn, read in from the plate view (`corrections/<id>.json`, written by `tools/atlasfix.py` or `matlab/AtlasRegionFix.m`), against the extraction: `inspect` says where each seed lands today and in whose face, how far a drawn boundary's ends sit from traced ink, and which runs of a corrected extent lie off it, and draws all of it over the plate; `apply` writes boundaries into the plate's SVG as cubics the pipeline reads and seeds into `seed_overrides`. Then the pipeline, in the order below. |
 | `inline_region_extents.py` | Retired; a shim that runs `build_app.py` (or its `--check`), so an old command still does the right thing. |
 
 ```
@@ -37,6 +38,7 @@ python3 tools/find_unlettered.py --pdf GerbilAtlas4Analysis.pdf --sheet /tmp/s.p
 python3 tools/find_compounds.py --pdf GerbilAtlas4Analysis.pdf --sheet /tmp/c.png   # then read it
 python3 tools/label_blocks.py --pdf GerbilAtlas4Analysis.pdf   # rewrites label_blocks
 python3 tools/label_leaders.py --pdf GerbilAtlas4Analysis.pdf  # rewrites label_leaders
+python3 tools/atlasfix.py 19 --abbr S1DZ                # mark what is wrong with a region, in a browser
 python3 tools/corrections.py inspect corrections/ID.json --qc   # a correction against the extraction
 python3 tools/corrections.py apply corrections/ID.json          # into svg/ and seed_overrides; then the pipeline
 python3 tools/build_region_extents.py                  # all 62 plates, ~5 min, rewrites the JSON
@@ -83,6 +85,42 @@ a reader placed by hand, standing in for a printed box or beside the printed one
 the paths `corrections.py apply` adds to a plate's SVG, marked `data-correction` with the
 file they came from. Both survive every re-run, which is the difference from editing the
 derived blocks: `build_region_extents.py` reads them and cuts the extents afresh.
+
+`atlasfix.py` is where one gets written. It serves `src/fixer.html` on `127.0.0.1` and
+opens a browser on it; nothing leaves the machine until **Commit**.
+
+```
+python3 tools/atlasfix.py 19 --abbr S1DZ    # the plate, and the region in question
+python3 tools/atlasfix.py --draft FILE      # back to a saved draft, or any correction file
+python3 tools/atlasfix.py 19 --no-browser --port 8770
+```
+
+The plate comes up in the page frame the tracings are in, with the tracing over it (dashed
+where the atlas prints it dashed), every region's outline as it stands, the printed labels
+with the line and tip where the atlas draws one, and the section outline. Wheel zooms,
+drag with shift or the middle button pans, and the status bar reads the pointer in
+millimetres. **1**-**5** choose the tool:
+
+| | |
+| --- | --- |
+| **Pick** | Read what is there: which face the point falls in, how big it is, which printed labels seed that face, which region holds the point today, and how far the nearest traced ink is. |
+| **Seed +** / **Seed −** | A point that is, or is not, inside the region. Without a box named beside it a positive seed is a seed of its own; naming one makes it stand in for that printed box, whose own seed then withdraws — which is what a box seeding the wrong face needs, and what a box seeding the right one must not get. |
+| **Boundary** | The run of boundary the tracing missed, solid or dashed as the atlas prints it. Click the vertices, **Enter** or double-click to finish. Draw its ends onto the traced ink: the pipeline only bridges `BRIDGE_PX`. |
+| **Extent** | The outline the region should have. Its own ring comes up as a polygon to pull into shape — drag a vertex, click an edge to add one, alt-click to delete one — or click a fresh one. Only the runs of it off the ink already traced are what get traced. |
+
+**Inspect** is `corrections.py inspect` on the draft: every mark against the extraction as
+it stands, in the same sentences the workflow will read. **Recut** goes further — it runs
+`corrections.apply` and `build_region_extents.build_plate` against a scratch copy of the
+plate's SVG and a copy of the database in memory, and draws the outlines that come back,
+which are the ones the pipeline would write. It takes about ten seconds and touches
+nothing in the working tree. **QC image** writes `qc/chk_corr_<id>.png`.
+
+**Commit** validates the draft, then builds the file in a temporary git worktree cut from
+`origin/main` and pushes the branch, so the checkout you are reading the plate from is
+untouched and the branch carries one commit. It shows the file first, and *dry run* there
+writes it under `build/corrections/` and stops, which is the way to look at what would be
+sent. **Save** and **Open** keep a draft between
+sessions — a draft is a correction file like any other.
 
 `--dry-run` reports and touches nothing. `--qc` writes `qc/chk_regions_NN.png`, the plate
 with its regions tinted by how much of each boundary the atlas actually prints; from

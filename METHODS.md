@@ -719,10 +719,15 @@ A region that comes out wrong is one of the three inputs above being wrong, and 
 so far has been one edit to an input: a run of boundary added to the tracing (`S1DZ`, plate
 19), an island given back to `brain_outline` (`ML` on 36, `och` on 22), a seed moved to the
 face its label means (`OV`, plate 5), a printed word given the box the label pass had
-missed (layer 1, plates 17--18). `matlab/AtlasRegionFix.m` is how such a thing is said from
-the plate itself: a point inside the region, the run the tracing missed, the outline the
-region should have, in millimetres over the plate and the tracing, written to
-`corrections/<id>.json` in the page frame the tracings are in and pushed. A workflow then
+missed (layer 1, plates 17--18). `tools/atlasfix.py` -- or `matlab/AtlasRegionFix.m`, which
+writes the same file from MATLAB -- is how such a thing is said from the plate itself: a
+point inside the region, the run the tracing missed, the outline the region should have, in
+millimetres over the plate and the tracing, written to `corrections/<id>.json` in the page
+frame the tracings are in and pushed. The reader is shown what a mark would do before
+sending it, and the browser tool shows it with the extraction rather than a copy of it: the
+face map is cut by `build_region_extents`'s own rasterizer over `BRIDGE_PX`, and its
+**Recut** applies the draft to a scratch tree and re-cuts the plate, which is the same
+`apply` and the same `build_plate` the workflow runs. A workflow then
 has the correction read against the extraction (`tools/corrections.py inspect`: which face
 each seed lands in today and who letters it, whether a drawn boundary's ends are within
 `BRIDGE_PX` of ink, which runs of a corrected outline lie off the ink) and applied to the

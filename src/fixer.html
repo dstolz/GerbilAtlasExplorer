@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Atlas region fixer</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23b03a2e'/%3E%3Cpath fill='%23f6f5f2' d='M16 12.2L17.8 6.7C20.5 6.6 24 8 25.6 10.5 27.3 11.8 28.8 14.6 28.8 17.4 28.6 20 26.9 22.9 25.5 24.3 24.7 25 23.6 25.2 22.6 25.2 20.4 25.2 17.6 23.7 16 23.7 14.4 23.7 11.6 25.2 9.4 25.2 8.4 25.2 7.3 25 6.5 24.3 5.1 22.9 3.4 20 3.2 17.4 3.2 14.6 4.7 11.8 6.4 10.5 8 8 11.5 6.6 14.2 6.7Z'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="/fixer.css">
+</head>
+<body>
+<noscript><p class="pad">The fixer draws the plate on a canvas and needs JavaScript. Without it,
+<code>tools/corrections.py</code> reads and applies a correction file from the command line.</p></noscript>
+
+<header>
+  <div class="brand">
+    <h1>Atlas region fixer</h1>
+    <p class="sub" id="where">plate &mdash;</p>
+  </div>
+  <div class="grp">
+    <button class="b" id="prev" type="button" title="The plate before this one (,)">&#9664;</button>
+    <input id="plate" type="number" min="1" max="62" step="1" title="Plate number">
+    <button class="b" id="next" type="button" title="The plate after this one (.)">&#9654;</button>
+  </div>
+  <div class="seg" id="layerseg" title="The plate under the marks (L cycles)"></div>
+  <div class="grp push">
+    <button class="b" id="fit" type="button" title="Fit the whole plate (F)">Fit</button>
+    <button class="b" id="openb" type="button" title="Read a draft or a correction file back in">Open</button>
+    <button class="b" id="saveb" type="button" title="Write the draft to a file (S)">Save</button>
+    <button class="b go" id="commitb" type="button" title="Write the correction on a branch and push it">Commit</button>
+  </div>
+</header>
+
+<main>
+  <aside class="side" id="side">
+    <section class="box">
+      <h2>The region</h2>
+      <input id="find" type="search" placeholder="Find a structure by name or abbreviation" autocomplete="off">
+      <div class="list" id="regions"></div>
+      <p class="fact" id="regfact">Nothing chosen yet.</p>
+    </section>
+
+    <section class="box">
+      <h2>Mark what is wrong</h2>
+      <div class="seg full" id="toolseg">
+        <button type="button" class="on" data-t="pick" title="Read what is under the pointer (1)">Pick</button>
+        <button type="button" data-t="seed" title="A point that is inside the region (2)">Seed +</button>
+        <button type="button" data-t="unseed" title="A point that is not inside it (3)">Seed &minus;</button>
+        <button type="button" data-t="boundary" title="A run of boundary the tracing missed (4)">Boundary</button>
+        <button type="button" data-t="extent" title="The outline the region should have (5)">Extent</button>
+      </div>
+      <div class="opts" id="opts"></div>
+      <p class="hint" id="hint">Click the plate to read what the extraction has there.</p>
+    </section>
+
+    <section class="box">
+      <h2>The correction</h2>
+      <textarea id="problem" rows="3" placeholder="What is wrong, in a sentence or two. This is what the session that applies it reads first."></textarea>
+      <div class="marks" id="marks"></div>
+      <div class="grp wrap">
+        <button class="b" id="noteb" type="button">Add a note</button>
+        <button class="b" id="undob" type="button" title="Drop the last mark (Z)">Undo</button>
+        <button class="b" id="clearb" type="button">Clear the marks</button>
+      </div>
+    </section>
+
+    <section class="box">
+      <h2>Against the pipeline</h2>
+      <div class="grp wrap">
+        <button class="b" id="inspectb" type="button" title="tools/corrections.py inspect: where each mark lands today (I)">Inspect</button>
+        <button class="b" id="recutb" type="button" title="Apply the draft to a scratch tree and cut the plate again (R)">Recut</button>
+        <button class="b" id="qcb" type="button" title="Write qc/chk_corr_&lt;id&gt;.png beside the plate">QC image</button>
+      </div>
+      <pre class="report" id="report">The plate is cut here the way <b>build_region_extents.py</b> cuts it. <b>Pick</b> says which face a point is in and which printed labels seed that face; <b>Inspect</b> reads the whole draft against the extraction as it stands; <b>Recut</b> applies it to a scratch copy and builds the plate again, so the outlines you see are the ones the pipeline would write.</pre>
+    </section>
+  </aside>
+
+  <section class="stage">
+    <canvas id="cv"></canvas>
+    <div class="over" id="over"></div>
+    <div class="statusbar">
+      <span id="at" class="mono">&mdash;</span>
+      <span id="under"></span>
+      <span class="push mono" id="zoom"></span>
+      <label class="chk"><input type="checkbox" id="v-ink" checked> tracing</label>
+      <label class="chk"><input type="checkbox" id="v-ext" checked> extents</label>
+      <label class="chk"><input type="checkbox" id="v-lab" checked> labels</label>
+      <label class="chk"><input type="checkbox" id="v-una"> unnamed faces</label>
+      <label class="chk"><input type="checkbox" id="v-cut" disabled> the recut</label>
+    </div>
+  </section>
+</main>
+
+<div class="modal" id="modal" hidden>
+  <div class="sheet" role="dialog" aria-modal="true">
+    <h3 id="mtitle"></h3>
+    <div id="mbody"></div>
+    <div class="grp end" id="mbtns"></div>
+  </div>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script src="/fixer.js"></script>
+</body>
+</html>
