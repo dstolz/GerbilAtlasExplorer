@@ -1,0 +1,64 @@
+{
+ "schema": "gerbil-atlas-correction/1",
+ "id": "fixture-p19-S1DZ",
+ "created": "2026-09-04T18:32:38Z",
+ "author": "tests/python/fixtures",
+ "plate": 19,
+ "ap_bregma_mm": 1.5,
+ "abbr": "S1DZ",
+ "hemisphere": "left",
+ "problem": "S1DZ on the left is a scrap against a proper band on the right, and S1J bulges through the gap between them: the case of #77, as a correction would have carried it.",
+ "seeds": [
+  {
+   "abbr": "S1DZ",
+   "kind": "positive",
+   "page_px": [
+    1079,
+    955
+   ],
+   "mm": [
+    -4.13,
+    -2.877
+   ],
+   "note": "inside the dysgranular strip, between the S1J and S1FL lines"
+  }
+ ],
+ "boundaries": [
+  {
+   "style": "dashed",
+   "closed": false,
+   "page_px": [
+    [
+     1162,
+     1043
+    ],
+    [
+     1186,
+     1061
+    ]
+   ],
+   "mm": [
+    [
+     -3.548,
+     -3.496
+    ],
+    [
+     -3.379,
+     -3.623
+    ]
+   ],
+   "note": "the 30 px run of the dashed S1J/S1DZ boundary the tracing missed"
+  }
+ ],
+ "extents": [],
+ "notes": [
+  "Written by hand from the #77 commit message; the seed is the point deepest inside the left S1DZ polygon as committed."
+ ],
+ "snapshot": null,
+ "source": {
+  "commit": "60f2fdb^",
+  "site": "https://dstolz.github.io/GerbilAtlasExplorer/",
+  "tool": "fixture",
+  "matlab": null
+ }
+}

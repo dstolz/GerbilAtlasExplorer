@@ -694,6 +694,34 @@ plate 49 the slash of `PM/ Cop` is drawn along the very boundary it names, and a
 threshold that keeps it, two of those five come back. Every one of the 31 occurrences was
 checked against the printed page by eye.
 
+### Corrections from the plate view
+
+A region that comes out wrong is one of the three inputs above being wrong, and every fix
+so far has been one edit to an input: a run of boundary added to the tracing (`S1DZ`, plate
+19), an island given back to `brain_outline` (`ML` on 36, `och` on 22), a seed moved to the
+face its label means (`OV`, plate 5), a printed word given the box the label pass had
+missed (layer 1, plates 17--18). `matlab/AtlasRegionFix.m` is how such a thing is said from
+the plate itself: a point inside the region, the run the tracing missed, the outline the
+region should have, in millimetres over the plate and the tracing, written to
+`corrections/<id>.json` in the page frame the tracings are in and pushed. A workflow then
+has the correction read against the extraction (`tools/corrections.py inspect`: which face
+each seed lands in today and who letters it, whether a drawn boundary's ends are within
+`BRIDGE_PX` of ink, which runs of a corrected outline lie off the ink) and applied to the
+input at fault, and the extents are re-cut. Nothing is drawn into `region_extents` by hand,
+so the regions still tile and `boundary_edges_shared_exactly` stays 1.0 by construction.
+
+Two of the four edits have a home in the data rather than in a script's table.
+`seed_overrides` is a seed placed by hand: keyed by plate and abbreviation, a row
+`[i, x, y, id, why]` stands in for printed box `i` exactly as a leader tip does -- the box
+is still where the word is, this is where it points -- or, with `i = -1`, seeds a face
+beside the printed labels, uncounted in `n` and unmirrored, as a mirror is. It is read after
+`label_leaders`, so it wins over a marched tip, and it survives a re-run of every pass. A
+run of boundary goes into the plate's SVG as a path of cubics with collinear control
+points -- the one grammar the extraction's reader accepts -- carrying `data-correction`
+with the id it came from, so the tracing says what the tracer drew and what a reader
+added. A corrected outline is evidence rather than input: only the runs of it further
+than 3 px from ink already traced are added, and the region is cut from the result.
+
 ### Coloring the section
 
 The extents tile the plate, which is what lets the app color it the way a map of countries

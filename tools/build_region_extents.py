@@ -28,8 +28,10 @@ The pipeline, in order:
      seeded on the printed labels and ridged on the distance transform of the
      ink splits the face along the strongest evidence there is. A label the
      atlas set outside its region with a line drawn back in is seeded at the
-     end of that line -- see `label_leaders` and tools/label_leaders.py. Faces holding
-     no label at all are left unassigned: the atlas does not name them here,
+     end of that line -- see `label_leaders` and tools/label_leaders.py. A seed a
+     reader has moved by hand, from a correction made in the plate view, stands
+     in for its box the same way -- see `seed_overrides` and tools/corrections.py.
+     Faces holding no label at all are left unassigned: the atlas does not name them here,
      and growing a neighbor over them would invent a claim. Abbreviations
      the atlas typeset into one label are seeded as one, not against
      each other -- see `label_blocks` and tools/label_blocks.py. And the names
@@ -51,7 +53,8 @@ The pipeline, in order:
      the atlas drew. Store as fractions of the app's 1100 x 703 plate frame,
      the frame and convention brain_outline already uses.
 
-Reads:  svg/*.svg, data/gerbil_atlas.json, the page-to-plate matrices in data/vec.json
+Reads:  svg/*.svg, data/gerbil_atlas.json (label_positions, label_leaders,
+        seed_overrides, brain_outline), the page-to-plate matrices in data/vec.json
 Writes: data/gerbil_atlas.json (`region_extents`), optional qc/chk_regions_NN.png
 
 Usage:  python3 tools/build_region_extents.py [--plates 30 | 28-33 | 5,30,45] [--qc] [--dry-run]
@@ -227,8 +230,15 @@ def build_plate(plate, DB, VECM, want_qc=False):
     boxes = DB['label_positions']['data'].get(str(plate), {})
     one_name = name_map(DB, plate)
     lead = DB.get('label_leaders', {}).get('data', {}).get(str(plate), {})
+    # Seeds a reader moved by hand, from a correction -- see seed_overrides and
+    # tools/corrections.py. A row [i, x, y, id, why] with i >= 0 stands in for
+    # box i of that abbreviation exactly as a leader tip does: the box is still
+    # where the word is printed, this is where it points, and it wins over a
+    # marched tip because it was read off the plate. With i == -1 the plate
+    # prints no box for the name at all, and the row is a seed of its own.
+    over = DB.get('seed_overrides', {}).get('data', {}).get(str(plate), {})
     seeds = np.zeros((H, W), np.int32)
-    seed_ab, seed_face, snapped, dropped, led = [], [], 0, 0, 0
+    seed_ab, seed_face, snapped, dropped, led, moved = [], [], 0, 0, 0, 0
     printed = []                       # (ab, point, half width, half height, face)
 
     def place(ab, at, hw, hh, fid):
@@ -250,9 +260,39 @@ def build_plate(plate, DB, VECM, want_qc=False):
             xi, yi = int(round(px)), int(round(py))
             seeds[max(0, yi - 2):yi + 3, max(0, xi - 2):xi + 3] = sid
 
+    def locate(at):
+        """The face a seed point falls in: the pixel's own face where that is
+        a real one, else the largest face within SNAP_PX -- a label printed on
+        a wall, or beside the section with a line this pass could not follow --
+        else 0, and the seed is dropped."""
+        nonlocal snapped, dropped
+        px, py = xf(im, at[0] * NW, at[1] * NH)
+        xi, yi = int(round(px)), int(round(py))
+        fid = 0
+        if 0 <= xi < W and 0 <= yi < H:
+            fid = faces[yi, xi]
+            if fid == 0 or fsize[fid] < MIN_FACE_PX:
+                fid = 0
+        if not fid:
+            k = SNAP_PX
+            win = faces[max(0, yi - k):yi + k, max(0, xi - k):xi + k]
+            v = win[win > 0]
+            v = v[fsize[v] >= MIN_FACE_PX]
+            if v.size:
+                fid = int(np.bincount(v).argmax())
+                snapped += 1
+            else:
+                dropped += 1
+        return fid
+
     for ab0, bs in boxes.items():
         ab = one_name.get(ab0, ab0)     # a joined label seeds under its first name
         tips = {i: (tx, ty) for i, tx, ty in lead.get(ab0, [])}
+        byhand = set()
+        for row in over.get(ab0, []):
+            if row[0] >= 0:
+                tips[row[0]] = (row[1], row[2])
+                byhand.add(row[0])
         for j, (cx, cy, bw, bh) in enumerate(bs):
             # A label the atlas could not fit inside its region is printed
             # outside it with a line drawn back in, and it is the end of that
@@ -262,27 +302,13 @@ def build_plate(plate, DB, VECM, want_qc=False):
             # lands in a neighbor's face and the two swap territories.
             tip = tips.get(j)
             at = tip or (cx, cy)
-            px, py = xf(im, at[0] * NW, at[1] * NH)
-            xi, yi = int(round(px)), int(round(py))
-            fid = 0
-            if 0 <= xi < W and 0 <= yi < H:
-                fid = faces[yi, xi]
-                if fid == 0 or fsize[fid] < MIN_FACE_PX:
-                    fid = 0
+            fid = locate(at)
             if not fid:
-                # printed on a wall, or beside the section with a line this pass
-                # could not follow
-                k = SNAP_PX
-                win = faces[max(0, yi - k):yi + k, max(0, xi - k):xi + k]
-                v = win[win > 0]
-                v = v[fsize[v] >= MIN_FACE_PX]
-                if v.size:
-                    fid = int(np.bincount(v).argmax())
-                    snapped += 1
-                else:
-                    dropped += 1
-                    continue
-            led += bool(tip)
+                continue
+            if j in byhand:
+                moved += 1
+            else:
+                led += bool(tip)
             # the glyph box -- or, for a label on a line, a mark at the end of
             # it, because the box is somewhere else entirely
             if tip:
@@ -292,11 +318,27 @@ def build_plate(plate, DB, VECM, want_qc=False):
             printed.append((ab, at, hw, hh, fid))
             place(ab, at, hw, hh, fid)
 
+    # A seed for a name the plate prints no box for. It takes part in the
+    # watershed like a printed one and is left out of `n`, as a mirror is; it
+    # is not mirrored itself, because a mirror exists only where a printed
+    # label does. Placed after every printed seed so that seed_ab[:len(printed)]
+    # is still the printed ones.
+    for ab0, rows in over.items():
+        ab = one_name.get(ab0, ab0)
+        for row in rows:
+            if row[0] >= 0:
+                continue
+            at = (row[1], row[2])
+            fid = locate(at)
+            if fid:
+                place(ab, at, TIP_SEED_PX, TIP_SEED_PX, fid)
+                moved += 1
+
     if not seed_ab:
         return None
 
     mirrored = mirror_seeds(printed, place, faces, fsize, m, im, NW, NH, W, H,
-                            DB['plate_frame']['ml_zero_px'])
+                            DB['plate_frame']['ml_zero_px'], set(seed_face))
 
     # Everything inside the section is up for grabs except a face the atlas
     # sealed and did not name. The drawn lines themselves belong to no face, so
@@ -502,7 +544,7 @@ def build_plate(plate, DB, VECM, want_qc=False):
     stats = dict(plate=plate, paths=len(polys), bridges=bridges,
                  faces=int((fsize[1:] >= MIN_FACE_PX).sum()),
                  seeds=len(printed), snapped=snapped, dropped=dropped,
-                 mirrored=mirrored, sole=sole, led=led,
+                 mirrored=mirrored, sole=sole, led=led, moved=moved,
                  feat=sum(1 for pr in printed if pr[0] in A.FEATURES),
                  feat_mm2=round(feat_mm2 * mm2, 3),
                  regions=len(out),
@@ -511,11 +553,14 @@ def build_plate(plate, DB, VECM, want_qc=False):
                  pts=sum(len(g) for v in out.values() for g in v['g']),
                  unassigned=len(unassigned),
                  covered=round(float((byab > 0).sum()) / tot_i, 4))
+    # the QC tuple also carries the faces the seeds were dropped into and the
+    # printed seeds themselves, which is what tools/corrections.py reads a
+    # correction against
     return (out, unassigned, stats,
-            (LBL, interior, traced, m, W, H, order, supw) if want_qc else None)
+            (LBL, interior, traced, m, W, H, order, supw, faces, printed) if want_qc else None)
 
 
-def mirror_seeds(printed, place, faces, fsize, m, im, NW, NH, W, H, ml0):
+def mirror_seeds(printed, place, faces, fsize, m, im, NW, NH, W, H, ml0, held=None):
     """Seed the other hemisphere of an abbreviation the atlas prints on one side.
 
     Most abbreviations are printed twice, once per hemisphere, but not all of
@@ -535,8 +580,12 @@ def mirror_seeds(printed, place, faces, fsize, m, im, NW, NH, W, H, ml0):
     A mirrored seed is then an ordinary seed -- it takes part in the watershed
     like a printed one -- but it is not a printed label, so it is left out of
     `n` and counted separately in the summary.
+
+    `held` is every face a seed already sits in -- the printed ones, and any a
+    reader placed by hand -- and none of them is a mirror target.
     """
-    held = {p[4] for p in printed}
+    if held is None:
+        held = {p[4] for p in printed}
     cand = {}
     for ab, at, hw, hh, src in printed:
         at2 = ((2 * ml0 - at[0] * NW) / NW, at[1])
@@ -650,10 +699,10 @@ def main():
         if a.qc and qc:
             write_qc(p, qc)
         print('plate %2d: %3d regions %4d polys %6d pts | %3d seeds '
-              '(%d snapped, %d dropped, %d mirrored) | %2d unassigned | '
+              '(%d snapped, %d dropped, %d mirrored, %d by hand) | %2d unassigned | '
               '%2d split | %.0f%% covered | %d no region, %.1f mm2 back'
               % (p, st['regions'], st['polys'], st['pts'], st['seeds'],
-                 st['snapped'], st['dropped'], st['mirrored'],
+                 st['snapped'], st['dropped'], st['mirrored'], st['moved'],
                  st['unassigned'], st['split'], 100 * st['covered'],
                  st['feat'], st['feat_mm2']), flush=True)
 
@@ -670,6 +719,7 @@ def main():
         labels_relocated=sum(r['snapped'] for r in rows),
         labels_dropped=sum(r['dropped'] for r in rows),
         labels_mirrored=sum(r['mirrored'] for r in rows),
+        seeds_moved_by_hand=sum(r['moved'] for r in rows),
         labels_naming_no_region=sum(r['feat'] for r in rows),
         names_that_are_no_region=len(A.FEATURES),
         mm2_returned_to_the_regions=round(sum(r['feat_mm2'] for r in rows), 1),
@@ -804,7 +854,7 @@ def write_qc(plate, qc):
     split had to be inferred. This is the check a reader can make by eye, and
     the one that catches a leak the numbers average away."""
     from PIL import Image
-    LBL, _interior, _traced, m, W, H, order, sup = qc
+    LBL, _interior, _traced, m, W, H, order, sup = qc[:8]
     NW, NH = A.NW, A.NH
     base = A.plate_image('drawing', plate).convert('RGB')
 
@@ -855,7 +905,7 @@ def validation_text(v, DB):
         "largest face within a millimeter; %(drop)d could not be resolved at "
         "all. %(mir)d more seeds are not printed labels at all but mirrors of "
         "one about ML 0, filling a face the drawing seals on the hemisphere the "
-        "atlas did not letter. %(feat)d of the seeds name no region at all -- the "
+        "atlas did not letter. %(hand)s%(feat)d of the seeds name no region at all -- the "
         "%(featn)d fissures, sulci, vessels and the cerebellar white matter that "
         "`features` lists -- and the %(fmm)s mm2 they were holding is given back "
         "at the end of the pass, each pixel of it to whichever region is nearest "
@@ -884,6 +934,9 @@ def validation_text(v, DB):
              pts=v['points'], seed=v['labels_seeded'],
              led=v['labels_on_a_leader'], snap=v['labels_relocated'],
              drop=v['labels_dropped'], mir=v['labels_mirrored'],
+             hand=('%d seeds were placed or moved by hand, from corrections made in the '
+                   'plate view -- see `seed_overrides`. ' % v['seeds_moved_by_hand']
+                   if v.get('seeds_moved_by_hand') else ''),
              feat=v['labels_naming_no_region'], featn=v['names_that_are_no_region'],
              fmm='{:,.0f}'.format(v['mm2_returned_to_the_regions']),
              split=v['entries_without_a_drawn_outline'],
@@ -926,7 +979,9 @@ DERIV = ("Built by tools/build_region_extents.py from the traced outlines in "
          "holding several abbreviations are split by a watershed seeded on the "
          "printed labels and ridged on the distance transform of the ink. "
          "Abbreviations the atlas typesets into one printed label are seeded as "
-         "one rather than against each other. An abbreviation the atlas prints "
+         "one rather than against each other. A seed a reader has moved by hand "
+         "-- see seed_overrides -- stands in for its label's box as a leader "
+         "tip does. An abbreviation the atlas prints "
          "on one hemisphere only is mirrored about ML 0 into the other, and the "
          "mirror kept where it lands in a face the drawing seals and no printed "
          "abbreviation names, and where more than half of that face reflects "

@@ -24,6 +24,7 @@ anyone check any of them, so they are here as code, in the order they run.
 | `regiongeom.py` | The boundary geometry: crack-lattice tracing, junction detection, arc-wise Douglas-Peucker, and the deburring that takes the pixel-wide slivers off the label map before any of it — a burr is nothing as area and a spike across the outline once simplified. Kept apart because it is the part that has to be right for the regions to tile. |
 | `build_volumes.py` | Stacks the 62 plates, interpolates between them, and writes the brain surface and one mesh per structure to `data/gerbil_atlas_volumes.json`; `--stl DIR` writes the same meshes as STL, `--nifti PATH` the label volume they were cut from as a gzipped NIfTI-1 file with a lookup table beside it. |
 | `volume.py` | The voxel geometry: the even-odd fill, the distance fields, marching cubes, hulls. Kept apart for the same reason `regiongeom.py` is — it holds the part that decides whether the regions still partition the volume. |
+| `corrections.py` | A correction to how a region is drawn, read in from the plate view (`corrections/<id>.json`, written by `matlab/AtlasRegionFix.m`), against the extraction: `inspect` says where each seed lands today and in whose face, how far a drawn boundary's ends sit from traced ink, and which runs of a corrected extent lie off it, and draws all of it over the plate; `apply` writes boundaries into the plate's SVG as cubics the pipeline reads and seeds into `seed_overrides`. Then the pipeline, in the order below. |
 | `inline_region_extents.py` | Retired; a shim that runs `build_app.py` (or its `--check`), so an old command still does the right thing. |
 
 ```
@@ -36,6 +37,8 @@ python3 tools/find_unlettered.py --pdf GerbilAtlas4Analysis.pdf --sheet /tmp/s.p
 python3 tools/find_compounds.py --pdf GerbilAtlas4Analysis.pdf --sheet /tmp/c.png   # then read it
 python3 tools/label_blocks.py --pdf GerbilAtlas4Analysis.pdf   # rewrites label_blocks
 python3 tools/label_leaders.py --pdf GerbilAtlas4Analysis.pdf  # rewrites label_leaders
+python3 tools/corrections.py inspect corrections/ID.json --qc   # a correction against the extraction
+python3 tools/corrections.py apply corrections/ID.json          # into svg/ and seed_overrides; then the pipeline
 python3 tools/build_region_extents.py                  # all 62 plates, ~5 min, rewrites the JSON
 python3 tools/build_region_extents.py --plates 30 --dry-run --qc
 python3 tools/build_volumes.py                         # all 62 plates, ~3 min, 21 MB of meshes
@@ -74,6 +77,12 @@ every join it made, boxed on the page it read; `label_leaders.py --qc` writes
 Both carry a `REJECT` table of candidates that were read against the printed plate and
 turned out to be something else, so a re-run reproduces the committed block rather than
 quietly making the same mistakes again.
+
+A correction is one more input the pipeline reads: `seed_overrides` in the database, a seed
+a reader placed by hand, standing in for a printed box or beside the printed ones; and
+the paths `corrections.py apply` adds to a plate's SVG, marked `data-correction` with the
+file they came from. Both survive every re-run, which is the difference from editing the
+derived blocks: `build_region_extents.py` reads them and cuts the extents afresh.
 
 `--dry-run` reports and touches nothing. `--qc` writes `qc/chk_regions_NN.png`, the plate
 with its regions tinted by how much of each boundary the atlas actually prints; from
