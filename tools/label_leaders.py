@@ -176,9 +176,37 @@ def impressions(DB, plate, boxes):
 # wall -- in the neighbouring region, which is the one failure this pass exists to
 # prevent. Marching the leader's own black ink instead of "ink the tracing did not draw"
 # would find it, and would move 47 of the 215 lines, four of them over 35 px; that is 47
-# lines to put beside the printed page before any of them could be trusted. This is the
-# one that was read, with what the page says.
+# lines to put beside the printed page before any of them could be trusted. These are the
+# ones that were read, with what the page says.
 TIP_READ = {
+    (3, 'OV', 0): ((0.4280, 0.6197),
+                  "the left-hand E/OV line on plate 3 -- the march reaches it from `OV`, "
+                  "and `E` takes it from the group. The same failure as plate 5's "
+                  "right: the ventricle it ends in is a slit between two drawn walls, "
+                  "narrower than the skirt, so the last stretch of the line is masked "
+                  "with the wall it runs through and the march stops 24 px short, out in "
+                  "the granule layer. Stepping along the line's own black ink from the "
+                  "recorded tip: 12 px of it still in that layer, then the wall, then 14 "
+                  "px inside the ventricle, ending against its far wall."),
+    (2, 'E', 1): ((0.4288, 0.6116),
+                  "the left-hand E/OV line on plate 2, which is found at all only once "
+                  "OV's own word is located beside E's: the march aims at the joined "
+                  "label and this line arrives between the two names. Its recorded end is "
+                  "24 px short, out in the granule layer; the line's own black ink runs "
+                  "205 px from the word and ends here, inside the ventricle. The "
+                  "ventricle on this hemisphere is cut into beads of 41 to 1363 px, so "
+                  "the bead this lands in is under MIN_AREA_PX and E keeps no entry on "
+                  "this side -- which is the honest outcome, and better than what the "
+                  "printed box seeded, a scrap of the section's own edge with the word "
+                  "sitting on it."),
+    (4, 'OV', 1): ((0.4221, 0.6154),
+                   "the left-hand E/OV line on plate 4 -- the march reaches it from `OV`, "
+                   "and `E` takes it from the group. Its recorded end is 45.6 px from the "
+                   "word, barely past MINTIP and nowhere near the ventricle: it stops in "
+                   "the 28,726 px face EPl's own word seeds, which is why E outlined a "
+                   "band down the medial edge of the bulb. The line's black ink runs 209 "
+                   "px and ends here, in the 1,085 px ventricle face that mirrors the one "
+                   "the right-hand line already lands in."),
     (5, 'E', 0): ((0.5258, 0.6339),
                   "the right-hand E/OV line ends inside the olfactory ventricle, which is "
                   "4 px of section between two drawn walls -- narrower than the skirt, so "
@@ -186,12 +214,68 @@ TIP_READ = {
                   "outside the ventricle and in the band around aci. Read off the print: "
                   "the line's own black ink runs to here, and the left-hand line, whose "
                   "ventricle is wider, needs no correction."),
+    (13, 'E', 1): ((0.4164, 0.6669),
+                   "the left-hand E/OV line on plate 13, read against its own mirror. On "
+                   "the right the line's black ink ends inside a 211 px sliver too small "
+                   "to seed, and the tip the march records sits 6.5 px back from it, on "
+                   "the compartment side of that sliver's wall -- which is the right "
+                   "answer, and the region E draws there. On the left the ink ends in the "
+                   "mirror sliver (259 px) but the march stops 37 px short of it, in the "
+                   "face DEn's own word seeds; E then holds that face against DEn and "
+                   "IEn, and IEn is left with no entry on this hemisphere at all. This is "
+                   "the same reading taken on the left: 8 px back along the line from its "
+                   "ink end, the first point on the compartment side of the wall."),
+}
+
+
+# The same reading, for a line the shape tests never accepted at all rather than one
+# whose end the march could not see. Step 3 keeps a piece only if it is long, thin and
+# straight, and step 5 drops a tip nearer its word than MINTIP -- which is what stops a
+# hyphen, a bracket or a stray mark being read as a leader, and is worth keeping as it
+# is. Three lines in the atlas fall outside it, and each is a label the atlas set outside
+# the region it names, so its printed box seeds a neighbour's face and the structure
+# outlines a scrap of that neighbour. All were read off the printed page the way the
+# entry in TIP_READ was, by marching the line's own black ink -- the leaders are black
+# and the drawing is red, and on the RGB page the two separate cleanly. The same march,
+# run against the one line TIP_READ already records, lands 0.2 px from the figure a
+# reader wrote there by hand, which is what says the reading is the page's and not the
+# reader's.
+TIP_HAND = {
+    (3, 'E', 0): ((0.5142, 0.6163),
+                  "the right-hand E/OV line on plate 3 -- 163 px of unbroken black ink "
+                  "from the word up into the olfactory ventricle. No piece of it "
+                  "survives step 3: it runs the length of the bulb and every wall it "
+                  "crosses cuts it, so what reaches the straightness test is a string of "
+                  "fragments. The box alone seeds a sliver of the section's own edge "
+                  "where the word is printed, which is what E outlined on that side."),
+    (2, 'E', 0): ((0.5117, 0.6105),
+                  "the right-hand E/OV line on plate 2, the twin of the plate-3 entry "
+                  "above it and the same failure: 163 px of unbroken black ink from the "
+                  "word up into the olfactory ventricle, cut by every wall it crosses "
+                  "into fragments none of which survives the straightness test. Both of "
+                  "this label's words are located, so the aim is the joined label and not "
+                  "the miss -- the line simply never reaches step 4. The box alone seeds "
+                  "the section's own edge where the word is printed."),
+    (13, 'lo', 0): ((0.3725, 0.6759),
+                    "lo is printed clear of the section on plate 13 with a 15 px line "
+                    "back to the lateral olfactory tract -- under MINTIP, so it is read "
+                    "as a mark beside the word rather than a line out of it, which is "
+                    "the right reading for a hyphen and the wrong one here. Left on the "
+                    "box, the seed lands outside the drawn border, in the crescent "
+                    "between it and the published outline, and lo outlines the paper "
+                    "its own name is set on."),
 }
 
 
 def tip_read(plate, ab, index):
     """The tip a reader took off the printed page, or None. See TIP_READ."""
     got = TIP_READ.get((plate, ab, index))
+    return got[0] if got else None
+
+
+def tip_hand(plate, ab, index):
+    """The tip for a line the shape tests could not accept, or None. See TIP_HAND."""
+    got = TIP_HAND.get((plate, ab, index))
     return got[0] if got else None
 
 
@@ -544,6 +628,22 @@ def main():
                 off += 1                          # a line points into the brain
                 continue
             keep.append((ab, j, round(fx, DEC), round(fy, DEC), o['reach']))
+        # ...and the lines the shape tests could not accept at all, read off the page the
+        # same way. Added here, before the pass below, so a hand-read line is shared
+        # across the names of its label exactly as a found one is.
+        have = {(ab, j) for ab, j, *_ in keep}
+        for pp, ab, j in sorted(TIP_HAND):
+            if pp != p or (ab, j) in have or rejected(p, ab, j) or (ab, j) not in idx:
+                continue
+            fx, fy = tip_hand(p, ab, j)
+            if not inside(outline.get(p, []), fx, fy):
+                off += 1
+                continue
+            _ab, x0, y0, x1, y1 = boxes[idx.index((ab, j))]
+            tx, ty = to_native(fx * NW, fy * NH)
+            keep.append((ab, j, round(fx, DEC), round(fy, DEC),
+                         math.hypot(tx - (x0 + x1) / 2, ty - (y0 + y1) / 2)))
+            hand += 1
         # one line, every name in the label it was drawn from
         shared, done = 0, {(ab, j) for ab, j, *_ in keep}
         for group in oneword:

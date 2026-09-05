@@ -75,6 +75,14 @@ KEEP = 0.45
 # point of this table: every box the pass writes was looked at on the printed
 # page first, and a pair with no entry here is reported and not written.
 READ = {
+    # SHy is the one entry here the published index does not list at all -- the atlas
+    # prints it on plates 22 to 25 and neither index carries a septohypothalamic row,
+    # so it reached this pass with no located copy for the same reason as the rest and
+    # for a different cause. See verification.known_source_discrepancies.
+    (22, 'SHy'): 'yny',
+    (23, 'SHy'): 'yyn',
+    (24, 'SHy'): 'yyy',
+    (25, 'SHy'): 'yyn',
     (23, 'AVPe'): 'ynn',
     (26, 'SChVM'): 'y',
     (39, 'tfp'): 'ynn',
@@ -104,6 +112,8 @@ READ = {
 # reader can check the judgement rather than take it, and so that the two words
 # this method keeps offering are on the record as the ones to expect.
 WAS = {
+    (22, 'SHy', 1): 'SHi, which the composed word matches on every plate that prints it',
+    (23, 'SHy', 2): 'SHi', (25, 'SHy', 2): 'the SFi printed under LSD',
     (23, 'AVPe', 1): 'VP', (23, 'AVPe', 2): 'VP, the other hemisphere',
     (39, 'tfp', 1): 'fmj', (39, 'tfp', 2): 'PMnR',
     (43, 'DTgP', 0): 'LDTg, which holds DTg whole and outscores the word itself',

@@ -14,10 +14,11 @@ Mi,mitral cell layer of the olfactory bulb,1,1,7.8,0.66,0.66,-4.63,leader tip,0.
 ON,olfactory nerve layer,1,0,7.8,1.44,1.44,-5.88,label box,0.5475,0.6115,0.0105,0.0119,,
 ON,olfactory nerve layer,1,1,7.8,-1.6,1.6,-5.92,label box,0.3896,0.6149,0.0102,0.0119,,
 OV,olfactory ventricle (olfactory part of lateral ventricle),1,0,7.8,-0.74,0.74,-5.67,leader tip,0.4008,0.6837,0.0102,0.0119,0.4343,0.5942
+OV,olfactory ventricle (olfactory part of lateral ventricle),1,1,7.8,1.48,1.48,-6.79,label box,0.5496,0.6853,0.0102,0.0119,,
 aci,"anterior commissure, intrabulbar part",1,0,7.8,-0.67,0.67,-5.35,leader tip,0.3745,0.5227,0.0098,0.0119,0.4378,0.5686
 aci,"anterior commissure, intrabulbar part",1,1,7.8,0.7,0.7,-5.23,leader tip,0.5639,0.5233,0.0098,0.0119,0.5092,0.5592
-E,ependyma and subependymal layer,2,0,7.45,1.51,1.51,-6.73,label box,0.5509,0.6799,0.004,0.0114,,
-E,ependyma and subependymal layer,2,1,7.45,-1.94,1.94,-6.83,label box,0.3724,0.6881,0.0036,0.0119,,
+E,ependyma and subependymal layer,2,0,7.45,0.75,0.75,-5.87,leader tip,0.5509,0.6799,0.004,0.0114,0.5117,0.6105
+E,ependyma and subependymal layer,2,1,7.45,-0.85,0.85,-5.88,leader tip,0.3724,0.6881,0.0036,0.0119,0.4288,0.6116
 EPl,external plexiform layer of the olfactory bulb,2,0,7.45,-1.38,1.38,-5.61,label box,0.4012,0.5892,0.0109,0.0114,,
 EPl,external plexiform layer of the olfactory bulb,2,1,7.45,1.22,1.22,-5.57,label box,0.5362,0.5864,0.0105,0.0114,,
 Gl,glomerular layer of the olfactory bulb,2,0,7.45,1.5,1.5,-5.47,label box,0.5503,0.5781,0.0069,0.0119,,
@@ -32,11 +33,12 @@ ON,olfactory nerve layer,2,0,7.45,-1.91,1.91,-5.89,label box,0.3735,0.6119,0.010
 ON,olfactory nerve layer,2,1,7.45,1.85,1.85,-5.89,label box,0.5685,0.6119,0.0098,0.0125,,
 ON,olfactory nerve layer,2,2,7.45,-0.42,0.42,-7.04,label box,0.4508,0.7048,0.0105,0.0119,,
 ON,olfactory nerve layer,2,3,7.45,0.39,0.39,-7.02,label box,0.4927,0.7031,0.0102,0.0119,,
-OV,olfactory ventricle (olfactory part of lateral ventricle),2,0,7.45,1.72,1.72,-6.73,label box,0.5616,0.6802,0.0102,0.0119,,
+OV,olfactory ventricle (olfactory part of lateral ventricle),2,0,7.45,0.75,0.75,-5.87,leader tip,0.5616,0.6802,0.0102,0.0119,0.5117,0.6105
+OV,olfactory ventricle (olfactory part of lateral ventricle),2,1,7.45,-0.85,0.85,-5.88,leader tip,0.3829,0.6881,0.0102,0.0119,0.4288,0.6116
 aci,"anterior commissure, intrabulbar part",2,0,7.45,-1.35,1.35,-4.83,leader tip,0.3642,0.5126,0.0098,0.0119,0.4026,0.5264
 aci,"anterior commissure, intrabulbar part",2,1,7.45,0.83,0.83,-4.95,leader tip,0.5819,0.5126,0.0102,0.0119,0.5157,0.536
-E,ependyma and subependymal layer,3,0,7.1,1.27,1.27,-6.99,label box,0.5383,0.7009,0.0036,0.0114,,
-E,ependyma and subependymal layer,3,1,7.1,-0.96,0.96,-6.12,leader tip,0.388,0.7069,0.0036,0.0119,0.4229,0.6309
+E,ependyma and subependymal layer,3,0,7.1,0.8,0.8,-5.94,leader tip,0.5383,0.7009,0.0036,0.0114,0.5142,0.6163
+E,ependyma and subependymal layer,3,1,7.1,-0.86,0.86,-5.98,leader tip,0.388,0.7069,0.0036,0.0119,0.428,0.6197
 EPl,external plexiform layer of the olfactory bulb,3,0,7.1,1.41,1.41,-5.44,label box,0.546,0.5761,0.0105,0.0114,,
 EPl,external plexiform layer of the olfactory bulb,3,1,7.1,-1.56,1.56,-5.56,label box,0.3919,0.5852,0.0105,0.0114,,
 Gl,glomerular layer of the olfactory bulb,3,0,7.1,-1.84,1.84,-5.67,label box,0.3772,0.5946,0.0065,0.0119,,
@@ -50,11 +52,12 @@ Mi,mitral cell layer of the olfactory bulb,3,0,7.1,1.58,1.58,-4.24,leader tip,0.
 Mi,mitral cell layer of the olfactory bulb,3,1,7.1,-1.44,1.44,-4.66,leader tip,0.3844,0.4781,0.0094,0.0153,0.3981,0.5131
 ON,olfactory nerve layer,3,0,7.1,0.44,0.44,-7.19,label box,0.4953,0.7171,0.0105,0.0119,,
 ON,olfactory nerve layer,3,1,7.1,-0.61,0.61,-7.21,label box,0.441,0.7191,0.0102,0.0125,,
-OV,olfactory ventricle (olfactory part of lateral ventricle),3,0,7.1,-0.96,0.96,-6.12,leader tip,0.3987,0.7069,0.0105,0.0119,0.4229,0.6309
+OV,olfactory ventricle (olfactory part of lateral ventricle),3,0,7.1,-0.86,0.86,-5.98,leader tip,0.3987,0.7069,0.0105,0.0119,0.428,0.6197
+OV,olfactory ventricle (olfactory part of lateral ventricle),3,1,7.1,0.8,0.8,-5.94,leader tip,0.549,0.704,0.0105,0.0119,0.5142,0.6163
 aci,"anterior commissure, intrabulbar part",3,0,7.1,1.39,1.39,-5.03,leader tip,0.587,0.5361,0.0098,0.0119,0.5446,0.5426
 aci,"anterior commissure, intrabulbar part",3,1,7.1,-1.27,1.27,-5.08,leader tip,0.3599,0.5413,0.0098,0.0091,0.4068,0.5466
 E,ependyma and subependymal layer,4,0,6.75,0.97,0.97,-6.04,leader tip,0.5492,0.7086,0.0036,0.0119,0.5231,0.6241
-E,ependyma and subependymal layer,4,1,6.75,-1.42,1.42,-6.75,leader tip,0.3768,0.7111,0.0036,0.0114,0.3991,0.6818
+E,ependyma and subependymal layer,4,1,6.75,-0.98,0.98,-5.93,leader tip,0.3768,0.7111,0.0036,0.0114,0.4221,0.6154
 EPl,external plexiform layer of the olfactory bulb,4,0,6.75,1.68,1.68,-5.36,label box,0.5596,0.569,0.0109,0.021,,
 EPl,external plexiform layer of the olfactory bulb,4,1,6.75,-1.82,1.82,-5.41,label box,0.3782,0.5734,0.0109,0.0119,,
 Gl,glomerular layer of the olfactory bulb,4,0,6.75,1.88,1.88,-5.68,label box,0.5703,0.5952,0.0069,0.0119,,
@@ -70,7 +73,7 @@ Mi,mitral cell layer of the olfactory bulb,4,1,6.75,1.53,1.53,-4.61,leader tip,0
 ON,olfactory nerve layer,4,0,6.75,-0.55,0.55,-7.17,label box,0.444,0.7159,0.0102,0.0125,,
 ON,olfactory nerve layer,4,1,6.75,0.48,0.48,-7.16,label box,0.4978,0.7151,0.0102,0.0119,,
 OV,olfactory ventricle (olfactory part of lateral ventricle),4,0,6.75,0.97,0.97,-6.04,leader tip,0.5598,0.7086,0.0102,0.0119,0.5231,0.6241
-OV,olfactory ventricle (olfactory part of lateral ventricle),4,1,6.75,-1.42,1.42,-6.75,leader tip,0.3873,0.7114,0.0102,0.0119,0.3991,0.6818
+OV,olfactory ventricle (olfactory part of lateral ventricle),4,1,6.75,-0.98,0.98,-5.93,leader tip,0.3873,0.7114,0.0102,0.0119,0.4221,0.6154
 aci,"anterior commissure, intrabulbar part",4,0,6.75,1.34,1.34,-5.11,leader tip,0.5901,0.5427,0.0098,0.0119,0.5424,0.5492
 aci,"anterior commissure, intrabulbar part",4,1,6.75,-1.28,1.28,-5.13,leader tip,0.3541,0.5438,0.0098,0.0119,0.4064,0.5506
 E,ependyma and subependymal layer,5,0,6.4,1.02,1.02,-6.16,leader tip,0.5503,0.7174,0.0036,0.0114,0.5258,0.6339
@@ -438,7 +441,7 @@ DTT,dorsal tenia tecta,13,0,3.6,0.35,0.35,-6.76,label box,0.4911,0.6824,0.0145,0
 Dtr,dorsal transition zone,13,0,3.6,-1.1,1.1,-6.16,label box,0.4157,0.6341,0.0102,0.0114,,
 Dtr,dorsal transition zone,13,1,3.6,0.86,0.86,-6.13,label box,0.5173,0.6312,0.0105,0.0114,,
 E,ependyma and subependymal layer,13,0,3.6,0.99,0.99,-6.5,leader tip,0.5558,0.71,0.0036,0.0114,0.5242,0.6618
-E,ependyma and subependymal layer,13,1,3.6,-1.27,1.27,-6.73,leader tip,0.3708,0.716,0.004,0.0119,0.407,0.6802
+E,ependyma and subependymal layer,13,1,3.6,-1.09,1.09,-6.57,leader tip,0.3708,0.716,0.004,0.0119,0.4164,0.6669
 Fr3,"frontal cortex, area 3",13,0,3.6,-2.8,2.8,-3.66,label box,0.3276,0.4321,0.0105,0.0119,,
 Fr3,"frontal cortex, area 3",13,1,3.6,2.91,2.91,-3.74,label box,0.6234,0.4386,0.0105,0.0114,,
 GI,granular insular cortex,13,0,3.6,2.37,2.37,-4.8,label box,0.5954,0.5241,0.0069,0.0119,,
@@ -454,7 +457,7 @@ M2,secondary motor cortex,13,1,3.6,1.69,1.69,-2.85,label box,0.5603,0.3662,0.010
 MO,medial orbital cortex,13,0,3.6,-0.55,0.55,-5.48,label box,0.4442,0.5787,0.012,0.0119,,
 MO,medial orbital cortex,13,1,3.6,0.55,0.55,-5.46,label box,0.5011,0.5776,0.0116,0.0119,,
 OV,olfactory ventricle (olfactory part of lateral ventricle),13,0,3.6,0.99,0.99,-6.5,leader tip,0.5667,0.71,0.0102,0.0125,0.5242,0.6618
-OV,olfactory ventricle (olfactory part of lateral ventricle),13,1,3.6,-1.27,1.27,-6.73,leader tip,0.3815,0.716,0.0102,0.0119,0.407,0.6802
+OV,olfactory ventricle (olfactory part of lateral ventricle),13,1,3.6,-1.09,1.09,-6.57,leader tip,0.3815,0.716,0.0102,0.0119,0.4164,0.6669
 Pir,piriform cortex,13,0,3.6,1.8,1.8,-6.09,label box,0.5658,0.6281,0.0094,0.0119,,
 Pir,piriform cortex,13,1,3.6,-1.85,1.85,-6.3,label box,0.3768,0.6457,0.0094,0.0108,,
 PrL,prelimbic cortex,13,0,3.6,-0.63,0.63,-4.4,label box,0.44,0.492,0.0116,0.0114,,
@@ -466,7 +469,7 @@ VO,ventral orbital cortex,13,1,3.6,-1.19,1.19,-5.5,label box,0.4112,0.581,0.0098
 VTT,ventral tenia tecta,13,0,3.6,0.73,0.73,-7.23,label box,0.5106,0.7208,0.0149,0.0114,,
 fmi,forceps minor of the corpus callosum,13,0,3.6,1.65,1.65,-4.2,label box,0.5581,0.4756,0.0109,0.0114,,
 fmi,forceps minor of the corpus callosum,13,1,3.6,-1.63,1.63,-4.35,label box,0.3884,0.4881,0.0109,0.0114,,
-lo,lateral olfactory tract,13,0,3.6,-2.07,2.07,-6.68,label box,0.3654,0.6761,0.0105,0.0114,,
+lo,lateral olfactory tract,13,0,3.6,-1.93,1.93,-6.68,leader tip,0.3654,0.6761,0.0105,0.0114,0.3725,0.6759
 rf,rhinal fissure,13,0,3.6,-2.21,2.21,-6.22,label box,0.3583,0.6389,0.0051,0.0119,,
 rf,rhinal fissure,13,1,3.6,2.22,2.22,-5.92,label box,0.5879,0.6146,0.0054,0.0114,,
 2,layer 2 of cortex,14,0,3.25,-0.55,0.55,-6.66,label box,0.4444,0.6744,0.0029,0.0091,,
@@ -1185,6 +1188,8 @@ S2,secondary somatosensory cortex,22,0,0.45,4.97,4.97,-5.08,label box,0.7302,0.5
 S2,secondary somatosensory cortex,22,1,0.45,-5.22,5.22,-4.89,label box,0.2023,0.5316,0.0091,0.0125,,
 SFi,septofimbrial nucleus,22,0,0.45,0.15,0.15,-4.89,label box,0.4807,0.531,0.0102,0.0119,,
 SHi,septohippocampal nucleus,22,0,0.45,-0.01,0.01,-4.3,label box,0.4724,0.4836,0.012,0.0119,,
+SHy,septohypothalamic nucleus,22,0,0.45,0.46,0.46,-6.38,label box,0.4964,0.6518,0.0149,0.0119,,
+SHy,septohypothalamic nucleus,22,1,0.45,-0.62,0.62,-6.39,label box,0.4405,0.6523,0.0149,0.0119,,
 SIB,"substantia innominata, basal part",22,0,0.45,-1.23,1.23,-7.26,label box,0.4092,0.723,0.0116,0.0119,,
 SIB,"substantia innominata, basal part",22,1,0.45,1.06,1.06,-7.23,label box,0.5276,0.7202,0.0116,0.0119,,
 ST,bed nucleus of the stria terminalis,22,0,0.45,0.81,0.81,-6.29,label box,0.5147,0.6446,0.0091,0.0119,,
@@ -1290,9 +1295,13 @@ S2,secondary somatosensory cortex,23,1,0.1,-5.25,5.25,-5.12,label box,0.2008,0.5
 SFi,septofimbrial nucleus,23,0,0.1,-0.38,0.38,-4.95,label box,0.4528,0.5361,0.0102,0.0119,,
 SFi,septofimbrial nucleus,23,1,0.1,0.32,0.32,-4.94,label box,0.4891,0.5355,0.0102,0.0119,,
 SHi,septohippocampal nucleus,23,0,0.1,-0.02,0.02,-3.99,label box,0.4718,0.4588,0.012,0.0119,,
+SHy,septohypothalamic nucleus,23,0,0.1,-0.37,0.37,-6.03,label box,0.4536,0.6234,0.0149,0.0119,,
+SHy,septohypothalamic nucleus,23,1,0.1,0.34,0.34,-6.03,label box,0.4902,0.6234,0.0149,0.0119,,
 SIB,"substantia innominata, basal part",23,0,0.1,-1.56,1.56,-7.47,label box,0.3921,0.7395,0.0116,0.0119,,
 SIB,"substantia innominata, basal part",23,1,0.1,1.35,1.35,-7.33,label box,0.5429,0.7287,0.0116,0.0119,,
 SO,supraoptic nucleus,23,0,0.1,-0.83,0.83,-8.13,label box,0.4298,0.7932,0.0102,0.0119,,
+STLP,"bed nucleus of the stria terminalis, lateral division, posterior part",23,0,0.1,1.23,1.23,-5.94,label box,0.5367,0.6165,0.0185,0.0119,,
+STLP,"bed nucleus of the stria terminalis, lateral division, posterior part",23,1,0.1,-1.27,1.27,-6.01,label box,0.4067,0.6217,0.0185,0.0119,,
 STLV,"bed nucleus of the stria terminalis, lateral division, ventral part",23,0,0.1,1.3,1.3,-6.47,label box,0.54,0.6594,0.0182,0.0119,,
 STLV,"bed nucleus of the stria terminalis, lateral division, ventral part",23,1,0.1,-1.52,1.52,-6.59,label box,0.3942,0.6685,0.0182,0.0125,,
 STMA,"bed nucleus of the stria terminalis, medial division, anterior part",23,0,0.1,0.79,0.79,-5.89,label box,0.5138,0.612,0.0221,0.0119,,
@@ -1431,6 +1440,10 @@ S2,secondary somatosensory cortex,24,1,-0.25,-5.58,5.58,-4.88,label box,0.1837,0
 SFi,septofimbrial nucleus,24,0,-0.25,-0.95,0.95,-4.3,label box,0.4233,0.4838,0.0102,0.0119,,
 SFi,septofimbrial nucleus,24,1,-0.25,0.69,0.69,-4.28,label box,0.5084,0.4821,0.0102,0.0119,,
 SHi,septohippocampal nucleus,24,0,-0.25,-0.07,0.07,-4,label box,0.4693,0.4594,0.012,0.0119,,
+SHy,septohypothalamic nucleus,24,0,-0.25,-0.3,0.3,-6.58,label box,0.4572,0.6682,0.0149,0.0119,,
+SHy,septohypothalamic nucleus,24,1,-0.25,0.21,0.21,-6.59,label box,0.4837,0.6688,0.0149,0.0119,,
+SHy,septohypothalamic nucleus,24,2,-0.25,0.62,0.62,-5.26,label box,0.5051,0.5614,0.0149,0.0119,,
+SHy,septohypothalamic nucleus,24,3,-0.25,-0.65,0.65,-5.32,label box,0.439,0.566,0.0149,0.0119,,
 SIB,"substantia innominata, basal part",24,0,-0.25,1.87,1.87,-7.13,label box,0.5694,0.7122,0.0116,0.0119,,
 SIB,"substantia innominata, basal part",24,1,-0.25,-2,2,-7.26,label box,0.369,0.723,0.0113,0.0119,,
 SO,supraoptic nucleus,24,0,-0.25,1.14,1.14,-7.97,label box,0.5318,0.7804,0.0098,0.0119,,
@@ -1602,6 +1615,8 @@ SCh,suprachiasmatic nucleus,25,0,-0.6,-0.44,0.44,-8.04,label box,0.45,0.7861,0.0
 SCh,suprachiasmatic nucleus,25,1,-0.6,0.45,0.45,-8.07,label box,0.4959,0.7881,0.0145,0.0119,,
 SFO,subfornical organ,25,0,-0.6,0.01,0.01,-4.38,label box,0.4733,0.4901,0.0142,0.0119,,
 SFi,septofimbrial nucleus,25,0,-0.6,0.5,0.5,-3.67,label box,0.4984,0.4327,0.0105,0.0119,,
+SHy,septohypothalamic nucleus,25,0,-0.6,-0.71,0.71,-6.63,label box,0.4361,0.6717,0.0149,0.0119,,
+SHy,septohypothalamic nucleus,25,1,-0.6,0.62,0.62,-6.64,label box,0.5051,0.6728,0.0149,0.0119,,
 SO,supraoptic nucleus,25,0,-0.6,1.27,1.27,-7.97,label box,0.5383,0.7801,0.0098,0.0125,,
 SO,supraoptic nucleus,25,1,-0.6,-1.06,1.06,-8.1,label box,0.4179,0.7906,0.0102,0.0119,,
 STMP,"bed nucleus of the stria terminalis, medial division, posterior part",25,0,-0.6,-1.05,1.05,-5.99,label box,0.4181,0.6202,0.0214,0.0119,,

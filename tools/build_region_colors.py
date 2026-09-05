@@ -89,10 +89,22 @@ SEEDS = 256             # tabu restarts before giving the color count up as too 
                         # 64 was enough until layer 1 was located on plates 17 and 18: the
                         # band it took back from Nv moves four edges of the quotient graph,
                         # and on that graph the eighth color is found on a seed past 128.
-                        # The floor is unmoved -- 1, 2, 3, AHA, ICj, Pir, Tu and VP still
-                        # pairwise touch -- so this is the search running out of patience
-                        # and not the atlas needing a ninth color, which the app's palette
-                        # has not got.
+                        # Adding SHy over plates 22 to 25 broke 256 as well -- and 1,024,
+                        # which is what showed that patience was the wrong dial: every
+                        # restart set out from the same DSATUR coloring. They begin
+                        # somewhere else now (see color_graph), and the eighth color comes
+                        # back on the nineteenth. The floor is unmoved through all of it --
+                        # 1, 2, 3, AHA, ICj, Pir, Tu and VP still pairwise touch, and an
+                        # exact maximum-clique search over the 631 patches returns 8 -- so
+                        # a ninth color is the search giving up and never the atlas asking:
+                        # MCPAL in src/app.js holds exactly eight, and a region in slot 8
+                        # renders as `undefined` with no test to catch it. Read the summary
+                        # after every run: `colors` must be 8, `colors_are_the_fewest` true.
+KICKS = (0.75, 0.55, 0.85, 0.65, 0.50)   # shares of the start a restart kicks to random
+                        # slots, cycled. Measured on the k=8 graph SHy makes: 0.05, 0.10,
+                        # 0.15 and 0.35 found nothing in twenty restarts each, 0.50 found
+                        # it once and 0.75 twice, and 1.00 -- which is no start at all --
+                        # nothing. A gentle kick lands back in the basin it left.
 
 
 # ---------------------------------------------------------------- who touches whom
@@ -362,14 +374,34 @@ def tabu(adj, start, k, seed, rounds):
 
 def color_graph(graph, k, rounds=20000):
     """Color the graph with k slots, or None. The k-core by search, the rest by
-    putting the peeled nodes back into whatever is free."""
+    putting the peeled nodes back into whatever is free.
+
+    Every restart begins somewhere else. Only the tabu *tenure* was seeded before, so
+    every restart set out from the one DSATUR coloring, and where that start sits in a
+    bad basin they all stalled in it together: with SHy added, the k=8 search came two
+    conflicts short after 1,024 restarts and twenty million moves. That reads exactly
+    like a graph that needs nine colors, and it is not one -- an exact maximum-clique
+    search over the 631 patches returns 8, and an eight-coloring is found in seconds
+    once a restart is allowed to begin somewhere other than where the last one did.
+
+    The kick has to be hard to be worth anything, which is the part that is not
+    obvious: kicking a twentieth of the nodes, or a seventh, or a third, found nothing
+    in twenty tries at each, and kicking half to three quarters found it one or two
+    times in twenty. A gentle perturbation lands back in the same basin. So the
+    strengths are cycled rather than fixed, and seed 0 keeps the plain DSATUR start, so
+    anything the old search found on its first restart is still found on the first."""
     core, off = peel(graph, k)
     col = {}
     if core:
         adj, start = dsatur(core, graph, k)
         got = None
         for seed in range(SEEDS):
-            got = tabu(adj, start, k, seed, rounds)
+            st = start
+            if seed:
+                rnd = random.Random(seed)
+                kick = KICKS[seed % len(KICKS)]
+                st = [rnd.randrange(k) if rnd.random() < kick else c for c in start]
+            got = tabu(adj, st, k, seed, rounds)
             if got:
                 break
         if not got:
