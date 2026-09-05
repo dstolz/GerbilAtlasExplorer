@@ -19,7 +19,7 @@ const DPR = Math.min(window.devicePixelRatio || 1, 2);
 const S = {
   boot: null, plate: 0, d: null, paths: [], img: null, imgM: null, layer: 'drawing',
   abbr: '', tool: 'pick', view: {k: 1, x: 0, y: 0}, at: null, pending: null,
-  drag: null, cut: null, busy: 0,
+  drag: null, cut: null, busy: 0, fitted: false,
   opts: {style: 'solid', closed: false, replaces: null, hemi: ''},
   show: {ink: true, ext: true, lab: true, una: false, cut: false},
   draft: {plate: 0, abbr: '', problem: '', seeds: [], boundaries: [], extents: [], notes: []},
@@ -137,17 +137,30 @@ function layerSeg() {
 function resize() {
   const r = cv.getBoundingClientRect();
   cv.width = Math.round(r.width * DPR); cv.height = Math.round(r.height * DPR);
-  draw();
+  // a view left as it was fitted stays fitted -- the panel opening or shutting, or a
+  // phone turned on its side, changes the room and should not leave the plate adrift
+  if (S.fitted) fit(); else draw();
 }
 function fit() {
   if (!S.d) return;
-  // the printed plate, not the whole page it was traced on: the page frame carries
-  // the PDF's margins, and fitting those leaves the brain a third of the window
-  const f = S.d.frame, m = S.d.im;
-  const box = [xf(m, 0, 0), xf(m, f.w, 0), xf(m, f.w, f.h), xf(m, 0, f.h)];
-  zoomTo(box, 10);
+  // the section, not the page it is printed on. The page frame carries the atlas's
+  // rulers, its plate number and its coordinate table, and fitting those leaves the
+  // brain in the middle third -- which on a phone held upright is most of the screen
+  // spent on white paper.
+  let pts = [];
+  for (const o of S.d.outline) pts = pts.concat(o);
+  if (pts.length < 3) {
+    const f = S.d.frame, m = S.d.im;
+    pts = [xf(m, 0, 0), xf(m, f.w, 0), xf(m, f.w, f.h), xf(m, 0, f.h)];
+  }
+  let w = 0, h = 0, x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for (const [x, y] of pts) { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); }
+  w = x1 - x0; h = y1 - y0;
+  zoomTo(pts, 0.05 * Math.max(w, h));
+  S.fitted = true;
 }
 function zoomTo(ring, pad) {
+  S.fitted = false;
   const r = cv.getBoundingClientRect();
   let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
   for (const [x, y] of ring) { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); }
@@ -316,66 +329,134 @@ function drawPending() {
 
 /* ------------------------------------------------------------------ pointer */
 
-let panFrom = null;
+/* One gesture model for a mouse and for fingers, which is what makes the page work on
+   a phone: a tap acts, a drag pans, two fingers pinch, and in the extent editor a drag
+   that starts on a vertex moves that vertex instead. A press that never travels further
+   than TAP_PX is a tap however it was made, so the same code answers a click and a
+   fingertip, and the tool acts on release rather than on press -- which is also what
+   lets a drag out of a mis-aimed press be taken back. */
+const TAP_PX = 6;
+const PTR = new Map();                 // the pointers down, in canvas-local px
+let G = null;                          // the gesture in progress
+
+function local(ev) {
+  const r = cv.getBoundingClientRect();
+  return [ev.clientX - r.left, ev.clientY - r.top];
+}
+function pageOf(pt) { return [(pt[0] - S.view.x) / S.view.k, (pt[1] - S.view.y) / S.view.k]; }
+function twoPointers() {
+  const [a, b] = [...PTR.values()];
+  return {mid: [(a.at[0] + b.at[0]) / 2, (a.at[1] + b.at[1]) / 2],
+    d: Math.max(1, Math.hypot(a.at[0] - b.at[0], a.at[1] - b.at[1]))};
+}
+function setPan(on) { document.querySelector('.stage').classList.toggle('pan', !!on); }
+
 cv.addEventListener('pointerdown', (ev) => {
   if (!S.d) return;
-  cv.setPointerCapture(ev.pointerId);
-  const at = screenToPage(ev);
-  if (ev.button === 1 || ev.button === 2 || ev.shiftKey || S.tool === 'pan') {
-    panFrom = {x: ev.clientX, y: ev.clientY, v: Object.assign({}, S.view)};
-    document.querySelector('.stage').classList.add('pan');
+  ev.preventDefault();
+  try { cv.setPointerCapture(ev.pointerId); } catch (e) { /* a synthetic pointer */ }
+  const at = local(ev);
+  PTR.set(ev.pointerId, {at, from: at});
+  if (PTR.size === 2) {                                  // a second finger: pinch
+    const t = twoPointers();
+    G = {kind: 'pinch', d0: t.d, v0: Object.assign({}, S.view), p0: pageOf(t.mid)};
+    setPan(true);
     return;
   }
-  if (ev.button !== 0) return;
+  if (PTR.size > 2 || ev.button > 0 && ev.button !== 1 && ev.button !== 2) return;
   const p = S.pending;
-  if (p && p.edit) {                                  // dragging an extent's vertices
-    const i = nearVertex(p.pts, at);
+  if (p && p.edit && ev.button === 0 && !ev.shiftKey) {   // the editor takes the drag
+    const page = pageOf(at);
+    const i = nearVertex(p.pts, page);
     if (i >= 0 && ev.altKey) { if (p.pts.length > 3) p.pts.splice(i, 1); draw(); return; }
-    if (i >= 0) { S.drag = {i}; return; }
-    const e = nearEdge(p.pts, at);
-    if (e >= 0) { p.pts.splice(e + 1, 0, at); S.drag = {i: e + 1}; draw(); return; }
-    return;
+    if (i >= 0) { G = {kind: 'vertex', i}; return; }
+    const e = nearEdge(p.pts, page);
+    if (e >= 0) { p.pts.splice(e + 1, 0, page); G = {kind: 'vertex', i: e + 1}; draw(); return; }
   }
-  if (p) { p.pts.push(at); draw(); return; }           // laying down vertices
-  click(at, ev);
+  G = {kind: 'pan', from: at, v0: Object.assign({}, S.view), travelled: 0,
+    tap: ev.button === 0 && !ev.shiftKey};
 });
+
 cv.addEventListener('pointermove', (ev) => {
   if (!S.d) return;
-  if (panFrom) {
-    S.view = {k: panFrom.v.k, x: panFrom.v.x + (ev.clientX - panFrom.x),
-      y: panFrom.v.y + (ev.clientY - panFrom.y)};
-    draw(); return;
+  const at = local(ev);
+  const held = PTR.get(ev.pointerId);
+  if (held) held.at = at;
+  if (G && G.kind === 'pinch' && PTR.size >= 2) {
+    const t = twoPointers();
+    const k = Math.max(0.02, Math.min(40, G.v0.k * t.d / G.d0));
+    S.fitted = false;
+    S.view = {k, x: t.mid[0] - G.p0[0] * k, y: t.mid[1] - G.p0[1] * k};
+    draw();
+    return;
   }
-  const at = screenToPage(ev);
-  S.at = at;
-  if (S.drag) { S.pending.pts[S.drag.i] = at; draw(); return; }
+  if (G && G.kind === 'pan' && held) {
+    G.travelled = Math.max(G.travelled, Math.hypot(at[0] - G.from[0], at[1] - G.from[1]));
+    if (G.travelled > TAP_PX) {
+      G.tap = false;
+      S.fitted = false;
+      setPan(true);
+      S.view = {k: G.v0.k, x: G.v0.x + at[0] - G.from[0], y: G.v0.y + at[1] - G.from[1]};
+      draw();
+      return;
+    }
+  }
+  const page = pageOf(at);
+  S.at = page;
+  if (G && G.kind === 'vertex') { S.pending.pts[G.i] = page; draw(); return; }
   if (S.pending && S.pending.edit) {
-    const i = nearVertex(S.pending.pts, at);
+    const i = nearVertex(S.pending.pts, page);
     if (i !== S.pending.hover) { S.pending.hover = i; draw(); }
   }
-  const mm = toMm(at[0], at[1]);
-  $('at').textContent = 'ML ' + fmt(mm[0]) + '  DV ' + fmt(mm[1]) + ' mm   ·   page '
-    + at[0].toFixed(0) + ', ' + at[1].toFixed(0);
-  const reg = regionAt(at[0], at[1]);
-  $('under').textContent = reg ? reg.abbr + ' — ' + reg.name : '';
-  if (S.pending && !S.pending.edit) draw();
+  readout(page);
+  if (S.pending && !S.pending.edit && !PTR.size) draw();     // the line to the pointer
 });
-cv.addEventListener('pointerup', () => {
-  panFrom = null; S.drag = null;
-  document.querySelector('.stage').classList.remove('pan');
-});
+
+function done(ev) {
+  const held = PTR.get(ev.pointerId);
+  PTR.delete(ev.pointerId);
+  if (!G) return;
+  if (G.kind === 'pan' && G.tap && held && ev.type === 'pointerup') {
+    const at = pageOf(held.at);
+    S.at = at;
+    readout(at);
+    if (S.pending && !S.pending.edit) { S.pending.pts.push(at); draw(); hintFor(); }
+    else if (!S.pending) click(at, ev);
+  }
+  if (PTR.size === 0) { G = null; setPan(false); }
+  else if (G.kind === 'pinch' && PTR.size === 1) {     // a finger lifted: carry on panning
+    const rest = [...PTR.values()][0];
+    G = {kind: 'pan', from: rest.at, v0: Object.assign({}, S.view), travelled: 99, tap: false};
+  }
+}
+cv.addEventListener('pointerup', done);
+cv.addEventListener('pointercancel', done);
 cv.addEventListener('dblclick', (ev) => { ev.preventDefault(); if (S.pending) finish(); });
 cv.addEventListener('contextmenu', (ev) => ev.preventDefault());
 cv.addEventListener('wheel', (ev) => {
   if (!S.d) return;
   ev.preventDefault();
-  const r = cv.getBoundingClientRect(), v = S.view;
+  const v = S.view, at = local(ev);
   const f = Math.exp(-ev.deltaY * (ev.deltaMode === 1 ? 0.05 : 0.0015));
-  const k = Math.max(0.02, Math.min(40, v.k * f));
-  const mx = ev.clientX - r.left, my = ev.clientY - r.top;
-  S.view = {k, x: mx - (mx - v.x) * k / v.k, y: my - (my - v.y) * k / v.k};
-  draw();
+  zoomBy(f, at);
 }, {passive: false});
+
+function zoomBy(f, about) {
+  S.fitted = false;
+  const r = cv.getBoundingClientRect(), v = S.view;
+  const at = about || [r.width / 2, r.height / 2];
+  const k = Math.max(0.02, Math.min(40, v.k * f));
+  S.view = {k, x: at[0] - (at[0] - v.x) * k / v.k, y: at[1] - (at[1] - v.y) * k / v.k};
+  draw();
+}
+
+function readout(page) {
+  const mm = toMm(page[0], page[1]);
+  $('at').textContent = 'ML ' + fmt(mm[0]) + '  DV ' + fmt(mm[1]) + ' mm   ·   page '
+    + page[0].toFixed(0) + ', ' + page[1].toFixed(0);
+  const reg = regionAt(page[0], page[1]);
+  $('under').textContent = reg ? reg.abbr + ' — ' + reg.name : '';
+}
 
 function nearVertex(pts, at) {
   const r = W(9);
@@ -484,7 +565,7 @@ function renderRegions() {
 
 function select(abbr) {
   S.abbr = abbr; S.draft.abbr = abbr;
-  renderRegions(); selectFacts(); renderOpts(); draw();
+  renderRegions(); selectFacts(); renderOpts(); sheetLabel(); draw();
   const el = $('regions').querySelector('.row.on');
   if (el) el.scrollIntoView({block: 'nearest'});
 }
@@ -557,22 +638,53 @@ function renderOpts() {
   hintFor();
 }
 
+const TOUCH = matchMedia('(pointer: coarse)').matches;
+const TAPPED = TOUCH ? 'Tap' : 'Click';
 const HINTS = {
-  pick: 'Click the plate to read what the extraction has there — the face, what seeds it, and which region holds the point today.',
-  seed: 'Click where <b>{a}</b> is. Without a box named above it is a seed of its own; with one, that printed box withdraws and this stands in for it.',
-  unseed: 'Click where <b>{a}</b> is <b>not</b>. A negative seed is for the reader, not the pipeline.',
-  boundary: 'Click along the run of boundary the tracing missed; <b>double-click</b> or <b>Enter</b> to finish, <b>Backspace</b> to drop a vertex, <b>Esc</b> to cancel. Draw its ends onto the traced ink — the pipeline only bridges {b} page px.',
-  extent: 'Pull the region’s own ring into shape, or click a fresh outline. Drag a vertex, click an edge to add one, <b>alt-click</b> to delete one; <b>Enter</b> accepts.',
+  pick: '{T} the plate to read what the extraction has there — the face, what seeds it, and which region holds the point today.',
+  seed: '{T} where <b>{a}</b> is. Without a box named above it is a seed of its own; with one, that printed box withdraws and this stands in for it.',
+  unseed: '{T} where <b>{a}</b> is <b>not</b>. A negative seed is for the reader, not the pipeline.',
+  boundary: '{T} along the run of boundary the tracing missed, then <b>Finish</b>. Put its ends on the traced ink — the pipeline only bridges {b} page px.',
+  extent: 'Pull the region’s own ring into shape, or {t} a fresh outline. Drag a vertex, {t} an edge to add one, then <b>Accept</b>.',
 };
 function hintFor() {
   let t = HINTS[S.tool] || '';
   if (S.pending) {
     t = S.pending.edit
-      ? 'Drag the vertices into place; click an edge to add one, alt-click one to delete it. <b>Enter</b> accepts, <b>Esc</b> drops it.'
-      : (S.pending.pts.length + ' vertex' + (S.pending.pts.length === 1 ? '' : 'es') + ' so far. ')
-        + '<b>Double-click</b> or <b>Enter</b> to finish, <b>Backspace</b> to drop the last, <b>Esc</b> to cancel.';
+      ? 'Drag the vertices into place; {t} an edge to add one'
+        + (TOUCH ? '' : ', alt-click one to delete it') + '. <b>Accept</b> keeps it.'
+      : (S.pending.pts.length + ' vertex' + (S.pending.pts.length === 1 ? '' : 'es') + ' so far. '
+        + '<b>Finish</b> when the run is drawn.');
   }
-  $('hint').innerHTML = t.replace('{a}', S.abbr || 'the region').replace('{b}', S.d ? S.d.bridge_px : 20);
+  $('hint').innerHTML = t.replace(/\{T\}/g, TAPPED).replace(/\{t\}/g, TAPPED.toLowerCase())
+    .replace('{a}', S.abbr || 'the region').replace('{b}', S.d ? S.d.bridge_px : 20);
+  drawbar();
+  sheetLabel();
+}
+
+/* What the sheet bar says while it is all that is up, so a phone can see the state
+   it is in without opening the panel. */
+function sheetLabel() {
+  const D = S.draft;
+  const n = D.seeds.length + D.boundaries.length + D.extents.length;
+  const tool = {pick: 'Pick', seed: 'Seed +', unseed: 'Seed −', boundary: 'Boundary',
+    extent: 'Extent'}[S.tool];
+  $('sheetwhat').textContent = (S.abbr || 'no region') + ' · ' + tool
+    + (n ? ' · ' + n + ' mark' + (n === 1 ? '' : 's') : '') + ' · the tools';
+}
+
+// A shape being drawn says on the plate how to finish it: a phone has no Enter key,
+// and a double-tap is not a double-click.
+function drawbar() {
+  const p = S.pending;
+  $('drawbar').hidden = !p;
+  if (!p) return;
+  const n = p.pts.length;
+  $('drawcount').textContent = p.edit ? n + ' vertices'
+    : n + (n === 1 ? ' point' : ' points');
+  $('dundo').hidden = !!p.edit;
+  $('dfinish').textContent = p.edit ? 'Accept' : 'Finish';
+  $('dfinish').disabled = n < (p.kind === 'extent' ? 3 : 2);
 }
 
 function renderMarks() {
@@ -614,6 +726,7 @@ function renderMarks() {
     el.appendChild(d);
   }
   $('commitb').disabled = !(D.seeds.length || D.boundaries.length || D.extents.length);
+  sheetLabel();
 }
 
 /* ------------------------------------------------------------------ actions */
@@ -746,8 +859,15 @@ async function useDraft(d) {
 
 /* -------------------------------------------------------------------- wiring */
 
+function cancelPending() {
+  if (!S.pending) return;
+  S.pending = null;
+  draw();
+  hintFor();
+}
+
 function setTool(t) {
-  if (S.pending) { S.pending = null; draw(); }
+  cancelPending();
   S.tool = t;
   for (const b of $('toolseg').children) b.classList.toggle('on', b.dataset.t === t);
   renderOpts();
@@ -759,7 +879,12 @@ function wire() {
   $('plate').onchange = () => { const n = Number($('plate').value); if (n >= 1 && n <= 62) loadPlate(n); };
   $('prev').onclick = () => { if (S.plate > 1) loadPlate(S.plate - 1); };
   $('next').onclick = () => { if (S.plate < 62) loadPlate(S.plate + 1); };
-  $('fit').onclick = fit;
+  $('zin').onclick = () => zoomBy(1.5);
+  $('zout').onclick = () => zoomBy(1 / 1.5);
+  $('zfit').onclick = fit;
+  $('dfinish').onclick = finish;
+  $('dcancel').onclick = cancelPending;
+  $('dundo').onclick = undo;
   $('inspectb').onclick = () => inspect(false);
   $('qcb').onclick = () => inspect(true);
   $('recutb').onclick = recut;
@@ -782,6 +907,7 @@ function wire() {
     $(id).onchange = () => { S.show[key] = $(id).checked; draw(); };
   }
   $('modal').onclick = (ev) => { if (ev.target === $('modal')) closeSheet(); };
+  $('sheetbar').onclick = () => sheet_(!document.body.classList.contains('shut'));
   window.addEventListener('resize', resize);
   document.addEventListener('keydown', key);
 }
@@ -789,7 +915,7 @@ function wire() {
 function undo() {
   const D = S.draft;
   if (S.pending && S.pending.pts.length > 1 && !S.pending.edit) { S.pending.pts.pop(); draw(); hintFor(); return; }
-  if (S.pending) { S.pending = null; draw(); hintFor(); return; }
+  if (S.pending) { cancelPending(); return; }
   for (const k of ['extents', 'boundaries', 'seeds', 'notes']) {
     if (D[k].length) { D[k].pop(); renderMarks(); draw(); return; }
   }
@@ -801,7 +927,7 @@ function key(ev) {
     return;
   }
   const k = ev.key;
-  if (k === 'Escape') { if (!$('modal').hidden) closeSheet(); else if (S.pending) { S.pending = null; draw(); hintFor(); } return; }
+  if (k === 'Escape') { if (!$('modal').hidden) closeSheet(); else cancelPending(); return; }
   if (!$('modal').hidden) return;
   if (k === 'Enter') { finish(); return; }
   if (k === 'Backspace') { ev.preventDefault(); undo(); return; }
@@ -821,10 +947,19 @@ function key(ev) {
   }
 }
 
+// The panel, shut or open. On a phone it starts shut: the plate is what a small
+// screen has room for, and the bar says what it is holding.
+function sheet_(shut) {
+  document.body.classList.toggle('shut', !!shut);
+  $('sheetbar').setAttribute('aria-expanded', String(!shut));
+  requestAnimationFrame(resize);
+}
+
 (async function start() {
   try {
     S.boot = await api('/api/boot');
     wire();
+    if (matchMedia('(max-width: 860px)').matches) sheet_(true);
     const st = S.boot.start;
     S.layer = st.layer || 'drawing';
     await loadPlate(st.plate);

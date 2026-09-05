@@ -190,8 +190,12 @@ def test_recut_builds_the_plate_the_correction_would_leave(tmp_path):
 # --------------------------------------------------------------- over the wire
 
 class Served:
+    def __init__(self, token=None):
+        self.tok = token
+
     def __enter__(self):
-        self.srv = F.serve(session(), '127.0.0.1', 0, {'tool': F.TOOL, 'start': {}})
+        self.srv = F.serve(session(), '127.0.0.1', 0, {'tool': F.TOOL, 'start': {}},
+                           token=self.tok)
         threading.Thread(target=self.srv.serve_forever, daemon=True).start()
         self.url = 'http://127.0.0.1:%d' % self.srv.server_address[1]
         return self
@@ -242,3 +246,24 @@ def test_the_server_says_no_rather_than_falling_over():
                 assert e.code == 404
         code, body = s.post('/api/document', {'draft': {'plate': PLATE, 'abbr': 'nosuch'}})
         assert code == 400 and 'nosuch' in body['error']
+
+
+def test_open_to_the_network_it_wants_its_key():
+    """Bound past loopback -- `--host 0.0.0.0`, to read a plate on a phone -- the port
+    is reachable by anything on the network, and this writes files and pushes branches.
+    The key minted at startup is what stands between the two; it arrives in the URL
+    once and is kept in a cookie after."""
+    with Served(token='sekret') as s:
+        try:
+            s.get('/api/boot')
+            raise AssertionError('answered without the key')
+        except urllib.error.HTTPError as e:
+            assert e.code == 403 and b'key' in e.read()
+        code, body = s.get('/api/boot?k=sekret')
+        assert code == 200 and json.loads(body)['tool'] == F.TOOL
+        req = urllib.request.Request(s.url + '/api/boot',
+                                     headers={'Cookie': 'atlasfix=sekret'})
+        with urllib.request.urlopen(req) as r:
+            assert r.status == 200
+        with urllib.request.urlopen(s.url + '/?k=sekret') as r:      # and hands it out
+            assert 'atlasfix=sekret' in r.headers.get('Set-Cookie', '')

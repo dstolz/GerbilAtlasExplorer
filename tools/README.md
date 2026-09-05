@@ -97,8 +97,8 @@ python3 tools/atlasfix.py 19 --no-browser --port 8770
 
 The plate comes up in the page frame the tracings are in, with the tracing over it (dashed
 where the atlas prints it dashed), every region's outline as it stands, the printed labels
-with the line and tip where the atlas draws one, and the section outline. Wheel zooms,
-drag with shift or the middle button pans, and the status bar reads the pointer in
+with the line and tip where the atlas draws one, and the section outline. A click or a tap
+acts, a drag pans, the wheel or two fingers zoom, and the status bar reads the pointer in
 millimetres. **1**-**5** choose the tool:
 
 | | |
@@ -119,7 +119,31 @@ nothing in the working tree. **QC image** writes `qc/chk_corr_<id>.png`.
 `origin/main` and pushes the branch, so the checkout you are reading the plate from is
 untouched and the branch carries one commit. It shows the file first, and *dry run* there
 writes it under `build/corrections/` and stops, which is the way to look at what would be
-sent. **Save** and **Open** keep a draft between
+sent.
+
+### From a phone
+
+The page is the whole of the interface, so a phone can read a plate and mark it as long as
+something on the network runs the server. It has to be a machine with the repository on it:
+the tool cuts plates, and that is the pipeline, not JavaScript.
+
+```
+python3 tools/atlasfix.py 19 --host 0.0.0.0        # on the machine with the clone
+```
+
+It prints the address to open on the phone. Bound past loopback the port is reachable by
+anything on the network, and this writes files and pushes branches, so the URL carries a
+key minted for that run; without it the server answers 403, and the key is kept in a cookie
+after the first request. Stop the run and the key is gone. On a network you would not hand
+a shell to, tunnel instead: `ssh -L 8770:127.0.0.1:8770 the-machine` and leave the default
+loopback binding alone.
+
+On a small screen the panel becomes a sheet with one bar left up, so the plate keeps the
+screen; the bar says which region and tool are in hand, and opens the tools when they are
+wanted. A tap does what a click does, a drag pans, two fingers pinch, and a boundary or an
+extent is finished from a bar on the plate itself rather than with **Enter** -- so the
+marks a phone can make are all of them. **Recut** takes its ten seconds on the machine
+running the tool, not on the phone. **Save** and **Open** keep a draft between
 sessions — a draft is a correction file like any other.
 
 `--dry-run` reports and touches nothing. `--qc` writes `qc/chk_regions_NN.png`, the plate

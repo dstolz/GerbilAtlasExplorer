@@ -45,6 +45,8 @@ JavaScript beyond what the browser ships.
 import argparse
 import base64
 import contextlib
+import secrets
+import socket
 import copy
 import datetime
 import http.server
@@ -57,6 +59,7 @@ import subprocess
 import sys
 import tempfile
 import threading
+import urllib.parse
 import webbrowser
 
 import numpy as np
@@ -467,6 +470,18 @@ def recut(S, draft):
             'unassigned': [[fr_page(P, x, y) for x, y in g] for g in unass]}
 
 
+def lan_address():
+    """This machine's address on the network it is on, without sending anything."""
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        s.connect(('10.255.255.255', 1))
+        return s.getsockname()[0]
+    except OSError:
+        return None
+    finally:
+        s.close()
+
+
 class Failed(Exception):
     """Something the reader should be told, not a traceback."""
 
@@ -573,20 +588,38 @@ class Handler(http.server.BaseHTTPRequestHandler):
     server_version = 'atlasfix/' + VERSION
     session = None
     boot = {}
+    token = None
+    hand_cookie = False
 
     def log_message(self, fmt, *args):
         if self.server.verbose:
             sys.stderr.write('  %s\n' % (fmt % args))
 
-    def local(self):
-        """The page this serves is the only one allowed to ask. A JSON POST from
-        another origin is preflighted and the preflight is not answered, so the
-        browser stops it; this is the belt to that brace, and costs a header read."""
+    def allowed(self, query):
+        """The page this serves is the only one allowed to ask.
+
+        A JSON POST from another origin is preflighted and the preflight is not
+        answered, so the browser stops it; the Origin check is the belt to that brace.
+        Bound past loopback -- `--host 0.0.0.0`, to read a plate on a phone -- anything
+        on the network can reach the port, and this thing writes files and pushes
+        branches, so a key minted at startup is then required. It arrives in the URL
+        once and is kept in a cookie after."""
         origin = self.headers.get('Origin')
         if origin and origin != 'http://%s' % self.headers.get('Host'):
             self.fail('this answers its own page only', 403)
             return False
-        return True
+        if not self.token:
+            return True
+        if query.get('k', [None])[0] == self.token:
+            self.hand_cookie = True
+            return True
+        for part in (self.headers.get('Cookie') or '').split(';'):
+            k, _, v = part.strip().partition('=')
+            if k == 'atlasfix' and v == self.token:
+                return True
+        self.fail('this port is open to the network and wants its key: open the URL '
+                  'the tool printed, which carries it', 403)
+        return False
 
     # ---- plumbing
     def send(self, code, ctype, body, cache=False):
@@ -596,6 +629,9 @@ class Handler(http.server.BaseHTTPRequestHandler):
         self.send_header('Content-Type', ctype)
         self.send_header('Content-Length', str(len(body)))
         self.send_header('Cache-Control', 'max-age=3600' if cache else 'no-store')
+        if self.hand_cookie:
+            self.send_header('Set-Cookie', 'atlasfix=%s; Path=/; SameSite=Strict' % self.token)
+            self.hand_cookie = False
         self.end_headers()
         if self.command != 'HEAD':
             self.wfile.write(body)
@@ -612,8 +648,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
 
     # ---- routes
     def do_GET(self):
-        path = self.path.split('?')[0]
-        if not self.local():
+        path, _, q = self.path.partition('?')
+        if not self.allowed(urllib.parse.parse_qs(q)):
             return
         try:
             if path in ASSETS:
@@ -640,8 +676,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self.fail('%s: %s' % (type(e).__name__, e), 500)
 
     def do_POST(self):
-        path = self.path.split('?')[0]
-        if not self.local():
+        path, _, q = self.path.partition('?')
+        if not self.allowed(urllib.parse.parse_qs(q)):
             return
         try:
             b = self.body()
@@ -714,9 +750,10 @@ def base64_png(s):
     return base64.b64decode(re.sub(r'^data:image/\w+;base64,', '', s))
 
 
-def serve(session, host, port, boot, verbose=False):
+def serve(session, host, port, boot, verbose=False, token=None):
     Handler.session = session
     Handler.boot = boot
+    Handler.token = token
     srv = http.server.ThreadingHTTPServer((host, port), Handler)
     srv.verbose = verbose
     srv.daemon_threads = True
@@ -738,7 +775,8 @@ def main(argv=None):
     ap.add_argument('--draft', help='a draft, or any corrections/<id>.json, to come back to')
     ap.add_argument('--layer', default='drawing', choices=LAYERS, help='the plate under the marks')
     ap.add_argument('--port', type=int, default=8770, help='default 8770; 0 picks a free one')
-    ap.add_argument('--host', default='127.0.0.1', help='default 127.0.0.1, which is the point')
+    ap.add_argument('--host', default='127.0.0.1',
+                    help='default 127.0.0.1; 0.0.0.0 opens it to the network, for a phone')
     ap.add_argument('--no-browser', action='store_true', help='do not open a browser')
     ap.add_argument('--verbose', action='store_true', help='log every request')
     args = ap.parse_args(argv)
@@ -767,13 +805,27 @@ def main(argv=None):
             'start': {'plate': plate, 'abbr': abbr, 'layer': args.layer, 'draft': draft},
             'repo': A.ROOT, 'remote': remote_url(), 'commit': head_commit()}
 
-    srv = serve(S, args.host, args.port, boot, verbose=args.verbose)
-    url = 'http://%s:%d/' % (args.host, srv.server_address[1])
-    print('%s  plate %d%s  %s' % (TOOL, plate, ', %s' % abbr if abbr else '', url))
+    # Bound past loopback the port is reachable by anything on the network, and this
+    # writes files and pushes branches, so it is only opened with a key.
+    wide = args.host not in ('127.0.0.1', 'localhost', '::1')
+    token = secrets.token_urlsafe(12) if wide else None
+    srv = serve(S, args.host, args.port, boot, verbose=args.verbose, token=token)
+    port = srv.server_address[1]
+    q = '?k=%s' % token if token else ''
+    here = 'http://127.0.0.1:%d/%s' % (port, q)
+    print('%s  plate %d%s' % (TOOL, plate, ', %s' % abbr if abbr else ''))
     print('  the repository:  %s%s' % (A.ROOT, '  (%s)' % boot['commit'] if boot['commit'] else ''))
+    print('  on this machine: %s' % here)
+    if wide:
+        lan = lan_address()
+        if lan:
+            print('  on your phone:   http://%s:%d/%s' % (lan, port, q))
+        print('  open to the network on %s: the key in that URL is what keeps the rest of'
+              % args.host)
+        print('  the network out, and it lasts as long as this run. Ctrl-c when you are done.')
     print('  ctrl-c to stop')
     if not args.no_browser:
-        threading.Timer(0.4, lambda: webbrowser.open(url)).start()
+        threading.Timer(0.4, lambda: webbrowser.open(here)).start()
     try:
         srv.serve_forever()
     except KeyboardInterrupt:

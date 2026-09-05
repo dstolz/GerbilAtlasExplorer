@@ -394,8 +394,9 @@ It runs inside the repository, so it answers with the extraction itself rather t
 of it: **Pick** says which face a point falls in and which printed labels seed that face,
 cut with `build_region_extents`'s own rasterizer, and **Recut** applies the draft to a
 scratch tree and builds the plate again, so the outlines shown before committing are the
-ones the pipeline will write after. `matlab/AtlasRegionFix.m` writes the same file from
-MATLAB, for anyone already there.
+ones the pipeline will write after. `--host 0.0.0.0` puts the page on the network for a
+phone or a tablet to read the plate on, behind a key it prints. `matlab/AtlasRegionFix.m`
+writes the same file from MATLAB, for anyone already there.
 
 A workflow then hands the file to a Claude Code session that follows
 [`.claude/skills/atlas-region-fix`](.claude/skills/atlas-region-fix/SKILL.md): it reads

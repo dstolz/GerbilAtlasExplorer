@@ -32,10 +32,20 @@ carries a `version` block naming the release its derived fields were built for.
   working tree is not touched either way. `tests/python/test_atlasfix.py` holds it to that:
   the page's face map is `build_plate`'s face map, pixel for pixel.
 
+  Because the interface is a page, it is also the first way to mark a plate from a phone.
+  A tap does what a click does, a drag pans, two fingers pinch, and a boundary is finished
+  from a bar on the plate rather than with **Enter**, so every mark can be made with a
+  thumb; the panel becomes a sheet with one bar left up, which leaves the plate three
+  quarters of a small screen instead of a third. The server still has to run on a machine
+  with the repository on it -- cutting a plate is the pipeline, not JavaScript -- and
+  `--host 0.0.0.0` puts it on the network for the phone to reach. Bound past loopback the
+  port is reachable by anything on that network and this thing pushes branches, so the URL
+  it prints carries a key minted for the run and nothing without it is answered.
+
   The page is `src/fixer.html`, `src/fixer.css` and `src/fixer.js`, served by the tool and
-  built into neither published page; `tests/js/fixer.spec.js` drives it in CI, which is why
-  the browser job now installs `tools/requirements.txt`. The MATLAB class stays as it is,
-  for anyone already in MATLAB.
+  built into neither published page; `tests/js/fixer.spec.js` drives it in CI, on a desktop
+  window and on a phone, which is why the browser job now installs `tools/requirements.txt`.
+  The MATLAB class stays as it is, for anyone already in MATLAB.
 - **A region drawn wrongly can be corrected from MATLAB, and the correction becomes a pull
   request on its own.** `matlab/AtlasRegionFix.m` brings a plate down from the site -- the
   drawing, the tracing, the extents as they stand, the printed labels and their lines --

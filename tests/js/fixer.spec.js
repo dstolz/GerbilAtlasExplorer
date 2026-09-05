@@ -6,7 +6,7 @@
 // commits: the marks are made, read against the extraction, and thrown away with the
 // browser. `Recut` builds the plate again in a scratch tree, which takes about ten
 // seconds, so it has a test of its own rather than a line in another one.
-const { test, expect } = require('@playwright/test');
+const { test, expect, devices } = require('@playwright/test');
 
 const APP = 'http://127.0.0.1:8771/';
 const SEED = [1079, 955];                 // page px inside the left S1DZ strip
@@ -137,3 +137,101 @@ test('a plate with no correction on it still draws, and the plate can be changed
     await expect(page.locator('#marks')).toContainText('Nothing marked yet');
     expect(page.errors).toEqual([]);
   });
+
+
+// ---------------------------------------------------------------------- a phone
+//
+// The plate is what a small screen has room for, so the panel starts shut and the
+// chrome is held to one row each; and a finger has neither a wheel nor an Enter key,
+// so a tap acts, a drag pans, two fingers pinch, and a shape being drawn is finished
+// from the plate itself. Fingers are dispatched as pointer events, which is what the
+// page listens for and what a touchscreen raises.
+
+async function onPhone(browser, body) {
+  const ctx = await browser.newContext({...devices['iPhone 13']});
+  const page = await ctx.newPage();
+  try {
+    await open(page);
+    await page.waitForTimeout(250);            // the sheet shuts on the first frame
+    await body(page);
+  } finally {
+    await ctx.close();
+  }
+}
+
+const view = (page) => page.evaluate(() => ({k: S.view.k, x: S.view.x, y: S.view.y}));
+
+// a run of touch pointers on the canvas: [[id, x, y], ...] per step
+function fingers(page, steps) {
+  return page.evaluate((frames) => {
+    const cv = document.getElementById('cv');
+    for (const [type, id, x, y] of frames) {
+      cv.dispatchEvent(new PointerEvent(type, {pointerId: id, clientX: x, clientY: y,
+        pointerType: 'touch', isPrimary: id === 1, bubbles: true, button: 0,
+        buttons: type === 'pointerup' ? 0 : 1}));
+    }
+  }, steps);
+}
+
+test('on a phone the plate keeps the screen and the panel is a sheet', async ({ browser }) => {
+  await onPhone(browser, async (page) => {
+    const box = await page.evaluate(() => {
+      const r = (s) => document.querySelector(s).getBoundingClientRect();
+      return {vh: window.innerHeight, cv: r('#cv').height, status: r('.statusbar').height,
+        bar: r('.sheetbar').bottom, shut: document.body.classList.contains('shut')};
+    });
+    expect(box.shut).toBe(true);
+    expect(box.cv).toBeGreaterThan(box.vh * 0.6);      // the plate, not the chrome
+    expect(box.status).toBeLessThan(40);               // one row, scrolled not wrapped
+    expect(box.bar).toBeLessThanOrEqual(box.vh + 1);   // and nothing runs off the bottom
+    await expect(page.locator('#sheetwhat')).toContainText('S1DZ · Pick');
+
+    await page.click('#sheetbar');                     // the tools, when they are wanted
+    await expect(page.locator('#problem')).toBeVisible();
+    await page.click('#sheetbar');
+    await expect(page.locator('#problem')).toBeHidden();
+  });
+});
+
+test('a tap reads the plate, a drag pans it, two fingers pinch it', async ({ browser }) => {
+  await onPhone(browser, async (page) => {
+    const v0 = await view(page);
+    await clickAt(page, SEED);                          // tap: the same probe as a click
+    await expect(page.locator('#report')).toContainText('today: inside S1DZ');
+    expect(await view(page)).toEqual(v0);               // and it did not move the plate
+
+    const drag = [['pointerdown', 1, 200, 300]];
+    for (let i = 1; i <= 8; i++) drag.push(['pointermove', 1, 200 - 8 * i, 300 + 4 * i]);
+    drag.push(['pointerup', 1, 136, 332]);
+    await fingers(page, drag);
+    const v1 = await view(page);
+    expect(v1.k).toBeCloseTo(v0.k, 6);                  // a drag pans and does not zoom
+    expect(v1.x).toBeLessThan(v0.x);
+    expect(v1.y).toBeGreaterThan(v0.y);
+
+    const pinch = [['pointerdown', 1, 150, 300], ['pointerdown', 2, 250, 300]];
+    for (let i = 1; i <= 6; i++) {
+      pinch.push(['pointermove', 1, 150 - 10 * i, 300], ['pointermove', 2, 250 + 10 * i, 300]);
+    }
+    pinch.push(['pointerup', 1, 90, 300], ['pointerup', 2, 310, 300]);
+    await fingers(page, pinch);
+    expect((await view(page)).k).toBeGreaterThan(v1.k * 1.5);
+  });
+});
+
+test('a boundary is drawn by tapping and finished from the plate', async ({ browser }) => {
+  await onPhone(browser, async (page) => {
+    await page.click('#sheetbar');
+    await page.click('[data-t="boundary"]');
+    await page.click('#sheetbar');                      // shut again: draw on the plate
+    await expect(page.locator('#drawbar')).toBeHidden();
+    await clickAt(page, GAP[0]);
+    await expect(page.locator('#drawbar')).toBeVisible();
+    await expect(page.locator('#dfinish')).toBeDisabled();   // one point is not a run
+    await clickAt(page, GAP[1]);
+    await expect(page.locator('#drawcount')).toHaveText('2 points');
+    await page.click('#dfinish');
+    await expect(page.locator('#drawbar')).toBeHidden();
+    await expect(page.locator('#sheetwhat')).toContainText('1 mark');
+  });
+});
