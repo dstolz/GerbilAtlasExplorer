@@ -5,6 +5,31 @@ carries a `version` block naming the release its derived fields were built for.
 
 ## [Unreleased]
 
+### Added
+- **A region drawn wrongly can be corrected from MATLAB, and the correction becomes a pull
+  request on its own.** `matlab/AtlasRegionFix.m` brings a plate down from the site -- the
+  drawing, the tracing, the extents as they stand, the printed labels and their lines --
+  lays them over each other in millimetres, and lets a reader mark what is wrong: a seed
+  for the name a face should carry, the run of boundary the tracing missed, the outline a
+  region should have. `preview` cuts the plate into faces the way the pipeline does and
+  says which one each seed lands in, before anything is sent; `commit` writes the marks to
+  `corrections/<id>.json` on a branch `correction/<id>` and pushes it, through a clone or
+  through the GitHub API. `.github/workflows/apply-correction.yml` then hands the file to
+  a Claude Code session that follows `.claude/skills/atlas-region-fix` -- reads the
+  correction against the extraction with `tools/corrections.py inspect`, fixes the input
+  at fault with `apply` or by hand, rebuilds, runs every check, writes it up -- and merges
+  the pull request once CI is green.
+
+  Nothing is drawn into `region_extents` by hand: a correction is one edit to a pipeline
+  input, and the extents are re-cut from it, so the regions still tile. The one new block
+  is `seed_overrides`, a seed placed by hand that stands in for a printed box as a leader
+  tip does, or seeds a face beside the printed labels; it is read after `label_leaders`
+  and survives every re-run. A boundary from a correction goes into the plate's SVG as
+  cubics with collinear control points, the one grammar `build_region_extents.flatten`
+  reads, marked `data-correction` with the file it came from. With the block empty, all 62
+  plates re-cut byte for byte; replaying the `S1DZ` case of #77 from its correction file
+  against the tracing as it was gives the region back at 0.62 mm2, its mirror's measure.
+
 ### Changed
 - **The 3-D view opens on the Nissl.** It opened on the labeled drawing, which is the right
   first sight of a *plate* and the wrong one of a *stack*: the drawing is ink on white, and

@@ -110,6 +110,23 @@ def test_no_leader_tip_lands_on_another_name(db):
     assert not bad, 'leader tips ending on another structure: ' + '; '.join(bad)
 
 
+def test_seed_overrides(db):
+    """A seed placed by hand names a region and, where it stands in for a printed
+    box, a box that exists -- see `seed_overrides` and tools/corrections.py. The
+    names that are no region cannot be seeded by hand any more than by the
+    label pass."""
+    S = {s['abbr'] for s in db['structures']}
+    LP = db['label_positions']['data']
+    for p, d in db['seed_overrides']['data'].items():
+        assert p in LP, p
+        for ab, rows in d.items():
+            assert ab in S and ab not in A.FEATURES, (p, ab)
+            for i, x, y, cid, why in rows:
+                assert i == -1 or 0 <= i < len(LP[p].get(ab, [])), (p, ab, i)
+                assert 0 <= x <= 1 and 0 <= y <= 1, (p, ab, x, y)
+                assert cid and why, (p, ab)
+
+
 def test_region_extents(db):
     R = db['region_extents']
     S = {s['abbr'] for s in db['structures']}

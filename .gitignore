@@ -1,4 +1,6 @@
-.claude/
+# the session state Claude Code keeps, but not the skills, which are the repository's
+.claude/*
+!.claude/skills/
 __pycache__/
 build/
 node_modules/

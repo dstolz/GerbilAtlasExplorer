@@ -371,7 +371,26 @@ plate range is malformed, and which are printed on one plate more than it gives 
 | `qc/` | Verification renders kept from the build; [`qc/README.md`](qc/README.md) says which script writes each. Not used by the app. |
 | `tools/` | The derivations that read something off the page rather than fitting a number to it, the shared library they use, the build, and the table exports. See [`tools/README.md`](tools/README.md). |
 | `tests/` | The data's own promises as `pytest` tests, and the built pages in a browser under Playwright. GitHub Actions runs both on every push. |
+| `matlab/` | `AtlasRegionFix.m`: mark what is wrong with a region on a plate from MATLAB, and send it. See [`matlab/README.md`](matlab/README.md) and the section below. |
+| `corrections/` | The corrections sent that way, one file each, as [`corrections/README.md`](corrections/README.md) describes; applied by `tools/corrections.py`. |
+| `.claude/skills/` | What a Claude Code session follows to take a correction to a finished pull request. |
 | `sw.js`, `manifest.webmanifest` | What makes the lean page work offline and installable. |
+
+## Correcting a region
+
+No region here is drawn by hand: the extents are cut from the tracings in `svg/` and the
+printed labels, so a region that comes out wrong is one of those inputs being wrong, and
+the fix is to the input. What a reader can say from the plate is where the region is and
+where its boundary runs. `matlab/AtlasRegionFix.m` lets you say it on the plate, in
+millimetres -- a seed inside the region, the run of boundary the tracing missed, the
+outline it should have -- and `commit` pushes it as `corrections/<id>.json` on a branch
+`correction/<id>`. A workflow then hands the file to a Claude Code session that follows
+[`.claude/skills/atlas-region-fix`](.claude/skills/atlas-region-fix/SKILL.md): it reads
+the correction against the extraction (`tools/corrections.py inspect`), fixes the input at
+fault, rebuilds everything cut from it, runs every check, writes the CHANGELOG and METHODS
+entries, and opens a pull request, which is merged once CI is green. The site serves
+`main`, so it updates on the merge. [`matlab/README.md`](matlab/README.md) has the setup
+and a worked example.
 
 ## Building and testing
 

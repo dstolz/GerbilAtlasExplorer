@@ -10,5 +10,6 @@ data/gerbil_atlas.json -text
 data/skull.json     -text
 data/vec.json       -text
 *.html              -text
+corrections/*.json  -text
 src/app.js          -text
 src/app.css         -text

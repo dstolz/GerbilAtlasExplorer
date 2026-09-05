@@ -174,6 +174,7 @@ def dumps(o):
 # re-run diffs by plate; their summaries are one compact line. Everything else is
 # indented by one space, which is how the file was first written.
 _PER_PLATE = {('brain_outline', 'data'), ('label_blocks', 'data'), ('label_leaders', 'data'),
+              ('seed_overrides', 'data'),
               ('region_extents', 'data'), ('region_extents', 'unassigned')}
 _COMPACT = {('region_extents', 'grades'), ('region_extents', 'summary'),
             ('label_leaders', 'summary'), ('plate_registration', 'data'),
@@ -197,7 +198,10 @@ def render_db(db):
                 if (k, sk) in _PER_PLATE:
                     rows = list(sv.items())
                     body = ',\n'.join('   %s: %s' % (json.dumps(pk), dumps(pv)) for pk, pv in rows)
-                    lines.append('  %s: {\n%s\n  }%s' % (json.dumps(sk), body, c))
+                    if not rows:                # an empty block, as seed_overrides starts
+                        lines.append('  %s: {}%s' % (json.dumps(sk), c))
+                    else:
+                        lines.append('  %s: {\n%s\n  }%s' % (json.dumps(sk), body, c))
                 elif (k, sk) in _COMPACT:
                     lines.append('  %s: %s%s' % (json.dumps(sk), dumps(sv), c))
                 else:

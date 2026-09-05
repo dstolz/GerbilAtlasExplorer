@@ -1,0 +1,121 @@
+# A correction to how a region is drawn, pushed from MATLAB (matlab/AtlasRegionFix.m) as
+# corrections/<id>.json on a branch correction/<id>, is applied here: a Claude Code session
+# follows .claude/skills/atlas-region-fix/SKILL.md -- diagnoses the input at fault, fixes
+# it, rebuilds the extents and everything cut from them, runs every check, writes the
+# CHANGELOG and METHODS entries, pushes to the same branch and opens a pull request -- and
+# the last step merges the pull request once CI is green. GitHub Pages serves main, so the
+# site updates on the merge.
+#
+# Setup, once: install the Claude GitHub App on the repository (`claude
+# /install-github-app`, or https://github.com/apps/claude) and add the secret it needs,
+# CLAUDE_CODE_OAUTH_TOKEN (from `claude setup-token`) or ANTHROPIC_API_KEY. Pushes made
+# through the App's token run ci.yml; pushes made with the default GITHUB_TOKEN would not,
+# which is why the action is not handed one.
+#
+# The session's own commits touch data/, svg/, tools/ and the docs, never corrections/, so
+# the paths filter keeps them from starting this again; the actor guard is the belt to
+# that brace.
+name: Apply correction
+
+on:
+  push:
+    branches: ['correction/**']
+    paths: ['corrections/**']
+  workflow_dispatch:
+    inputs:
+      correction:
+        description: 'corrections/<id>.json to apply, on the branch this is run from'
+        required: true
+        type: string
+
+concurrency:
+  group: correction-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    if: github.event_name == 'workflow_dispatch' || github.actor != 'claude[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0                # build_app.py stamps the page from git, and the diff below needs main
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: tools/requirements.txt
+      - run: pip install -r tools/requirements.txt
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+
+      - name: Which corrections this branch carries
+        id: files
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            list="${{ inputs.correction }}"
+          else
+            git fetch origin main
+            list=$(git diff --name-only origin/main...HEAD -- 'corrections/*.json' | tr '\n' ' ')
+          fi
+          echo "list=$list" >> "$GITHUB_OUTPUT"
+          echo "corrections: $list"
+          [ -n "$list" ] || { echo "no correction file on this branch"; exit 1; }
+      - name: Read them
+        run: python3 tools/corrections.py validate ${{ steps.files.outputs.list }}
+
+      - name: Apply them
+        id: claude
+        uses: anthropics/claude-code-action@v1
+        env:
+          GH_TOKEN: ${{ github.token }}
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            Branch ${{ github.ref_name }} of ${{ github.repository }} carries a correction to
+            how a region of the atlas is drawn: ${{ steps.files.outputs.list }}
+
+            Read .claude/skills/atlas-region-fix/SKILL.md and follow it end to end for each
+            file: diagnose the cause, fix the pipeline input at fault, rebuild, run every
+            check, write the CHANGELOG and METHODS entries, commit, push to this same branch,
+            and open a pull request against main with `gh pr create`. Do not merge it, and do
+            not edit the correction file. Python dependencies and Playwright are installed.
+          claude_args: |
+            --allowedTools "Bash,Read,Edit,Write,Glob,Grep"
+            --max-turns 300
+
+      - name: Merge when CI is green
+        if: steps.claude.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ steps.claude.outputs.github_token || github.token }}
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          pr=$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number')
+          if [ -z "$pr" ]; then
+            gh pr create --base main --head "$BRANCH" --fill-first
+            pr=$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number')
+          fi
+          echo "pull request #$pr"
+          # With a branch-protection rule, auto-merge waits for the checks it requires.
+          # Without one GitHub refuses to arm it, so wait on the checks here and merge.
+          if gh pr merge "$pr" --auto --squash --delete-branch; then
+            exit 0
+          fi
+          sleep 90                                     # let ci.yml register on the head
+          gh pr checks "$pr" --watch --fail-level error
+          gh pr merge "$pr" --squash --delete-branch
