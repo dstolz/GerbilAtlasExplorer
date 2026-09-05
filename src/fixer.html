@@ -6,7 +6,8 @@
 <meta name="color-scheme" content="light dark">
 <title>Atlas region fixer</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23b03a2e'/%3E%3Cpath fill='%23f6f5f2' d='M16 12.2L17.8 6.7C20.5 6.6 24 8 25.6 10.5 27.3 11.8 28.8 14.6 28.8 17.4 28.6 20 26.9 22.9 25.5 24.3 24.7 25 23.6 25.2 22.6 25.2 20.4 25.2 17.6 23.7 16 23.7 14.4 23.7 11.6 25.2 9.4 25.2 8.4 25.2 7.3 25 6.5 24.3 5.1 22.9 3.4 20 3.2 17.4 3.2 14.6 4.7 11.8 6.4 10.5 8 8 11.5 6.6 14.2 6.7Z'/%3E%3C/svg%3E">
-<link rel="stylesheet" href="/fixer.css">
+<meta name="gae-build" content="{{BUILD_HASH}} {{BUILD_DATE}}">
+<link rel="stylesheet" href="fixer.css">
 </head>
 <body>
 <noscript><p class="pad">The fixer draws the plate on a canvas and needs JavaScript. Without it,
@@ -24,15 +25,17 @@
   </div>
   <div class="seg" id="layerseg" title="The plate under the marks (L cycles)"></div>
   <div class="grp push">
-    <button class="b" id="fit" type="button" title="Fit the whole plate (F)">Fit</button>
-    <button class="b" id="openb" type="button" title="Read a draft or a correction file back in">Open</button>
-    <button class="b" id="saveb" type="button" title="Write the draft to a file (S)">Save</button>
     <button class="b go" id="commitb" type="button" title="Write the correction on a branch and push it">Commit</button>
   </div>
 </header>
 
 <main>
   <aside class="side" id="side">
+    <!-- on a phone the panel is a sheet: this bar is all of it that stays up, so the
+         plate keeps the screen until the tools are wanted -->
+    <button class="sheetbar" id="sheetbar" type="button" aria-expanded="true">
+      <span id="sheetwhat">the tools</span><span class="chev" aria-hidden="true">&#9662;</span>
+    </button>
     <section class="box">
       <h2>The region</h2>
       <input id="find" type="search" placeholder="Find a structure by name or abbreviation" autocomplete="off">
@@ -61,6 +64,8 @@
         <button class="b" id="noteb" type="button">Add a note</button>
         <button class="b" id="undob" type="button" title="Drop the last mark (Z)">Undo</button>
         <button class="b" id="clearb" type="button">Clear the marks</button>
+        <button class="b" id="saveb" type="button" title="Write the draft to a file (S)">Save</button>
+        <button class="b" id="openb" type="button" title="Read a draft or a correction file back in">Open</button>
       </div>
     </section>
 
@@ -77,7 +82,21 @@
 
   <section class="stage">
     <canvas id="cv"></canvas>
-    <div class="over" id="over"></div>
+    <div class="over" id="over">
+      <div class="zoomers">
+        <button class="rb" id="zin" type="button" title="Zoom in" aria-label="Zoom in">+</button>
+        <button class="rb" id="zout" type="button" title="Zoom out" aria-label="Zoom out">&minus;</button>
+        <button class="rb" id="zfit" type="button" title="Fit the plate (F)" aria-label="Fit the plate">&#10530;</button>
+      </div>
+      <!-- a phone has no Enter key and no double-click, so a shape being drawn says
+           how to finish it on the plate itself -->
+      <div class="drawbar" id="drawbar" hidden>
+        <span id="drawcount" class="mono"></span>
+        <button class="b" id="dundo" type="button">Undo point</button>
+        <button class="b" id="dcancel" type="button">Cancel</button>
+        <button class="b go" id="dfinish" type="button">Finish</button>
+      </div>
+    </div>
     <div class="statusbar">
       <span id="at" class="mono">&mdash;</span>
       <span id="under"></span>
@@ -100,6 +119,6 @@
 </div>
 <div class="toast" id="toast" hidden></div>
 
-<script src="/fixer.js"></script>
+<script src="fixer.js"></script>
 </body>
 </html>

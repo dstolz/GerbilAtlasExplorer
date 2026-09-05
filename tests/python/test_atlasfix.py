@@ -18,6 +18,7 @@ import numpy as np
 
 import atlaslib as A
 import atlasfix as F
+import build_facemaps as M
 import build_region_extents as B
 import corrections as C
 
@@ -190,8 +191,12 @@ def test_recut_builds_the_plate_the_correction_would_leave(tmp_path):
 # --------------------------------------------------------------- over the wire
 
 class Served:
+    def __init__(self, token=None):
+        self.tok = token
+
     def __enter__(self):
-        self.srv = F.serve(session(), '127.0.0.1', 0, {'tool': F.TOOL, 'start': {}})
+        self.srv = F.serve(session(), '127.0.0.1', 0, {'tool': F.TOOL, 'start': {}},
+                           token=self.tok)
         threading.Thread(target=self.srv.serve_forever, daemon=True).start()
         self.url = 'http://127.0.0.1:%d' % self.srv.server_address[1]
         return self
@@ -242,3 +247,76 @@ def test_the_server_says_no_rather_than_falling_over():
                 assert e.code == 404
         code, body = s.post('/api/document', {'draft': {'plate': PLATE, 'abbr': 'nosuch'}})
         assert code == 400 and 'nosuch' in body['error']
+
+
+def test_open_to_the_network_it_wants_its_key():
+    """Bound past loopback -- `--host 0.0.0.0`, to read a plate on a phone -- the port
+    is reachable by anything on the network, and this writes files and pushes branches.
+    The key minted at startup is what stands between the two; it arrives in the URL
+    once and is kept in a cookie after."""
+    with Served(token='sekret') as s:
+        try:
+            s.get('/api/boot')
+            raise AssertionError('answered without the key')
+        except urllib.error.HTTPError as e:
+            assert e.code == 403 and b'key' in e.read()
+        code, body = s.get('/api/boot?k=sekret')
+        assert code == 200 and json.loads(body)['tool'] == F.TOOL
+        req = urllib.request.Request(s.url + '/api/boot',
+                                     headers={'Cookie': 'atlasfix=sekret'})
+        with urllib.request.urlopen(req) as r:
+            assert r.status == 200
+        with urllib.request.urlopen(s.url + '/?k=sekret') as r:      # and hands it out
+            assert 'atlasfix=sekret' in r.headers.get('Set-Cookie', '')
+
+
+# ------------------------------------------------------------ the published cut
+
+def test_the_committed_face_map_is_the_cut_it_claims_to_be():
+    """The page GitHub Pages serves has no Python, so `Pick` there reads
+    data/facemaps/ instead of cutting the plate. That is only honest if what is
+    committed is the cut -- so this decodes the published raster and compares it,
+    pixel for pixel, with what the extraction gives today. `build_facemaps.py --check`
+    is the same promise in CI; this is the one that says the *encoding* is right too."""
+    import gzip
+    S = session()
+    P = S.plate(PLATE)
+    faces, fsize, _interior = F.cut_faces(P)
+
+    raw = gzip.decompress(open(os.path.join(M.DIR, M.RASTER % PLATE), 'rb').read())
+    got = np.frombuffer(raw, '<u2').reshape(P.H, P.W)
+    assert np.array_equal(got, faces)
+
+    with open(os.path.join(M.DIR, M.SIDECAR % PLATE), encoding='utf8') as f:
+        meta = json.load(f)
+    assert meta['page'] == [P.W, P.H]
+    assert meta['min_face_px'] == B.MIN_FACE_PX
+    assert meta['sizes'] == [int(v) for v in fsize]
+    seeds = F.label_seeds(P, S.DB, faces, fsize)
+    assert meta['labels'] == [[s['abbr'], s['index'], int(s['face'])] for s in seeds]
+    # and the answer the page gives from it is the answer the tool gives from the cut
+    fid = int(got[int(SEED[1]), int(SEED[0])])
+    here = S.probe(PLATE, SEED)
+    assert fid == here['face']
+    assert meta['sizes'][fid] == here['face_px']
+    assert sorted({l[0] for l in meta['labels'] if l[2] == fid}) == here['names']
+
+
+def test_every_plate_has_a_face_map_the_page_can_read():
+    for p in range(1, A.N_PLATES + 1):
+        for name in (M.RASTER, M.SIDECAR):
+            path = os.path.join(M.DIR, name % p)
+            assert os.path.isfile(path), 'no %s' % os.path.relpath(path, A.ROOT)
+    with open(os.path.join(M.DIR, M.SIDECAR % 1), encoding='utf8') as f:
+        meta = json.load(f)
+    assert set(meta) == {'plate', 'page', 'min_face_px', 'mm2_per_px', 'sizes', 'labels'}
+
+
+def test_the_cut_gzips_the_same_way_twice():
+    """--check compares bytes, so the compression has to be settled: no mtime, no name."""
+    S = session()
+    raw, meta = M.cut(S, PLATE)
+    import gzip
+    assert gzip.compress(raw, 6, mtime=0) == gzip.compress(raw, 6, mtime=0)
+    assert M.render(meta) == M.render(meta)
+    assert json.loads(M.render(meta))['plate'] == PLATE

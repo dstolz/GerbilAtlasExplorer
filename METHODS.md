@@ -727,7 +727,11 @@ frame the tracings are in and pushed. The reader is shown what a mark would do b
 sending it, and the browser tool shows it with the extraction rather than a copy of it: the
 face map is cut by `build_region_extents`'s own rasterizer over `BRIDGE_PX`, and its
 **Recut** applies the draft to a scratch tree and re-cuts the plate, which is the same
-`apply` and the same `build_plate` the workflow runs. A workflow then
+`apply` and the same `build_plate` the workflow runs. The same page is published on the
+site, where there is no Python to cut with; it reads `data/facemaps/` instead, which is
+that cut of all 62 plates written out by `tools/build_facemaps.py` and checked against the
+tracing on every push, so what it says about a face is still the extraction's answer and
+not a second implementation of it. What it cannot do is re-cut, and it does not pretend to. A workflow then
 has the correction read against the extraction (`tools/corrections.py inspect`: which face
 each seed lands in today and who letters it, whether a drawn boundary's ends are within
 `BRIDGE_PX` of ink, which runs of a corrected outline lie off the ink) and applied to the
