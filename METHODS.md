@@ -445,6 +445,18 @@ seed the extraction drops, the coordinate the app quotes, the point the planner 
 the circle it draws when there is no extent to outline — a circle round the word would be a
 circle round blank paper beside the section.
 
+`tools/leaders.py` reads the block back out — a row per leader with the label the atlas drew
+it from, both ends in millimeters, and which region each of them falls in — so the figures
+above can be checked without opening the JSON. It needs no PDF: the lines were read off the
+page once and committed, and this reads what was committed. `--shared` is the 21 lines a
+joined label shares between two names; `--odd` is the tips that land somewhere other than the
+region their label names, which is eight in a neighbour's ground and 54 in an unassigned face
+or in an outline too thin to hold the point that seeded it. Five of the eight are names that
+are no region of their own — three fissures, a sulcus and an incisure. The other three are
+marks the leader pass misread, and they read as neighbours here *because* they are fixed: a
+row of `seed_overrides` withdraws each, so the extents no longer follow the mark and the tip
+is left sitting in the region it used to take ground from.
+
 ## The brain outline
 
 `brain_outline` in the JSON gives the outline of the section on each plate: what a track
@@ -510,7 +522,7 @@ fractions of the frame-cropped image — the same frame and the same convention
 `brain_outline` uses, so the app's existing point-in-polygon test reads them unchanged.
 **3,078 structure-plate entries carry an area**, 96% of the 3,215 the label pass located
 and 91% of the 3,365 the published index lists — both counted over the structures that are
-regions — as 5,902 polygons over 167,276 points. Where
+regions — as 5,904 polygons over 167,299 points. Where
 the atlas prints two names as one label the two share an entry, so a name having no entry of
 its own does not mean it has no area — see step 8. Twenty of the 724 names have no entry
 anywhere, and never could: they name no region — see step 7.
@@ -627,7 +639,7 @@ to **0.7% of polygons** and the repeated vertices to none.
 the difference between a polygon that reads as the line the atlas drew and one that visibly
 cuts its corners. The floor is the page lattice: at 0.35 px the tolerance drops below the
 raster step and the polygon starts recording the staircase rather than the line, at seven
-times the points. At 0.5 it does not — 167,276 points against the 77,453 the 2 px pass
+times the points. At 0.5 it does not — 167,299 points against the 77,453 the 2 px pass
 wrote, for a median traced share of **1.00** where it was 0.98, and it takes the last of the
 crossings with it: **0.03% of polygons**, two of 7,048, against 9% before either change.
 A thin structure is what a coarse tolerance cannot draw without folding its two sides
@@ -718,8 +730,10 @@ with the region the word is standing in. The other counts in this paragraph, and
 outline-containment row above, are a snapshot no committed script reproduces and are left
 as they stand.
 
-240 of the 6,346 printed labels are set outside their region with a line drawn back into
-it, and are seeded at the end of that line. A further 192 sit outside the face they name
+240 of the 6,346 printed labels carry a line the leader pass read, and 237 of them are
+seeded at the end of it. The other three are marks the pass misread — `4Sh` and `4N` on
+plate 39, `Sp5O` on 51, each printed inside the region it names, which is a word the atlas
+draws no line for — and a row of `seed_overrides` puts each seed back on its printed word. A further 192 sit outside the face they name
 with no line this pass could follow — printed on a boundary, or beside the section on a line
 the tracing runs along — and are pulled to the largest face within a millimeter; most of
 those are on the olfactory bulb plates 5–9, where the section is small and the drawing sets
@@ -843,12 +857,12 @@ single corner would read as one patch if they were painted alike.
 The vertex test answers for boundaries the two regions hold in common and for nothing else,
 and a boundary can be missed by a hair without being shared. **Two regions that come within
 0.05 mm of each other — 2.9 px of the 1100 × 703 frame, about a pixel and a half on screen
-at the zoom the plate opens at — are counted as touching too.** Over the atlas 4,469 pairs
-of names touch on at least one plate; 4,219 of them share a vertex somewhere and 250 never
-do, meeting only across a gap under the tolerance — 535 plate-by-plate occurrences, on all
+at the zoom the plate opens at — are counted as touching too.** Over the atlas 4,468 pairs
+of names touch on at least one plate; 4,215 of them share a vertex somewhere and 253 never
+do, meeting only across a gap under the tolerance — 538 plate-by-plate occurrences, on all
 62 plates. Those are laminae one or two pixels wide (`Py` between `Or` and `Rad` on plate
 30), near-corners where two boundaries pass within a fifth of a pixel without meeting, and
-pinches. **56 of the 249 would be painted alike on the vertex test alone**, and would then
+pinches. **54 of the 253 would be painted alike on the vertex test alone**, and would then
 have read as one region across a gap nobody can see. Folding them in costs nothing: with the
 rule and without it, the atlas needs the same eight colors.
 
