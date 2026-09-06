@@ -170,10 +170,9 @@ test.describe('the controls', () => {
     expect(await page.locator('#v3mcol').inputValue()).toBe('sel');
   });
 
-  // A mesh link written before a hue per structure became the default carries no `mc` at
-  // all. It still opens on the mesh it was written for -- the same structure, the same
-  // opacity -- and takes the default the view now has rather than the one it had then.
-  test('a link written without a color opens on the default the view now has', async ({ page }) => {
+  // The short link: a picture at the default coloring names no color, so the parse has to
+  // answer a missing `mc` with the default rather than with nothing.
+  test('a link that names no color opens on the default', async ({ page }) => {
     test.setTimeout(180000);
     await meshes(page, '#p30/CPu&t=v3d&mh=1&mo=45');
     const p = (await panes(page))[0];

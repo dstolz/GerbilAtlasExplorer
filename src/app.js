@@ -5222,8 +5222,8 @@ function writeHash(){
     if(Q.sk) h+='&sk'+x+'='+Math.round(Q.sko*100);
     if(Q.lm) h+='&lm'+x+'=1';
     /* the two mesh settings ride with the meshes the way the bone opacity rides with the
-       skull, and only when they are off their defaults -- so every link ever written for
-       a mesh still reads as exactly the mesh it was written for */
+       skull, and only when they are off their defaults, so the plain toggle writes the
+       short link */
     if(Q.m){ h+='&mh'+x+'=1';
       if(Q.mop!==MESHOP) h+='&mo'+x+'='+Math.round(Q.mop*100);
       if(Q.mcol!=='each') h+='&mc'+x+'='+Q.mcol; }
@@ -5337,10 +5337,8 @@ function readHash(){
     const mo=parseInt(par['mo'+x],10);
     Q.mop = Number.isFinite(mo)&&mo>=10&&mo<=100 ? mo/100 : MESHOP;
     const mc=par['mc'+x];
-    /* a mode this build cannot draw reads as the default rather than as nothing. A link
-       written before a hue per structure became that default carries no `mc` and opens on
-       it rather than on Selection: the same meshes either way, and the one it opens on is
-       the one that says which of them is which. */
+    /* no mode named, or one this build cannot draw, reads as the default rather than as
+       nothing */
     Q.mcol = mc==='sel'||(mc==='plate'&&MCOK) ? mc : 'each';
     if(Q.m) meshLoad();
   });

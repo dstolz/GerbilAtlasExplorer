@@ -15,9 +15,8 @@ carries a `version` block naming the release its derived fields were built for.
   click away and unchanged. The note under the picture says what the colors are doing in
   every mode rather than only off the default, because a hue that is the first thing a
   reader sees is the one most likely to be read as meaning something, and it means nothing.
-  A mesh link written before this carries no `mc` and so opens on the new default rather
-  than the old one — the same meshes at the same opacity, colored the way the view now
-  colors them; `&mc=sel` is what a link carries to ask for the old picture.
+  A link still names a color only when it is off the default, so `&mc=plate` and `&mc=sel`
+  are what carry the other two and a plain mesh link carries none.
 
 ### Added
 - **The meshes take a transparency and a coloring, and the coloring can be the plate's
