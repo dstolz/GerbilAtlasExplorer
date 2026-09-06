@@ -510,7 +510,7 @@ fractions of the frame-cropped image — the same frame and the same convention
 `brain_outline` uses, so the app's existing point-in-polygon test reads them unchanged.
 **3,078 structure-plate entries carry an area**, 96% of the 3,215 the label pass located
 and 91% of the 3,365 the published index lists — both counted over the structures that are
-regions — as 5,902 polygons over 167,255 points. Where
+regions — as 5,902 polygons over 167,276 points. Where
 the atlas prints two names as one label the two share an entry, so a name having no entry of
 its own does not mean it has no area — see step 8. Twenty of the 724 names have no entry
 anywhere, and never could: they name no region — see step 7.
@@ -627,7 +627,7 @@ to **0.7% of polygons** and the repeated vertices to none.
 the difference between a polygon that reads as the line the atlas drew and one that visibly
 cuts its corners. The floor is the page lattice: at 0.35 px the tolerance drops below the
 raster step and the polygon starts recording the staircase rather than the line, at seven
-times the points. At 0.5 it does not — 167,255 points against the 77,453 the 2 px pass
+times the points. At 0.5 it does not — 167,276 points against the 77,453 the 2 px pass
 wrote, for a median traced share of **1.00** where it was 0.98, and it takes the last of the
 crossings with it: **0.03% of polygons**, two of 7,048, against 9% before either change.
 A thin structure is what a coarse tolerance cannot draw without folding its two sides
@@ -702,19 +702,21 @@ structure every time, and to the name pointed at 6,308 times. **5,357 of them ar
 with an outline.** 551 are answered with the printed name because the entry carries `w` and
 there is no boundary to draw, and 423 because there is no extent to give — 297 of those being
 the names that are no region, which is not a shortfall but the point of step 7, and the other
-125 structures no extent could be cut for. Of the 21 that answer with another name, four are
+125 structures no extent could be cut for. Of the 23 that answer with another name, four are
 places where one located box sits inside another (`StA` around `STMA` on plate 23, `PVP`
 around `VL` on 29, `psf` around `sf` on 53, `SolC` around `sol` on 55) and the smaller of the
-two wins the point, which is the right tie-break everywhere else; fourteen are the
+two wins the point, which is the right tie-break everywhere else; twelve are the
 compound labels — `9a,bCb`, `9/11N`, `3/4Cb`, `S1J/BF`, `RSGb/c` — where two names hold the
-one box and the first answers for both, with the region they share. The last three are the
-right-hand `S1DZ` on plate 18 and both hemispheres' `MA3`, the right on plate 34 and the
-left on 35, and they are the only ones that are supposed to: the atlas sets each of those
-words outside the region it names — `S1DZ` below its wedge, in `S1J`; each `MA3` beside its
-paramedian column, in the tegmental gray around it on 34 and in `InC` on 35 — so the name
-is carried by a seed placed by hand and the point under the word answers with the region
-the word is standing in. The other counts in this paragraph, and the outline-containment
-row above, are a snapshot no committed script reproduces and are left as they stand.
+one box and the first answers for both, with the region they share. The last seven are the
+ones that are supposed to, each a word the atlas sets outside the region it names: the
+right-hand `S1DZ` on plate 18, below its wedge, in `S1J`; both hemispheres' `MA3`, the
+right on plate 34 and the left on 35, each beside its paramedian column, in the tegmental
+gray around it on 34 and in `InC` on 35; and both names of both `PN/PIF` labels on plate
+36, which the atlas prints in `PBP` and draws a line from into the collar around `IF`. For
+those the name is carried by a seed placed by hand and the point under the word answers
+with the region the word is standing in. The other counts in this paragraph, and the
+outline-containment row above, are a snapshot no committed script reproduces and are left
+as they stand.
 
 240 of the 6,346 printed labels are set outside their region with a line drawn back into
 it, and are seeded at the end of that line. A further 192 sit outside the face they name
@@ -780,10 +782,10 @@ checked against the printed page by eye.
 A region that comes out wrong is one of the three inputs above being wrong, and the fix is
 one edit to an input: a run of boundary added to the tracing (`S1DZ`, plate 19), an island
 given back to `brain_outline` (`ML` on 36, `och` on 22), a seed moved to the face its label
-means (`OV`, plate 5; `MA3`, plates 34 and 35), a printed word given the box the label pass had
-missed (layer 1, plates 17--18; `p1PAG`, plates 32--34) -- or two, where two of those causes
-meet on one region: the `S1DZ` wedge on
-plate 18 had lost the run of boundary the printed word is set over *and* was seeded from a
+means (`OV`, plate 5; `MA3`, plates 34 and 35; `PN/PIF`, plate 36), a printed word given the
+box the label pass had missed (layer 1, plates 17--18; `p1PAG`, plates 32--34) -- or two,
+where two of those causes meet on one region: the `S1DZ` wedge on plate 18 had lost the run
+of boundary the printed word is set over *and* was seeded from a
 box the atlas prints below it, and neither edit is any use without the other.
 `tools/atlasfix.py` -- or `matlab/AtlasRegionFix.m`, which writes the same file from
 MATLAB -- is how such a thing is said from the plate itself: a
@@ -841,8 +843,8 @@ single corner would read as one patch if they were painted alike.
 The vertex test answers for boundaries the two regions hold in common and for nothing else,
 and a boundary can be missed by a hair without being shared. **Two regions that come within
 0.05 mm of each other — 2.9 px of the 1100 × 703 frame, about a pixel and a half on screen
-at the zoom the plate opens at — are counted as touching too.** Over the atlas 4,470 pairs
-of names touch on at least one plate; 4,220 of them share a vertex somewhere and 250 never
+at the zoom the plate opens at — are counted as touching too.** Over the atlas 4,469 pairs
+of names touch on at least one plate; 4,219 of them share a vertex somewhere and 250 never
 do, meeting only across a gap under the tolerance — 535 plate-by-plate occurrences, on all
 62 plates. Those are laminae one or two pixels wide (`Py` between `Or` and `Rad` on plate
 30), near-corners where two boundaries pass within a fifth of a pixel without meeting, and
