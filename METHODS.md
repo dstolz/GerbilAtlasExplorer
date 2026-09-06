@@ -832,6 +832,15 @@ Two things are still not painted. The sealed faces the atlas names nothing insid
 it, however many names the atlas has set inside the one printed outline. What that paints is
 what the plate prints: one patch per printed boundary.
 
+**The same table colors the meshes.** The 3-D view's *Plate colors* mode reads
+`region_colors` and nothing else, so a structure's mesh is the color its outline is on the
+plate underneath it. The property solved for is inherited rather than re-derived, which is
+what keeps the two views from disagreeing — but it is inherited exactly, and what was solved
+is adjacency *on a plate*. Two regions that never share a boundary on any section and meet
+only across the 350 µm between two of them were never asked about, and can wear the same
+color where their meshes touch in depth. `tests/js/mesh3d.spec.js` checks the mapping is the
+table's, region for region, on all 62 plates.
+
 The block records all of it — the joins, the 28 refusals by name, the patch every region
 belongs to, and the slot it wears. `tests/python/test_data.py` re-derives the adjacency from
 the committed extents and checks the two things that matter: that no two regions touching on
