@@ -91,7 +91,9 @@ def test_committed_corrections_read():
 
 
 def test_apply_dry_run_touches_nothing():
+    import copy
     DB = A.load_db()
+    before_over = copy.deepcopy(DB['seed_overrides']['data'])
     with open(A.JSON, encoding='utf8', newline='') as f:
         before_db = f.read()
     svg = os.path.join(A.SVGDIR, 'GerbilAtlas_Plate_19.svg')
@@ -99,7 +101,7 @@ def test_apply_dry_run_touches_nothing():
         before_svg = f.read()
     rep = C.apply(C.load(FIX), DB, A.vec_matrices(), dry=True, quiet=True)
     assert rep['added'] == 1 and rep['changed'] == 1
-    assert DB['seed_overrides']['data'] == {}
+    assert DB['seed_overrides']['data'] == before_over     # whatever is committed, unchanged
     with open(A.JSON, encoding='utf8', newline='') as f:
         assert f.read() == before_db
     with open(svg, encoding='utf8', newline='') as f:

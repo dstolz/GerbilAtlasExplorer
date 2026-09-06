@@ -196,6 +196,77 @@ carries a `version` block naming the release its derived fields were built for.
   you are switching to — the rest is what gave way to make room for it.
 
 ### Fixed
+- **`S1DZ` on plate 18 was drawing its own label, and `S1J` was short the ground the
+  watershed took to draw it with.** The dysgranular zone is a wedge a few pixels wide where
+  it leaves `fmi`, too narrow to hold its own name: on the right hemisphere the atlas sets
+  the word `S1DZ` below the boundary it names, in `S1J`. Two things had gone wrong there,
+  and this is the first correction that takes two edits rather than one -- neither is any
+  use without the other.
+
+  **The tracing had lost the run of the `S1DZ`/`S1J` boundary the printed word sits over.**
+  The line runs under the glyphs, and what shows between them carries about half the
+  contrast of the line either side -- a redness of 10-17 against 21-39, on parenchyma that
+  reads 3-6 -- so the vectorizer stopped at each edge of the word. The two dangling ends it
+  left sat 28.6 px (200 µm) from their own continuation and 15.2 and 17.4 px from the
+  `S1FL` line above them -- so `BRIDGE_PX` welded each of them sideways across the wedge,
+  and the strip was walled into two faces of 4,148 and 1,070 px that no printed label
+  named. The run is traced now, as one cubic between the two ends with its control points
+  on their tangents; its chord sits 3.1° off the fragment it leaves and 3.3° off the one it
+  joins, so the boundary is straight there and one cubic is the whole of it.
+
+  **And the printed box seeded `S1J`.** A box seeds the face its own centre pixel falls in,
+  and the centre of `S1DZ` is 8.7 px below the boundary, inside `S1J`'s face -- so the
+  watershed split that face between the two names and gave `S1DZ` a blob around its own
+  word: 0.0729 mm² with 47% of its border on ink. That is what `seed_overrides` is for, and
+  this is its first row. `[1, 0.6528, 0.4097]` stands in for the right-hand box exactly as a
+  leader tip does, on the wedge's midline directly above the word. The box does not move: it
+  is where the word is printed, which is all it ever claimed to be.
+
+  With the run and not the seed `S1DZ` comes out 0.3432 mm², the box still seeding `S1J`;
+  with the seed and not the run, 0.5095, the medial 1,070 px still walled off by a bridge.
+  Together **`S1DZ` on plate 18 goes 0.3663 to 0.5873 mm²** -- 0.0729 to 0.2939 on the
+  right, against 0.2934 on the left, so the two hemispheres now measure within 0.0005 mm² of
+  each other -- and every point of both polygons' borders is on printed ink, traced share
+  0.470 to 1.000. `S1J` takes back the 0.0428 mm² the watershed had carved out of it (1.0760
+  to 1.1188 on the right) and its own share goes 0.897 to 1.000. Plate 18 goes from 16
+  unassigned faces to 14, and from 62 faces lettered by one abbreviation to 64.
+
+  Nothing else on the plate moves by as much as a plate pixel. Three entries do move:
+  `S1FL` (3.3779 → 3.3715 mm², by 0.88 plate px at its furthest), `fmi` (2.6881 → 2.6873,
+  0.48) and `VP` (0.6460 → 0.6459, 0.16). The first two are the two bridges going away:
+  each was a junction on a neighbour's border, and an arc no longer cut in two simplifies as
+  one -- `S1FL`'s right polygon comes back in 34 points where it took 54. The third is the
+  step-7 watershed re-solving. No other plate has an entry that changes by a point.
+
+  Over the atlas `S1DZ` gains 0.221 mm² (7.570 to 7.791) and 0.0487 mm³ (2.4888 to 2.5375),
+  and **comes out in six mesh components where it was in seven**: plate 18 was the gap
+  between two right-hemisphere pieces, so the 0.1914 and 0.2828 mm³ fragments either side
+  of it join into one of 0.5228. `S1J` gains 0.043 mm² and 0.0096 mm³ and keeps its four
+  pieces. Five other structures move by under 0.003 mm³ apiece: `fmi` and `S1FL` from their
+  own plate-18 polygons, and `S1DZO`, `ec` and `CPu` from the interpolation between plates
+  17 and 19 reading the corrected plane. `boundary_edges_shared_exactly` stays 1.0,
+  `regions_partition_the_volume` still asserts,
+  the structure count stays 689, and `region_colors` comes back unchanged, all 689 slots:
+  the wedge already touched `S1FL` and `S1J` on the left hemisphere, so no pair of names
+  that touch on plate 18 is new and there is nothing for the solve to repaint.
+
+  One consequence is meant to look like a regression and is not. Pointing at the printed
+  `S1DZ` on the right of plate 18 now answers `S1J`, because that is where the atlas prints
+  the word; `label_inside_its_own_region` goes 0.9750 to 0.9748 for the same reason. A word
+  set outside the region it names is what `seed_overrides` exists to record.
+
+  `tests/python/test_corrections.py` asserted `seed_overrides` was empty as its way of
+  saying a dry run mutates nothing in memory; it now compares the block against the one it
+  loaded, which says the same thing and survives a committed row. METHODS is brought up to
+  what the scripts write, and most of the gap predates this change: entries carrying an area
+  3,067 → 3,072 and the pairs the label pass located 3,204 → 3,209 (none of it this
+  change), polygons 5,881 → 5,893 (none), points 166,844 → 166,973 (of which −15 is this
+  change), entries carrying `w` 294 → 295 (none), and in the end-to-end paragraph labels
+  answered with an outline 5,356 → 5,357 and with no extent to give 424 → 423 (both #88's,
+  not this change) against labels answering to the name pointed at 6,309 → 6,308 and to
+  another name 18 → 19 (both this change, and both of them the `S1DZ` box).
+
+  Reported as #89, from the plate view.
 - **`M1` gets its left hemisphere back on plate 27, from the mammillothalamic tract.** The
   atlas prints `M1` twice on every plate from 11 to 28, once per hemisphere. On plate 27 the
   left one was filed as `mt`: two characters against two, at the same size in the same face,
