@@ -37,12 +37,15 @@ h1{margin:0;font-size:16px;font-weight:650;letter-spacing:-.01em;white-space:now
 .grp{display:flex;align-items:center;gap:6px;flex:none}
 .grp.wrap{flex-wrap:wrap}
 .grp.push,.push{margin-left:auto}
+.gshort,.tshort{display:none}
 .grp.end{justify-content:flex-end;margin-top:12px}
 #plate{width:56px;text-align:center}
 
 /* ---------- controls ---------- */
+/* `a.b` as well as `button.b`: the guide is a link, and should not read as one */
 .b{font:inherit;font-size:12.5px;padding:5px 10px;border:1px solid var(--line);
-  border-radius:8px;background:var(--panel2);color:var(--ink);cursor:pointer}
+  border-radius:8px;background:var(--panel2);color:var(--ink);cursor:pointer;
+  display:inline-flex;align-items:center;text-decoration:none;white-space:nowrap}
 .b:hover{background:var(--chip)}
 .b[disabled]{opacity:.45;cursor:default}
 .b.go{background:var(--accent);border-color:var(--accent);color:#fff}
@@ -185,5 +188,14 @@ main{flex:1 1 auto;display:grid;grid-template-columns:352px minmax(0,1fr);min-he
   .brand{margin-right:auto}
   #layerseg{order:5;width:100%}
   #layerseg button{flex:1 1 0}
+  /* The header holds two rows here -- the title, the plate and the two buttons on one,
+     the plate images on the other -- and a third would come out of the plate's own room.
+     So the guide gives up its word and the title its first, which leaves 40 px spare at
+     390 px rather than the 4 px it was over by. */
+  header{gap:5px 6px}
+  .tlong,.glong{display:none}
+  .tshort,.gshort{display:inline}
+  #plate{width:46px}
+  #guide{padding:8px 13px;font-weight:650}
   .statusbar{gap:8px;font-size:11px}
 }

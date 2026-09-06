@@ -90,7 +90,9 @@ file they came from. Both survive every re-run, which is the difference from edi
 derived blocks: `build_region_extents.py` reads them and cuts the extents afresh.
 
 `atlasfix.py` is where one gets written. It serves `src/fixer.html` on `127.0.0.1` and
-opens a browser on it; nothing leaves the machine until **Commit**.
+opens a browser on it; nothing leaves the machine until **Commit**. **Guide** in its header
+opens [Correcting a Region](https://github.com/dstolz/GerbilAtlasExplorer/wiki/Correcting-a-Region),
+the wiki page a reader who has not done this before wants first.
 
 ```
 python3 tools/atlasfix.py 19 --abbr S1DZ    # the plate, and the region in question

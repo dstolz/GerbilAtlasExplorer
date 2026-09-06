@@ -15,7 +15,7 @@
 
 <header>
   <div class="brand">
-    <h1>Atlas region fixer</h1>
+    <h1><span class="tlong">Atlas region fixer</span><span class="tshort">Region fixer</span></h1>
     <p class="sub" id="where">plate &mdash;</p>
   </div>
   <div class="grp">
@@ -25,6 +25,9 @@
   </div>
   <div class="seg" id="layerseg" title="The plate under the marks (L cycles)"></div>
   <div class="grp push">
+    <a class="b" id="guide" href="https://github.com/dstolz/GerbilAtlasExplorer/wiki/Correcting-a-Region" target="_blank" rel="noreferrer"
+       title="How to use this: what a correction corrects, what each tool is for, and what happens after you send it"
+       aria-label="How to use this"><span class="glong">Guide</span><span class="gshort" aria-hidden="true">?</span></a>
     <button class="b go" id="commitb" type="button" title="Write the correction on a branch and push it">Commit</button>
   </div>
 </header>
@@ -76,7 +79,9 @@
         <button class="b" id="recutb" type="button" title="Apply the draft to a scratch tree and cut the plate again (R)">Recut</button>
         <button class="b" id="qcb" type="button" title="Write qc/chk_corr_&lt;id&gt;.png beside the plate">QC image</button>
       </div>
-      <pre class="report" id="report">The plate is cut here the way <b>build_region_extents.py</b> cuts it. <b>Pick</b> says which face a point is in and which printed labels seed that face; <b>Inspect</b> reads the whole draft against the extraction as it stands; <b>Recut</b> applies it to a scratch copy and builds the plate again, so the outlines you see are the ones the pipeline would write.</pre>
+      <pre class="report" id="report">The plate is cut here the way <b>build_region_extents.py</b> cuts it. <b>Pick</b> says which face a point is in and which printed labels seed that face; <b>Inspect</b> reads the whole draft against the extraction as it stands; <b>Recut</b> applies it to a scratch copy and builds the plate again, so the outlines you see are the ones the pipeline would write.
+
+The <a href="https://github.com/dstolz/GerbilAtlasExplorer/wiki/Correcting-a-Region" target="_blank" rel="noreferrer">guide</a> says what each tool is for and what happens to a correction after you send it.</pre>
     </section>
   </aside>
 
