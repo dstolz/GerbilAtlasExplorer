@@ -196,6 +196,46 @@ carries a `version` block naming the release its derived fields were built for.
   you are switching to — the rest is what gave way to make room for it.
 
 ### Fixed
+- **`M1` gets its left hemisphere back on plate 27, from the mammillothalamic tract.** The
+  atlas prints `M1` twice on every plate from 11 to 28, once per hemisphere. On plate 27 the
+  left one was filed as `mt`: two characters against two, at the same size in the same face,
+  which is as much as can be said for why. So the box at (0.3944, 0.2591) -- printed `M1`,
+  between `M2` and `S1Tr` at the top of the section, where the drawing shows it plainly --
+  belonged to a tract running through the diencephalon four millimetres below it. The seed
+  went where the box was, and the dorsal cortical strip it seeded went with it.
+
+  The wrong input was the box, so the box is what moved: one entry of `label_positions`,
+  from `mt` to `M1` on plate 27. Nothing else was touched -- no tracing, no outline, no
+  override -- and everything cut from that input was rebuilt.
+
+  `M1` on plate 27 goes from one polygon of 0.4704 mm² to two of 0.8204, and `mt` from three
+  of 0.5632 to two of 0.2131: the 0.3501 mm² strip moves whole, and no other one of the
+  plate's 106 entries changes by a point. Over the atlas `M1` gains a label (35 → 36) and
+  0.350 mm² (46.015 → 46.365), and its volume goes 16.4004 → 16.7476 mm³; `mt` loses the same
+  label and area (1.74 → 1.39 mm²) and 0.1288 mm³. Both come out in **two** mesh components
+  where each was in three -- one per hemisphere, which is what a structure printed on both
+  should be, and the third piece was the mistake in each case. Six neighbours move by less
+  than 0.13 mm³ apiece (`M2`, `cg`, `ec`, `MPtA`, `S1HL`, `S1Tr`), which is the interpolation
+  between plates 26 and 28 reading the corrected plane. `boundary_edges_shared_exactly`
+  stays 1.0.
+
+  **The whole atlas repaints.** Four adjacency pairs change on plate 27, and
+  `region_colors` is one solve over all 62 plates: re-run, it lands on a different valid
+  eight-coloring, and 603 of the 689 regions take a different slot. Nothing about the
+  coloring's guarantees moves -- eight colors, 631 patches, 28 refusals, no two regions that
+  touch on a plate alike -- and the asks granted go 111 → 120. A slot has never meant
+  anything beyond "not my neighbor", and it is not stable across a rebuild; that is what
+  re-solving is.
+
+  The rebuild also caught two things that had drifted before this change. The committed
+  `region_extents` block predated `seed_overrides`, so its `derivation` now carries the
+  sentence about a seed moved by hand, and its summary the `seeds_moved_by_hand` count.
+  And METHODS's coloring paragraph was quoting an older solve: pairs that touch 4,434 →
+  4,456, sharing a vertex 4,187 → 4,207, gap-only 247 → 249 over 526 → 532 plate
+  occurrences, the pairs with an unprinted border 189 → 193 of which 87 → 90 are printed
+  apart elsewhere, candidates 102 → 103, joins 74 → 75, asks 116 → 120, and the
+  counterfactual 62 → 56. Only the last of each pair is this change; most of each gap was
+  already there.
 - **`E/OV` follows its own leader on the rest of the olfactory bulb, and `IEn` gets a
   hemisphere back.** The atlas cannot fit `E/OV` inside the olfactory ventricle on any of
   plates 1–5, so it prints the label outside the section with a line drawn back in; where
