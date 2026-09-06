@@ -5,6 +5,20 @@ carries a `version` block naming the release its derived fields were built for.
 
 ## [Unreleased]
 
+### Changed
+- **The meshes open in a hue per structure.** The 3-D mesh **Color** control opened on
+  *Selection*, which paints a division's members all in the division's one color. That is
+  the right picture of one structure and the wrong one of sixty-five: a cortex in one teal
+  is a blob that will not say which field you are looking at, and a division is the case
+  that brings anybody to the meshes in the first place. **One per structure** is the default
+  now, and it is listed first in the control; *Plate colors* and *Selection* are both a
+  click away and unchanged. The note under the picture says what the colors are doing in
+  every mode rather than only off the default, because a hue that is the first thing a
+  reader sees is the one most likely to be read as meaning something, and it means nothing.
+  A mesh link written before this carries no `mc` and so opens on the new default rather
+  than the old one — the same meshes at the same opacity, colored the way the view now
+  colors them; `&mc=sel` is what a link carries to ask for the old picture.
+
 ### Added
 - **The meshes take a transparency and a coloring, and the coloring can be the plate's
   own.** Two controls under **Advanced**, one 3-D pane at a time. **Opacity** runs from a

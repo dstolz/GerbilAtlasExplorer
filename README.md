@@ -224,12 +224,14 @@ handful.
   as a mesh. Two settings of their own sit under **Advanced**. **Opacity** takes them from
   solid to a glass shell: below the top of the range they are composited back to front
   instead of hiding each other, so what is inside one shows through it, and so does the
-  tissue behind. **Color** says what a mesh is colored by — the selection, where a division's
-  members are all in its one color because that is what a division is; the **plate's own
-  colors**, the same eight-color solution the section is painted with, so a structure is the
-  same color in the stack as in the plate under it and no two that touch on a plate are
-  alike; or a hue
-  per structure, which is more colors than eight and promises nothing else. Both ride in the
+  tissue behind. **Color** says what a mesh is colored by. It opens on **one per structure**
+  — a hue off each name, so a division comes up as its members rather than as a blob, which
+  is what you are looking at when the meshes are on; it is more colors than eight and
+  promises nothing else, two names can land on the same hue. **Plate colors** is the same
+  eight-color solution the section is painted with, so a structure is the same color in the
+  stack as in the plate under it and no two that touch on a plate are alike. **Selection**
+  puts a division's members all in its one color, because that is what a division is — the
+  right picture of one structure and the wrong one of three hundred. All of it rides in the
   link. Six planes in seven of a mesh are interpolated between
   sections 350 µm apart; see [METHODS](METHODS.md#the-third-dimension). (Needs WebGL 2.)
 - **Split** puts a second 3D view beside the first, sharing the one stack, label cloud and

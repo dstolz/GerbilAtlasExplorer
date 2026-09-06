@@ -3377,7 +3377,7 @@ const MESHOP=.92;
    sight of it; Contours is one button away and the note still says what the stack is. */
 const v3pane=()=>({mode:'volume', op:.42, t0:0, t1:1, gam:1, a:0, b:61,
                    half:false, ortho:false, sk:false, sko:.32, m:false, ms:false, lm:false,
-                   mop:MESHOP, mcol:'sel',
+                   mop:MESHOP, mcol:'each',
                    az:-.82, el:.30, dist:26, tx:0, ty:0, view:'obl'});
 const V3P=[v3pane(), v3pane()];
 let v3two=false;                   /* the second pane is drawn */
@@ -4750,11 +4750,13 @@ function meshHue(ab){
 }
 /* Three answers to what a mesh is colored by, and the pane says which.
 
-   Selection is what this always did: the thing you asked for in the color the plate marks
-   it in, and a division's members all in the division's one color, because they are parts
-   of a thing and twenty hues would read as twenty things. That is the right picture of one
-   structure and the wrong one of three hundred -- a cortex in one color is a single blob,
-   and which lobe you are looking at is exactly what it will not say.
+   One per structure gives every mesh its name's own hue, a division's members included:
+   more colors than eight, so more of them are told apart at a glance. It is what the view
+   opens on, because the case that brings anybody here with the meshes on is a division --
+   one structure is one shape and any color draws it, but a cortex is sixty-five, and the
+   picture has to say which of them you are looking at before it says anything else. It
+   promises no more than that -- the name is hashed into 360 degrees, so two of them can
+   land on the same hue or next door to each other, and nothing about a hue is a fact.
 
    Plate colors is the plate's own coloring lifted into the third dimension: `region_colors`,
    the slot each region wears on every plate it is drawn on, solved once so that no two
@@ -4763,12 +4765,14 @@ function meshHue(ab){
    means nothing beyond "not my neighbor". Adjacency in depth was not part of the solve, so
    two meshes that meet only between sections can come out alike; METHODS says so too.
 
-   One per structure gives every mesh its name's own hue, a division's members included:
-   more colors than eight, so more of them are told apart at a glance. It promises no more
-   than that -- the name is hashed into 360 degrees, so two of them can land on the same
-   hue or next door to each other, and nothing about a hue is a fact. */
+   Selection is what this did first: the thing you asked for in the color the plate marks it
+   in, and a division's members all in the division's one color, because they are parts of a
+   thing and twenty hues would read as twenty things. That is the right picture of one
+   structure and the wrong one of three hundred, which is why it is no longer the one the
+   view opens on -- it is the mode to reach for when the mesh is the answer to "where is
+   this", rather than "which of these am I looking at". */
 function meshColor(ab,Q){
-  const mode=(Q&&Q.mcol)||'sel';
+  const mode=(Q&&Q.mcol)||'each';
   /* a region the coloring has no slot for keeps its name's hue rather than going
      uncolored -- there are none in a full build, and a partial one still draws */
   if(mode==='plate') return MCBY[ab]===undefined ? meshHue(ab) : MCRGB[MCBY[ab]%MCRGB.length];
@@ -5047,10 +5051,12 @@ function v3note(){
          unsaid and should not is how many of them are actually there -- the members the
          atlas draws no region for have no mesh either, and past the cap the rest are the
          largest ones, so the shape on screen is short of the division by a stated amount. */
-      /* What the colors are doing and what they are not, said whenever they are not doing
-         what they have always done. The plate's coloring carries its own meaning into the
-         third dimension unchanged -- "not my neighbor", and nothing else -- and a hue per
-         name carries none at all. */
+      /* What the colors are doing and what they are not -- said in every mode, including
+         the one the view opens on, because a reader who is not told will read something
+         into a hue and there is nothing in it to read. The plate's coloring carries its
+         own meaning into the third dimension unchanged -- "not my neighbor", and nothing
+         else -- a hue per name carries none at all, and the selection's one color is the
+         one case where the color is saying something: these are all the same thing. */
       const paint = Q.mcol==='plate'
         ? ' Colored the way the plate colors them \u2014 no two regions that touch on a'+
           ' plate alike, and the same color on every plate a region is drawn on;'+
@@ -5058,6 +5064,9 @@ function v3note(){
         : Q.mcol==='each'
         ? ' Every structure in a hue off its own name \u2014 enough to tell them apart,'+
           ' and nothing more: two names can land on the same hue.'
+        : isGrp(sel)
+        ? ' All in the division\u2019s one color, which says they are parts of it and'+
+          ' nothing about which part.'
         : '';
       /* a translucent render is a picture with the sorting stated, for the same reason the
          windowed one is: the reader cannot see from it that anything was done */
@@ -5217,7 +5226,7 @@ function writeHash(){
        a mesh still reads as exactly the mesh it was written for */
     if(Q.m){ h+='&mh'+x+'=1';
       if(Q.mop!==MESHOP) h+='&mo'+x+'='+Math.round(Q.mop*100);
-      if(Q.mcol!=='sel') h+='&mc'+x+'='+Q.mcol; }
+      if(Q.mcol!=='each') h+='&mc'+x+'='+Q.mcol; }
   });
   if(v3two){ h+='&sp='+(1+v3ed); if(!v3lock) h+='&lk=0'; }
   /* fo used to be a bare 1 for "an origin is set". It now carries the landmark as 1 + its
@@ -5328,8 +5337,11 @@ function readHash(){
     const mo=parseInt(par['mo'+x],10);
     Q.mop = Number.isFinite(mo)&&mo>=10&&mo<=100 ? mo/100 : MESHOP;
     const mc=par['mc'+x];
-    /* a mode this build cannot draw reads as the default rather than as nothing */
-    Q.mcol = mc==='each'||(mc==='plate'&&MCOK) ? mc : 'sel';
+    /* a mode this build cannot draw reads as the default rather than as nothing. A link
+       written before a hue per structure became that default carries no `mc` and opens on
+       it rather than on Selection: the same meshes either way, and the one it opens on is
+       the one that says which of them is which. */
+    Q.mcol = mc==='sel'||(mc==='plate'&&MCOK) ? mc : 'each';
     if(Q.m) meshLoad();
   });
   v3ui(); v3frame();
@@ -5731,7 +5743,7 @@ const slabDef = Q=>Q.a===0&&Q.b===61;
 /* one group, one count -- the same way the four sliders of the tissue curve count once.
    Only while the meshes are on, because that is the only time either setting draws
    anything, and it is when the link carries them. */
-const meshDef = Q=>!Q.m||(Q.mop===MESHOP&&Q.mcol==='sel');
+const meshDef = Q=>!Q.m||(Q.mop===MESHOP&&Q.mcol==='each');
 function advCount(){
   if(tab==='plate') return (ctrDef()?0:1)+((pgray&&psrc==='drawing')?1:0);
   if(tab==='v3d'){ const Q=v3E(); return (v3tdef(Q)?0:1)+(slabDef(Q)?0:1)+(meshDef(Q)?0:1); }
