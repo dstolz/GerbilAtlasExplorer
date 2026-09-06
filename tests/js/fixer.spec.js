@@ -431,3 +431,44 @@ test('a worker from an older build cannot serve this page a stale database',
     // deliberately not versioned: 186 of them is not a download to spend on a stamp
     expect(asked.some((u) => /\/data\/plates\/.*\.jpg$/.test(u))).toBe(true);
   });
+
+
+// ------------------------------------------------------------------ the guide
+//
+// The wiki page is where a reader who has never seen this before is told what a
+// correction actually corrects. The link has to be on the page itself, and on a phone
+// it has to be there without costing the plate a row of its screen -- which it did,
+// until the title and the link gave up their words instead.
+
+const GUIDE = 'https://github.com/dstolz/GerbilAtlasExplorer/wiki/Correcting-a-Region';
+
+test('the guide is linked from the page, and opens away from the draft', async ({ page }) => {
+  await open(page);
+  const a = page.locator('#guide');
+  await expect(a).toBeVisible();
+  await expect(a).toHaveAttribute('href', GUIDE);
+  await expect(a).toHaveAttribute('target', '_blank');       // a draft in hand is not lost
+  // useInnerText: the narrow-screen span is in the markup and hidden, and textContent
+  // would read both of them
+  await expect(a).toHaveText('Guide', {useInnerText: true});
+  // and again where a first-time reader is told what the tools are
+  await expect(page.locator('#report a')).toHaveAttribute('href', GUIDE);
+});
+
+test('on a phone the guide costs the plate no room', async ({ browser }) => {
+  await onPhone(browser, async (page) => {
+    const a = page.locator('#guide');
+    await expect(a).toBeVisible();
+    await expect(a).toHaveAttribute('href', GUIDE);
+    await expect(a).toHaveText('?', {useInnerText: true});    // the word does not fit
+    const box = await page.evaluate(() => {
+      const h = document.querySelector('header');
+      const rows = new Set([...h.children].map((e) => Math.round(e.getBoundingClientRect().top)));
+      return {header: h.getBoundingClientRect().height, rows: rows.size,
+        cv: document.getElementById('cv').getBoundingClientRect().height,
+        vh: window.innerHeight};
+    });
+    expect(box.header).toBeLessThan(100);          // two rows, not three
+    expect(box.cv).toBeGreaterThan(box.vh * 0.7);  // and the plate keeps the screen
+  });
+});

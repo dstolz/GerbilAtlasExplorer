@@ -6,7 +6,7 @@
 <meta name="color-scheme" content="light dark">
 <title>Atlas region fixer</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23b03a2e'/%3E%3Cpath fill='%23f6f5f2' d='M16 12.2L17.8 6.7C20.5 6.6 24 8 25.6 10.5 27.3 11.8 28.8 14.6 28.8 17.4 28.6 20 26.9 22.9 25.5 24.3 24.7 25 23.6 25.2 22.6 25.2 20.4 25.2 17.6 23.7 16 23.7 14.4 23.7 11.6 25.2 9.4 25.2 8.4 25.2 7.3 25 6.5 24.3 5.1 22.9 3.4 20 3.2 17.4 3.2 14.6 4.7 11.8 6.4 10.5 8 8 11.5 6.6 14.2 6.7Z'/%3E%3C/svg%3E">
-<meta name="gae-build" content="2f97aae 2026-09-05">
+<meta name="gae-build" content="d69d1fa 2026-09-06">
 <style>
 /* The fixer's own page: tools/atlasfix.py serves this and src/fixer.js beside it.
    The palette is the app's, so a plate looks the same here as it does there; the
@@ -47,12 +47,15 @@ h1{margin:0;font-size:16px;font-weight:650;letter-spacing:-.01em;white-space:now
 .grp{display:flex;align-items:center;gap:6px;flex:none}
 .grp.wrap{flex-wrap:wrap}
 .grp.push,.push{margin-left:auto}
+.gshort,.tshort{display:none}
 .grp.end{justify-content:flex-end;margin-top:12px}
 #plate{width:56px;text-align:center}
 
 /* ---------- controls ---------- */
+/* `a.b` as well as `button.b`: the guide is a link, and should not read as one */
 .b{font:inherit;font-size:12.5px;padding:5px 10px;border:1px solid var(--line);
-  border-radius:8px;background:var(--panel2);color:var(--ink);cursor:pointer}
+  border-radius:8px;background:var(--panel2);color:var(--ink);cursor:pointer;
+  display:inline-flex;align-items:center;text-decoration:none;white-space:nowrap}
 .b:hover{background:var(--chip)}
 .b[disabled]{opacity:.45;cursor:default}
 .b.go{background:var(--accent);border-color:var(--accent);color:#fff}
@@ -195,6 +198,15 @@ main{flex:1 1 auto;display:grid;grid-template-columns:352px minmax(0,1fr);min-he
   .brand{margin-right:auto}
   #layerseg{order:5;width:100%}
   #layerseg button{flex:1 1 0}
+  /* The header holds two rows here -- the title, the plate and the two buttons on one,
+     the plate images on the other -- and a third would come out of the plate's own room.
+     So the guide gives up its word and the title its first, which leaves 40 px spare at
+     390 px rather than the 4 px it was over by. */
+  header{gap:5px 6px}
+  .tlong,.glong{display:none}
+  .tshort,.gshort{display:inline}
+  #plate{width:46px}
+  #guide{padding:8px 13px;font-weight:650}
   .statusbar{gap:8px;font-size:11px}
 }
 </style>
@@ -205,7 +217,7 @@ main{flex:1 1 auto;display:grid;grid-template-columns:352px minmax(0,1fr);min-he
 
 <header>
   <div class="brand">
-    <h1>Atlas region fixer</h1>
+    <h1><span class="tlong">Atlas region fixer</span><span class="tshort">Region fixer</span></h1>
     <p class="sub" id="where">plate &mdash;</p>
   </div>
   <div class="grp">
@@ -215,6 +227,9 @@ main{flex:1 1 auto;display:grid;grid-template-columns:352px minmax(0,1fr);min-he
   </div>
   <div class="seg" id="layerseg" title="The plate under the marks (L cycles)"></div>
   <div class="grp push">
+    <a class="b" id="guide" href="https://github.com/dstolz/GerbilAtlasExplorer/wiki/Correcting-a-Region" target="_blank" rel="noreferrer"
+       title="How to use this: what a correction corrects, what each tool is for, and what happens after you send it"
+       aria-label="How to use this"><span class="glong">Guide</span><span class="gshort" aria-hidden="true">?</span></a>
     <button class="b go" id="commitb" type="button" title="Write the correction on a branch and push it">Commit</button>
   </div>
 </header>
@@ -266,7 +281,9 @@ main{flex:1 1 auto;display:grid;grid-template-columns:352px minmax(0,1fr);min-he
         <button class="b" id="recutb" type="button" title="Apply the draft to a scratch tree and cut the plate again (R)">Recut</button>
         <button class="b" id="qcb" type="button" title="Write qc/chk_corr_&lt;id&gt;.png beside the plate">QC image</button>
       </div>
-      <pre class="report" id="report">The plate is cut here the way <b>build_region_extents.py</b> cuts it. <b>Pick</b> says which face a point is in and which printed labels seed that face; <b>Inspect</b> reads the whole draft against the extraction as it stands; <b>Recut</b> applies it to a scratch copy and builds the plate again, so the outlines you see are the ones the pipeline would write.</pre>
+      <pre class="report" id="report">The plate is cut here the way <b>build_region_extents.py</b> cuts it. <b>Pick</b> says which face a point is in and which printed labels seed that face; <b>Inspect</b> reads the whole draft against the extraction as it stands; <b>Recut</b> applies it to a scratch copy and builds the plate again, so the outlines you see are the ones the pipeline would write.
+
+The <a href="https://github.com/dstolz/GerbilAtlasExplorer/wiki/Correcting-a-Region" target="_blank" rel="noreferrer">guide</a> says what each tool is for and what happens to a correction after you send it.</pre>
     </section>
   </aside>
 
@@ -1723,7 +1740,9 @@ function offline() {
     + 'correction runs them, and says what it found in the pull request.\n\n'
     + 'Commit writes corrections/<id>.json on a branch through the GitHub API, which '
     + 'needs a fine-grained token with Contents: read and write. To get Recut back, run '
-    + 'the tool from a clone or in a Codespace.');
+    + 'the tool from a clone or in a Codespace.\n\n'
+    + 'Guide, in the header: what a correction corrects, what each tool is for, and what '
+    + 'happens after you send it.');
 }
 
 function undo() {

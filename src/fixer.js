@@ -1411,7 +1411,9 @@ function offline() {
     + 'correction runs them, and says what it found in the pull request.\n\n'
     + 'Commit writes corrections/<id>.json on a branch through the GitHub API, which '
     + 'needs a fine-grained token with Contents: read and write. To get Recut back, run '
-    + 'the tool from a clone or in a Codespace.');
+    + 'the tool from a clone or in a Codespace.\n\n'
+    + 'Guide, in the header: what a correction corrects, what each tool is for, and what '
+    + 'happens after you send it.');
 }
 
 function undo() {

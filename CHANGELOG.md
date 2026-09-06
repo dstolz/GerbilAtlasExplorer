@@ -6,6 +6,18 @@ carries a `version` block naming the release its derived fields were built for.
 ## [Unreleased]
 
 ### Added
+- **The fixer links to the guide.** **Guide** in the header of `fixer.html` opens
+  *Correcting a Region* on the wiki -- what a correction actually corrects, what each of the
+  five tools is for, how to read what **Pick** says about a face, and what happens after a
+  correction is sent. It is also linked from the panel where the tools are first explained,
+  and named in the notice the published page shows in place of **Inspect** and **Recut**.
+
+  On a phone the link cost the plate a row of the header, which is the room that page was
+  tuned to keep: the title and the link give up their words there -- *Region fixer* and
+  *?* -- and the header is two rows again at 390&nbsp;px with 43&nbsp;px to spare rather
+  than 4 over. A test holds it to that, on the phone as on a desktop.
+
+### Added
 - **The fixer is on the site now, and in a Codespace, so correcting a region needs no
   clone.** `fixer.html` is the same page `tools/atlasfix.py` serves, built into the site by
   `build_app.py` with its stylesheet and script inlined. Opened from GitHub Pages it has no
