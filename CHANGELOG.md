@@ -5,6 +5,58 @@ carries a `version` block naming the release its derived fields were built for.
 
 ## [Unreleased]
 
+### Fixed
+- **The right MCPC on plate 33, and the zonal layer on 35, 37 and 38: four words printed on
+  the ink of the thing they name.** A label is seeded where its word is, and where the word
+  falls on a boundary rather than inside a face `locate()` has nothing to seed and snaps to
+  whichever face fills most of the sixty pixels around it. That is a documented fallback and
+  usually harmless -- 192 labels take it, most on the olfactory bulb plates where the section
+  is small. These four are the case where it costs a structure a hemisphere.
+
+  `MCPC` is printed across the boundary of the magnocellular nucleus rather than beside it,
+  so the right-hand box centre lands on the ink and was snapped out into the tegmental field
+  `TG` is printed in. MCPC then held 0.7232 mm2 of that field -- four and a half times its
+  own left-hand nucleus, and reaching laterally past `APTV` to `REth` -- while its own
+  nucleus, the 2,396 px mirror of the 3,114 px face the left-hand word seeds, sat unnamed.
+  A row of `seed_overrides` puts the seed 8 px inside that face. **`MCPC` goes 0.8824 to
+  0.2824 mm2** and comes out symmetric, 0.1231 on the right against 0.1592 on the left,
+  where plate 34 draws 0.1541 and 0.1601; **`TG` goes 1.0766 to 1.7984** and comes out
+  symmetric too, 0.9028 against 0.8956, where it had been 0.1809 against 0.8956. Both traced
+  shares rise with it, MCPC's right 0.905 to 0.976 and TG's 0.854 to 0.982: the outline they
+  now stop at is one the atlas printed.
+
+  `Zo`, the zonal layer of the superior colliculus, is the same failure found by looking for
+  it. The lamina is one or two pixels of section between the pia and `SuG`, the atlas letters
+  it on the lamina, and on three plates the box centre lands on the ink: the seed is snapped
+  into the neighbour and the arc goes unnamed, so `Zo` comes out as one hemisphere's lamina
+  where the drawing has two. **Plate 35 goes 0.4403 to 0.8186 mm2, plate 37 0.4385 to 0.8593,
+  plate 38 0.3218 to 0.6415.** What those three rows recover was unassigned ground, so no
+  region loses by it: `SuG` gives up 0.011 mm2 on each plate and `RSGa` gains 0.014 on 35,
+  and nothing else moves by more than a thousandth. In the meshes `Zo` goes 1.2505 to 1.8426
+  mm3 and drops from three components to two, the laminae being one arc now rather than
+  three pieces; `TG` goes 1.4823 to 1.8173 and `MCPC` 0.4070 to 0.2499. `RSGa`'s worst traced
+  share goes 0.92 to 1.00.
+
+  Twenty-four (plate, region) entries move, all on those four plates, and every one of them
+  outside the five named above by 0.0138 mm2 or less. `boundary_edges_shared_exactly` stays
+  1.0 and `structure_plate_entries` stays 3,078 -- no structure gained or lost a plate.
+  `label_inside_its_own_region` goes 0.9723 to 0.9725, which is the number this kind of fix
+  exists to move: four more labels now stand in the region they name. Five adjacencies go
+  with the corrected outlines, 4,468 pairs that touch to 4,463, and METHODS' vertex and near
+  figures follow; the coloring is unchanged at 690 regions, 633 patches, eight colours.
+
+  How the other three were found: `tools/leaders.py --odd` is the leader half of this
+  question, and this is the seed half. Every plate was rebuilt and, for each of the 2,132
+  (plate, region) entries the atlas letters on both hemispheres, the left and right areas
+  compared, with `locate()` replicated on every printed box to see which fall on ink. Ninety-
+  five labels snap; a snap on its own is not a fault. The signature that is one is a snapped
+  box with an **unowned** face beside it whose size and place mirror the face the other
+  hemisphere's word seeds, and only these four have it. The bulb plates are the documented
+  fallback and were left alone; `IntDL` on 47 snaps into the seventeen-name cerebellar block,
+  which is a `w` entry and an estimate by design; `CA1` on 33 and 34, `VP` on 18 and `sol` on
+  54 are lopsided with no unowned face within reach, so whatever ails them is not this and
+  they are left for a diagnosis of their own.
+
 ### Added
 - **Every leader in the atlas, and the label it was drawn from, as one command.**
   `tools/leaders.py`. Where a region is too small or too crowded to hold the word that names
