@@ -5,54 +5,6 @@ carries a `version` block naming the release its derived fields were built for.
 
 ## [Unreleased]
 
-### Fixed
-- **Su3 gets its right-hand ring back on plate 39, and DMSp5 its half of the trigeminal
-  blob on 51.** Three of the 240 lines in `label_leaders` are not lines. The atlas draws a
-  leader only for a word it could not fit inside the region it names; `4Sh` and `4N` on the
-  right of plate 39 and `Sp5O` on the left of 51 are each printed *inside* the region they
-  name, exactly as their mirrors on the other hemisphere are, so there was nothing for a
-  line to do. What the pass followed out of each is a mark near the word -- long enough and
-  straight enough to clear `MINTIP` and the shape tests, and running into the neighbour
-  above.
-
-  What that cost was a whole structure on a hemisphere. `Su3` is lettered once on plate 39,
-  so the right-hand ring had nothing but its mirror to claim it with, and `4Sh`'s tip was
-  sitting in it: `Su3` held 0.1031 mm2 where it should hold both rings, and `4Sh` held the
-  Su3 ring on top of its own. `DMSp5` had no area at all on that hemisphere of plate 51,
-  because `Sp5O`'s tip had taken it. `4N`'s mark ends under `DRV`, outside every ring the
-  label could name, and cost only its own seed.
-
-  A row of `seed_overrides` withdraws each marched tip and puts the seed back on the printed
-  word -- `report-p39-4Sh-4N` and `report-p51-Sp5O`, three rows, fourteen now. On plate 39
-  `Su3` goes 0.1031 to 0.2023 mm2 and `4Sh` 0.2307 to 0.1322; on 51 `DMSp5` goes 0.1226 to
-  0.2751 and `Sp5O` 0.4254 to 0.2733. Both transfers conserve to within 0.0004 mm2: the
-  ground moved, none of it was lost. Thirteen (plate, region) entries move in all and every
-  other one of them by 0.0011 mm2 or less, all on those two plates; nothing moves anywhere
-  else in the atlas. `boundary_edges_shared_exactly` stays 1.0 and
-  `structure_plate_entries` stays 3,078 -- no structure gained or lost a plate, they
-  exchanged ground on one. `labels_on_a_leader` goes 240 to 237, which is the count that
-  records the fix.
-
-  In the meshes `Su3` goes 0.2876 to 0.3341 mm3 and its centre moves back onto the midline,
-  ML -0.04 to +0.02; `DMSp5` goes 0.5371 to 0.6790 mm3 and drops from three components to
-  two, because the half that was missing rejoins the rest. `4Sh` goes 0.0734 to 0.0510 and
-  `Sp5O` 0.7294 to 0.6388. Twenty-eight structure rows move in the table; the other
-  twenty-four are neighbours on plates 38-40 and 50-52 whose interpolated volume shifts by
-  a thousandth or two, which is what a change on one plate does to the levels either side.
-  In `region_colors` nothing is recoloured -- 690 regions, 633 patches, eight colours --
-  and one adjacency goes with the ring, 4,470 pairs that touch to 4,469.
-
-  These three were found by `tools/leaders.py --odd`, and they are why it now reports eight
-  tips in a neighbour's ground rather than five: a withdrawn mark still sits where it always
-  sat, and the region it used to take is no longer drawn around it. The tool's
-  `superseded_by` column is what tells the two apart. The other 59 the filter returns were
-  read and left alone. Five are fissures and their kin, which are no region to land in.
-  Most of the rest are structures the drawing does not enclose -- `aci` on 8-9, `eml` on 28,
-  `VMHSh` on 29 seed a face several names share, which is a tracing question and not a
-  leader one -- and three (`I` on 23, `LVPO` on 44, `RPa` on 58) land dead centre in a face
-  they solely own that is simply under the 600 px `MIN_AREA_PX` publishes. The `E`/`OV` lines on the bulb plates are the honest outcome `TIP_READ` already
-  records and were not touched.
-
 ### Added
 - **Every leader in the atlas, and the label it was drawn from, as one command.**
   `tools/leaders.py`. Where a region is too small or too crowded to hold the word that names
@@ -283,6 +235,123 @@ carries a `version` block naming the release its derived fields were built for.
   you are switching to — the rest is what gave way to make room for it.
 
 ### Fixed
+- **Su3 gets its right-hand ring back on plate 39, and DMSp5 its half of the trigeminal
+  blob on 51.** Three of the 240 lines in `label_leaders` are not lines. The atlas draws a
+  leader only for a word it could not fit inside the region it names; `4Sh` and `4N` on the
+  right of plate 39 and `Sp5O` on the left of 51 are each printed *inside* the region they
+  name, exactly as their mirrors on the other hemisphere are, so there was nothing for a
+  line to do. What the pass followed out of each is a mark near the word -- long enough and
+  straight enough to clear `MINTIP` and the shape tests, and running into the neighbour
+  above.
+
+  What that cost was a whole structure on a hemisphere. `Su3` is lettered once on plate 39,
+  so the right-hand ring had nothing but its mirror to claim it with, and `4Sh`'s tip was
+  sitting in it: `Su3` held 0.1031 mm2 where it should hold both rings, and `4Sh` held the
+  Su3 ring on top of its own. `DMSp5` had no area at all on that hemisphere of plate 51,
+  because `Sp5O`'s tip had taken it. `4N`'s mark ends under `DRV`, outside every ring the
+  label could name, and cost only its own seed.
+
+  A row of `seed_overrides` withdraws each marched tip and puts the seed back on the printed
+  word -- `report-p39-4Sh-4N` and `report-p51-Sp5O`, three rows, fourteen now. On plate 39
+  `Su3` goes 0.1031 to 0.2023 mm2 and `4Sh` 0.2307 to 0.1322; on 51 `DMSp5` goes 0.1226 to
+  0.2751 and `Sp5O` 0.4254 to 0.2733. Both transfers conserve to within 0.0004 mm2: the
+  ground moved, none of it was lost. Thirteen (plate, region) entries move in all and every
+  other one of them by 0.0011 mm2 or less, all on those two plates; nothing moves anywhere
+  else in the atlas. `boundary_edges_shared_exactly` stays 1.0 and
+  `structure_plate_entries` stays 3,078 -- no structure gained or lost a plate, they
+  exchanged ground on one. `labels_on_a_leader` goes 240 to 237, which is the count that
+  records the fix. On top of the `PN/PIF` rebuild below, polygons go 5,902 to 5,904 and
+  points 167,276 to 167,299; nothing on plate 36 moves.
+
+  In the meshes `Su3` goes 0.2876 to 0.3341 mm3 and its centre moves back onto the midline,
+  ML -0.04 to +0.02; `DMSp5` goes 0.5371 to 0.6790 mm3 and drops from three components to
+  two, because the half that was missing rejoins the rest. `4Sh` goes 0.0734 to 0.0510 and
+  `Sp5O` 0.7294 to 0.6388. Twenty-eight structure rows move in the table; the other
+  twenty-four are neighbours on plates 38-40 and 50-52 whose interpolated volume shifts by
+  a thousandth or two, which is what a change on one plate does to the levels either side.
+  In `region_colors` nothing is recoloured -- 690 regions, 633 patches, eight colours --
+  and one adjacency goes with the ring, 4,470 pairs that touch to 4,469.
+
+  These three were found by `tools/leaders.py --odd`, and they are why it now reports eight
+  tips in a neighbour's ground rather than five: a withdrawn mark still sits where it always
+  sat, and the region it used to take is no longer drawn around it. The tool's
+  `superseded_by` column is what tells the two apart. The other 59 the filter returns were
+  read and left alone. Five are fissures and their kin, which are no region to land in.
+  Most of the rest are structures the drawing does not enclose -- `aci` on 8-9, `eml` on 28,
+  `VMHSh` on 29 seed a face several names share, which is a tracing question and not a
+  leader one -- and three (`I` on 23, `LVPO` on 44, `RPa` on 58) land dead centre in a face
+  they solely own that is simply under the 600 px `MIN_AREA_PX` publishes. The `E`/`OV` lines on the bulb plates are the honest outcome `TIP_READ` already
+  records and were not touched.
+
+- **`PN/PIF` on plate 36 follows the lines the atlas draws from it, and `PBP` gets the
+  ground it was printed in.** Two words, two lines, four rows, and a leader pass that
+  recorded neither line.
+
+  The atlas prints `PN/PIF` once per hemisphere on plate 36, in the dorsolateral wedge of
+  the ventral tegmental area, and draws a short line from each word down and medially into
+  the collar of gray around `IF`. `label_leaders` has no entry for the plate: both lines
+  are 15 to 17 plate px long, which is under what the leader march will follow, so neither
+  was found -- the same miss as `CeCv` and `9/11N` on plates 59-62 (#92). With no tip, the
+  four boxes seeded where the words are, which is the face `PBP` is printed in, and the
+  watershed split that face between the pair and `PBP` along a line the atlas does not
+  draw. `PN/PIF` came out as the whole dorsal wedge -- 0.4801 mm² over two polygons, 11%
+  of the border of each inferred -- and `PBP`, whose own label sits in the same face,
+  was left with the ventrolateral band.
+
+  Both lines were read off the plate the way the leader pass reads one: the ink that is
+  neutral-dark where the tracing is red, straight over its whole length, running out of a
+  located label. The left runs (491, 456) to **(507, 462)** in plate pixels, the right
+  (553, 455) to **(539, 461)**, and each ends in the collar beside `IF`. That is four rows
+  of `seed_overrides`, its eleventh through fifteenth -- two names to a label, because the
+  atlas typesets `PN` and `PIF` as one and draws the line from the whole of it, so it is
+  recorded against every name in it, as `label_leaders` does for `E/OV`. No box moves.
+
+  **`PN/PIF` goes 0.4801 to 0.1104 mm²** and is the collar the lines point into: 0.0763 on
+  the left at traced share 0.989, where the drawing seals that ground as a face of its own
+  and the pair now takes the whole of it, and 0.0341 on the right at 0.871, where it does
+  not and the watershed still has to place the ventral edge. **`PBP` goes 0.8093 to 1.2538
+  mm²** -- 0.3928 to 0.6070 on the left and 0.4165 to 0.6468 on the right -- and its traced
+  share goes 0.941 to 0.995 and 0.933 to 0.974, because the boundary it now stops at is one
+  the atlas printed rather than one the watershed drew. `PIF` still has no entry of its own
+  here: it shares the pair's, filed under the name the label leads with, which is what
+  `label_blocks` means.
+
+  **Only plate 36 has an entry that changes.** Eight others on it move, none by more than
+  0.53 plate px (9 µm) or 0.0018 mm²: `vtgx`, `IF`, `fr`, `RMC`, `ml`, `mp`, `SubB` and
+  `MGM`, which is a new junction changing how a shared arc simplifies. Three adjacency
+  pairs go (`PN`-`PaR`, `PN`-`RMC`, `PN`-`ml`) and two arrive (`PBP`-`vtgx`, `PN`-`mp`), so
+  the touching pairs go 4,470 to 4,469 -- and `region_colors` still comes back **identical**,
+  all 690 slots, the solve landing where it landed. `boundary_edges_shared_exactly` stays
+  1.0 and `regions_partition_the_volume` still asserts. No label was added or moved, so the
+  label counts and the structure count stand.
+
+  In the volume `PBP` gains 0.1980 mm³ (1.1835 to 1.3815) and `PN` loses 0.0641 (0.1454 to
+  0.0813) -- and **comes out in two mesh components where it was in three**. That is the
+  point of it. `PN` is a slab over plates 36 and 37, and on 37, where the atlas prints the
+  name on its own with a line of its own that the pass did read, it sits ventromedially at
+  ML -0.47. The plate-36 wedge was 0.0595 mm³ at ML -0.55 and the plate-37 piece 0.0320 at
+  ML -0.47, and the two did not meet; the collar is where the line points, so they are one
+  piece of 0.0711 now. The third, 0.0539 mm³ at ML +0.60, was the right-hand wedge; the
+  right-hand collar is 0.0101 and stays its own piece, the atlas printing no `PN` on the
+  right of 37 to join it to. Twenty other structures move by under 0.036 mm³ apiece, from
+  the interpolation between plates 35 and 37 reading the corrected plane.
+
+  One consequence is meant to look like a regression and is not, and it is the same one
+  `S1DZ` and both `MA3` have. Pointing at either printed `PN/PIF` on plate 36 now answers
+  `PBP`, because that is the region the atlas sets the words in; `label_inside_its_own_region`
+  goes 0.9733 to 0.9727 for those four labels. METHODS' end-to-end paragraph counts the
+  labels that answer with another name and it goes 21 to 23 -- the two `PN` boxes are new
+  there, and the two `PIF` boxes were already counted, having answered `PN` before and
+  answering `PBP` now; so the compound-label share of that count goes 14 to 12 and the
+  set that is supposed to answer elsewhere goes 3 to 7.
+
+  Counts. Nothing about the label pass moves. In METHODS, points go 167,255 to 167,276 and
+  the touching-pair figures 4,470 and 4,220 to **4,469 and 4,219**, the 250 that never share
+  a vertex and the 535 plate-by-plate occurrences unchanged.
+
+  Reported from the plate view. The rows carry `report-p36-PN-PIF` as their id, there being
+  no correction file to name.
+
 - **`MA3` on the left of plate 35 keeps to its own column now, and `InC` gets back the
   ground the watershed took to draw it with.** The same failure as the right-hand `MA3` on
   plate 34, on the other hemisphere of the next plate, and found by looking for it.
