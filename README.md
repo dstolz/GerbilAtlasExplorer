@@ -124,7 +124,8 @@ the whole atlas (all 186 plate images) lives inside it, 22 MB, most of that the 
   drives: a column to the right of the view where there is width for one, a row above the
   picture where there is not. The view is re-fitted around it rather than covered, so
   nothing you are looking at is ever hidden behind it. Inside it, **Advanced** folds away
-  the settings you make once: the contrast, the 3-D tone curve and the slab. The count
+  the settings you make once: the contrast, the 3-D tone curve, the slab, and how the
+  meshes are made opaque and colored. The count
   beside each says how much is set in there, and a link that carried any of it opens
   Advanced on arrival.
 - The **i** in the picture's bottom-right corner says what the view is showing and how to
@@ -219,13 +220,23 @@ handful.
   parallel projection, so nothing is foreshortened. **View** puts the camera on an
   anatomical axis — left, right, rostral, caudal, dorsal or ventral — and the link you
   copy carries it. **Meshes** fetches the closed surfaces built offline from the outlines
-  (20 MB, once) and shows the selected structure — or a short filtered list — as a mesh.
-  Six planes in seven of a mesh are interpolated between
+  (20 MB, once) and shows the selected structure — or a division, or a short filtered list —
+  as a mesh. Two settings of their own sit under **Advanced**. **Opacity** takes them from
+  solid to a glass shell: below the top of the range they are composited back to front
+  instead of hiding each other, so what is inside one shows through it, and so does the
+  tissue behind. **Color** says what a mesh is colored by — the selection, where a division's
+  members are all in its one color because that is what a division is; the **plate's own
+  colors**, the same eight-color solution the section is painted with, so a structure is the
+  same color in the stack as in the plate under it and no two that touch on a plate are
+  alike; or a hue
+  per structure, which is more colors than eight and promises nothing else. Both ride in the
+  link. Six planes in seven of a mesh are interpolated between
   sections 350 µm apart; see [METHODS](METHODS.md#the-third-dimension). (Needs WebGL 2.)
 - **Split** puts a second 3D view beside the first, sharing the one stack, label cloud and
   set of meshes — so it costs pixels and nothing else. Everything above belongs to a pane
   rather than to the view: **A** and **B** choose which pane the toolbar sets, and each can
-  have its own mode, contrast, slab, midline cut, projection, skull, landmarks and meshes.
+  have its own mode, contrast, slab, midline cut, projection, skull, landmarks and meshes —
+  down to how opaque those meshes are and what colors them.
   The sections beside the volume they came from, a whole brain beside a slab, a structure's
   mesh beside the section it was built from. Clicking into a pane makes it the one the toolbar is on.
   **Lock** turns, zooms and pans both panes together, holding whatever angle apart they

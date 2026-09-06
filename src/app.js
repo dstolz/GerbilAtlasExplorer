@@ -3349,7 +3349,11 @@ let gl=null, v3ready=false, v3busy=false, v3fail='';
    first use -- 20 MB, so never part of the page. Six planes in seven of them are
    interpolated, which the note says every time they are shown. */
 let MESH=null, meshBusy=false, meshFail='';
-const MESHC={};                                  /* abbr -> {va, n, type} on the GPU */
+const MESHC={};                            /* abbr -> {va, n, type, c} on the GPU */
+/* How opaque a structure mesh is drawn, and the value at which it is opaque enough to
+   sort itself: the same number, because the pass this always ran is the one the default
+   still takes. Anything below it is composited instead -- see meshDraw(). */
+const MESHOP=.92;
 
 /* ---------- the panes ----------
    Everything the 3-D toolbar sets belongs to a pane and not to the app: what is drawn
@@ -3373,6 +3377,7 @@ const MESHC={};                                  /* abbr -> {va, n, type} on the
    sight of it; Contours is one button away and the note still says what the stack is. */
 const v3pane=()=>({mode:'volume', op:.42, t0:0, t1:1, gam:1, a:0, b:61,
                    half:false, ortho:false, sk:false, sko:.32, m:false, ms:false, lm:false,
+                   mop:MESHOP, mcol:'sel',
                    az:-.82, el:.30, dist:26, tx:0, ty:0, view:'obl'});
 const V3P=[v3pane(), v3pane()];
 let v3two=false;                   /* the second pane is drawn */
@@ -4576,7 +4581,9 @@ function v3ui(){
   $('v3lm').checked=Q.lm;
   $('v3h').checked=Q.half;
   $('v3o').checked=Q.ortho;
-  $('v3m').checked=Q.m; $('v3msw').hidden=!Q.m; $('v3ms').checked=Q.ms;
+  $('v3m').checked=Q.m; $('v3msw').hidden=$('adv3m').hidden=!Q.m; $('v3ms').checked=Q.ms;
+  $('v3mop').value=Math.round(Q.mop*100); $('v3mopl').textContent=Math.round(Q.mop*100)+'%';
+  $('v3mcol').value=Q.mcol;
   $('v3v').value=Q.view;
   $('v3sp').checked=v3two; $('v3lk').checked=v3lock;
   $('v3pseg').hidden=!v3two; $('v3lkw').hidden=!v3two;
@@ -4718,20 +4725,57 @@ function meshGPU(key,m){
   gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1,3,gl.FLOAT,false,0,0);
   const ib=gl.createBuffer(); gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,ib); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,d.F,gl.STATIC_DRAW);
   gl.bindVertexArray(null);
-  return MESHC[key]={va, n:d.nf*3, type:d.F instanceof Uint32Array?gl.UNSIGNED_INT:gl.UNSIGNED_SHORT};
+  /* the mesh's own center, kept with its buffers: it is what the translucent pass sorts
+     on, and it costs one walk of vertices that have just been walked anyway */
+  let cx=0, cy=0, cz=0;
+  for(let i=0;i<d.nv;i++){ cx+=d.P[i*3]; cy+=d.P[i*3+1]; cz+=d.P[i*3+2]; }
+  const k=d.nv||1;
+  return MESHC[key]={va, n:d.nf*3, type:d.F instanceof Uint32Array?gl.UNSIGNED_INT:gl.UNSIGNED_SHORT,
+                     c:[cx/k,cy/k,cz/k]};
 }
 /* an HSL color, as the bars use, to the RGB triple the shader wants */
 function hslRGB(h,sat,l){
   const a=sat*Math.min(l,1-l), f=n=>{ const k=(n+h/30)%12; return l-a*Math.max(-1,Math.min(k-3,9-k,1)); };
   return [f(0),f(8),f(4)];
 }
-function meshColor(ab){
-  /* every mesh of a superstructure in the one color the plate outlines it in: they are
-     parts of a thing, and twenty hues would read as twenty things */
-  if(isGrp(sel)) return v3col.cg;
-  if(ab===sel||(sel&&ab===meshKey(sel))) return v3col.c2;
+/* the palette the plate's Color regions paints with, as the triples the shader wants */
+const MCRGB=MCPAL.map(h=>[parseInt(h.slice(1,3),16)/255,
+                          parseInt(h.slice(3,5),16)/255,
+                          parseInt(h.slice(5,7),16)/255]);
+/* a structure's own hue, off its name: the same abbreviation is the same color in every
+   session, in either pane, and in whichever list it turns up in */
+function meshHue(ab){
   let h=0; for(let i=0;i<ab.length;i++) h=(h*31+ab.charCodeAt(i))>>>0;
   return hslRGB(h%360,.55,.55);
+}
+/* Three answers to what a mesh is colored by, and the pane says which.
+
+   Selection is what this always did: the thing you asked for in the color the plate marks
+   it in, and a division's members all in the division's one color, because they are parts
+   of a thing and twenty hues would read as twenty things. That is the right picture of one
+   structure and the wrong one of three hundred -- a cortex in one color is a single blob,
+   and which lobe you are looking at is exactly what it will not say.
+
+   Plate colors is the plate's own coloring lifted into the third dimension: `region_colors`,
+   the slot each region wears on every plate it is drawn on, solved once so that no two
+   regions that touch on a plate are alike. A structure is the same color here as in the
+   section underneath it, which is what makes the two views one picture -- and the color still
+   means nothing beyond "not my neighbor". Adjacency in depth was not part of the solve, so
+   two meshes that meet only between sections can come out alike; METHODS says so too.
+
+   One per structure gives every mesh its name's own hue, a division's members included:
+   more colors than eight, so more of them are told apart at a glance. It promises no more
+   than that -- the name is hashed into 360 degrees, so two of them can land on the same
+   hue or next door to each other, and nothing about a hue is a fact. */
+function meshColor(ab,Q){
+  const mode=(Q&&Q.mcol)||'sel';
+  /* a region the coloring has no slot for keeps its name's hue rather than going
+     uncolored -- there are none in a full build, and a partial one still draws */
+  if(mode==='plate') return MCBY[ab]===undefined ? meshHue(ab) : MCRGB[MCBY[ab]%MCRGB.length];
+  if(mode==='each') return meshHue(ab);
+  if(isGrp(sel)) return v3col.cg;
+  if(ab===sel||(sel&&ab===meshKey(sel))) return v3col.c2;
+  return meshHue(ab);
 }
 /* Every name of a joined label -- "Au1 (A1/AAF)" -- resolves to the one the label leads
    with, which is how regBuild() answers a selection in the plane: pick A1 and the plate
@@ -4774,6 +4818,15 @@ function meshList(){
     for(const r of results) add(r.abbr);
   return out;
 }
+/* At the default opacity and above, the meshes are solid enough to sort themselves: one
+   depth-tested, depth-writing pass, nearest surface wins, which is the pass this always
+   ran. Turned down they have to be composited, and compositing is order-dependent -- so
+   they are drawn farthest first and stop writing depth, which is the whole of what lets a
+   structure inside another one show through it. Farthest by the mesh's own center against
+   the camera: two shapes that interleave can still be composited in the wrong order, but
+   the shapes here are compact and nothing about the picture depends on the ones that do.
+   Depth writes are what the faint surface shell is tested against, so the shell comes out
+   of the same trade -- occluded by solid meshes, laid over translucent ones. */
 function meshDraw(Q,M){
   if(!Q.m||!MESH||!gl) return;
   /* pSkull shades from dot(N, cam - p) with p a model-space vertex, so the camera has to
@@ -4788,8 +4841,17 @@ function meshDraw(Q,M){
   const draw=(key,m,col,op)=>{ const g=meshGPU(key,m); gl.bindVertexArray(g.va);
     gl.uniform3fv(U(pSkull,'u_c'),col); gl.uniform1f(U(pSkull,'u_op'),op);
     gl.drawElements(gl.TRIANGLES,g.n,g.type,0); };
-  for(const ab of list) draw('s:'+ab, MESH.data[ab].mesh, meshColor(ab), .92);
-  if(Q.ms){ gl.depthMask(false); draw('surface', MESH.surface.mesh, v3col.ti, .16); gl.depthMask(true); }
+  let order=list;
+  if(Q.mop<MESHOP){
+    gl.depthMask(false);
+    const far=ab=>{ const c=meshGPU('s:'+ab,MESH.data[ab].mesh).c;
+      return (c[0]-cam[0])*(c[0]-cam[0])+(c[1]-cam[1])*(c[1]-cam[1])+(c[2]-cam[2])*(c[2]-cam[2]); };
+    const d={}; for(const ab of list) d[ab]=far(ab);
+    order=[...list].sort((a,b)=>d[b]-d[a]);
+  }
+  for(const ab of order) draw('s:'+ab, MESH.data[ab].mesh, meshColor(ab,Q), Q.mop);
+  if(Q.ms){ gl.depthMask(false); draw('surface', MESH.surface.mesh, v3col.ti, .16); }
+  gl.depthMask(true);
   gl.disable(gl.DEPTH_TEST); gl.bindVertexArray(null);
 }
 /* the selection's mesh as a binary STL, in atlas millimeters (ML, DV, AP). A
@@ -4831,9 +4893,21 @@ function meshSTL(){
   dl(`mesh_${name.replace(/[^A-Za-z0-9]/g,'')}.stl`,u,u);
 }
 $('v3m').onchange=e=>{ const Q=v3E(); Q.m=e.target.checked; if(Q.m) meshLoad();
-  $('v3msw').hidden=!Q.m; v3flags(); v3note(); v3frame(); queueHash(); };
+  $('v3msw').hidden=$('adv3m').hidden=!Q.m; v3flags(); v3note(); v3frame(); queueHash(); };
 $('v3ms').onchange=e=>{ v3E().ms=e.target.checked; v3frame(); };
 $('v3mfb').onclick=()=>$('v3mfile').click();
+$('v3mop').oninput=e=>{ v3E().mop=+e.target.value/100;
+  $('v3mopl').textContent=e.target.value+'%'; v3note(); v3frame(); queueHash(); };
+$('v3mop').ondblclick=()=>{ $('v3mop').value=Math.round(MESHOP*100);
+  $('v3mop').dispatchEvent(new Event('input')); };
+$('v3mcol').onchange=e=>{ v3E().mcol=e.target.value; v3note(); v3frame(); queueHash(); };
+/* the plate's coloring is what that option draws with, so a build that carries none
+   cannot offer it -- the same answer the plate's own Color regions box gives */
+if(!MCOK){
+  const o=$('v3mcol').querySelector('option[value="plate"]');
+  o.disabled=true;
+  o.textContent += ROK ? ' (none in this build)' : ' (no outlines in this build)';
+}
 
 /* ---------- the stack as a NIfTI ----------
    The same 62 plates the renderer marches through, written out as a gzipped NIfTI-1
@@ -4973,6 +5047,22 @@ function v3note(){
          unsaid and should not is how many of them are actually there -- the members the
          atlas draws no region for have no mesh either, and past the cap the rest are the
          largest ones, so the shape on screen is short of the division by a stated amount. */
+      /* What the colors are doing and what they are not, said whenever they are not doing
+         what they have always done. The plate's coloring carries its own meaning into the
+         third dimension unchanged -- "not my neighbor", and nothing else -- and a hue per
+         name carries none at all. */
+      const paint = Q.mcol==='plate'
+        ? ' Colored the way the plate colors them \u2014 no two regions that touch on a'+
+          ' plate alike, and the same color on every plate a region is drawn on;'+
+          ' a color names nothing.'
+        : Q.mcol==='each'
+        ? ' Every structure in a hue off its own name \u2014 enough to tell them apart,'+
+          ' and nothing more: two names can land on the same hue.'
+        : '';
+      /* a translucent render is a picture with the sorting stated, for the same reason the
+         windowed one is: the reader cannot see from it that anything was done */
+      const thru = Q.mop<MESHOP
+        ? ` Drawn at ${Math.round(Q.mop*100)}% opacity, composited back to front.` : '';
       const G = isGrp(sel) ? byAb[sel] : null;
       const vol = G && list.reduce((t,k)=>t+(MESH.data[k].volume_mm3||0),0);
       const cut = G && list.length<new Set(G.members.map(meshKey).filter(Boolean)).size;
@@ -4986,6 +5076,7 @@ function v3note(){
              : isFeat(sel) ? ` <b>${esc(sel)}</b> has no mesh and no volume: ${featTxt(sel)}, so the atlas draws it no boundary anywhere and there is no shape to build. It is in the label cloud, where every plate that prints it puts a dot.`
              : sel ? ` <b>${esc(sel)}</b> has no mesh: the atlas names it but draws it no region of its own on any plate, so there is nothing to build one from — as for ${NREG-Object.keys(MESH.data).length} of the ${NREG} structures that are regions.`
              : list.length ? ` ${list.length} structures of the filter as meshes.` : ' Select a structure, or filter to a few, to see its mesh.')+
+        paint+thru+
         ' Six planes in seven are arithmetic between sections 350 µm apart; nothing here is a segmentation.';
     }
   }
@@ -5121,7 +5212,12 @@ function writeHash(){
     if(Q.view&&Q.view!=='obl') h+='&vp'+x+'='+Q.view;
     if(Q.sk) h+='&sk'+x+'='+Math.round(Q.sko*100);
     if(Q.lm) h+='&lm'+x+'=1';
-    if(Q.m) h+='&mh'+x+'=1';
+    /* the two mesh settings ride with the meshes the way the bone opacity rides with the
+       skull, and only when they are off their defaults -- so every link ever written for
+       a mesh still reads as exactly the mesh it was written for */
+    if(Q.m){ h+='&mh'+x+'=1';
+      if(Q.mop!==MESHOP) h+='&mo'+x+'='+Math.round(Q.mop*100);
+      if(Q.mcol!=='sel') h+='&mc'+x+'='+Q.mcol; }
   });
   if(v3two){ h+='&sp='+(1+v3ed); if(!v3lock) h+='&lk=0'; }
   /* fo used to be a bare 1 for "an origin is set". It now carries the landmark as 1 + its
@@ -5229,6 +5325,11 @@ function readHash(){
     if(Q.sk){ Q.sko=sk/100; if(gl) v3skullBuild(); if(Q.dist<34) Q.dist=38; }
     Q.lm = par['lm'+x]==='1';
     Q.m = par['mh'+x]==='1';
+    const mo=parseInt(par['mo'+x],10);
+    Q.mop = Number.isFinite(mo)&&mo>=10&&mo<=100 ? mo/100 : MESHOP;
+    const mc=par['mc'+x];
+    /* a mode this build cannot draw reads as the default rather than as nothing */
+    Q.mcol = mc==='each'||(mc==='plate'&&MCOK) ? mc : 'sel';
     if(Q.m) meshLoad();
   });
   v3ui(); v3frame();
@@ -5281,7 +5382,7 @@ function readHash(){
   setTab(par.t==='proj'?'proj':(par.t==='v3d'?'v3d':'plate'));
   /* a link that carried a contrast, a tone curve or a slab has to show what it set: a
      folded section must never be the unexplained reason the picture looks like that */
-  if(par.ct||par.tf||par.tf2||par.sl||par.sl2) advOpen(true);
+  if(par.ct||par.tf||par.tf2||par.sl||par.sl2||par.mo||par.mo2||par.mc||par.mc2) advOpen(true);
   return true;
 }
 addEventListener('hashchange',()=>{ if(location.hash!==lastWritten) readHash(); });
@@ -5627,9 +5728,13 @@ try{ advOn=localStorage.getItem('gae-adv')==='1'; }catch(_){}
    worth putting in a link, so a count and a link can never disagree about what is set. */
 const ctrDef  = ()=>pctr===100;
 const slabDef = Q=>Q.a===0&&Q.b===61;
+/* one group, one count -- the same way the four sliders of the tissue curve count once.
+   Only while the meshes are on, because that is the only time either setting draws
+   anything, and it is when the link carries them. */
+const meshDef = Q=>!Q.m||(Q.mop===MESHOP&&Q.mcol==='sel');
 function advCount(){
   if(tab==='plate') return (ctrDef()?0:1)+((pgray&&psrc==='drawing')?1:0);
-  if(tab==='v3d'){ const Q=v3E(); return (v3tdef(Q)?0:1)+(slabDef(Q)?0:1); }
+  if(tab==='v3d'){ const Q=v3E(); return (v3tdef(Q)?0:1)+(slabDef(Q)?0:1)+(meshDef(Q)?0:1); }
   return 0;
 }
 function vpanCount(){
@@ -6355,7 +6460,7 @@ window.__gae={toFrame,fromFrame,writeHash,readHash,tgSolve,tgPath,tgFootprint,pl
   coordsOf,tgJSON,tgNotes,meshList,setCmp,anMake,notes:()=>NOTES,mesh:()=>MESH,
   v3split,v3edit,v3rects,panes:()=>V3P.map(q=>({...q})),
   v3build,v3niiBuf,meshSTL,
-  GRP,isGrp,regIn,grpsOf,mcBuild,mcSet,MCPAL,
+  GRP,isGrp,regIn,grpsOf,mcBuild,mcSet,MCPAL,meshColor,meshKey,
   setMax,
   vpan:on=>vpanOpen(on), adv:on=>advOpen(on), inf:on=>infOpen(on),
   state:()=>({cur,sel,zoom,tab,smode,psrc,tgProbe,tgFoot,cmpOn,anShow,maxed,targSide,tgTilt,tgRoll,tgYaw,tgPlate,tgOff,fview,fvOn:fvOn(),v3two,v3ed,v3lock,mcOn,mcWash,vpanOn,advOn,infOn})};

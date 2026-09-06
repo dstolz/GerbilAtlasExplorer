@@ -6,6 +6,37 @@ carries a `version` block naming the release its derived fields were built for.
 ## [Unreleased]
 
 ### Added
+- **The meshes take a transparency and a coloring, and the coloring can be the plate's
+  own.** Two controls under **Advanced**, one 3-D pane at a time. **Opacity** runs from a
+  glass shell to solid bone; **Color** says what decides a mesh's color.
+
+  The picture that asked for both is a division. Its members were drawn in the division's
+  one color -- right for a structure, whose parts are parts of a thing, and wrong for the
+  cortex, where sixty-five meshes in one teal make a blob that will not say which field you
+  are looking at or where one stops. **Plate colors** is the answer that was already in the
+  repository: `region_colors`, the slot each region wears on every plate it is drawn on,
+  solved once over all 62 plates so that no two regions that touch on a plate are alike. The
+  3-D view now reads that same table rather than solving anything of its own, so a structure
+  is the color in the stack that it is in the section under it, and the two views are one
+  picture. What a color means is what it has always meant here -- "not my neighbor", and
+  nothing else; and since the solve was over adjacency on a plate, two meshes that meet only
+  across the 350 um between sections can come out alike, which METHODS now says. **One per structure** is the third answer: a hue off each name, more colors than
+  eight, promising only that they are told apart.
+
+  Opacity is the other half of the same problem, since a solid shell of cortex hides
+  everything the cortex contains. At the top of its range the meshes take the pass they
+  always took -- depth-tested, depth-writing, nearest surface wins. Below it they are
+  composited back to front by their own centers and stop writing depth, which is the whole
+  of what lets a structure inside another show through it, and the tissue behind show
+  through both.
+
+  Both belong to a pane, so a split can hold the solid picture beside the transparent one,
+  and both ride in the link -- `mo` and `mc`, beside `mh` and only when they are off their
+  defaults, so every mesh link ever written still opens on exactly the mesh it was written
+  for. The count on **Advanced** covers them, a link carrying either unfolds it, and the
+  note under the picture says what was done: a render that has been made translucent or
+  recolored is one the reader cannot see the settings of from the picture.
+
 - **The fixer links to the guide.** **Guide** in the header of `fixer.html` opens
   *Correcting a Region* on the wiki -- what a correction actually corrects, what each of the
   five tools is for, how to read what **Pick** says about a face, and what happens after a
@@ -17,7 +48,6 @@ carries a `version` block naming the release its derived fields were built for.
   *?* -- and the header is two rows again at 390&nbsp;px with 43&nbsp;px to spare rather
   than 4 over. A test holds it to that, on the phone as on a desktop.
 
-### Added
 - **The fixer is on the site now, and in a Codespace, so correcting a region needs no
   clone.** `fixer.html` is the same page `tools/atlasfix.py` serves, built into the site by
   `build_app.py` with its stylesheet and script inlined. Opened from GitHub Pages it has no
