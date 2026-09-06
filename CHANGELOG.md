@@ -196,6 +196,98 @@ carries a `version` block naming the release its derived fields were built for.
   you are switching to — the rest is what gave way to make room for it.
 
 ### Fixed
+- **`9/11N` on plate 62 and `CeCv` on plates 59-61 sit at the end of the lines the atlas
+  draws to them.** Seven printed words, eight boxes, one failure: the atlas cannot fit the word
+  inside the region, sets it outside and draws a short line back in, and `label_leaders` has no
+  record of that line -- so the seed stayed on the word. `9N` came out as a 0.2466 mm² blob around its
+  own word, carrying `w` and holding ground that is `vsc`'s and `ts`'s; `CeCv` had no area at
+  all on three of the seven plates the index lists it for.
+
+  **`CeCv` had never been located either, which is why no line could have been marched to it.**
+  The word is printed twice on each of plates 59, 60 and 61, lateral to the cell beside the
+  central canal, and the label pass has none of the six. A leader is attached to a label by
+  running the line back until it *reaches a box*, so with no box there was nothing to reach.
+  The six boxes are added to `label_positions` -- the ink bounding box of each printed word,
+  in the frame fractions the pass writes. That alone would not have helped: each of the six
+  lines is 10 to 14 page px long and each tip sits 15 px from its own word, under the 20 px
+  `MINTIP` asks before it will call a mark a line rather than a bracket beside the word.
+
+  **So the eight tips are rows of `seed_overrides`, read off the plate.** That block is where
+  a hand reading belongs: it stands in for the printed box exactly as a leader tip does, it is
+  read after `label_leaders`, and it wins over a marched tip because it was read off the plate.
+  `label_leaders` is `tools/label_leaders.py`'s own output against the page and is left to it.
+  `9/11N` is one label of two names -- see `label_blocks` -- so `9N` and `11N` each take the
+  one tip, as a leader is recorded against every name in the label it was drawn from. Its line
+  is 32 px of black ink from the top of the word up into the ventral horn, cut in two where it
+  crosses the outline it points into, with its tip 35 px from the box and so well past
+  `MINTIP`; what the shape tests made of the two fragments is not answerable from the app's
+  plate. Nothing else was touched -- no tracing, no outline, no leader -- and everything cut
+  from those inputs was rebuilt.
+
+  **Plate 62.** `9N` goes from one polygon of 0.2466 mm² carrying `w` to **two polygons of
+  0.1474 mm² with every point of both borders on printed ink**, traced share 0.58 to 1.000 --
+  one ventral horn per hemisphere, the left one from the mirror, since the atlas letters only
+  the right and the face opposite is sealed and unnamed. `vsc` takes back the 0.152 mm² it was
+  short (0.6765 to 0.8284) and loses its own `w` with it; `ts` goes 0.0433 to 0.1375. The plate
+  goes from 7 unassigned faces to 5 and from 13 faces lettered by one abbreviation to 15.
+
+  **Plates 59-61.** `CeCv` gains an entry on each -- 0.0725, 0.0736 and 0.1306 mm², every point
+  of every border on printed ink. On plate 60 it is two polygons, one either side of the
+  central canal, which the drawing cuts there as a face of its own; on 59 and 61 the canal is
+  thinner than a face and the two sides come out as one polygon across the midline, which is
+  the extraction's honest answer to a boundary the plate does not resolve. Regions per plate
+  go 20 to 21, 18 to 19 and 19 to 20, faces lettered by one abbreviation 18 to 20, 14 to 16 and
+  11 to 13, and plate 61 goes from 8 unassigned faces to 7.
+
+  Nothing else on the four plates moves by as much as a plate pixel. Nineteen other entries do
+  move -- `Cu`, `IB`, `dsc`, `pyx`, `rs`, `SolC`, `dcs`, `ts`, `vsc`, `mlf` and `MdV`, spread
+  over the four -- the largest of them by 0.90 plate px (`SolC` on plate 60), which is the
+  watershed re-solving beside a seed that was not there before. No plate outside 59-62 has an entry that changes by
+  a point.
+
+  Over the atlas `CeCv` goes 0.631 to 0.907 mm² and 0.1771 to 0.2878 mm³, drawn on five plates
+  where it was on two and from nine located labels where it had three, still in two mesh
+  components. `9N` goes 0.247 to 0.147 mm² and 0.0505 to 0.0388 mm³ and **comes out in two mesh
+  components where it was in one** -- one per hemisphere, which is what a structure the atlas
+  draws on both should be, and the single piece was the mistake. `vsc` gains 0.153 mm² and
+  0.0372 mm³, `ts` 0.092 and 0.0198, `SolC` loses 0.011 mm² and gains 0.0070 mm³; eleven more
+  structures move by under 0.01 mm³ apiece, from the interpolation reading the corrected
+  planes. `boundary_edges_shared_exactly` stays 1.0, `regions_partition_the_volume` still
+  asserts, and the structure count stays 689.
+
+  **The whole atlas repaints, as it did for #88.** Five adjacency pairs are new on plate 62 and
+  `region_colors` is one solve over all 62 plates: re-run, it lands on a different valid
+  eight-coloring and 541 of the 689 regions take a different slot. Two of the joins it used to
+  refuse are gone, both of them `9N`'s -- against `ts` and against `vsc` -- because the atlas
+  does draw a boundary there and the extraction now has it: refusals 28 to 26, patches 631 to
+  632, pairs that touch 4,456 to 4,461, pairs with no printed boundary 193 to 189. Eight
+  colors, the fewest, no two regions that touch on a plate alike, and 120 asks granted, all
+  unchanged.
+
+  One consequence is meant to look like a regression and is not. Pointing at the printed
+  `9/11N` on plate 62 now answers `vsc`, and at `CeCv` on 59-61 answers `MdV`, because that is
+  where the atlas prints those words; `label_inside_its_own_region` goes 0.9748 to 0.9735 and
+  the 3-D `labels_in_their_own_region` 0.9460 to 0.9447 for the same reason, both checks
+  reading a box at the end of its *leader* and these seeds being `seed_overrides`.
+
+  The left-hand `9/11N` on plate 62 is still not located, and is left that way on purpose. It
+  is a compound token, and `tools/find_compounds.py` is what reads those off the page and
+  decides which member holds which box; the mirror gives the region its left horn, so what is
+  missing is the second word to hover, not the ground.
+
+  `label_positions` goes 6,337 to 6,343 and the pairs it covers 3,344 to 3,347;
+  `test_label_positions` and `test_labels_table_rows` carry those two literals and are bumped
+  with them. Entries carrying an area go 3,072 to 3,075, polygons 5,893 to 5,898, points
+  166,973 to 167,075, entries carrying `w` 295 to 293, mirrored seeds 121 to 123 and seeds
+  placed by hand 1 to 9. METHODS is brought up to all of those and to the coloring's own
+  figures, and gains a passage under *Where the name is not the place* saying which lines are
+  read off the plate rather than marched to, and why each of these two was. Two figures there
+  are left alone and named here instead: the "6,258 of 6,335" row in the volume table and the
+  counts in the end-to-end paragraph are a snapshot no committed script reproduces, and both
+  were already stale before this change.
+
+  Reported against the plate view, `9/11N` on plate 62 and `CeCv` on 59-61. No correction file
+  was written, so the rows name the report.
 - **`S1DZ` on plate 18 was drawing its own label, and `S1J` was short the ground the
   watershed took to draw it with.** The dysgranular zone is a wedge a few pixels wide where
   it leaves `fmi`, too narrow to hold its own name: on the right hemisphere the atlas sets
