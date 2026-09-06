@@ -63,8 +63,37 @@ def test_label_positions(db):
             for b in boxes:
                 assert len(b) == 4 and all(0 <= v <= 1 for v in b)
                 n += 1
-    assert n == db['verification']['label_positions_located'] == 6337
+    assert n == db['verification']['label_positions_located'] == 6336
     assert sum(len(d) for d in LP.values()) == db['verification']['ocr_confirmed'] == 3344
+
+
+def test_every_label_is_inside_the_printed_coordinate_box(db):
+    """A printed label is inside the ruled box, because that is where the atlas
+    prints one.
+
+    Every plate is cropped to its own printed ML/DV coordinate box, and the
+    section and its abbreviations are what the box contains. Outside it are the
+    tick numbers and the two axis captions, which are page furniture and name no
+    structure -- so a box the label pass located out there is something read that
+    is not a label at all. One was: the rotated `m` of "[mm]" in the right-hand
+    caption on plate 22, read as `3` and plotted 9.54 mm lateral, off the section
+    and outside the brain in the 3-D cloud.
+
+    The ruled box is `[10, 10.5, 1032, 692.5]` of the 1100 x 703 frame, which is
+    where the app draws its axes. The margin is not tight: the located labels run
+    118 to 906 px across and 125 to 608 px down, so nothing genuine is near the
+    lines and a failure here is a false positive rather than a label set close to
+    the edge.
+    """
+    BX0, BY0, BX1, BY1 = 10, 10.5, 1032, 692.5
+    bad = []
+    for p, d in db['label_positions']['data'].items():
+        for ab, boxes in d.items():
+            for i, (cx, cy, _w, _h) in enumerate(boxes):
+                x, y = cx * A.NW, cy * A.NH
+                if not (BX0 <= x <= BX1 and BY0 <= y <= BY1):
+                    bad.append('plate %s: %s[%d] at (%.1f, %.1f) px' % (p, ab, i, x, y))
+    assert not bad, 'labels outside the printed coordinate box: ' + '; '.join(bad)
 
 
 def test_leaders(db):

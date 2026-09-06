@@ -196,6 +196,32 @@ carries a `version` block naming the release its derived fields were built for.
   you are switching to — the rest is what gave way to make room for it.
 
 ### Fixed
+- **A point outside the brain in the 3-D label cloud, and it was never a label.** Plate 22
+  carried a box for `3` -- layer 3 of cortex -- at ML +9.54 mm, on a plate whose section
+  reaches +6.11. What was printed there is not an abbreviation: it is the rotated `m` of
+  `[mm]` in the axis caption the atlas sets sideways up the right-hand margin, outside its
+  own ruled coordinate box, read as a `3` by the label pass. A `3` is a name the atlas
+  prints, so nothing downstream had reason to doubt it.
+
+  It cost no geometry. A seed outside the section names no face, so the extraction had
+  already refused this one -- it was the single entry in `labels_dropped`, and every
+  polygon on the plate is byte-identical with the box gone. What it did was plot. Every
+  located label is a point in the reverse lookup, the projections and the 3-D cloud, and
+  in the cloud it hung in mid-air beside the brain, which is where a reader saw it. The
+  plate had hidden it twice over: `3` has an extent there, and a structure with an extent
+  is outlined rather than circled, so the box was never drawn; what it did drive -- a hover
+  on the ruler answering `3` -- is a question nobody thinks to ask of the margin.
+
+  **6,337 located labels become 6,336**, `labels_dropped` goes 1 to 0, and `3` loses 0.08 mm
+  of the ML its label center is quoted at in the structure table (3.58 to 3.50, DV -7.29 to
+  -7.31) -- the mean of 68 labels dragged by one that was 6 mm out. Nothing else moves: the
+  extents, the volumes, the meshes, the coloring and the divisions are all unchanged.
+
+  The rule it broke is now a test over the committed data: every label lies inside the
+  printed coordinate box, `[10, 10.5, 1032, 692.5]` of the 1100 x 703 frame. The margin is
+  wide -- the located labels run 118 to 906 px across and 125 to 608 px down -- so nothing
+  genuine is near the lines, and anything out there is page furniture read as a name.
+
 - **`S1DZ` on plate 18 was drawing its own label, and `S1J` was short the ground the
   watershed took to draw it with.** The dysgranular zone is a wedge a few pixels wide where
   it leaves `fmi`, too narrow to hold its own name: on the right hemisphere the atlas sets
