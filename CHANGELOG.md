@@ -25,25 +25,40 @@ carries a `version` block naming the release its derived fields were built for.
   shares rise with it, MCPC's right 0.905 to 0.976 and TG's 0.854 to 0.982: the outline they
   now stop at is one the atlas printed.
 
-  `Zo`, the zonal layer of the superior colliculus, is the same failure found by looking for
-  it. The lamina is one or two pixels of section between the pia and `SuG`, the atlas letters
-  it on the lamina, and on three plates the box centre lands on the ink: the seed is snapped
-  into the neighbour and the arc goes unnamed, so `Zo` comes out as one hemisphere's lamina
-  where the drawing has two. **Plate 35 goes 0.4403 to 0.8186 mm2, plate 37 0.4385 to 0.8593,
-  plate 38 0.3218 to 0.6415.** What those three rows recover was unassigned ground, so no
-  region loses by it: `SuG` gives up 0.011 mm2 on each plate and `RSGa` gains 0.014 on 35,
-  and nothing else moves by more than a thousandth. In the meshes `Zo` goes 1.2505 to 1.8426
-  mm3 and drops from three components to two, the laminae being one arc now rather than
-  three pieces; `TG` goes 1.4823 to 1.8173 and `MCPC` 0.4070 to 0.2499. `RSGa`'s worst traced
-  share goes 0.92 to 1.00.
+  `Zo`, the zonal layer of the superior colliculus, is the same failure, and once one of them
+  turned up the layer was read across all nine plates it is drawn on rather than the three
+  the scan first returned. The lamina is one or two pixels of section between the pia and
+  `SuG`, and the atlas letters it on the lamina, so wherever the box centre lands on the ink
+  the seed is snapped into a neighbour and the arc goes unnamed. **Plate 35 goes 0.4403 to
+  0.8186 mm2, 36 0.5120 to 0.9033, 37 0.4385 to 0.8593, 38 0.3218 to 0.6415 and 39 0.4583 to
+  0.7120.** What those rows recover was unassigned ground, so no region loses by it: `SuG`
+  gives up between 0.006 and 0.012 mm2 a plate, `RSGa` gains 0.014 on 35, and nothing else
+  moves by more than a thousandth and a half.
 
-  Twenty-four (plate, region) entries move, all on those four plates, and every one of them
-  outside the five named above by 0.0138 mm2 or less. `boundary_edges_shared_exactly` stays
+  Plate 39 needed the first seeds of their own this database has -- rows with no
+  `label_index` beside them. Its left lamina is cut into three faces and one printed word can
+  seed only one, so the other two are named by a seed apiece, which is the case
+  `tools/corrections.py` describes as the box being fine and a face simply unlettered. The
+  four plates that needed nothing are worth naming too: on 33 and 34 the lamina is one arc
+  across the midline, which a single seed names entire, and on 40 and 41 both words already
+  seed it -- what sits unowned beside them there is the cerebellum, the outer cortical
+  surface and one-pixel slivers of rim, none of it zonal layer.
+
+  What no seed can fix is the right of 36, 38 and 39. There the tracing does not separate
+  `Zo` from `SuG` and `Op` at all: the three share one face of 17,000 to 26,000 px and the
+  watershed splits it along a line the atlas never drew. That is a missing run of boundary
+  rather than a seed in the wrong place, it wants the printed page to place, and it is left
+  as it is and said so in the `seed_overrides` note.
+
+  In the meshes `Zo` goes 1.2505 to 2.1875 mm3; `TG` goes 1.4823 to 1.8173 and `MCPC` 0.4070
+  to 0.2499. `RSGa`'s worst traced share goes 0.92 to 1.00.
+
+  Forty (plate, region) entries move, all on those six plates, and every one of them outside
+  the seven named above by 0.0138 mm2 or less. `boundary_edges_shared_exactly` stays
   1.0 and `structure_plate_entries` stays 3,078 -- no structure gained or lost a plate.
-  `label_inside_its_own_region` goes 0.9723 to 0.9725, which is the number this kind of fix
-  exists to move: four more labels now stand in the region they name. Five adjacencies go
-  with the corrected outlines, 4,468 pairs that touch to 4,463, and METHODS' vertex and near
-  figures follow; the coloring is unchanged at 690 regions, 633 patches, eight colours.
+  Four adjacencies go with the corrected outlines, 4,468 pairs that touch to 4,464, and
+  METHODS' vertex and near figures follow it, as do polygons at 5,905 and points at 167,565.
+  The coloring is unchanged at 690 regions, 633 patches, eight colours.
 
   How the other three were found: `tools/leaders.py --odd` is the leader half of this
   question, and this is the seed half. Every plate was rebuilt and, for each of the 2,132

@@ -522,7 +522,7 @@ fractions of the frame-cropped image — the same frame and the same convention
 `brain_outline` uses, so the app's existing point-in-polygon test reads them unchanged.
 **3,078 structure-plate entries carry an area**, 96% of the 3,215 the label pass located
 and 91% of the 3,365 the published index lists — both counted over the structures that are
-regions — as 5,904 polygons over 167,479 points. Where
+regions — as 5,905 polygons over 167,565 points. Where
 the atlas prints two names as one label the two share an entry, so a name having no entry of
 its own does not mean it has no area — see step 8. Twenty of the 724 names have no entry
 anywhere, and never could: they name no region — see step 7.
@@ -639,7 +639,7 @@ to **0.7% of polygons** and the repeated vertices to none.
 the difference between a polygon that reads as the line the atlas drew and one that visibly
 cuts its corners. The floor is the page lattice: at 0.35 px the tolerance drops below the
 raster step and the polygon starts recording the staircase rather than the line, at seven
-times the points. At 0.5 it does not — 167,479 points against the 77,453 the 2 px pass
+times the points. At 0.5 it does not — 167,565 points against the 77,453 the 2 px pass
 wrote, for a median traced share of **1.00** where it was 0.98, and it takes the last of the
 crossings with it: **0.03% of polygons**, two of 7,048, against 9% before either change.
 A thin structure is what a coarse tolerance cannot draw without folding its two sides
@@ -857,12 +857,12 @@ single corner would read as one patch if they were painted alike.
 The vertex test answers for boundaries the two regions hold in common and for nothing else,
 and a boundary can be missed by a hair without being shared. **Two regions that come within
 0.05 mm of each other — 2.9 px of the 1100 × 703 frame, about a pixel and a half on screen
-at the zoom the plate opens at — are counted as touching too.** Over the atlas 4,463 pairs
-of names touch on at least one plate; 4,210 of them share a vertex somewhere and 253 never
-do, meeting only across a gap under the tolerance — 537 plate-by-plate occurrences, on all
+at the zoom the plate opens at — are counted as touching too.** Over the atlas 4,464 pairs
+of names touch on at least one plate; 4,210 of them share a vertex somewhere and 254 never
+do, meeting only across a gap under the tolerance — 538 plate-by-plate occurrences, on all
 62 plates. Those are laminae one or two pixels wide (`Py` between `Or` and `Rad` on plate
 30), near-corners where two boundaries pass within a fifth of a pixel without meeting, and
-pinches. **54 of the 253 would be painted alike on the vertex test alone**, and would then
+pinches. **54 of the 254 would be painted alike on the vertex test alone**, and would then
 have read as one region across a gap nobody can see. Folding them in costs nothing: with the
 rule and without it, the atlas needs the same eight colors.
 
