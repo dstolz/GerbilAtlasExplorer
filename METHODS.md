@@ -457,9 +457,9 @@ where the section is small and the drawing prints the labels beside it; the medi
 *names*: the area of each structure on each plate, as a list of closed polygons of `[x, y]`
 fractions of the frame-cropped image — the same frame and the same convention
 `brain_outline` uses, so the app's existing point-in-polygon test reads them unchanged.
-**3,067 structure-plate entries carry an area**, 96% of the 3,204 the label pass located
+**3,072 structure-plate entries carry an area**, 96% of the 3,209 the label pass located
 and 91% of the 3,365 the published index lists — both counted over the structures that are
-regions — as 5,881 polygons over 166,844 points. Where
+regions — as 5,893 polygons over 166,973 points. Where
 the atlas prints two names as one label the two share an entry, so a name having no entry of
 its own does not mean it has no area — see step 8. Twenty of the 724 names have no entry
 anywhere, and never could: they name no region — see step 7.
@@ -576,7 +576,7 @@ to **0.7% of polygons** and the repeated vertices to none.
 the difference between a polygon that reads as the line the atlas drew and one that visibly
 cuts its corners. The floor is the page lattice: at 0.35 px the tolerance drops below the
 raster step and the polygon starts recording the staircase rather than the line, at seven
-times the points. At 0.5 it does not — 166,844 points against the 77,453 the 2 px pass
+times the points. At 0.5 it does not — 166,973 points against the 77,453 the 2 px pass
 wrote, for a median traced share of **1.00** where it was 0.98, and it takes the last of the
 crossings with it: **0.03% of polygons**, two of 7,048, against 9% before either change.
 A thin structure is what a coarse tolerance cannot draw without folding its two sides
@@ -614,8 +614,8 @@ structure can have a drawn rim and an invented inner wall. So the split itself i
 the share of the wall the watershed put *inside* a face that lands on traced ink. Below
 half, nobody drew it — and an entry that sits only in faces like that, and whose own border
 is under three-quarters drawn, carries `w`. That is the cerebellar lobules against each
-other, the mediodorsal thalamus, the lateral hypothalamic zones, and little else: **294 of
-3,067 entries**, against 1,551 that share a face at all. It used to be 372: 63 left, 3
+other, the mediodorsal thalamus, the lateral hypothalamic zones, and little else: **295 of
+3,072 entries**, against 1,551 that share a face at all. It used to be 372: 63 left, 3
 arrived, and 18 more left when step 10 was tightened — a polygon that tracks the ink to half
 a pixel has more of its border *on* the ink, so an entry whose own border was just under
 three-quarters drawn crosses the line. The 63 are lobules — with `cbw` out of the way in step 7, a lobule's outline is the
@@ -643,16 +643,19 @@ back the 170 mm² of cerebellum step 7 exists to take off it. Plate 52 carries o
 and `tests/js/smoke.spec.js` tests them separately for that reason.
 
 End to end, in the app: pointing at each of the 6,335 printed labels in turn resolves to a
-structure every time, and to the name pointed at 6,309 times. **5,356 of them are answered
+structure every time, and to the name pointed at 6,308 times. **5,357 of them are answered
 with an outline.** 551 are answered with the printed name because the entry carries `w` and
-there is no boundary to draw, and 424 because there is no extent to give — 297 of those being
+there is no boundary to draw, and 423 because there is no extent to give — 297 of those being
 the names that are no region, which is not a shortfall but the point of step 7, and the other
-126 structures no extent could be cut for. Of the 18 that answer with another name, four are
+125 structures no extent could be cut for. Of the 19 that answer with another name, four are
 places where one located box sits inside another (`StA` around `STMA` on plate 23, `PVP`
 around `VL` on 29, `psf` around `sf` on 53, `SolC` around `sol` on 55) and the smaller of the
-two wins the point, which is the right tie-break everywhere else; the other fourteen are the
+two wins the point, which is the right tie-break everywhere else; fourteen are the
 compound labels — `9a,bCb`, `9/11N`, `3/4Cb`, `S1J/BF`, `RSGb/c` — where two names hold the
-one box and the first answers for both, with the region they share.
+one box and the first answers for both, with the region they share. The nineteenth is the
+right-hand `S1DZ` on plate 18, and it is the only one that is supposed to: the atlas sets
+that word below the wedge it names, in `S1J`, so the name is carried by a seed placed by
+hand and the point under the word answers with the region the word is standing in.
 
 240 of the 6,337 printed labels are set outside their region with a line drawn back into
 it, and are seeded at the end of that line. A further 192 sit outside the face they name
@@ -715,12 +718,15 @@ checked against the printed page by eye.
 
 ### Corrections from the plate view
 
-A region that comes out wrong is one of the three inputs above being wrong, and every fix
-so far has been one edit to an input: a run of boundary added to the tracing (`S1DZ`, plate
-19), an island given back to `brain_outline` (`ML` on 36, `och` on 22), a seed moved to the
-face its label means (`OV`, plate 5), a printed word given the box the label pass had
-missed (layer 1, plates 17--18). `tools/atlasfix.py` -- or `matlab/AtlasRegionFix.m`, which
-writes the same file from MATLAB -- is how such a thing is said from the plate itself: a
+A region that comes out wrong is one of the three inputs above being wrong, and the fix is
+one edit to an input: a run of boundary added to the tracing (`S1DZ`, plate 19), an island
+given back to `brain_outline` (`ML` on 36, `och` on 22), a seed moved to the face its label
+means (`OV`, plate 5), a printed word given the box the label pass had missed (layer 1,
+plates 17--18) -- or two, where two of those causes meet on one region: the `S1DZ` wedge on
+plate 18 had lost the run of boundary the printed word is set over *and* was seeded from a
+box the atlas prints below it, and neither edit is any use without the other.
+`tools/atlasfix.py` -- or `matlab/AtlasRegionFix.m`, which writes the same file from
+MATLAB -- is how such a thing is said from the plate itself: a
 point inside the region, the run the tracing missed, the outline the region should have, in
 millimetres over the plate and the tracing, written to `corrections/<id>.json` in the page
 frame the tracings are in and pushed. The reader is shown what a mark would do before
