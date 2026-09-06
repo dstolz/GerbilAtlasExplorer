@@ -63,8 +63,8 @@ def test_label_positions(db):
             for b in boxes:
                 assert len(b) == 4 and all(0 <= v <= 1 for v in b)
                 n += 1
-    assert n == db['verification']['label_positions_located'] == 6342
-    assert sum(len(d) for d in LP.values()) == db['verification']['ocr_confirmed'] == 3347
+    assert n == db['verification']['label_positions_located'] == 6346
+    assert sum(len(d) for d in LP.values()) == db['verification']['ocr_confirmed'] == 3350
 
 
 def test_every_label_is_inside_the_printed_coordinate_box(db):
@@ -384,7 +384,9 @@ def test_volumes_consistent(db):
     # held nothing.
     # 689 rather than 688: SHy, which the published index does not list, is drawn and
     # lettered on plates 22-25 and takes an extent on all four.
-    assert V['summary']['structures'] == len(V['data']) == 689
+    # 690 rather than 689: p1PAG, whose italic word no label pass had read, so it had
+    # no box anywhere and nothing to seed with. It is located on plates 32-34 now.
+    assert V['summary']['structures'] == len(V['data']) == 690
     assert not (have & set(db['features']['data']))
     assert 'little-endian' in V['note']
     for ab, e in V['data'].items():

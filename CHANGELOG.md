@@ -196,6 +196,118 @@ carries a `version` block naming the release its derived fields were built for.
   you are switching to — the rest is what gave way to make room for it.
 
 ### Fixed
+- **`p1PAG` is drawn on plates 32-34 now, and `MA3` on the right of plate 34 is drawn on
+  its own strip rather than beside it.** Two regions, two of the four causes, and one
+  plate they meet on.
+
+  **`p1PAG` had never been located anywhere.** The p1 periaqueductal gray is printed on
+  plates 32, 33 and 34 -- once at the midline on the first two, twice on 34, where the
+  atlas sets the word either side of the aqueduct -- and `label_positions` had no box for
+  it on any of them. No box is no seed, so no area, no volume and no mesh, and the face
+  the word is printed in was left unlettered. The reason it survived every pass is in the
+  database already: `p1PAG` and `p1Rt` are set in italic, the only italics on any plate,
+  and `tools/find_unlettered.py` composes a word it cannot cut whole out of glyphs taken
+  from located labels -- so with no italic exemplar anywhere there was nothing to compose
+  from. That is the one case that pass cannot reach in principle, and the answer is the
+  same as for any word a pass has missed: measure it on the plate. The four boxes here are
+  the ink bounding box of the word read off the plate drawing; the same measurement
+  reproduces the committed box for `MA3` on plate 34 to 0.0000 in `cx`, 0.0003 in `cy`,
+  0.0003 in `w` and 0.0005 in `h`, which is what says the convention is the one the label
+  passes wrote. `p1Rt` is the other italic and is still unlocated; nothing here touches it,
+  and `verification` now says which six structures are left with no label anywhere.
+
+  **`p1PAG` on plate 32 comes out 1.4948 mm², on 33 0.7949 and on 34 0.8117** -- 3.101 mm²
+  over the atlas, 1.0935 mm³, one mesh component, graded `surface`, centred at ML -0.02,
+  DV -4.93, AP -3.32. Every one of the three is the periaqueductal collar as the atlas
+  draws it: traced share 0.994, 0.982 and 0.996. The second ring on plate 32 is a hole --
+  the sliver below the aqueduct that no printed name letters, which stays unassigned
+  rather than being absorbed.
+
+  On 32 and 33 that ground was nobody's: the plates go from 5.6055 to 4.1010 mm² and from
+  4.2941 to 3.5093 mm² of unassigned ground. On 34 it came out of **`PrEW`, which had been
+  holding the whole periaqueductal column** because it was the only name seeded in that
+  face: 0.9061 to 0.1001 mm² on the plate, 0.994 to 0.188 over the atlas, 0.2564 to 0.0840
+  mm³, and its centre drops from DV -5.15 to -6.07 -- onto the small ventral bulge the
+  atlas prints the word inside. Its traced share goes 1.000 to 0.982, which is the honest
+  number: the line between `PrEW` and `p1PAG` is 1.8% of its border and is the one piece
+  of boundary here the atlas does not draw.
+
+  **And the right-hand `MA3` on plate 34 was seeded outside its strip.** The atlas prints
+  `MA3` twice, one word per paramedian column. The right-hand box is centred at (0.4836,
+  0.6071), which is plate pixel (532.0, 426.8); at that height the column it names runs
+  from x 520 to 529, so the centre sits three pixels clear of it, in the tegmental face of
+  92,776 page px that `TG`, `VTAR` and `sumx` letter between them. A box seeds the face its
+  own centre pixel falls in, so the watershed split that face and gave `MA3` a blob beside
+  its own word -- 0.0716 mm² with 34% of its border invented -- while the column itself,
+  1,805 page px against 1,885 for its mirror on the left, was left unlettered.
+
+  That is a row of `seed_overrides`, its tenth. `[0, 0.4768, 0.6071]` stands in for the
+  right-hand box exactly as a leader tip does, on the column's midline at the word's own
+  height. The box does not move: it is where the word is printed, which is all it ever
+  claimed to be. **The right-hand `MA3` goes 0.0716 to 0.0940 mm² and its traced share
+  0.656 to 1.000**, against 0.0993 on the left, so the two hemispheres now measure within
+  0.0053 mm² of each other where they were 0.0271 apart, and every point of both polygons'
+  borders is on printed ink. The plate goes 0.1704 to 0.1933 mm², the atlas 0.333 to 0.356
+  mm² and 0.1525 to 0.1800 mm³, still one mesh component. `TG` takes back the 0.0702 mm²
+  the watershed had carved out of it -- 3.2144 to 3.2846 on the plate, 4.637 to 4.707 over
+  the atlas, 1.4745 to 1.4824 mm³ -- and its right polygon's traced share goes 0.952 to
+  0.963. Plate 34's unassigned ground goes from 24 polygons to 23; its count of faces
+  lettered by one abbreviation stays at 110, because the right-hand column becomes one
+  while the face `PrEW` had to itself is now shared with `p1PAG`. Plates 32 and 33 each
+  gain one such face, 121 to 122 and 130 to 131, and 32 comes back in more unassigned
+  polygons than it went in with, 26 to 30: `unassigned` records connected runs of ground
+  no name holds, and those run through the ink between two unnamed faces, so the one blob
+  that stretched from x 413 to 623 across the midline is five once `p1PAG` sits in it.
+
+  **Nothing outside plates 32-34 has an entry that changes at all.** On those three, 31
+  entries move besides the four above, and none of them by more than 1.44 plate px (25 µm)
+  -- most by under half a plate pixel, which is `DP_PX`. That is naming a face that was
+  unassigned: it puts new junctions on its neighbours' borders, and an arc cut in two
+  simplifies differently from the same arc whole. In volume, 38 structures move by under
+  0.035 mm³ apiece -- `3V` -0.0347, `Dk` -0.0329, `PVP` +0.0239, `pc` -0.0232 the largest
+  of them -- which is the interpolation between plates 31 and 35 reading the corrected
+  planes. No structure changes its number of mesh components.
+  `boundary_edges_shared_exactly` stays 1.0 and `regions_partition_the_volume` still
+  asserts. The structure count goes 689 to 690: `p1PAG` had never had a mesh anywhere,
+  because it had never had an extent anywhere.
+
+  One consequence is meant to look like a regression and is not, and it is the same one
+  `S1DZ` had. Pointing at the printed `MA3` on the right of plate 34 now answers `TG`,
+  because that is the region the atlas sets the word in; `label_inside_its_own_region`
+  goes 0.9736 to 0.9735 for that one label. A word set outside the region it names is what
+  `seed_overrides` exists to record, and the block's note names this row beside the nine
+  already there.
+
+  **The whole atlas repaints.** Ten adjacency pairs are new (4,461 to 4,471) and
+  `region_colors` is one solve over all 62 plates: re-run, it lands on a different valid
+  eight-coloring and 594 of the 690 regions take a different slot. Nothing about the
+  coloring's guarantees moves -- eight colors and no fewer, 633 patches where there were
+  632, 26 refusals, no two regions that touch on a plate alike; the asks granted go 120 to
+  119, which is the solve landing where it lands. A slot has never meant anything beyond
+  "not my neighbor", and it is not stable across a rebuild.
+
+  Counts. In the database, `label_positions_located` goes 6,342 to 6,346 and
+  `ocr_confirmed` 3,347 to 3,350, with `n_labels_located` and `ocr_confirmed` on plates
+  32-34; all of it is `export_tables.py --refresh-db`. The literals in `tests/python` and
+  `tests/js/colors.spec.js` follow, structure count included. In METHODS: entries carrying
+  an area 3,075 to 3,078, the pairs the label pass located 3,212 to 3,215, polygons 5,898
+  to 5,902, points 167,075 to 167,252, the coloring's 689 regions and 632 patches to 690
+  and 633 and its asks granted 120 to 119, and every quotation of the label total.
+  `verification`'s note gains the pass that read `p1PAG` and says which six structures are
+  left with no label anywhere; the figures it opens on are the stale snapshot #92 named and
+  are left as they are.
+
+  The end-to-end paragraph and the outline-containment row are the snapshot #92 left alone
+  for being one no committed script reproduces, and this change leaves their counts alone
+  for the same reason -- METHODS now says so in the paragraph itself. One thing in it is
+  not a count and could not be left: it enumerated the labels that answer with another
+  name as four plus fourteen plus the right-hand `S1DZ`, "the only one that is supposed
+  to". There are two of those now, so the enumeration goes 19 to 20 and names both.
+
+  Reported from the plate view as `p1PAG` missing on plates 31 and 32; the atlas prints the
+  word on 32, 33 and 34, which is where it is now drawn. The `MA3` row carries
+  `report-p34-MA3` as its id, there being no correction file to name.
+
 - **`9/11N` on plate 62 and `CeCv` on plates 59-61 sit at the end of the lines the atlas
   draws to them.** Seven printed words, eight boxes, one failure: the atlas cannot fit the word
   inside the region, sets it outside and draws a short line back in, and `label_leaders` has no
