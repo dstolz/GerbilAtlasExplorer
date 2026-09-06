@@ -270,7 +270,10 @@ carries a `version` block naming the release its derived fields were built for.
   twenty-four are neighbours on plates 38-40 and 50-52 whose interpolated volume shifts by
   a thousandth or two, which is what a change on one plate does to the levels either side.
   In `region_colors` nothing is recoloured -- 690 regions, 633 patches, eight colours --
-  and one adjacency goes with the ring, 4,470 pairs that touch to 4,469.
+  and one adjacency goes with the ring, 4,469 pairs that touch to 4,468. METHODS' vertex
+  and near figures go with it: 4,215 pairs share a vertex somewhere and 253 never do, 538
+  occurrences over the 62 plates, and 54 of the 253 would be painted alike on the vertex
+  test alone. Eight colours with the near rule and without it, as before.
 
   These three were found by `tools/leaders.py --odd`, and they are why it now reports eight
   tips in a neighbour's ground rather than five: a withdrawn mark still sits where it always

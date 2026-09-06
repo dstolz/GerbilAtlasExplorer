@@ -857,12 +857,12 @@ single corner would read as one patch if they were painted alike.
 The vertex test answers for boundaries the two regions hold in common and for nothing else,
 and a boundary can be missed by a hair without being shared. **Two regions that come within
 0.05 mm of each other — 2.9 px of the 1100 × 703 frame, about a pixel and a half on screen
-at the zoom the plate opens at — are counted as touching too.** Over the atlas 4,469 pairs
-of names touch on at least one plate; 4,219 of them share a vertex somewhere and 250 never
-do, meeting only across a gap under the tolerance — 535 plate-by-plate occurrences, on all
+at the zoom the plate opens at — are counted as touching too.** Over the atlas 4,468 pairs
+of names touch on at least one plate; 4,215 of them share a vertex somewhere and 253 never
+do, meeting only across a gap under the tolerance — 538 plate-by-plate occurrences, on all
 62 plates. Those are laminae one or two pixels wide (`Py` between `Or` and `Rad` on plate
 30), near-corners where two boundaries pass within a fifth of a pixel without meeting, and
-pinches. **56 of the 249 would be painted alike on the vertex test alone**, and would then
+pinches. **54 of the 253 would be painted alike on the vertex test alone**, and would then
 have read as one region across a gap nobody can see. Folding them in costs nothing: with the
 rule and without it, the atlas needs the same eight colors.
 
