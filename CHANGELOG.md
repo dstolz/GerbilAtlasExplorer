@@ -5,6 +5,54 @@ carries a `version` block naming the release its derived fields were built for.
 
 ## [Unreleased]
 
+### Fixed
+- **Su3 gets its right-hand ring back on plate 39, and DMSp5 its half of the trigeminal
+  blob on 51.** Three of the 240 lines in `label_leaders` are not lines. The atlas draws a
+  leader only for a word it could not fit inside the region it names; `4Sh` and `4N` on the
+  right of plate 39 and `Sp5O` on the left of 51 are each printed *inside* the region they
+  name, exactly as their mirrors on the other hemisphere are, so there was nothing for a
+  line to do. What the pass followed out of each is a mark near the word -- long enough and
+  straight enough to clear `MINTIP` and the shape tests, and running into the neighbour
+  above.
+
+  What that cost was a whole structure on a hemisphere. `Su3` is lettered once on plate 39,
+  so the right-hand ring had nothing but its mirror to claim it with, and `4Sh`'s tip was
+  sitting in it: `Su3` held 0.1031 mm2 where it should hold both rings, and `4Sh` held the
+  Su3 ring on top of its own. `DMSp5` had no area at all on that hemisphere of plate 51,
+  because `Sp5O`'s tip had taken it. `4N`'s mark ends under `DRV`, outside every ring the
+  label could name, and cost only its own seed.
+
+  A row of `seed_overrides` withdraws each marched tip and puts the seed back on the printed
+  word -- `report-p39-4Sh-4N` and `report-p51-Sp5O`, three rows, fourteen now. On plate 39
+  `Su3` goes 0.1031 to 0.2023 mm2 and `4Sh` 0.2307 to 0.1322; on 51 `DMSp5` goes 0.1226 to
+  0.2751 and `Sp5O` 0.4254 to 0.2733. Both transfers conserve to within 0.0004 mm2: the
+  ground moved, none of it was lost. Thirteen (plate, region) entries move in all and every
+  other one of them by 0.0011 mm2 or less, all on those two plates; nothing moves anywhere
+  else in the atlas. `boundary_edges_shared_exactly` stays 1.0 and
+  `structure_plate_entries` stays 3,078 -- no structure gained or lost a plate, they
+  exchanged ground on one. `labels_on_a_leader` goes 240 to 237, which is the count that
+  records the fix.
+
+  In the meshes `Su3` goes 0.2876 to 0.3341 mm3 and its centre moves back onto the midline,
+  ML -0.04 to +0.02; `DMSp5` goes 0.5371 to 0.6790 mm3 and drops from three components to
+  two, because the half that was missing rejoins the rest. `4Sh` goes 0.0734 to 0.0510 and
+  `Sp5O` 0.7294 to 0.6388. Twenty-eight structure rows move in the table; the other
+  twenty-four are neighbours on plates 38-40 and 50-52 whose interpolated volume shifts by
+  a thousandth or two, which is what a change on one plate does to the levels either side.
+  In `region_colors` nothing is recoloured -- 690 regions, 633 patches, eight colours --
+  and one adjacency goes with the ring, 4,470 pairs that touch to 4,469.
+
+  These three were found by `tools/leaders.py --odd`, and they are why it now reports eight
+  tips in a neighbour's ground rather than five: a withdrawn mark still sits where it always
+  sat, and the region it used to take is no longer drawn around it. The tool's
+  `superseded_by` column is what tells the two apart. The other 59 the filter returns were
+  read and left alone. Five are fissures and their kin, which are no region to land in.
+  Most of the rest are structures the drawing does not enclose -- `aci` on 8-9, `eml` on 28,
+  `VMHSh` on 29 seed a face several names share, which is a tracing question and not a
+  leader one -- and three (`I` on 23, `LVPO` on 44, `RPa` on 58) land dead centre in a face
+  they solely own that is simply under the 600 px `MIN_AREA_PX` publishes. The `E`/`OV` lines on the bulb plates are the honest outcome `TIP_READ` already
+  records and were not touched.
+
 ### Added
 - **Every leader in the atlas, and the label it was drawn from, as one command.**
   `tools/leaders.py`. Where a region is too small or too crowded to hold the word that names
@@ -29,9 +77,10 @@ carries a `version` block naming the release its derived fields were built for.
   Where an end falls is answered exactly as the app answers a click -- the plate's extents,
   even-odd, at the point itself -- so the row says what the line cost and what it bought:
   `VMHSh` on plate 30 is printed in an unassigned face and lands in `VMHSh`. `--odd` is that
-  question asked as a filter, and its answer today is nothing alarming: five tips in a
-  neighbour's ground, all of them names that name no region at all, and 55 in an unassigned
-  face or in an outline too thin to hold the point that seeded it. `--shared`, `--abbr` (a
+  question asked as a filter, and it is what found the three misread marks fixed below:
+  eight tips now sit in a neighbour's ground -- five of them names that are no region at all,
+  three of them superseded -- and 54 in an unassigned face or in an outline too thin to hold
+  the point that seeded it. `--shared`, `--abbr` (a
   name, or one of the atlas's own aliases), `--plates`, `--min-mm` and `--sort length` are the
   rest of the filters, and `--csv` and `--json` write the same rows flat.
 

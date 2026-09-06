@@ -85,18 +85,26 @@ def test_where_an_end_falls_is_the_apps_own_hit_test(db, rows):
                 assert sum(A.pip(g, x, y) for g in RE[str(r['plate'])][ab]['g']) % 2
 
 
-def test_the_tips_land_where_the_atlas_says_they_do(rows):
-    """180 of the 240 land in the region their label names.
+def test_the_tips_land_where_the_atlas_says_they_do(rows, db):
+    """178 of the 240 land in the region their label names.
 
-    Of the rest, the five in a neighbor's ground are all names that name no region --
-    a fissure is the line between two regions (see `features`) -- and the 55 in none
-    are unassigned faces and outlines too thin to hold the point that seeded them.
-    A tip in another *structure's* ground would be a followed-too-far line, and
-    test_data.test_no_leader_tip_lands_on_another_name is what holds that to zero.
+    Of the rest, 54 land in no region at all -- an unassigned face, or an outline too
+    thin to hold the point that seeded it -- and eight in a neighbor's ground. Five of
+    those eight are names that name no region: a fissure is the line between two regions
+    (see `features`), so a line drawn to one lands in whichever of them holds the point.
+
+    The other three are the marks the leader pass misread -- 4Sh and 4N on plate 39,
+    Sp5O on 51 -- and they show here precisely because they were fixed: each is
+    superseded by a row of `seed_overrides`, so the extents no longer follow the mark,
+    and the tip is now visibly sitting in the neighbor it used to take ground from. A
+    tip in a neighbor that is neither a feature nor superseded is a new one of these.
     """
     where = {k: [r for r in rows if L.lands(r) == k] for k in ('own', 'other', 'none')}
-    assert (len(where['own']), len(where['other']), len(where['none'])) == (180, 5, 55)
-    assert all(r['feature'] for r in where['other'])
+    assert (len(where['own']), len(where['other']), len(where['none'])) == (178, 8, 54)
+    for r in where['other']:
+        assert r['feature'] or r['superseded_by'], (r['plate'], r['abbr'], r['index'])
+    assert sorted((r['plate'], r['abbr']) for r in where['other'] if r['superseded_by']) == \
+        [(39, '4N'), (39, '4Sh'), (51, 'Sp5O')]
 
 
 def test_the_figures_methods_publishes_come_back(rows):
@@ -124,7 +132,7 @@ def test_filters(db, rows):
     a.shared = True
     assert len(L.select(rows, a, db)) == 42            # 21 lines, two names each
     a.shared, a.odd = False, True
-    assert len(L.select(rows, a, db)) == 60            # 5 in a neighbor, 55 in none
+    assert len(L.select(rows, a, db)) == 62            # 8 in a neighbor, 54 in none
     a.odd, a.abbr = False, 'VMHSh'
     assert {r['abbr'] for r in L.select(rows, a, db)} == {'VMHSh'}
     a.abbr = 'auditory cortex'                         # an alias resolves to its members

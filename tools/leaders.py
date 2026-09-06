@@ -28,13 +28,21 @@ so its longest line, 1.231 mm, is the longest here among the lines no label shar
 the `E/OV` on plate 4, which the summary never measured on its own.
 
 Which region an end falls in is answered exactly as the app answers a click: the extents
-of that plate, even-odd, at the point itself. Three answers are possible and all three are
-ordinary. The region the label names is the expected one. A neighbor means the name is one
-of the twenty the atlas prints that name no region at all -- a fissure is the line between
-two regions, and a line drawn to it lands in whichever of them holds the point (see
-`features`). No region at all means an unassigned face, or a structure so thin that its
-simplified outline does not quite hold the point that seeded it; it is not a fault by
-itself. `--odd` is that question asked as a filter.
+of that plate, even-odd, at the point itself. The region the label names is the expected
+answer, and 178 of the 240 give it. No region at all -- 54 of them -- means an unassigned
+face, or a structure so thin that its simplified outline does not quite hold the point
+that seeded it; it is not a fault by itself, and neither is a face under the 600 px the
+extraction publishes, which is what leaves `I` on plate 23, `LVPO` on 44 and `RPa` on 58
+with a tip in the middle of a face they solely own and no area to show for it.
+
+A tip in a *neighbor's* ground is the one that reads as a question, and there are eight.
+Five are names that name no region at all: a fissure is the line between two regions, so
+a line drawn to one lands in whichever of them holds the point (see `features`). The other
+three are marks the pass misread and read here as what they are -- `4Sh` and `4N` on plate
+39, `Sp5O` on 51, each printed inside the region it names and so drawn no line by the
+atlas. Those three are superseded by `seed_overrides`, which is why the extents no longer
+follow them and why the tip is now plainly sitting in the neighbor it used to take ground
+from; `superseded_by` is the column that says so. `--odd` is that question as a filter.
 
 Reads:  data/gerbil_atlas.json, and nothing else. Stdlib only, and no PDF: the lines were
         read off the printed page once, by tools/label_leaders.py, and committed.

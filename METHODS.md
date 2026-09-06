@@ -450,9 +450,12 @@ it from, both ends in millimeters, and which region each of them falls in — so
 above can be checked without opening the JSON. It needs no PDF: the lines were read off the
 page once and committed, and this reads what was committed. `--shared` is the 21 lines a
 joined label shares between two names; `--odd` is the tips that land somewhere other than the
-region their label names, which is five in a neighbour's ground — three fissures, a sulcus and
-an incisure, none of which is a region of its own — and 55 in an unassigned face or in an
-outline too thin to hold the point that seeded it.
+region their label names, which is eight in a neighbour's ground and 54 in an unassigned face
+or in an outline too thin to hold the point that seeded it. Five of the eight are names that
+are no region of their own — three fissures, a sulcus and an incisure. The other three are
+marks the leader pass misread, and they read as neighbours here *because* they are fixed: a
+row of `seed_overrides` withdraws each, so the extents no longer follow the mark and the tip
+is left sitting in the region it used to take ground from.
 
 ## The brain outline
 
@@ -519,7 +522,7 @@ fractions of the frame-cropped image — the same frame and the same convention
 `brain_outline` uses, so the app's existing point-in-polygon test reads them unchanged.
 **3,078 structure-plate entries carry an area**, 96% of the 3,215 the label pass located
 and 91% of the 3,365 the published index lists — both counted over the structures that are
-regions — as 5,902 polygons over 167,255 points. Where
+regions — as 5,904 polygons over 167,278 points. Where
 the atlas prints two names as one label the two share an entry, so a name having no entry of
 its own does not mean it has no area — see step 8. Twenty of the 724 names have no entry
 anywhere, and never could: they name no region — see step 7.
@@ -636,7 +639,7 @@ to **0.7% of polygons** and the repeated vertices to none.
 the difference between a polygon that reads as the line the atlas drew and one that visibly
 cuts its corners. The floor is the page lattice: at 0.35 px the tolerance drops below the
 raster step and the polygon starts recording the staircase rather than the line, at seven
-times the points. At 0.5 it does not — 167,255 points against the 77,453 the 2 px pass
+times the points. At 0.5 it does not — 167,278 points against the 77,453 the 2 px pass
 wrote, for a median traced share of **1.00** where it was 0.98, and it takes the last of the
 crossings with it: **0.03% of polygons**, two of 7,048, against 9% before either change.
 A thin structure is what a coarse tolerance cannot draw without folding its two sides
@@ -725,8 +728,10 @@ is carried by a seed placed by hand and the point under the word answers with th
 the word is standing in. The other counts in this paragraph, and the outline-containment
 row above, are a snapshot no committed script reproduces and are left as they stand.
 
-240 of the 6,346 printed labels are set outside their region with a line drawn back into
-it, and are seeded at the end of that line. A further 192 sit outside the face they name
+240 of the 6,346 printed labels carry a line the leader pass read, and 237 of them are
+seeded at the end of it. The other three are marks the pass misread — `4Sh` and `4N` on
+plate 39, `Sp5O` on 51, each printed inside the region it names, which is a word the atlas
+draws no line for — and a row of `seed_overrides` puts each seed back on its printed word. A further 192 sit outside the face they name
 with no line this pass could follow — printed on a boundary, or beside the section on a line
 the tracing runs along — and are pulled to the largest face within a millimeter; most of
 those are on the olfactory bulb plates 5–9, where the section is small and the drawing sets
