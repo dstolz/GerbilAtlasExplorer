@@ -196,6 +196,76 @@ carries a `version` block naming the release its derived fields were built for.
   you are switching to — the rest is what gave way to make room for it.
 
 ### Fixed
+- **`MA3` on the left of plate 35 keeps to its own column now, and `InC` gets back the
+  ground the watershed took to draw it with.** The same failure as the right-hand `MA3` on
+  plate 34, on the other hemisphere of the next plate, and found by looking for it.
+
+  The medial accessory oculomotor nucleus is a pair of narrow paramedian columns, and the
+  atlas cannot fit `MA3` inside one: it sets each word beside its column. On plate 35 the
+  left-hand box is centred at (0.4559, 0.5912), which is plate pixel (501.5, 415.6); at
+  that height the column it names runs from x 503 to 513, so the centre sits **a pixel and
+  a half short of it**, inside the face `InC` letters. A box seeds the face its own centre
+  pixel falls in, so the watershed split `InC`'s face and gave `MA3` a blob around its own
+  word -- 0.0658 mm² with a quarter of its border invented -- while the column itself,
+  1,661 page px against 1,863 for its mirror on the right, was left unlettered.
+
+  This is the eleventh row of `seed_overrides`, and the second `MA3` has needed. `[0, 0.4618, 0.5912]` stands in for the left-hand box exactly as a leader
+  tip does, on the column's midline at the word's own height. The box does not move: it is
+  where the word is printed, which is all it ever claimed to be.
+
+  **The left-hand `MA3` goes 0.0658 to 0.0882 mm² and its traced share 0.757 to 0.994**,
+  against 0.0971 on the right, so the two hemispheres now measure within 0.0089 mm² of each
+  other where they were 0.0313 apart. **`InC` on the left goes 0.1911 to 0.2530 mm² and its
+  traced share 0.856 to 0.997**, against 0.2592 on the right, within 0.0062 where it was
+  0.0681: it takes back the whole 0.0619 mm² the watershed had carved out of it, and
+  99.7% of its border is printed ink where 86% was. Over the atlas `MA3` goes 0.356 to
+  0.379 mm² and `InC` 1.405 to 1.466, and the worst traced share either of them carries
+  anywhere goes 0.76 to 0.98 and 0.86 to 0.99. Plate 35 goes from 28 polygons of unassigned
+  ground to 27 and from 88 faces lettered by one abbreviation to 90 -- the column becomes
+  one, and `InC`'s face stops being shared.
+
+  **Only plate 35 has an entry that changes.** Five others on it move, none by more than
+  0.58 plate px (10 µm) or 0.0013 mm²: `PrEW`, `PBP`, `PaR`, `LPAG` and `Dk`, which is a new
+  junction changing how a shared arc simplifies. `region_colors` comes back **identical**,
+  all 690 slots: `MA3` and `InC` touched on the plate before and touch on it now, so no
+  pair of names that touch is new and there is nothing for the solve to repaint.
+  `boundary_edges_shared_exactly` stays 1.0 and `regions_partition_the_volume` still
+  asserts.
+
+  In the volume `InC` gains 0.0235 mm³ (0.6180 to 0.6415) and keeps its four components.
+  **`MA3` loses 0.0057 mm³ (0.1800 to 0.1743) while gaining area**, and that is the point
+  rather than a cost: it is a slab between plates 34 and 35, and the blob on 35 sat 13 px
+  lateral of the column on 34 -- centres at x 494.7 against 508.1 -- so the interpolation
+  between them swept a band neither plate draws. The centres are 508.3 and 508.1 now, and
+  the sweep is the column. Fifteen other
+  structures move by under 0.003 mm³ apiece, from the interpolation between plates 34 and 36
+  reading the corrected plane. One of them changes shape in a way worth naming:
+  **`LPAG` comes out in two mesh components where it was in one**, the second being 0.0011
+  mm³ -- 0.05% of it, nine voxels at 50 µm -- half a step in front of plate 35, which is the
+  anterior edge of the only plane this change touched. Its polygon there moved by 0.44 plate
+  px and the lattice pinched a crumb off the edge. It is a voxelisation artefact at the
+  resolution the volume is built on, not a second piece of anatomy.
+
+  One consequence is meant to look like a regression and is not, and it is the third of
+  these. Pointing at the printed `MA3` on the left of plate 35 now answers `InC`, because
+  that is the region the atlas sets the word in; `label_inside_its_own_region` goes 0.9735
+  to 0.9733 for that one label. METHODS' end-to-end paragraph counts the labels that answer
+  with another name, and it goes 20 to 21.
+
+  Counts. Nothing about the label pass moves: no box was added or moved, so
+  `label_positions_located`, `ocr_confirmed` and every per-plate count stay where they are,
+  and so does the structure count at 690. In METHODS, points go 167,252 to 167,255. The
+  touching-pair figures are reconciled rather than incremented, and most of that gap is
+  #93's rather than this change's: the touching-pair figures under *Coloring the section* stood at "4,461
+  pairs ... 4,210 ... 251" against 4,471, 4,221 and 250 on `main`, and this change takes
+  them to **4,470, 4,220 and 250**. The one pair fewer is `MA3`-`PaR`: the blob reached far
+  enough laterally to touch the pararubral nucleus and the column does not. No pair is
+  new, which is why the coloring does not move. The 535 plate-by-plate occurrences are
+  unchanged throughout.
+
+  Reported from the plate view. The row carries `report-p35-MA3` as its id, there being no
+  correction file to name.
+
 - **`p1PAG` is drawn on plates 32-34 now, and `MA3` on the right of plate 34 is drawn on
   its own strip rather than beside it.** Two regions, two of the four causes, and one
   plate they meet on.
