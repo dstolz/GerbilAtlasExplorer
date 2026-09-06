@@ -206,7 +206,7 @@ handful.
   Tissue is what a volume is made for — density reads as density, where the drawing's ink
   and printed abbreviations stack into a haze — and the labeled plate is one button away.
   **Contours** draws the sections themselves — the atlas's own boundaries, or the Nissl or
-  myelin section — one textured plate at a time, and **Labels** is a point cloud of all 6,315 printed
+  myelin section — one textured plate at a time, and **Labels** is a point cloud of all 6,336 printed
   abbreviations you can orbit. Clip to a slab or cut
   it in half at the midline. **Floor**, **Ceiling** and **Gamma** window the tissue before
   **Density** decides how opaque it is drawn — the difference between a gray fog and a
@@ -368,7 +368,7 @@ plate range is malformed, and which are printed on one plate more than it gives 
 | `data/gerbil_atlas_structures.csv` | One row per structure: abbreviation, name, plate and bregma range, tags. |
 | `data/gerbil_atlas_groups.csv` | One row per gross division: its members spelled out, the plates it is on, its other names, and a note saying what it holds and what it deliberately does not. Written by `tools/build_groups.py`; added here, not published with the atlas. |
 | `data/gerbil_atlas_structure_table.csv` | One row per structure with its label center, areas per plate, and the volume and center of its mesh. |
-| `data/gerbil_atlas_labels.csv` | One row per printed label — 6,315 stereotaxic triplets, read at the end of the label's leader line where the atlas draws one. |
+| `data/gerbil_atlas_labels.csv` | One row per printed label — 6,336 stereotaxic triplets, read at the end of the label's leader line where the atlas draws one. |
 | `data/gerbil_atlas_plates.csv` | One row per plate: bregma / lambda / interaural / occipital-crest AP. |
 | `data/geojson/plate_NN.geojson` | The regional outlines of one plate in millimeters, one feature per structure, with the unnamed faces and the section outline. |
 | `data/facemaps/plate_NN.{u16.gz,json}` | The page cut into faces, as `tools/build_region_extents.py` cuts it: the face of every page pixel, and which printed labels seed each. What the region fixer's published page answers **Pick** from, so that answer is the extraction's and not a copy of it. Written by `tools/build_facemaps.py`; CI checks it is a fresh cut. |

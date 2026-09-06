@@ -274,7 +274,7 @@ carries a `version` block naming the release its derived fields were built for.
   One consequence is meant to look like a regression and is not, and it is the same one
   `S1DZ` had. Pointing at the printed `MA3` on the right of plate 34 now answers `TG`,
   because that is the region the atlas sets the word in; `label_inside_its_own_region`
-  goes 0.9748 to 0.9747 for that one label. A word set outside the region it names is what
+  goes 0.9750 to 0.9748 for that one label. A word set outside the region it names is what
   `seed_overrides` exists to record, and the block's note now enumerates both rows.
 
   **The whole atlas repaints.** Ten adjacency pairs are new (4,456 to 4,466) and
@@ -284,7 +284,7 @@ carries a `version` block naming the release its derived fields were built for.
   asks granted, no two regions that touch on a plate alike. A slot has never meant anything
   beyond "not my neighbor", and it is not stable across a rebuild.
 
-  Counts. In the database, `label_positions_located` goes 6,337 to 6,341 and
+  Counts. In the database, `label_positions_located` goes 6,336 to 6,340 and
   `ocr_confirmed` 3,344 to 3,347, with `n_labels_located` and `ocr_confirmed` on plates
   32-34; all of it is `export_tables.py --refresh-db`. The literals in `tests/python` and
   `tests/js/colors.spec.js` follow, structure count included. In METHODS: entries carrying
@@ -294,7 +294,7 @@ carries a `version` block naming the release its derived fields were built for.
 
   Two numbers are reconciled rather than incremented, and most of each gap predates this
   change: `verification.note` opened on "3339 of 3510 index entries" and "6322 individual
-  printed labels" where the data now says 3,343 and 6,341, of which 3 pairs and 4 labels
+  printed labels" where the data now says 3,343 and 6,340, of which 3 pairs and 4 labels
   are this change. Two more are left with only this change's own delta applied, because
   the way they were arrived at is not written down anywhere and no script here computes
   it: METHODS' end-to-end paragraph and its outline-containment row both quote a label
@@ -306,6 +306,33 @@ carries a `version` block naming the release its derived fields were built for.
   Reported from the plate view as `p1PAG` missing on plates 31 and 32; the atlas prints the
   word on 32, 33 and 34, which is where it is now drawn. The `MA3` row carries
   `report-p34-MA3` as its id, there being no correction file to name.
+
+- **A point outside the brain in the 3-D label cloud, and it was never a label.** Plate 22
+  carried a box for `3` -- layer 3 of cortex -- at ML +9.54 mm, on a plate whose section
+  reaches +6.11. What was printed there is not an abbreviation: it is the rotated `m` of
+  `[mm]` in the axis caption the atlas sets sideways up the right-hand margin, outside its
+  own ruled coordinate box, read as a `3` by the label pass. A `3` is a name the atlas
+  prints, so nothing downstream had reason to doubt it.
+
+  It cost no geometry. A seed outside the section names no face, so the extraction had
+  already refused this one -- it was the single entry in `labels_dropped`, and every
+  polygon on the plate is byte-identical with the box gone. What it did was plot. Every
+  located label is a point in the reverse lookup, the projections and the 3-D cloud, and
+  in the cloud it hung in mid-air beside the brain, which is where a reader saw it. The
+  plate had hidden it twice over: `3` has an extent there, and a structure with an extent
+  is outlined rather than circled, so the box was never drawn; what it did drive -- a hover
+  on the ruler answering `3` -- is a question nobody thinks to ask of the margin.
+
+  **6,337 located labels become 6,336**, `labels_dropped` goes 1 to 0, and `3` loses 0.08 mm
+  of the ML its label center is quoted at in the structure table (3.58 to 3.50, DV -7.29 to
+  -7.31) -- the mean of 68 labels dragged by one that was 6 mm out. Nothing else moves: the
+  extents, the volumes, the meshes, the coloring and the divisions are all unchanged.
+
+  The rule it broke is now a test over the committed data: every label lies inside the
+  printed coordinate box, `[10, 10.5, 1032, 692.5]` of the 1100 x 703 frame. The margin is
+  wide -- the located labels run 118 to 906 px across and 125 to 608 px down -- so nothing
+  genuine is near the lines, and anything out there is page furniture read as a name.
+
 - **`S1DZ` on plate 18 was drawing its own label, and `S1J` was short the ground the
   watershed took to draw it with.** The dysgranular zone is a wedge a few pixels wide where
   it leaves `fmi`, too narrow to hold its own name: on the right hemisphere the atlas sets
