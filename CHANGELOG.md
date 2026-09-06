@@ -6,6 +6,44 @@ carries a `version` block naming the release its derived fields were built for.
 ## [Unreleased]
 
 ### Added
+- **Every leader in the atlas, and the label it was drawn from, as one command.**
+  `tools/leaders.py`. Where a region is too small or too crowded to hold the word that names
+  it, the atlas sets the abbreviation outside and draws a thin line to the place it means;
+  `tools/label_leaders.py` read those lines off the printed page and wrote their far ends into
+  `label_leaders`, and until now that block was only readable as 47 lines of JSON keyed by
+  plate, or as three columns of `data/gerbil_atlas_labels.csv` -- the tip's two fractions and
+  a `position_from` saying which end a row's coordinate came from -- which is enough to filter
+  on and not enough to read: nothing there says how long a line is, which labels share one, or
+  what either of its ends sits in. This reads the block back out: a row per leader, with the
+  label it belongs to, both of its ends in stereotaxic millimeters, and which region each end
+  falls in.
+
+  A leader is one drawn line, and the block records it against every name in the label it was
+  drawn from -- `E/OV` on plate 3 is one line and two entries, because the atlas typeset the
+  two names as one label. So the rows are labels, 240 of them, and `line` is what says which
+  of them are the same line: 219 lines, 21 of which two names share. Two lengths are quoted,
+  because they answer different questions: the line as printed, from the edge of the word to
+  the tip, and how far the label's recorded position moves once the line is followed, which is
+  what the seed, the coordinate the app quotes and the point a planner aims at all shift by.
+
+  Where an end falls is answered exactly as the app answers a click -- the plate's extents,
+  even-odd, at the point itself -- so the row says what the line cost and what it bought:
+  `VMHSh` on plate 30 is printed in an unassigned face and lands in `VMHSh`. `--odd` is that
+  question asked as a filter, and its answer today is nothing alarming: five tips in a
+  neighbour's ground, all of them names that name no region at all, and 55 in an unassigned
+  face or in an outline too thin to hold the point that seeded it. `--shared`, `--abbr` (a
+  name, or one of the atlas's own aliases), `--plates`, `--min-mm` and `--sort length` are the
+  rest of the filters, and `--csv` and `--json` write the same rows flat.
+
+  It derives nothing and writes nothing into the database: it is `label_leaders` put the way a
+  reader asks for it. So it needs no PDF, unlike the pass that produced the block, and no
+  numpy either -- the database and the standard library are the whole of it. The arithmetic is
+  held to the pass's own by tests: the longest line among those no label shares comes back as
+  the 1.231 mm `label_leaders.summary` recorded, and the median gap of 0.57 mm and the 47 of
+  240 over a millimetre are the two figures METHODS publishes.
+
+  `tools/README.md` also had `label_leaders.py` finding 212 labels where the committed block,
+  METHODS and the tests all say 240.
 - **The meshes take a transparency and a coloring, and the coloring can be the plate's
   own.** Two controls under **Advanced**, one 3-D pane at a time. **Opacity** runs from a
   glass shell to solid bone; **Color** says what decides a mesh's color.

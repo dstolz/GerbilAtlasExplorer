@@ -445,6 +445,15 @@ seed the extraction drops, the coordinate the app quotes, the point the planner 
 the circle it draws when there is no extent to outline — a circle round the word would be a
 circle round blank paper beside the section.
 
+`tools/leaders.py` reads the block back out — a row per leader with the label the atlas drew
+it from, both ends in millimeters, and which region each of them falls in — so the figures
+above can be checked without opening the JSON. It needs no PDF: the lines were read off the
+page once and committed, and this reads what was committed. `--shared` is the 21 lines a
+joined label shares between two names; `--odd` is the tips that land somewhere other than the
+region their label names, which is five in a neighbour's ground — three fissures, a sulcus and
+an incisure, none of which is a region of its own — and 55 in an unassigned face or in an
+outline too thin to hold the point that seeded it.
+
 ## The brain outline
 
 `brain_outline` in the JSON gives the outline of the section on each plate: what a track
