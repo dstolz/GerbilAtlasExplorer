@@ -775,12 +775,12 @@ single corner would read as one patch if they were painted alike.
 The vertex test answers for boundaries the two regions hold in common and for nothing else,
 and a boundary can be missed by a hair without being shared. **Two regions that come within
 0.05 mm of each other — 2.9 px of the 1100 × 703 frame, about a pixel and a half on screen
-at the zoom the plate opens at — are counted as touching too.** Over the atlas 4,434 pairs
-of names touch on at least one plate; 4,187 of them share a vertex somewhere and 247 never
-do, meeting only across a gap under the tolerance — 526 plate-by-plate occurrences, on all
+at the zoom the plate opens at — are counted as touching too.** Over the atlas 4,456 pairs
+of names touch on at least one plate; 4,207 of them share a vertex somewhere and 249 never
+do, meeting only across a gap under the tolerance — 532 plate-by-plate occurrences, on all
 62 plates. Those are laminae one or two pixels wide (`Py` between `Or` and `Rad` on plate
 30), near-corners where two boundaries pass within a fifth of a pixel without meeting, and
-pinches. **62 of the 247 would be painted alike on the vertex test alone**, and would then
+pinches. **56 of the 249 would be painted alike on the vertex test alone**, and would then
 have read as one region across a gap nobody can see. Folding them in costs nothing: with the
 rule and without it, the atlas needs the same eight colors.
 
@@ -788,14 +788,14 @@ rule and without it, the atlas needs the same eight colors.
 the atlas draws round several names and print nothing within — the `w` flag, above — and a
 color change through the middle of those draws a line the atlas does not have. So pairs like
 that are joined into one patch and painted as one. What makes this a decision rather than a
-rule is that `w` is read off each plate's own ink: **87 of the 189 pairs that share an
+rule is that `w` is read off each plate's own ink: **90 of the 193 pairs that share an
 unprinted border somewhere are drawn apart by a printed line somewhere else**, and one color
 cannot be both. The printed line wins every time. Merging such a pair would erase a boundary
 the atlas draws; splitting it draws a color change where the atlas prints nothing, which is
 the milder error and the honest one, since the color change is then telling the truth about
-the other plate. So the candidates are the 102 pairs with no printed boundary anywhere, and
+the other plate. So the candidates are the 103 pairs with no printed boundary anywhere, and
 even those only as far as they can be taken without a printed boundary falling *inside* a
-patch along a chain of merges: **74 joins hold, 28 are refused**, and the 689 regions of the
+patch along a chain of merges: **75 joins hold, 28 are refused**, and the 689 regions of the
 atlas become 631 patches, the largest of them seven names.
 
 **The patches are colored with eight colors, which is the fewest.** Eight regions of this
@@ -807,7 +807,7 @@ the reverse of the order they came off, where a slot is always free for them. Th
 seeded, so a re-run reproduces the block byte for byte, and `--check` says whether the
 committed one is current. Which of the eight slots a patch takes is settled last and changes
 no boundary: every region asks for the slot hashed from its abbreviation, and the assignment
-granting the most asks — 116 of the 689 — is the one taken.
+granting the most asks — 120 of the 689 — is the one taken.
 
 **Every restart begins somewhere else, and that is what keeps the eighth color findable.**
 Only the tabu tenure was seeded at first, so every restart set out from the one DSATUR
