@@ -520,9 +520,9 @@ where the section is small and the drawing prints the labels beside it; the medi
 *names*: the area of each structure on each plate, as a list of closed polygons of `[x, y]`
 fractions of the frame-cropped image — the same frame and the same convention
 `brain_outline` uses, so the app's existing point-in-polygon test reads them unchanged.
-**3,078 structure-plate entries carry an area**, 96% of the 3,215 the label pass located
-and 91% of the 3,365 the published index lists — both counted over the structures that are
-regions — as 5,905 polygons over 167,610 points. Where
+**3,118 structure-plate entries carry an area**, 97% of the 3,215 the label pass located
+and 93% of the 3,365 the published index lists — both counted over the structures that are
+regions — as 6,012 polygons over 168,740 points. Where
 the atlas prints two names as one label the two share an entry, so a name having no entry of
 its own does not mean it has no area — see step 8. Twenty of the 724 names have no entry
 anywhere, and never could: they name no region — see step 7.
@@ -639,7 +639,7 @@ to **0.7% of polygons** and the repeated vertices to none.
 the difference between a polygon that reads as the line the atlas drew and one that visibly
 cuts its corners. The floor is the page lattice: at 0.35 px the tolerance drops below the
 raster step and the polygon starts recording the staircase rather than the line, at seven
-times the points. At 0.5 it does not — 167,610 points against the 77,453 the 2 px pass
+times the points. At 0.5 it does not — 168,740 points against the 77,453 the 2 px pass
 wrote, for a median traced share of **1.00** where it was 0.98, and it takes the last of the
 crossings with it: **0.03% of polygons**, two of 7,048, against 9% before either change.
 A thin structure is what a coarse tolerance cannot draw without folding its two sides
@@ -677,8 +677,8 @@ structure can have a drawn rim and an invented inner wall. So the split itself i
 the share of the wall the watershed put *inside* a face that lands on traced ink. Below
 half, nobody drew it — and an entry that sits only in faces like that, and whose own border
 is under three-quarters drawn, carries `w`. That is the cerebellar lobules against each
-other, the mediodorsal thalamus, the lateral hypothalamic zones, and little else: **293 of
-3,078 entries**, against 1,551 that share a face at all. It used to be 372: 63 left, 3
+other, the mediodorsal thalamus, the lateral hypothalamic zones, and little else: **316 of
+3,118 entries**, against the 1,529 whose seed lands in a face some other name seeds too. It used to be 372: 63 left, 3
 arrived, 18 more left when step 10 was tightened — a polygon that tracks the ink to half
 a pixel has more of its border *on* the ink, so an entry whose own border was just under
 three-quarters drawn crosses the line — and 2 more when `9/11N` was read off its own line.
@@ -857,12 +857,12 @@ single corner would read as one patch if they were painted alike.
 The vertex test answers for boundaries the two regions hold in common and for nothing else,
 and a boundary can be missed by a hair without being shared. **Two regions that come within
 0.05 mm of each other — 2.9 px of the 1100 × 703 frame, about a pixel and a half on screen
-at the zoom the plate opens at — are counted as touching too.** Over the atlas 4,464 pairs
-of names touch on at least one plate; 4,210 of them share a vertex somewhere and 254 never
-do, meeting only across a gap under the tolerance — 538 plate-by-plate occurrences, on all
+at the zoom the plate opens at — are counted as touching too.** Over the atlas 4,509 pairs
+of names touch on at least one plate; 4,250 of them share a vertex somewhere and 259 never
+do, meeting only across a gap under the tolerance — 540 plate-by-plate occurrences, on all
 62 plates. Those are laminae one or two pixels wide (`Py` between `Or` and `Rad` on plate
 30), near-corners where two boundaries pass within a fifth of a pixel without meeting, and
-pinches. **54 of the 254 would be painted alike on the vertex test alone**, and would then
+pinches. **61 of the 259 would be painted alike on the vertex test alone**, and would then
 have read as one region across a gap nobody can see. Folding them in costs nothing: with the
 rule and without it, the atlas needs the same eight colors.
 
@@ -875,10 +875,10 @@ unprinted border somewhere are drawn apart by a printed line somewhere else**, a
 cannot be both. The printed line wins every time. Merging such a pair would erase a boundary
 the atlas draws; splitting it draws a color change where the atlas prints nothing, which is
 the milder error and the honest one, since the color change is then telling the truth about
-the other plate. So the candidates are the 100 pairs with no printed boundary anywhere, and
+the other plate. So the candidates are the 105 pairs with no printed boundary anywhere, and
 even those only as far as they can be taken without a printed boundary falling *inside* a
-patch along a chain of merges: **74 joins hold, 26 are refused**, and the 690 regions of the
-atlas become 633 patches, the largest of them seven names.
+patch along a chain of merges: **78 joins hold, 27 are refused**, and the 691 regions of the
+atlas become 631 patches, the largest of them seven names.
 
 **The patches are colored with eight colors, which is the fewest.** Eight regions of this
 atlas pairwise touch — cortical layers 1, 2 and 3 against `Pir`, `Tu`, `ICj`, `VP` and `AHA`
@@ -889,14 +889,14 @@ the reverse of the order they came off, where a slot is always free for them. Th
 seeded, so a re-run reproduces the block byte for byte, and `--check` says whether the
 committed one is current. Which of the eight slots a patch takes is settled last and changes
 no boundary: every region asks for the slot hashed from its abbreviation, and the assignment
-granting the most asks — 119 of the 690 — is the one taken.
+granting the most asks — 118 of the 691 — is the one taken.
 
 **Every restart begins somewhere else, and that is what keeps the eighth color findable.**
 Only the tabu tenure was seeded at first, so every restart set out from the one DSATUR
 coloring; where that start sits in a bad basin the restarts all stall in it together, and
 what comes out is a ninth color the app's palette has not got. Adding `SHy` produced exactly
 that — 1,024 restarts, twenty million moves, two conflicts short — and it was not the atlas
-asking for a ninth: an exact maximum-clique search over the 633 patches returns eight, and
+asking for a ninth: an exact maximum-clique search over the 631 patches returns eight, and
 an eight-coloring is found in seconds once a restart may start from somewhere new. The kick
 has to be hard to be worth anything. Kicking a twentieth, a tenth, a seventh or a third of
 the start's patches to random slots found nothing in twenty tries at each; kicking half to

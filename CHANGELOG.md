@@ -5,6 +5,47 @@ carries a `version` block naming the release its derived fields were built for.
 
 ## [Unreleased]
 
+### Changed
+- **The publication floor comes down to the face floor, and 40 regions the atlas draws are
+  published for the first time.** `MIN_AREA_PX` was 600 page px against a `MIN_FACE_PX` of
+  400, so the extraction spent one test deciding a face was a region rather than tracer
+  noise and a second test throwing away a third of what it had just accepted. The cull was
+  written for watershed slivers -- a pixel-wide tongue of one region running along another's
+  edge -- and it was also taking whole faces sealed by ink and seeded by a single printed
+  label. **51 of those, 13 of them a structure's only claim on its plate.** The two floors
+  are now equal, so the cull takes the slivers it was written for and nothing else.
+
+  Nothing is lost by it: **40 (plate, region) entries arrive and none go**, and
+  `structure_plate_entries` goes 3,078 to 3,118. The fornix is the case that prompted it --
+  `f` is drawn on both hemispheres of plates 30 and 31 now, where 31 had no area at all and
+  30 had only the right side, and its faces there are 470 to 487 px against the 674 to 737
+  the same bundle measures on 29 and 32. `Obex` gains area for the first time anywhere: its
+  only territory is a share of the face it, `IB` and `sol` seed between them on plate 57,
+  and that share was cut every time. So the structure and mesh count goes 690 to 691.
+
+  Three of the run's own verification numbers say the same thing from other directions.
+  `label_inside_its_own_region` goes 0.9721 to **0.9776** -- more printed words now stand in
+  the region they name, because the region exists. `section_area_residual_worst_plate` goes
+  0.024 to **0.0101**, the ground those 40 entries hold having come out of the unassigned
+  remainder. And `tools/leaders.py` reports 194 leader tips landing in the region their label
+  names where it reported 177: seventeen of them were sitting in the middle of a face too
+  small to publish. `boundary_edges_shared_exactly` stays 1.0.
+
+  What it costs is drawn borders. A small face carries proportionally more of the watershed's
+  invented wall, so `entries_without_a_drawn_outline` goes 293 to 316 and the traced-fraction
+  shares slip -- `ge_90` 0.811 to 0.804, `ge_75` 0.904 to 0.898, `lt_50` 0.029 to 0.033. That
+  is the honest price of publishing a region the atlas draws and letters: it is drawn less
+  well than a big one, and it is now drawn.
+
+  The figures that follow: polygons 5,905 to 6,012, points 167,610 to 168,740, the coloring
+  691 regions in 631 patches with 78 joins holding and 27 refused against 105 candidates, and
+  touching pairs 4,464 to 4,509. METHODS takes all of them. Its `w` paragraph quoted 1,551
+  entries "that share a face at all" against no committed script; since the entry count moved
+  it is restated as the 1,529 whose seed lands in a face another name seeds too, which is a
+  definition that can be recomputed. The `TIP_READ` note in `tools/label_leaders.py` that had
+  `E` keeping no entry on the left of plate 2 says what the floor did and what it does now --
+  that bead is published, and `E` has one.
+
 ### Fixed
 - **The right VMHSh on plate 30 gets its shell back.** The atlas prints both `VMHSh` words
   clear of the section and draws each a line up into the shell of the ventromedial nucleus.

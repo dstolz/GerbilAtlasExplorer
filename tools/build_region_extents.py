@@ -81,7 +81,12 @@ BRIDGE_PX = 20      # page px; 99% of tracing gaps are under 25, 94% under 12
 DP_PX = 0.5         # plate px: 9 um, and 1.5 page px, so the tolerance still
                     # sits above the lattice the boundary is traced on
 MIN_FACE_PX = 400   # page px; below this a face is tracer noise, not a region
-MIN_AREA_PX = 600   # page px; a territory smaller than this is not published
+MIN_AREA_PX = 400   # page px; a territory smaller than this is not published. Equal to
+                    # MIN_FACE_PX by intent: a face big enough to be a region at all is
+                    # big enough to publish, so the cull now takes only the watershed
+                    # slivers it was written for and not whole sealed faces a single
+                    # printed label seeds -- 51 of those, 13 of them a structure's only
+                    # claim on its plate, were being dropped at 600
 SEED_PAD = 1.0      # label box is used as the marker at this scale
 SNAP_PX = 60        # a label printed beside its section is pulled this far in
 TIP_SEED_PX = 4     # plate px: the mark a label on a leader line seeds with
