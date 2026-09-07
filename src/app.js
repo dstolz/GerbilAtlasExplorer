@@ -53,7 +53,7 @@ const plateFilter = () =>
 const S = DB.structures, P = DB.plates, AL = DB.aliases, LB = window.__BOX__;
 /* Where a printed label points. An abbreviation the atlas could not fit inside the
    region it names is set outside it, with a thin line drawn from the word back into
-   the region -- 215 of the 6,266 labels. For those the box says where the word is and
+   the region -- 240 of the 6,336 labels. For those the box says where the word is and
    this says where the structure is; see `label_leaders` and tools/label_leaders.py.
    Keyed by plate, then abbreviation, as [i, x, y] against that abbreviation's list in
    __BOX__ on the same plate. Labels without a line are absent: their box is the
