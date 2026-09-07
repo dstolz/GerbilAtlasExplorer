@@ -112,6 +112,18 @@ The <a href="https://github.com/dstolz/GerbilAtlasExplorer/wiki/Correcting-a-Reg
       <label class="chk"><input type="checkbox" id="v-una"> unnamed faces</label>
       <label class="chk"><input type="checkbox" id="v-cut" disabled> the recut</label>
     </div>
+    <!-- the plates in order, as one drag. The header steps one at a time; this crosses
+         the brain, and shows where marks are waiting on the plates behind it. -->
+    <div class="platebar">
+      <span class="pend">anterior</span>
+      <div class="rngwrap">
+        <input type="range" id="rng" min="1" max="62" step="1" value="19"
+               aria-label="Plate" title="Drag across the plates (, and . step one)">
+        <div class="pips" id="pips" aria-hidden="true"></div>
+      </div>
+      <span class="pend">posterior</span>
+      <b class="mono" id="rnglab" title="The plate the slider is on, and its bregma">&mdash;</b>
+    </div>
   </section>
 </main>
 

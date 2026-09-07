@@ -23,11 +23,14 @@ async function open(page) {
   return page;
 }
 
-// page px -> a click on the canvas, through the view the page is holding
+// page px -> a click on the canvas, through the view the page is holding -- which is
+// the zoom and pan after the turn that sets the page upright, so the page's own
+// composed matrix is what converts, not S.view alone
 async function clickAt(page, pt) {
   const box = await page.evaluate(([x, y]) => {
     const r = document.getElementById('cv').getBoundingClientRect();
-    return [r.left + S.view.x + x * S.view.k, r.top + S.view.y + y * S.view.k];
+    const at = xf(viewM(), x, y);
+    return [r.left + at[0], r.top + at[1]];
   }, pt);
   await page.mouse.click(box[0], box[1]);
 }
@@ -138,9 +141,115 @@ test('a plate with no correction on it still draws, and the plate can be changed
     await page.fill('#plate', '5');
     await page.locator('#plate').press('Enter');
     await expect(page.locator('#where')).toContainText('plate 5, bregma');
-    await expect(page.locator('#marks')).toContainText('Nothing marked yet');
+    await expect(page.locator('#marks')).toContainText('Nothing marked on this plate');
     expect(page.errors).toEqual([]);
   });
+
+
+// ------------------------------------------------------------- a plate at a time
+//
+// A correction is one plate's: its marks are that page's pixels and the millimetres
+// beside them are read through that plate's own registration, so a mark made on plate
+// 19 has no meaning on plate 5. The marks stay on the plate they were made on and come
+// back with it; the slider is how you cross the brain to get there.
+
+test('marks stay on the plate they were made on', async ({ page }) => {
+  await open(page);
+  await page.fill('#problem', 'S1DZ on the left is a scrap.');
+  await page.click('[data-t="seed"]');
+  await clickAt(page, SEED);
+  await expect(page.locator('#marks .mark')).toHaveCount(1);
+
+  await page.click('#next');                              // plate 20, and nothing on it
+  await expect(page.locator('#where')).toContainText('plate 20, bregma');
+  await expect(page.locator('#marks')).toContainText('Nothing marked on this plate');
+  await expect(page.locator('#marks')).toContainText('Marks are waiting on plate 19');
+  await expect(page.locator('#problem')).toHaveValue('');
+  expect(await page.evaluate(() => S.draft.seeds.length)).toBe(0);
+  await expect(page.locator('#pips i')).toHaveCount(1);   // and the slider says where
+
+  await page.click('#prev');                              // and back: the mark is there
+  await expect(page.locator('#where')).toContainText('plate 19, bregma');
+  await expect(page.locator('#marks .mark')).toHaveCount(1);
+  await expect(page.locator('#marks')).toContainText('S1DZ positive');
+  await expect(page.locator('#problem')).toHaveValue('S1DZ on the left is a scrap.');
+  const doc = await page.evaluate(async () => (await SRC.document(S.draft)).doc);
+  expect(doc.plate).toBe(19);                             // one plate's marks, not two
+  expect(doc.seeds).toHaveLength(1);
+  expect(doc.seeds[0].page_px[0]).toBeCloseTo(SEED[0], 0);
+  expect(page.errors).toEqual([]);
+});
+
+test('the slider crosses the plates, and reads ahead of the one it lands on',
+  async ({ page }) => {
+    await open(page);
+    const rng = page.locator('#rng');
+    await expect(rng).toHaveValue('19');
+    await rng.fill('44');                                 // as a drag ends on it
+    await expect(page.locator('#rnglab')).toHaveText(/^44\s+·\s+-7\.25 mm$/);
+    await expect(page.locator('#plate')).toHaveValue('44');
+    await expect(page.locator('#where')).toContainText('plate 44, bregma -7.25 mm');
+    await page.click('#prev');                            // and the arrows move it back
+    await expect(rng).toHaveValue('43');
+    await expect(page.locator('#where')).toContainText('plate 43, bregma');
+    expect(page.errors).toEqual([]);
+  });
+
+
+// ---------------------------------------------------------- the plate printed sideways
+//
+// The atlas prints plate 20 at a quarter turn: its page is 2481 x 3296 where every
+// other plate's is 3296 x 2481, and the registration matrix that carries the page into
+// the plate frame turns it back. The page draws it upright, as the book and the app
+// show it, and leaves the page frame alone -- a correction written here is in the same
+// coordinates tools/corrections.py reads on every other plate.
+
+test('plate 20 is drawn upright, and its page frame is untouched', async ({ page }) => {
+  await open(page);
+  await page.fill('#plate', '20');
+  await page.locator('#plate').press('Enter');
+  await expect(page.locator('#where')).toContainText('page 2481 × 3296 px');
+
+  const turn = await page.evaluate(() => ({
+    rot: S.rot,
+    // the section on screen, which is landscape once the page is set upright
+    box: (() => {
+      const V = viewM();
+      let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+      for (const o of S.d.outline) {
+        for (const q of o) {
+          const at = xf(V, q[0], q[1]);
+          x0 = Math.min(x0, at[0]); y0 = Math.min(y0, at[1]);
+          x1 = Math.max(x1, at[0]); y1 = Math.max(y1, at[1]);
+        }
+      }
+      return [x1 - x0, y1 - y0];
+    })(),
+    // and the millimetres are still read off the page, so the midline is still ML 0
+    mid: ['cc', 'SHi', 'VDB'].map((a) => {
+      const L = S.d.labels.find((x) => x.abbr === a);
+      return toMm(L.at[0], L.at[1])[0];
+    }),
+  }));
+  expect(turn.rot).toEqual([0, -1, 1, 0, 0, 2481]);       // a quarter turn, and no scale
+  expect(turn.box[0]).toBeGreaterThan(turn.box[1]);
+  for (const ml of turn.mid) expect(Math.abs(ml)).toBeLessThan(0.1);
+
+  // a click lands on the page pixel it was aimed at, through the turn and back --
+  // deep in the left CPu, which is where those page coordinates are on this plate
+  await clickAt(page, [1255, 1389]);
+  const at = await page.evaluate(() => S.at);
+  expect(at[0]).toBeCloseTo(1255, 0);
+  expect(at[1]).toBeCloseTo(1389, 0);
+  await expect(page.locator('#under')).toContainText('CPu');
+  await expect(page.locator('#report')).toContainText('today: inside CPu');
+  expect(page.errors).toEqual([]);
+});
+
+test('a plate printed square is drawn with no turn at all', async ({ page }) => {
+  await open(page);
+  expect(await page.evaluate(() => S.rot)).toEqual([1, 0, 0, 1, 0, 0]);
+});
 
 
 // ---------------------------------------------------------------------- a phone
@@ -471,6 +580,8 @@ test('on a phone the guide costs the plate no room', async ({ browser }) => {
         vh: window.innerHeight};
     });
     expect(box.header).toBeLessThan(100);          // two rows, not three
-    expect(box.cv).toBeGreaterThan(box.vh * 0.7);  // and the plate keeps the screen
+    // and the plate keeps the screen. The floor is 0.68 rather than 0.7 because the
+    // plate slider took a slim row of it deliberately; the header did not grow.
+    expect(box.cv).toBeGreaterThan(box.vh * 0.68);
   });
 });
