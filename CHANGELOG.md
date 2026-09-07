@@ -222,6 +222,43 @@ carries a `version` block naming the release its derived fields were built for.
   they are left for a diagnosis of their own.
 
 ### Added
+- **A staining apiece in the split 3-D view: A on the Nissl, B on the myelin.** Which of the
+  plate's sources the stack is read from now belongs to the **pane** rather than to the view,
+  so **Labeled / Nissl / Myelin / MRI** sets the pane the rest of the 3-D toolbar is on, the
+  way the mode, the slab and the camera already do — and the split can stand a Nissl stack
+  beside a myelin one. The atlas prints those two stains on consecutive pages of every one of
+  the 62 levels, and turning between them is the comparison it sets up and cannot itself
+  complete: this is the same 62 levels stacked twice, in the same coordinate box, at the same
+  angle, cells on one side and tracts on the other. Everything drawn over them — the plate
+  ring, the label cloud, the meshes, the skull, the landmarks — lands in the same place in
+  both panes. The drawing beside either of them is the third pairing, and the MRI beside all
+  three is the fourth. What it is not is the same tissue twice: the myelin page is an
+  adjacent section, as it always was, so a feature can sit a section's thickness from where
+  the Nissl has it.
+
+  A pane opens as a copy of the one it was split from, staining included, so a split still
+  changes nothing about the picture. The GPU holds one stack per staining a *drawn* pane is
+  on: one where the panes agree — every view that was possible before they could differ — and
+  two where they do not, at 24 MB apiece. Putting a pane back onto a staining the other one is
+  holding costs nothing and reads nothing, and folding the split away hands back the stack
+  nobody is looking at rather than keeping it against a return to it. Reading a second one
+  costs the few seconds the first cost and says which staining it is reading while it runs;
+  the stack of the pane waiting for it is the only thing that goes missing meanwhile — that
+  pane's shell, meshes, labels and ring keep drawing, and the other pane is not interrupted at
+  all. The pane letters carry the staining while the two differ (**A · Nissl**, **B · Myelin**)
+  and stay bare letters while they agree: the toolbar can only ever speak for the pane it is
+  on, and a picture is better off with less written over it. The note under the view names the
+  other pane's source on the same grounds, with the one caveat that pair carries and the
+  others do not — the myelin page is an adjacent section, so the two panes share the level
+  rather than the tissue.
+
+  A link carries B's staining as `&ps32=`, under `ps3`'s name with the pane's `2` on it like
+  every other second-pane parameter, and writes it only where B is on something other than A —
+  so every link ever written still reads as exactly the view it was written from, and a split
+  on one staining still writes the link it always wrote. `ps3` still names A, which is the
+  whole view wherever there is one pane, and a link carrying only `ps` still sets the plate
+  and the stack together, which is what it always meant. See
+  [METHODS](METHODS.md#the-3-d-view).
 - **Every leader in the atlas, and the label it was drawn from, as one command.**
   `tools/leaders.py`. Where a region is too small or too crowded to hold the word that names
   it, the atlas sets the abbreviation outside and draws a thin line to the place it means;

@@ -189,8 +189,8 @@ The alternates are stored at the same 1100×703 as the drawings, as grayscale JP
 quality 65: 5.8 MB of Nissl and 5.1 MB of myelin, taking the single file from 7.3 MB to
 18.2 MB. **Gray** and **Contrast** in the toolbar are a CSS filter on the image, and the
 same filter string is set on the canvas the PNG export draws through, so what is saved is
-what was on screen. The 3-D view reads whichever source is selected and rebuilds its volume
-when it changes; it is left out of that filter because a filter on an `<img>` cannot reach
+what was on screen. The 3-D view reads whichever source the pane is on and builds a volume
+per source; it is left out of that filter because a filter on an `<img>` cannot reach
 a 3-D texture, and it stretches the same tissue in the renderer instead — see
 [the tissue curve](#the-tissue-curve) below. A histology section has no contour channel,
 only tissue, so the weight given to the tissue channel differs by source and by mode — a slice is composited once and needs
@@ -1622,8 +1622,31 @@ there is no library.
 A selected structure is picked out in blue in every mode, hovering a point names it and
 reads its coordinates, clicking one opens its plate, and a ring traces wherever the plate
 viewer currently sits. Anterior/posterior clipping cuts the stack to a slab; **Half**
-cuts it at the midline. The whole thing is built once, the first time the tab is opened,
-in about a second; it needs WebGL 2, and says so plainly if that is missing.
+cuts it at the midline. The whole thing is built the first time the tab is opened, in
+about a second; it needs WebGL 2, and says so plainly if that is missing.
+
+Which of the plate's four sources the stack is read from belongs to the **pane**, not to
+the view, so **Split** can hold a Nissl stack beside a myelin one — two stacks of the same
+62 levels, one showing cells and the other tracts, standing as two brains at the same
+angle. The atlas prints those two stains on consecutive pages of every level, three pages
+apart across the supplement, and turning between them is the comparison it sets up and
+cannot itself complete. Both stacks are built in the same coordinate box off pages the
+authors registered to each other, so everything drawn over them — the plate ring, the
+label cloud, the meshes, the skull, the landmarks — lands in the same place in both panes.
+What they are not is the same tissue twice: the myelin page is an adjacent section, as
+[The three plates of a level](#the-three-plates-of-a-level) says, so a feature can sit a
+section's thickness away from where the Nissl has it.
+
+The GPU holds one texture per staining a drawn pane is on: one where the panes agree,
+which is every view that was possible before they could differ, and two where they do not,
+at 24 MB apiece. A pane put back onto a staining the other one is already holding, and a
+split folded away, cost nothing and read nothing; a staining no drawn pane is on is handed
+back rather than kept against a return to it. Reading a second one costs what the first
+cost and says so over the view while it runs — the pane waiting for it draws everything
+but its stack, and the other one is not interrupted at all. The pane letters carry the
+staining while the two differ, since the toolbar can only speak for the pane it is on. A
+link names A's staining as `&ps3=` and B's as `&ps32=`, each written only where it differs
+from what the link already implies.
 
 The layers are separable because the plates are not line art: they are Nissl
 photomicrographs with a red vector contour overlay printed on top, so isolating the
@@ -1697,9 +1720,9 @@ writes in too — a re-zero renames coordinates in the app and does not move the
 and a file carrying a private origin would be the one thing about it a reader could not
 check.
 
-The stack is 24 MB and the view hands its only copy to the GPU, so the export read the 62
-plates again rather than the page holding a second copy for the length of every visit
-against an export most of them never ran.
+A stack is 24 MB and the view hands its only copy of each to the GPU, so the export read
+the 62 plates again rather than the page holding a second copy for the length of every
+visit against an export most of them never ran.
 
 ### The skull
 
