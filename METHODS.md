@@ -941,7 +941,7 @@ there is no "hippocampus" in it, only CA1, CA2, CA3, DG and their layers, and no
 only the pontine nuclei, the reticular nuclei, the parabrachial nuclei and the rest. Asking
 for a whole division is a thing people want to do and the published data cannot answer.
 
-`tools/build_groups.py` adds twenty of them. **A division is a list of the atlas's own
+`tools/build_groups.py` adds twenty-one of them. **A division is a list of the atlas's own
 abbreviations and nothing else.** It carries no geometry, no coordinate and no boundary of
 its own; everything it shows is derived, in the app, from its members:
 
@@ -966,7 +966,7 @@ outer boundary of the union: a wall between two members cancels, a wall between 
 something outside the division does not. The survivors are then walked into closed rings —
 every vertex of a region boundary has even degree, so the walk always closes. Nothing is
 unioned numerically, nothing is smoothed, and every edge of the result is an edge the atlas
-drew. `test_group_outlines_close` runs the cancellation over all 451 division–plate pairs;
+drew. `test_group_outlines_close` runs the cancellation over all 454 division–plate pairs;
 the browser test samples points and checks that the ring encloses the same ground the members
 do.
 
@@ -979,12 +979,17 @@ medulla is in both. So this is a covering, not a partition, and the areas of two
 not add.
 
 Most divisions start from the atlas's own system tags, which are already close to
-anatomical containers for some of them (`hippocampal`, `olfactory`, `amygdala`, `cerebellum`,
-`fiber_tract`) and not for others. The corrections are stated as rules rather than as a hand
-list, and each is in the tool beside the division it applies to. Three are worth naming here:
+anatomical containers for some of them (`olfactory`, `amygdala`, `cerebellum`, `fiber_tract`)
+and not for others. The corrections are stated as rules rather than as a hand
+list, and each is in the tool beside the division it applies to. Four are worth naming here:
 
 - **The `thalamus` tag over-applies.** Thirty-three hypothalamic nuclei carry it as well as
-  `hypothalamus`; the thalamus division is the tag minus anything tagged hypothalamic.
+  `hypothalamus`; the thalamus division is the tag minus anything tagged hypothalamic. It
+  also reaches one nucleus at the far caudal end of the diencephalon that the drawing places
+  outside it: the **lithoid nucleus**, printed on plate 33 alone, whose every neighbour there
+  is midbrain — Darkschewitsch, the interstitial nucleus of Cajal, the precommissural
+  nucleus, the intermediate gray of the superior colliculus, the magnocellular nucleus of the
+  posterior commissure and the p1 periaqueductal gray. It is filed under midbrain.
 - **`cortex` is a false friend twice over.** The dorsal and external *cortices of the
   inferior colliculus* carry it and are not cerebral cortex; they are filed under midbrain
   alone. Conversely most cortical fields are tagged by function (`auditory`, `visual`) rather
@@ -992,6 +997,8 @@ list, and each is in the tool beside the division it applies to. Three are worth
 - **The `brainstem` tag is not the brainstem.** It is the pontine and medullary reticular
   core; it holds no midbrain and not the cranial nerve nuclei. The brainstem division is
   built from the three divisions under it instead.
+- **The `hippocampal` tag is the hippocampus *and its surroundings*.** Thirty-seven
+  structures carry it, and two anatomies are inside it. See below.
 
 The **pons against the medulla** is the one boundary the atlas's own geometry can settle, so
 it is drawn off the plates rather than asserted: the pons runs from the first plate that
@@ -1001,6 +1008,59 @@ is swept into one of them if more than one plate of it falls inside, or at least
 does. The first clause keeps a long forebrain tract out: the forceps major reaches plate 39
 and is no more pontine for it. The second keeps a straddler in both: the deep dorsal cochlear
 nucleus is on plates 49 and 50, so it is pontine and medullary at once, which is what it is.
+
+The **hippocampal formation against the parahippocampal region** is the opposite case: a
+boundary no geometry here can settle, so it is taken from a source and the source is named.
+The atlas's `hippocampal` tag holds 37 structures and two anatomies. The **hippocampal
+formation** is the archipallial cortex itself — the cornu ammonis and its layers, the dentate
+gyrus and its layers, the subiculum, the indusium griseum and the fasciola cinerea, and the
+white matter the formation is built on (alveus, fimbria, fornix, the hippocampal
+commissures). The **parahippocampal region** is the cortex outside it:
+presubiculum, parasubiculum and postsubiculum, the entorhinal cortices, and the perirhinal
+and ectorhinal belt. Where the line falls between them is what a reader has to be told,
+because both are cortex and the atlas draws no boundary that says which is which.
+
+It falls where Chauhan et al. (2021) put it. Their formation "comprises indusium griseum,
+longitudinal striae, gyrus fasciolaris, hippocampus proper (cornu ammonis, dentate gyrus and
+subiculum) and part of the uncus", it "has archipallial cortex", and the last thing in it is
+the subiculum, which they have "continuous with the six-layered neocortex (para-hippocampal
+gyrus)". The entorhinal cortex in that chapter *is* the parahippocampal gyrus — it is named
+that way every time it appears, as the origin of the perforant path and of the afferents
+reaching the alveus — so it is outside the formation rather than the last thing inside it.
+Two of the things on their list this atlas does not name: the longitudinal striae, which
+traverse the indusium griseum and are not lettered apart from it here, and the uncus, which
+a lissencephalic brain has not got.
+
+Three structures carry the tag and are in neither division: the amygdalohippocampal area,
+filed under amygdala, and the septohippocampal and septofimbrial nuclei, filed under septum
+and basal forebrain. All three are transitions into the formation rather than parts of it —
+the chapter has the septal nuclei sending to the hippocampus through the fornix and
+receiving from it, which is a connection and not a membership — and all three already had a
+home.
+
+The presubiculum, parasubiculum and postsubiculum are the part of this the chapter does not
+settle. It names the presubiculum once, as what delimits CA1 laterally, and the other two
+not at all. They are filed with the parahippocampal region on that reading — the subiculum
+is the last member the chapter lists, and the presubiculum is outside CA1 rather than inside
+it — and it is the one placement in these two divisions the source does not make for us.
+The member lists are written out so it can be put back.
+
+> Chauhan P, Jethwa K, Rathawa A, Chauhan G, Mehra S (2021). The Anatomy of the Hippocampus.
+> In: Pluta R, editor. *Cerebral Ischemia*. Brisbane: Exon Publications. Chapter 2.
+> doi:10.36255/exonpublications.cerebralischemia.2021.hippocampus —
+> https://www.ncbi.nlm.nih.gov/books/NBK575732/
+
+This is a narrower formation than the one in common use after Amaral and Witter, which takes
+the entorhinal cortex and the whole subicular complex in. Neither is derivable from anything
+this atlas draws, so the division follows the definition it cites and writes its members out;
+the broader formation is `HIPP` and `PHR` together, less the perirhinal and ectorhinal belt.
+
+The formation is written as the tag *minus the parahippocampal region* rather than as a hand
+list, which is the `less` rule in `tools/build_groups.py` and the reason the two cannot
+overlap and cannot between them drop a tagged structure. `test_groups_cover_the_atlas`
+asserts both, and that what the two miss is exactly the hippocampal fissure and those three
+transitions. Narrowing the formation moves its caudal end with it: it ran to plate 42 on the
+entorhinal cortex and now ends at plate 38, bregma −5.15 mm, where the subiculum does.
 
 A division's **plate range** is where its gray matter is, not where its members reach. The
 medial lemniscus is part of the pons where it runs through it and part of nothing at plate 30,

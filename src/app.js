@@ -513,7 +513,7 @@ function draw(){
           (r.first_plate===r.last_plate?r.first_plate:r.first_plate+'–'+r.last_plate)}</span>
      </div>`;
   /* The divisions sit above the structures under a header that folds them away, because
-     they are twenty rows in front of seven hundred and somebody who never wants them
+     they are twenty-one rows in front of seven hundred and somebody who never wants them
      should be able to say so once. Folded, the header still says how many matched. */
   const gh = gresults.length
     ? `<div class="ghead${gopen?' open':''}" id="ghead" role="button" tabindex="0" aria-expanded="${gopen?'true':'false'}"
