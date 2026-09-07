@@ -157,10 +157,13 @@ GROUPS = [
          alias=('thalamus', 'dorsal thalamus', 'epithalamus', 'diencephalon'),
          note='Dorsal thalamus, the geniculate bodies, the reticular and midline nuclei, the '
               'epithalamus and zona incerta. The atlas tags many hypothalamic nuclei '
-              '`thalamus` as well; those are excluded here.',
+              '`thalamus` as well; those are excluded here, and so is the lithoid nucleus, '
+              'which the tag reaches but which is drawn among the pretectal and '
+              'periaqueductal nuclei and is filed under midbrain.',
          sys=('thalamus',),
          nsys=('hypothalamus',),
-         add=('A13',)),
+         add=('A13',),
+         drop=('Lth',)),
 
     dict(id='hypo', abbr='HYPO', name='hypothalamus',
          alias=('hypothalamus', 'diencephalon'),
@@ -175,9 +178,11 @@ GROUPS = [
               'gray, the tegmentum, substantia nigra and the ventral tegmental area, the red '
               'nucleus and the oculomotor and trochlear nuclei. The dorsal raphe is here where '
               'the atlas prints it rostral of the pontine nuclei; its caudal subdivisions fall '
-              'at pontine levels and are filed there.',
+              'at pontine levels and are filed there. The lithoid nucleus carries the '
+              "atlas's thalamus tag and is drawn on plate 33 among Darkschewitsch, Cajal, the "
+              'precommissural nucleus and the p1 periaqueductal gray, so it is here instead.',
          sys=('midbrain',),
-         add=('Aq', 'DLPAG', 'DMPAG', 'LPAG', 'VLPAG', 'p1PAG', 'Su3', 'Su3C',
+         add=('Aq', 'DLPAG', 'DMPAG', 'LPAG', 'VLPAG', 'p1PAG', 'Su3', 'Su3C', 'Lth',
               'CIC', 'DCIC', 'ECIC', 'DMIC', 'BIC', 'bic', 'cic', 'Pta', 'Sag',
               'APT', 'APTD', 'APTV', 'MPT', 'OPT', 'PPT',
               'DR', 'CLi', 'RLi', 'Me5', 'me5', '4n', '3n')),
