@@ -5,6 +5,14 @@
    two transforms tools/atlaslib.py uses -- the plate's registration matrix and
    plate_frame -- so what the status bar says is what the file will say.
 
+   Plate 20's page is the one printed at a quarter turn, and the view undoes it: the
+   section is drawn upright, as the atlas draws it and as the app shows it, while the
+   page frame underneath is untouched. Nothing a correction carries is rotated.
+
+   A draft belongs to the plate it was made on -- its marks are that page's pixels and
+   the millimetres beside them are read through that plate's registration -- so the
+   plate that is put down keeps its marks and hands them back when it comes up again.
+
    The marks are the MATLAB class's marks and no others: a seed for the name a face
    should carry, a run of boundary the tracing missed, the outline a region should
    have. Nothing here edits region_extents; a correction is one edit to a pipeline
@@ -16,18 +24,62 @@ const cv = $('cv');
 const ctx = cv.getContext('2d');
 const DPR = Math.min(window.devicePixelRatio || 1, 2);
 
+const blankDraft = (n) => ({plate: n, abbr: '', problem: '', seeds: [], boundaries: [],
+  extents: [], notes: []});
+
 const S = {
-  boot: null, plate: 0, d: null, paths: [], img: null, imgM: null, layer: 'drawing',
-  abbr: '', tool: 'pick', view: {k: 1, x: 0, y: 0}, at: null, pending: null,
+  boot: null, plate: 0, want: 0, d: null, paths: [], img: null, imgM: null, layer: 'drawing',
+  abbr: '', tool: 'pick', view: {k: 1, x: 0, y: 0}, rot: [1, 0, 0, 1, 0, 0],
+  at: null, pending: null,
   drag: null, cut: null, busy: 0, fitted: false,
   opts: {style: 'solid', closed: false, replaces: null, hemi: ''},
   show: {ink: true, ext: true, lab: true, una: false, cut: false},
-  draft: {plate: 0, abbr: '', problem: '', seeds: [], boundaries: [], extents: [], notes: []},
+  draft: blankDraft(0),
+  drafts: new Map(),                    // plate -> the draft made on it, kept while it is away
 };
 
 /* ------------------------------------------------------------------ frames */
 
 const xf = (m, x, y) => [m[0] * x + m[2] * y + m[4], m[1] * x + m[3] * y + m[5]];
+const mul6 = (A, B) => [                    // A after B, both [a, b, c, d, e, f]
+  A[0] * B[0] + A[2] * B[1], A[1] * B[0] + A[3] * B[1],
+  A[0] * B[2] + A[2] * B[3], A[1] * B[2] + A[3] * B[3],
+  A[0] * B[4] + A[2] * B[5] + A[4], A[1] * B[4] + A[3] * B[5] + A[5]];
+
+function inv6(m) {
+  const det = m[0] * m[3] - m[1] * m[2];
+  return [m[3] / det, -m[1] / det, -m[2] / det, m[0] / det,
+    (m[2] * m[5] - m[3] * m[4]) / det, (m[1] * m[4] - m[0] * m[5]) / det];
+}
+
+/* The turn to draw a page upright.
+
+   The atlas prints plate 20 sideways: its page is 2481 x 3296 where every other plate's
+   is 3296 x 2481, and the registration matrix that carries the page into the plate
+   frame is a quarter turn rather than a plain scale. Drawn as it is stored, the section
+   lies on its side -- which is not the plate anyone is reading, and not what the app
+   shows. So the view is composed with the same quarter turn, snapped to a right angle
+   so no scale or skew of the fit leaks into it: the plate comes up the way it is
+   printed in the book, and the page frame beneath it is untouched. Every page_px a
+   correction carries is still the page's own, so corrections/ and tools/corrections.py
+   never see this. The identity on the other 61 plates. */
+function quarterTurn(m, w, h) {
+  const z = (v) => v || 0;                              // and no negative zero in it
+  const q = ((Math.round(Math.atan2(m[1], m[0]) / (Math.PI / 2)) % 4) + 4) % 4;
+  const c = [1, 0, -1, 0][q], sn = [0, 1, 0, -1][q];     // cos and sin of q right angles
+  const R = [c, sn, z(-sn), c, 0, 0];
+  let x0 = Infinity, y0 = Infinity;
+  for (const [x, y] of [[0, 0], [w, 0], [w, h], [0, h]]) {
+    const at = xf(R, x, y);
+    x0 = Math.min(x0, at[0]); y0 = Math.min(y0, at[1]);
+  }
+  R[4] = z(-x0); R[5] = z(-y0);                          // the turned page starts at 0, 0
+  return R;
+}
+// page px -> canvas px: the plate set upright, then the view's own zoom and pan
+function viewM() { const v = S.view; return mul6([v.k, 0, 0, v.k, v.x, v.y], S.rot); }
+// canvas px -> the upright frame the view zooms and pans in, short of the page itself
+function viewOf(pt) { const v = S.view; return [(pt[0] - v.x) / v.k, (pt[1] - v.y) / v.k]; }
 
 function toMm(x, y) {                       // page px -> [ML, DV] mm
   const f = S.d.frame, p = xf(S.d.m, x, y);
@@ -36,10 +88,6 @@ function toMm(x, y) {                       // page px -> [ML, DV] mm
 function toPage(ml, dv) {                   // [ML, DV] mm -> page px
   const f = S.d.frame;
   return xf(S.d.im, f.ml0 + ml * f.mlpx, f.dv0 - dv * f.dvpx);
-}
-function screenToPage(ev) {
-  const r = cv.getBoundingClientRect(), v = S.view;
-  return [(ev.clientX - r.left - v.x) / v.k, (ev.clientY - r.top - v.y) / v.k];
 }
 function pip(ring, x, y) {                  // even-odd, the app's own test
   let c = false;
@@ -166,12 +214,6 @@ async function grab(rel, how) {
   const r = await fetch(url);
   if (!r.ok) throw new Error(rel + ': ' + r.status);
   return how === 'text' ? r.text() : how === 'buf' ? r.arrayBuffer() : r.json();
-}
-
-function inv6(m) {
-  const det = m[0] * m[3] - m[1] * m[2];
-  return [m[3] / det, -m[1] / det, -m[2] / det, m[0] / det,
-    (m[2] * m[5] - m[3] * m[4]) / det, (m[1] * m[4] - m[0] * m[5]) / det];
 }
 
 // M/C/Z, absolute -- the one grammar build_region_extents.flatten reads and the tracer
@@ -562,32 +604,73 @@ function draftOf(doc) {
 
 /* ------------------------------------------------------------------- plate */
 
+/* The plate a draft belongs to. A correction is one plate's, so leaving a plate puts
+   its draft away under its number and arriving at one takes back whatever was left
+   there; what carries across is the region being worked on, which is a choice about
+   what to look at rather than a mark on a page. A draft with nothing in it is not
+   kept, so walking the plates leaves nothing behind. */
+const marksIn = (D) => D.seeds.length + D.boundaries.length + D.extents.length;
+
+function stashDraft() {
+  const D = S.draft;
+  if (!D || !D.plate) return;
+  D.problem = $('problem').value;
+  if (marksIn(D) || D.notes.length || D.problem.trim()) S.drafts.set(D.plate, D);
+  else S.drafts.delete(D.plate);
+}
+
+/* The plates with marks waiting on them, this one included while it has any. */
+function markedPlates() {
+  const out = new Set();
+  for (const [n, D] of S.drafts) if (marksIn(D)) out.add(n);
+  if (marksIn(S.draft)) out.add(S.draft.plate); else out.delete(S.draft.plate);
+  out.delete(0);
+  return [...out].sort((a, b) => a - b);
+}
+
+/* A plate is a fetch, and the slider can ask for the next one before this one lands,
+   so each load is stamped and a superseded one drops what it fetched rather than
+   drawing it over the plate that overtook it. */
+let ASK = 0, IMG = 0;
+
 async function loadPlate(n) {
+  const mine = ++ASK;
+  S.want = n;
+  stashDraft();
   const d = await SRC.plate(n);
+  if (mine !== ASK) return;                 // the plate was changed again while this loaded
   S.plate = n; S.d = d; S.cut = null; S.pending = null;
+  S.rot = quarterTurn(d.m, d.page[0], d.page[1]);
   S.show.cut = false; $('v-cut').checked = false; $('v-cut').disabled = true;
-  S.draft.plate = n;
+  S.draft = S.drafts.get(n) || blankDraft(n);
+  if (!S.draft.abbr) S.draft.abbr = S.abbr;
+  S.abbr = S.draft.abbr;
+  S.opts.replaces = null;                   // a label index is one plate's box, not another's
+  $('problem').value = S.draft.problem || '';
   S.paths = d.paths.map((p) => ({p: new Path2D(p.d), d: p.d, style: p.style, corr: p.corr}));
-  $('plate').value = n;
+  syncPlate(n);
   $('where').textContent = 'plate ' + n + ', bregma ' + fmt(d.bregma) + ' mm · page '
     + d.page[0] + ' × ' + d.page[1] + ' px';
   if (!d.layers.includes(S.layer)) S.layer = d.layers[0];
   layerSeg();
   await loadImage();
+  if (mine !== ASK) return;
   fit();
-  renderRegions(); renderMarks(); selectFacts();
+  renderRegions(); renderMarks(); selectFacts(); renderOpts();
 }
 
 function loadImage() {
+  const mine = ++IMG;
   return new Promise((res) => {
     const im = new Image();
     im.onload = () => {
+      if (mine !== IMG) return res();       // another plate or another layer was asked for
       S.img = im;
       const f = S.d.frame, sx = f.w / im.naturalWidth, sy = f.h / im.naturalHeight, m = S.d.im;
       S.imgM = [m[0] * sx, m[1] * sx, m[2] * sy, m[3] * sy, m[4], m[5]];
       draw(); res();
     };
-    im.onerror = () => { S.img = null; draw(); res(); };
+    im.onerror = () => { if (mine === IMG) { S.img = null; draw(); } res(); };
     im.src = SRC.image(S.layer, S.plate);
   });
 }
@@ -635,7 +718,11 @@ function zoomTo(ring, pad) {
   S.fitted = false;
   const r = cv.getBoundingClientRect();
   let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
-  for (const [x, y] of ring) { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); }
+  // the box to frame is the one on screen, so the points are turned before it is measured
+  for (const p of ring) {
+    const [x, y] = xf(S.rot, p[0], p[1]);
+    x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y);
+  }
   const p = pad === undefined ? 60 : pad;
   x0 -= p; y0 -= p; x1 += p; y1 += p;
   const k = Math.min(r.width / (x1 - x0), r.height / (y1 - y0));
@@ -643,7 +730,7 @@ function zoomTo(ring, pad) {
   draw();
 }
 function setT(a, b, c, d, e, f) { ctx.setTransform(a * DPR, b * DPR, c * DPR, d * DPR, e * DPR, f * DPR); }
-function page() { const v = S.view; setT(v.k, 0, 0, v.k, v.x, v.y); }
+function page() { setT.apply(null, viewM()); }
 function screen() { ctx.setTransform(DPR, 0, 0, DPR, 0, 0); }
 function W(px) { return px / S.view.k; }
 
@@ -657,14 +744,13 @@ function css(name) { return getComputedStyle(document.documentElement).getProper
 
 function draw() {
   if (!S.d) return;
-  const v = S.view, r = cv.getBoundingClientRect();
+  const r = cv.getBoundingClientRect();
   screen();
   ctx.clearRect(0, 0, r.width, r.height);
   ctx.fillStyle = css('--bg'); ctx.fillRect(0, 0, r.width, r.height);
 
   if (S.img && S.imgM) {
-    const m = S.imgM;
-    setT(v.k * m[0], v.k * m[1], v.k * m[2], v.k * m[3], v.k * m[4] + v.x, v.k * m[5] + v.y);
+    setT.apply(null, mul6(viewM(), S.imgM));
     ctx.imageSmoothingQuality = 'high';
     ctx.drawImage(S.img, 0, 0);
   }
@@ -737,12 +823,17 @@ function draw() {
 
 function labelText() {
   if (!S.abbr) return;
-  const v = S.view;
+  const V = viewM();
   ctx.font = '600 11px ui-sans-serif,system-ui,sans-serif';
   ctx.fillStyle = css('--accent');
   for (const L of S.d.labels) {
     if (L.abbr !== S.abbr) continue;
-    const x = L.box[0][0] * v.k + v.x, y = L.box[0][1] * v.k + v.y;
+    // the box's top-left on screen, which on a turned page is not its first corner
+    let x = Infinity, y = Infinity;
+    for (const q of L.box) {
+      const at = xf(V, q[0], q[1]);
+      x = Math.min(x, at[0]); y = Math.min(y, at[1]);
+    }
     ctx.fillText(L.abbr + '[' + L.index + ']', x, y - 3);
   }
 }
@@ -815,7 +906,7 @@ function local(ev) {
   const r = cv.getBoundingClientRect();
   return [ev.clientX - r.left, ev.clientY - r.top];
 }
-function pageOf(pt) { return [(pt[0] - S.view.x) / S.view.k, (pt[1] - S.view.y) / S.view.k]; }
+function pageOf(pt) { const q = viewOf(pt); return xf(inv6(S.rot), q[0], q[1]); }
 function twoPointers() {
   const [a, b] = [...PTR.values()];
   return {mid: [(a.at[0] + b.at[0]) / 2, (a.at[1] + b.at[1]) / 2],
@@ -831,7 +922,7 @@ cv.addEventListener('pointerdown', (ev) => {
   PTR.set(ev.pointerId, {at, from: at});
   if (PTR.size === 2) {                                  // a second finger: pinch
     const t = twoPointers();
-    G = {kind: 'pinch', d0: t.d, v0: Object.assign({}, S.view), p0: pageOf(t.mid)};
+    G = {kind: 'pinch', d0: t.d, v0: Object.assign({}, S.view), p0: viewOf(t.mid)};
     setPan(true);
     return;
   }
@@ -1191,14 +1282,36 @@ function renderMarks() {
     () => zoomTo(e.page_px)));
   D.notes.forEach((n, i) => add(css('--muted'), 'note', n,
     () => { D.notes.splice(i, 1); renderMarks(); }));
-  if (!D.seeds.length && !D.boundaries.length && !D.extents.length && !D.notes.length) {
+  if (!marksIn(D) && !D.notes.length) {
     const d = document.createElement('div');
     d.className = 'mark empty';
-    d.textContent = 'Nothing marked yet.';
+    d.textContent = 'Nothing marked on this plate.';
     el.appendChild(d);
   }
-  $('commitb').disabled = !(D.seeds.length || D.boundaries.length || D.extents.length);
+  // marks stay on the plate they were made on, so say where the ones out of sight are
+  const away = markedPlates().filter((n) => n !== S.plate);
+  if (away.length) {
+    const d = document.createElement('div');
+    d.className = 'mark empty';
+    d.textContent = 'Marks are waiting on plate ' + away.join(', ') + '.';
+    el.appendChild(d);
+  }
+  $('commitb').disabled = !marksIn(D);
+  renderPips();
   sheetLabel();
+}
+
+/* The plates that hold marks, under the slider. A draft that is not on the plate in
+   front of you is otherwise invisible, and a correction is only ever sent for the
+   plate it was drawn on. */
+function renderPips() {
+  const el = $('pips');
+  el.innerHTML = '';
+  for (const n of markedPlates()) {
+    const i = document.createElement('i');
+    i.style.left = ((n - 1) / 61 * 100) + '%';
+    el.appendChild(i);
+  }
 }
 
 /* ------------------------------------------------------------------ actions */
@@ -1319,10 +1432,10 @@ async function open_() {
 async function useDraft(d) {
   const n = Number(d.plate) || S.plate;
   if (n !== S.plate) await loadPlate(n);
-  S.draft = Object.assign({plate: n, abbr: '', problem: '', seeds: [], boundaries: [],
-    extents: [], notes: []}, d);
+  S.draft = Object.assign(blankDraft(n), d);
   S.draft.plate = n;
   for (const k of ['seeds', 'boundaries', 'extents', 'notes']) S.draft[k] = S.draft[k] || [];
+  S.drafts.set(n, S.draft);
   $('problem').value = S.draft.problem || '';
   if (S.draft.abbr) select(S.draft.abbr);
   renderMarks();
@@ -1338,6 +1451,23 @@ function cancelPending() {
   hintFor();
 }
 
+/* The plate the page is on, in the three places that say so. The bregma comes from
+   the boot list rather than the plate being fetched, so the slider reads right under
+   the thumb before its plate has landed. */
+function syncPlate(n) {
+  $('plate').value = n;
+  $('rng').value = n;
+  const p = S.boot.plates.find((q) => q.plate === n);
+  $('rnglab').textContent = n + (p ? '  ·  ' + fmt(p.bregma) + ' mm' : '');
+}
+
+let RNGT = 0;
+function goPlate(n) {
+  n = Math.max(1, Math.min(62, Math.round(Number(n) || 0)));
+  syncPlate(n);
+  if (n !== S.want) loadPlate(n);
+}
+
 function setTool(t) {
   cancelPending();
   S.tool = t;
@@ -1348,9 +1478,18 @@ function setTool(t) {
 function wire() {
   for (const b of $('toolseg').children) b.onclick = () => setTool(b.dataset.t);
   $('find').oninput = renderRegions;
-  $('plate').onchange = () => { const n = Number($('plate').value); if (n >= 1 && n <= 62) loadPlate(n); };
-  $('prev').onclick = () => { if (S.plate > 1) loadPlate(S.plate - 1); };
-  $('next').onclick = () => { if (S.plate < 62) loadPlate(S.plate + 1); };
+  $('plate').onchange = () => goPlate($('plate').value || S.want);   // cleared: stay put
+  $('prev').onclick = () => goPlate(S.want - 1);
+  $('next').onclick = () => goPlate(S.want + 1);
+  const rng = $('rng');
+  // the number and the bregma follow the thumb at once; the plate itself is a fetch of
+  // the tracing, the cut and a scan, so it waits for the drag to settle
+  rng.oninput = () => {
+    syncPlate(Math.round(Number(rng.value)));
+    clearTimeout(RNGT);
+    RNGT = setTimeout(() => goPlate(rng.value), 110);
+  };
+  rng.onchange = () => { clearTimeout(RNGT); goPlate(rng.value); };
   if (!SRC.pipeline) offline();
   $('zin').onclick = () => zoomBy(1.5);
   $('zout').onclick = () => zoomBy(1 / 1.5);
@@ -1442,8 +1581,8 @@ function key(ev) {
   else if (k === 'i') inspect(false);
   else if (k === 'r') recut();
   else if (k === 's') save();
-  else if (k === ',') { if (S.plate > 1) loadPlate(S.plate - 1); }
-  else if (k === '.') { if (S.plate < 62) loadPlate(S.plate + 1); }
+  else if (k === ',') goPlate(S.want - 1);
+  else if (k === '.') goPlate(S.want + 1);
   else if (k === 'l') {
     const i = S.d.layers.indexOf(S.layer);
     S.layer = S.d.layers[(i + 1) % S.d.layers.length];

@@ -171,6 +171,35 @@ carries a `version` block naming the release its derived fields were built for.
   are what carry the other two and a plain mesh link carries none.
 
 ### Fixed
+- **A draft in the region fixer stays on the plate it was made on.** The page kept one draft
+  for the whole session and only rewrote its plate number when the plate changed, so a seed
+  placed on plate 19 was still in the marks list on plate 20 -- drawn at the same page pixel,
+  which on another plate is somewhere else entirely, and with its millimetres recomputed
+  through the new plate's registration. A correction is one plate's: its marks are that
+  page's pixels, and `page_px` is the only thing `tools/corrections.py` reads them by. The
+  page now keeps a draft per plate. Leaving a plate puts its marks and its problem statement
+  away under its number, arriving at one takes back whatever was left there, and the marks
+  panel says which plates are still holding something. What carries across is the region
+  being worked on, which is a choice about what to look at rather than a mark on a page --
+  and `stands in for`, which names a printed box by its index on one plate and nothing at all
+  on the next, is cleared with it.
+
+- **Plate 20 is drawn the right way up in the region fixer.** The atlas prints that page at a
+  quarter turn: it is 2481 x 3296 px where every other plate is 3296 x 2481, and its
+  registration matrix is a rotation rather than a plain scale. The fixer draws in the page
+  frame, so it drew the section lying on its side -- not the plate the book prints, and not
+  what the app shows. The view is now composed with that same turn, snapped to a right angle
+  so no scale or skew leaks in, and the page frame beneath it is untouched: the status bar,
+  the probe and every `page_px` a correction carries are the page's own, unrotated, so
+  `corrections/` and the pipeline never see this. The identity on the other 61 plates.
+
+- **`src/fixer.js` and `src/fixer.css` are stored with the line endings `fixer.html` is built
+  from.** `.gitattributes` marks the files that are checked byte-for-byte against a fresh
+  build, and it had `src/app.js` and `src/app.css` but not the fixer's two. `fixer.html`
+  inlines them verbatim, so on a clone with `core.autocrlf=true` they came out CRLF, the
+  built page carried CRLF where the committed one has LF, and `tools/build_app.py --check`
+  reported `fixer.html: STALE` on a tree nobody had touched.
+
 - **The right VMHSh on plate 30 gets its shell back.** The atlas prints both `VMHSh` words
   clear of the section and draws each a line up into the shell of the ventromedial nucleus.
   The leader pass followed the right one to within two pixels of that shell and stopped on
@@ -286,6 +315,15 @@ carries a `version` block naming the release its derived fields were built for.
   they are left for a diagnosis of their own.
 
 ### Added
+- **A plate slider under the region fixer's canvas.** The header steps one plate at a time;
+  this crosses the brain in one drag, the way the atlas's own view does. The number and the
+  bregma follow the thumb at once -- both come from the boot list, so they read before the
+  plate has landed -- while the plate itself, which is a fetch of the tracing, the cut and a
+  scan, waits for the drag to settle; overlapping loads are stamped, so a plate overtaken on
+  the way is dropped rather than drawn. Under the track it marks the plates that have marks
+  waiting on them, which is the only way a draft left behind on another plate is visible from
+  here. On a phone the two end words give up their room to the track.
+
 - **A staining apiece in the split 3-D view: A on the Nissl, B on the myelin.** Which of the
   plate's sources the stack is read from now belongs to the **pane** rather than to the view,
   so **Labeled / Nissl / Myelin / MRI** sets the pane the rest of the 3-D toolbar is on, the

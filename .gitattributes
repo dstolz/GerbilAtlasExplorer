@@ -13,3 +13,5 @@ data/vec.json       -text
 corrections/*.json  -text
 src/app.js          -text
 src/app.css         -text
+src/fixer.js        -text
+src/fixer.css       -text
