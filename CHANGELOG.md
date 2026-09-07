@@ -5,6 +5,73 @@ carries a `version` block naming the release its derived fields were built for.
 
 ## [Unreleased]
 
+### Fixed
+- **The right MCPC on plate 33, and the zonal layer on 35, 37 and 38: four words printed on
+  the ink of the thing they name.** A label is seeded where its word is, and where the word
+  falls on a boundary rather than inside a face `locate()` has nothing to seed and snaps to
+  whichever face fills most of the sixty pixels around it. That is a documented fallback and
+  usually harmless -- 192 labels take it, most on the olfactory bulb plates where the section
+  is small. These four are the case where it costs a structure a hemisphere.
+
+  `MCPC` is printed across the boundary of the magnocellular nucleus rather than beside it,
+  so the right-hand box centre lands on the ink and was snapped out into the tegmental field
+  `TG` is printed in. MCPC then held 0.7232 mm2 of that field -- four and a half times its
+  own left-hand nucleus, and reaching laterally past `APTV` to `REth` -- while its own
+  nucleus, the 2,396 px mirror of the 3,114 px face the left-hand word seeds, sat unnamed.
+  A row of `seed_overrides` puts the seed 8 px inside that face. **`MCPC` goes 0.8824 to
+  0.2824 mm2** and comes out symmetric, 0.1231 on the right against 0.1592 on the left,
+  where plate 34 draws 0.1541 and 0.1601; **`TG` goes 1.0766 to 1.7984** and comes out
+  symmetric too, 0.9028 against 0.8956, where it had been 0.1809 against 0.8956. Both traced
+  shares rise with it, MCPC's right 0.905 to 0.976 and TG's 0.854 to 0.982: the outline they
+  now stop at is one the atlas printed.
+
+  `Zo`, the zonal layer of the superior colliculus, is the same failure, and once one of them
+  turned up the layer was read across all nine plates it is drawn on rather than the three
+  the scan first returned. The lamina is one or two pixels of section between the pia and
+  `SuG`, and the atlas letters it on the lamina, so wherever the box centre lands on the ink
+  the seed is snapped into a neighbour and the arc goes unnamed. **Plate 35 goes 0.4403 to
+  0.8186 mm2, 36 0.5120 to 0.9033, 37 0.4385 to 0.8593, 38 0.3218 to 0.6415 and 39 0.4583 to
+  0.7120.** What those rows recover was unassigned ground, so no region loses by it: `SuG`
+  gives up between 0.006 and 0.012 mm2 a plate, `RSGa` gains 0.014 on 35, and nothing else
+  moves by more than a thousandth and a half.
+
+  Plate 39 needed the first seeds of their own this database has -- rows with no
+  `label_index` beside them. Its left lamina is cut into three faces and one printed word can
+  seed only one, so the other two are named by a seed apiece, which is the case
+  `tools/corrections.py` describes as the box being fine and a face simply unlettered. The
+  four plates that needed nothing are worth naming too: on 33 and 34 the lamina is one arc
+  across the midline, which a single seed names entire, and on 40 and 41 both words already
+  seed it -- what sits unowned beside them there is the cerebellum, the outer cortical
+  surface and one-pixel slivers of rim, none of it zonal layer.
+
+  What no seed can fix is the right of 36, 38 and 39. There the tracing does not separate
+  `Zo` from `SuG` and `Op` at all: the three share one face of 17,000 to 26,000 px and the
+  watershed splits it along a line the atlas never drew. That is a missing run of boundary
+  rather than a seed in the wrong place, it wants the printed page to place, and it is left
+  as it is and said so in the `seed_overrides` note.
+
+  In the meshes `Zo` goes 1.2505 to 2.1875 mm3; `TG` goes 1.4823 to 1.8173 and `MCPC` 0.4070
+  to 0.2499. `RSGa`'s worst traced share goes 0.92 to 1.00.
+
+  Forty (plate, region) entries move, all on those six plates, and every one of them outside
+  the seven named above by 0.0138 mm2 or less. `boundary_edges_shared_exactly` stays
+  1.0 and `structure_plate_entries` stays 3,078 -- no structure gained or lost a plate.
+  Four adjacencies go with the corrected outlines, 4,468 pairs that touch to 4,464, and
+  METHODS' vertex and near figures follow it, as do polygons at 5,905 and points at 167,565.
+  The coloring is unchanged at 690 regions, 633 patches, eight colours.
+
+  How the other three were found: `tools/leaders.py --odd` is the leader half of this
+  question, and this is the seed half. Every plate was rebuilt and, for each of the 2,132
+  (plate, region) entries the atlas letters on both hemispheres, the left and right areas
+  compared, with `locate()` replicated on every printed box to see which fall on ink. Ninety-
+  five labels snap; a snap on its own is not a fault. The signature that is one is a snapped
+  box with an **unowned** face beside it whose size and place mirror the face the other
+  hemisphere's word seeds, and only these four have it. The bulb plates are the documented
+  fallback and were left alone; `IntDL` on 47 snaps into the seventeen-name cerebellar block,
+  which is a `w` entry and an estimate by design; `CA1` on 33 and 34, `VP` on 18 and `sol` on
+  54 are lopsided with no unowned face within reach, so whatever ails them is not this and
+  they are left for a diagnosis of their own.
+
 ### Added
 - **Every leader in the atlas, and the label it was drawn from, as one command.**
   `tools/leaders.py`. Where a region is too small or too crowded to hold the word that names
