@@ -983,7 +983,12 @@ and not for others. The corrections are stated as rules rather than as a hand
 list, and each is in the tool beside the division it applies to. Four are worth naming here:
 
 - **The `thalamus` tag over-applies.** Thirty-three hypothalamic nuclei carry it as well as
-  `hypothalamus`; the thalamus division is the tag minus anything tagged hypothalamic.
+  `hypothalamus`; the thalamus division is the tag minus anything tagged hypothalamic. It
+  also reaches one nucleus at the far caudal end of the diencephalon that the drawing places
+  outside it: the **lithoid nucleus**, printed on plate 33 alone, whose every neighbour there
+  is midbrain — Darkschewitsch, the interstitial nucleus of Cajal, the precommissural
+  nucleus, the intermediate gray of the superior colliculus, the magnocellular nucleus of the
+  posterior commissure and the p1 periaqueductal gray. It is filed under midbrain.
 - **`cortex` is a false friend twice over.** The dorsal and external *cortices of the
   inferior colliculus* carry it and are not cerebral cortex; they are filed under midbrain
   alone. Conversely most cortical fields are tagged by function (`auditory`, `visual`) rather

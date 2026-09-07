@@ -6,6 +6,18 @@ carries a `version` block naming the release its derived fields were built for.
 ## [Unreleased]
 
 ### Changed
+- **The lithoid nucleus is midbrain, not thalamus.** `Lth` carries the atlas's `thalamus`
+  tag and was in `THAL` on that alone. The drawing puts it elsewhere: it is printed on plate
+  33 and nowhere else, a paired nucleus at ML ±0.4 to ±0.7, DV −4.6 to −5.0, and every one of
+  its six neighbours there is midbrain — the nucleus of Darkschewitsch, the interstitial
+  nucleus of Cajal, the precommissural nucleus, the intermediate gray of the superior
+  colliculus, the magnocellular nucleus of the posterior commissure and the p1 periaqueductal
+  gray. That is the pretectal and periaqueductal company at the midbrain–diencephalon
+  junction, not the dorsal thalamus. **`THAL` goes from 91 members to 90 and `MIDB` from 97
+  to 98**, `BSTEM` with it, 286 to 287; no plate range moves, since plate 33 is inside both
+  divisions already. The rule is a `drop` on the thalamus beside the one that excludes the
+  hypothalamic nuclei, and an `add` on the midbrain, so the tag is still what the division
+  starts from.
 - **The hippocampal formation stops at the subiculum, and the belt beyond it is a division of
   its own.** `HIPP` had been the atlas's `hippocampal` tag with the hippocampal fissure taken
   out, and a tag is not an anatomy. It held 36 structures. Nine of them are the transitional
@@ -61,6 +73,30 @@ carries a `version` block naming the release its derived fields were built for.
   are what carry the other two and a plain mesh link carries none.
 
 ### Fixed
+- **`S1` gets its left hemisphere on plate 24, and the stria terminalis gives back the
+  cortex it was holding.** The word printed in the left somatosensory band on plate 24 is
+  `S1`, between `S1ULp` above and `S2` below. The label pass read it as `st`, so
+  `label_positions` carried a third box for the stria terminalis at ML −5.83, DV −4.31 — the
+  mirror of the real `S1` box at ML +5.65, DV −4.26 — and that box seeded the left `S1` face
+  as stria terminalis. Nothing downstream could recover: `S1` came out with one ring on the
+  plate where every neighbour drawn beside it (`S1ULp`, `S2`, `GI`, `DI`, `AI`, `S1BF`) has
+  ground in both hemispheres, and the septum and basal forebrain division, which holds `st`,
+  painted a wedge of lateral cortex four and a half millimetres lateral of the stria it
+  names. That wedge is what a reader saw and reported.
+
+  The box is moved from `st` to `S1` in `label_positions` and the extents re-cut. **`S1` on
+  plate 24 goes 0.8575 to 1.4004 mm², one ring to two**, the new one the mirror of the old:
+  ML −6.55 to −4.49 against +4.49 to +6.53, DV −4.54 to −3.97 against −4.59 to −3.92. **`st`
+  goes 0.8803 to 0.3374 mm², three rings to two**, which is the two the atlas prints, beside
+  `ic` in each hemisphere. Exactly 0.5429 mm² moves from one to the other and nothing else on
+  plate 24 moves at all — the whole-atlas re-cut changes two (plate, region) entries and no
+  others. Over the series `S1` goes 12.811 to 13.354 mm² and 3.7425 to 4.0888 mm³, `st` 4.529
+  to 3.986 mm² and 1.3610 to 1.2881 mm³ and six mesh components to five. `S1`'s reported
+  center flips from ML +5.88 to −5.80: the table gives the center of the largest mesh
+  component, and the left one is now the larger. `boundary_edges_shared_exactly` stays 1.0,
+  the located-label count is unchanged at 6346 — one box changed owner, none was added or
+  lost — and so is the count of (plate, name) pairs, 3350, because `st` keeps two boxes on
+  plate 24 and `S1` already had one there.
 - **The right MCPC on plate 33, and the zonal layer on 35, 37 and 38: four words printed on
   the ink of the thing they name.** A label is seeded where its word is, and where the word
   falls on a boundary rather than inside a face `locate()` has nothing to seed and snaps to
