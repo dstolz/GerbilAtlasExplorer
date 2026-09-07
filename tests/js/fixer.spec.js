@@ -109,7 +109,9 @@ test('recut applies the draft to a scratch tree and builds the plate again',
     await page.click('#recutb');
     const r = page.locator('#report');
     await expect(r).toContainText('seed_overrides 19/S1DZ', {timeout: 60000});
-    await expect(r).toContainText('recut plate 19: 39 regions');
+    // 40 rather than 39: E is drawn on this plate now that MIN_AREA_PX matches
+    // MIN_FACE_PX, so a face the extraction had accepted is published too.
+    await expect(r).toContainText('recut plate 19: 40 regions');
     await expect(page.locator('#v-cut')).toBeChecked();          // and it is what is drawn
   });
 
