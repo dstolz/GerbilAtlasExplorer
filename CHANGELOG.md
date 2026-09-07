@@ -6,6 +6,31 @@ carries a `version` block naming the release its derived fields were built for.
 ## [Unreleased]
 
 ### Fixed
+- **The right VMHSh on plate 30 gets its shell back.** The atlas prints both `VMHSh` words
+  clear of the section and draws each a line up into the shell of the ventromedial nucleus.
+  The leader pass followed the right one to within two pixels of that shell and stopped on
+  the wrong side of its wall -- the failure `TIP_READ` in `tools/label_leaders.py` exists
+  for, where a region narrower than the skirt the tracing is masked with swallows the last
+  stretch of the line. So the tip seeded the undivided hypothalamic face that `MTu`, `PLH`,
+  `PTe`, `PeF`, `PeFLH`, `TuLH` and `f` share, and the shell -- the 3,404 px mirror of the
+  4,487 px face the left tip lands in -- was left unnamed.
+
+  A row of `seed_overrides` moves the seed five page pixels, off the wall and into the shell.
+  **`VMHSh` on plate 30 goes 0.2771 to 0.4188 mm2**, and the right side of it 0.0392 to
+  0.1809 against the left's 0.2379, where plate 31 draws 0.2753. Its traced share on that
+  side goes 0.966 to **1.000**: the outline it stops at now is one the atlas printed, every
+  pixel of it. `MTu` gains 0.0378 mm2 of the block the two were splitting, and the other nine
+  entries that move do so by 0.0031 mm2 or less. In the meshes `VMHSh` comes out as one
+  component rather than two.
+
+  Eleven (plate, region) entries move, all on plate 30. `boundary_edges_shared_exactly` stays
+  1.0, `structure_plate_entries` stays 3,078, the coloring is unchanged at 690 regions and
+  633 patches, and points go 167,565 to 167,610. `tests/python/test_leaders.py` records one
+  more tip sitting in a neighbour -- 177 in their own region, nine in a neighbour, 54 in
+  none -- which is what a superseded tip looks like from the outside: the extents no longer
+  follow it, so it is left where the march stopped.
+
+### Fixed
 - **The right MCPC on plate 33, and the zonal layer on 35, 37 and 38: four words printed on
   the ink of the thing they name.** A label is seeded where its word is, and where the word
   falls on a boundary rather than inside a face `locate()` has nothing to seed and snaps to
