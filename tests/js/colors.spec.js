@@ -39,66 +39,12 @@ test('every region on every plate carries a color, and one color only', async ({
   expect(Math.max(...out.counts)).toBeLessThanOrEqual(out.pal);
 });
 
-// The invariant again, from the geometry rather than from the app's own adjacency: any two
-// regions whose boundaries come within the tolerance the coloring calls touching must wear
-// different colors. Brute force over the pairs whose boxes are close enough to matter.
-test('two regions that all but touch are never the same color', async ({ page }) => {
-  test.setTimeout(120000);
-  await page.goto(BUNDLE + '#p30');
-  const bad = await page.evaluate(() => {
-    const G = window.__gae, out = [];
-    const near = 0.05 * 57;                       // 0.05 mm at 57 px/mm, as the app has it
-    const d2 = (p, a, b) => {
-      const dx = b[0] - a[0], dy = b[1] - a[1], L = dx * dx + dy * dy;
-      const t = L ? Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / L)) : 0;
-      const ex = p[0] - (a[0] + t * dx), ey = p[1] - (a[1] + t * dy);
-      return ex * ex + ey * ey;
-    };
-    for (const pl of [1, 20, 27, 30, 45, 54, 62]) {
-      const M = G.mcBuild(pl), R = G.regBuild(pl).regs;
-      for (let i = 0; i < R.length; i++) for (let j = i + 1; j < R.length; j++) {
-        const o = R[i], q = R[j];
-        if (M.unit[o.ab] === M.unit[q.ab] || M.by[o.ab] !== M.by[q.ab]) continue;
-        if (o.x0 - q.x1 > near || q.x0 - o.x1 > near || o.y0 - q.y1 > near || q.y0 - o.y1 > near) continue;
-        let hit = false;
-        for (const g of o.gs) { for (const p of g) {
-          for (const h of q.gs) for (let k = 0; k + 1 < h.length; k++)
-            if (d2(p, h[k], h[k + 1]) <= near * near) { hit = true; break; }
-          if (hit) break;
-        } if (hit) break; }
-        if (hit) out.push(`p${pl} ${o.ab}/${q.ab}`);
-      }
-    }
-    return out;
-  });
-  expect(bad).toEqual([]);
-});
-
-test('stepping from one plate to the next repaints nothing', async ({ page }) => {
-  await page.goto(BUNDLE + '#p30');
-  const keep = await page.evaluate(() => {
-    const G = window.__gae;
-    let held = 0, seen = 0, prev = null;
-    for (let p = 1; p <= 62; p++) {
-      const M = G.mcBuild(p);
-      if (prev) for (const ab in M.by) if (ab in prev) { seen++; if (prev[ab] === M.by[ab]) held++; }
-      prev = M.by;
-    }
-    return { keep: held / seen, seen };
-  });
-  // colored plate by plate this was about a half; solved once over the atlas it is all
-  // of them, which is what makes stepping through the levels readable
-  expect(keep.seen).toBeGreaterThan(2000);
-  expect(keep.keep).toBe(1);
-});
-
-test('the same plate is the same picture in a second session', async ({ page }) => {
-  await page.goto(BUNDLE + '#p27');
-  const first = await page.evaluate(() => window.__gae.mcBuild(27).by);
-  await page.goto(BUNDLE + '#p30');            // a different plate visited first
-  const second = await page.evaluate(() => { window.__gae.mcBuild(45); return window.__gae.mcBuild(27).by; });
-  expect(second).toEqual(first);
-});
+// The same invariant read off the geometry -- no two regions that touch wear one slot --
+// is tests/python/test_data.py::test_region_colors, which recomputes the adjacency from the
+// committed extents on all 62 plates rather than on a handful here; and that a region's slot
+// never moves between plates is the `moved` check above, which is every pair of plates and
+// not just consecutive ones. Neither is repeated in the browser: the page holds one table
+// (`__REGION__.c`), and the test above is what says it reaches every region drawn.
 
 test('the toggle paints every region of the plate and clears it again', async ({ page }) => {
   await page.goto(BUNDLE + '#p30');

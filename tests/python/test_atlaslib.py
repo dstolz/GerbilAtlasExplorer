@@ -1,6 +1,5 @@
 """The shared library: the renderer is byte-exact, the parsers agree, the payloads match."""
 import json
-import os
 
 import pytest
 
@@ -84,12 +83,6 @@ def test_build_renders_every_blob():
     assert 'register("sw.js?v=abc1234")' in stamped and B.unstamp(stamped) == lean
 
 
-def test_unstamp_idempotent():
-    db = A.load_db()
-    stamped = B.render(db, commit='abc1234', date='2026-09-02')
-    assert 'abc1234' in stamped and B.unstamp(stamped) == B.render(db)
-
-
 def test_build_stamp_carries_the_moment():
     """The page ships the stamp as UTC text plus the instant behind it, which is what
     lets the browser show it on the reader's own clock."""
@@ -103,15 +96,10 @@ def test_build_stamp_carries_the_moment():
     assert 'datetime=""' in B.render(db, commit='abc1234', date='undated', time='')
 
 
-def test_committed_pages_current():
-    assert B.check(A.load_db()) == 0
-
-
-def test_tables_current():
-    db = A.load_db()
-    for name, (path, text) in E.outputs(db).items():
-        with open(path, encoding='utf8', newline='') as f:
-            assert f.read() == text, name
+# Whether the committed pages, tables and geojson are a fresh build is not asserted here:
+# `tools/build_app.py --check` and `tools/export_tables.py --check` are that check, they run
+# in CI beside this file, and the second of them also verifies the derived fields in the JSON,
+# which no test here ever did. See .github/workflows/ci.yml.
 
 
 def test_labels_table_rows():

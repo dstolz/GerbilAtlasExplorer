@@ -440,9 +440,21 @@ row; [`matlab/README.md`](matlab/README.md) has the MATLAB setup and a worked ex
 
 ```
 python3 tools/build_app.py --lean       # rebuild both pages from src/ and data/
-python3 tools/build_app.py --check      # are the committed pages a fresh build
 python3 -m pytest tests/python          # the data's invariants
 npm ci && npx playwright install chromium && npm run build && npm test   # the pages in a browser
+```
+
+Whether a committed artifact is still a fresh build of its inputs is each tool's own
+`--check`, which names the file that is stale and the tool to re-run it with. The tests do
+not repeat those; CI runs them beside the tests, and so should you before a pull request:
+
+```
+python3 tools/check_indexes.py          # the two published indexes against the database
+python3 tools/export_tables.py --check  # the tables, the geojson, the derived fields
+python3 tools/build_groups.py --check   # the gross divisions
+python3 tools/build_region_colors.py --check
+python3 tools/build_facemaps.py --check # the face maps the static fixer page reads
+python3 tools/build_app.py --check      # the committed pages
 ```
 
 ## License
