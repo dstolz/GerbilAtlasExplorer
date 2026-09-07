@@ -105,7 +105,7 @@ against the fit alone: midline structures (`3V`, `Aq`, `4V`, `cc`, `MnR`) land w
 0.10 mm of ML 0, and bilateral pairs come out symmetric at the published widths —
 `MSO` ±1.33, `LSO` ±1.67, `CIC` ±1.93, `Au1` ±6.48 (mean distance from the midline).
 
-With AP coming from the plate, this gives every one of the 6,346 located labels a full
+With AP coming from the plate, this gives every one of the 6,345 located labels a full
 stereotaxic triplet.
 
 ## Plate images
@@ -163,7 +163,7 @@ quantitative should go back to the source volume rather than to these. See
 
 Registration between them is by construction rather than by fitting. Every page carries
 the atlas's own printed ML/DV box, and each page is cropped to *its own* box by the same
-detector, so all three land in the coordinate frame above — the frame the 6,346 label
+detector, so all three land in the coordinate frame above — the frame the 6,345 label
 positions are recorded in. Nothing is warped, translated or scaled to match anything else.
 
 Three things had to be got right, and each is checked rather than assumed:
@@ -239,7 +239,7 @@ on, each in its own named group, with the same caption the PNG carries.
 `label_positions` in the JSON records where each abbreviation is printed on each
 plate, as `[cx, cy, w, h]` fractions of the frame-cropped image. Most structures
 appear twice, once per hemisphere; layered ones such as cerebellar white matter
-appear many more times. 6,346 individual labels are located, covering 3,346 of the
+appear many more times. 6,345 individual labels are located, covering 3,345 of the
 3,510 structure-plate entries (95%) and four more for `SHy`, which the published index
 does not list at all — see [Known discrepancies](#known-discrepancies-with-the-published-index).
 These drive the circling, the hover tooltips and
@@ -339,7 +339,7 @@ A label is not always on the thing it names. Where a region is small, or crowded
 against the edge of the section, the atlas cannot fit the word inside it: it sets the name
 outside and draws a thin line from the word back into the region. `VMHSh` on plate 30 is
 printed clear of the brain altogether, with its line running back up into the shell of the
-ventromedial nucleus. **240 of the 6,346 located labels are set that way, on 47 of the 62
+ventromedial nucleus. **240 of the 6,345 located labels are set that way, on 47 of the 62
 plates.** For those the box says where the word is and not where the structure is, and the
 two are a median 0.57 mm apart, a fifth of them over a millimeter.
 
@@ -730,7 +730,7 @@ with the region the word is standing in. The other counts in this paragraph, and
 outline-containment row above, are a snapshot no committed script reproduces and are left
 as they stand.
 
-240 of the 6,346 printed labels carry a line the leader pass read, and 237 of them are
+240 of the 6,345 printed labels carry a line the leader pass read, and 237 of them are
 seeded at the end of it. The other three are marks the pass misread — `4Sh` and `4N` on
 plate 39, `Sp5O` on 51, each printed inside the region it names, which is a word the atlas
 draws no line for — and a row of `seed_overrides` puts each seed back on its printed word. A further 192 sit outside the face they name
@@ -1256,7 +1256,7 @@ anything readable off a manipulator. Nothing in the atlas records which way a gi
 is tilted, so the app cannot check a sign; the dialog shows what the frame does to a
 familiar structure and the sign is confirmed by reading that back against anatomy.
 
-This is worth more than it might look. At 17° of pitch about the atlas origin the 6,346
+This is worth more than it might look. At 17° of pitch about the atlas origin the 6,345
 labels move a **median of 2.20 mm** — `MSO` goes from AP −7.95 / DV −8.30 to AP −10.05 /
 DV −5.64. The displacement grows with distance from the pivot, so the pivot matters more
 than the angles do.
@@ -1338,7 +1338,7 @@ drawn as the line where that section's plane cuts the middle of the brain, tilte
 the part of the rotation those two axes can see, and clicking it still lands on its plate —
 the click is read back through the rotation at the same depth the line is drawn at.
 
-In the 3-D view the whole scene — the 62-section stack, the 6,346 labels, the CT shell, the
+In the 3-D view the whole scene — the 62-section stack, the 6,345 labels, the CT shell, the
 plate ring and any planned track — is held in one world built affinely out of atlas
 millimeters, so the turn is a model matrix in front of the camera rather than a rebuild of any
 of it, and three transformed basis vectors are the whole of that matrix. It is taken about the
@@ -1615,7 +1615,7 @@ there is no library.
   this one; `&r=contour` and `&r=points` are what a link now carries to say otherwise.
 - **Contours** draws the atlas's own red boundary drawings as a stack. It reads as a
   contour model of the brain because that is exactly what it is.
-- **Labels** plots all 6,346 printed abbreviations as a stereotaxic point cloud — the
+- **Labels** plots all 6,345 printed abbreviations as a stereotaxic point cloud — the
   projection views with the third axis put back. The `auditory` chip lights the whole
   ascending pathway in one rotatable view.
 
