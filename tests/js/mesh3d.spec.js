@@ -70,9 +70,10 @@ test('a mesh in Plate colors wears the color the plate paints that region', asyn
   expect(out.own).toBe(true);
 });
 
-// A division is the case the modes exist for: its members are one color by default,
-// because they are parts of a thing, and that is exactly the picture that will not say
-// which of three hundred structures you are looking at. The selection color comes off the
+// A division is the case the modes exist for: a hue apiece is what the view opens on, and
+// Selection is the mode that puts its members in one color because they are parts of a
+// thing -- which is exactly the picture that will not say which of three hundred structures
+// you are looking at, and why it is no longer the default. The selection color comes off the
 // stylesheet when the view starts, so this one waits for the view rather than reading it
 // out of a page that has never drawn.
 test('a division draws in one color, or in as many as it has structures', async ({ page }) => {
@@ -148,7 +149,7 @@ test.describe('the controls', () => {
 
     // and back to the defaults: same link as before, same picture as before
     await range(page, 'v3mop', 92);
-    await page.selectOption('#v3mcol', 'sel');
+    await page.selectOption('#v3mcol', 'each');
     expect(await shot(page)).toBe(solid);
     const h0 = await page.evaluate(() => { window.__gae.writeHash(); return location.hash; });
     expect(h0).toContain('&mh=1');
@@ -159,13 +160,24 @@ test.describe('the controls', () => {
 
   test('a link carrying either one opens on it, with Advanced unfolded', async ({ page }) => {
     test.setTimeout(180000);
-    await meshes(page, '#p30/CPu&t=v3d&mh=1&mo=45&mc=each');
+    await meshes(page, '#p30/CPu&t=v3d&mh=1&mo=45&mc=sel');
     const p = (await panes(page))[0];
     expect(p.mop).toBeCloseTo(.45, 5);
-    expect(p.mcol).toBe('each');
+    expect(p.mcol).toBe('sel');
     // a folded section must not be the reason the picture looks like that
     expect((await page.evaluate(() => window.__gae.state())).advOn).toBe(true);
     expect(await page.locator('#v3mopl').textContent()).toBe('45%');
+    expect(await page.locator('#v3mcol').inputValue()).toBe('sel');
+  });
+
+  // The short link: a picture at the default coloring names no color, so the parse has to
+  // answer a missing `mc` with the default rather than with nothing.
+  test('a link that names no color opens on the default', async ({ page }) => {
+    test.setTimeout(180000);
+    await meshes(page, '#p30/CPu&t=v3d&mh=1&mo=45');
+    const p = (await panes(page))[0];
+    expect(p.mop).toBeCloseTo(.45, 5);
+    expect(p.mcol).toBe('each');
     expect(await page.locator('#v3mcol').inputValue()).toBe('each');
   });
 
@@ -179,14 +191,14 @@ test.describe('the controls', () => {
     await page.selectOption('#v3mcol', 'plate');
     let q = await panes(page);
     expect(q[0].mop).toBeCloseTo(.92, 5);
-    expect(q[0].mcol).toBe('sel');
+    expect(q[0].mcol).toBe('each');
     expect(q[1].mop).toBeCloseTo(.2, 5);
     expect(q[1].mcol).toBe('plate');
 
     // the toolbar reads back whichever pane it is on
     await page.click('#v3pseg button[data-p="0"]');
     expect(await page.locator('#v3mopl').textContent()).toBe('92%');
-    expect(await page.locator('#v3mcol').inputValue()).toBe('sel');
+    expect(await page.locator('#v3mcol').inputValue()).toBe('each');
 
     const h = await page.evaluate(() => { window.__gae.writeHash(); return location.hash; });
     expect(h).toContain('&mo2=20');

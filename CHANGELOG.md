@@ -5,6 +5,19 @@ carries a `version` block naming the release its derived fields were built for.
 
 ## [Unreleased]
 
+### Changed
+- **The meshes open in a hue per structure.** The 3-D mesh **Color** control opened on
+  *Selection*, which paints a division's members all in the division's one color. That is
+  the right picture of one structure and the wrong one of sixty-five: a cortex in one teal
+  is a blob that will not say which field you are looking at, and a division is the case
+  that brings anybody to the meshes in the first place. **One per structure** is the default
+  now, and it is listed first in the control; *Plate colors* and *Selection* are both a
+  click away and unchanged. The note under the picture says what the colors are doing in
+  every mode rather than only off the default, because a hue that is the first thing a
+  reader sees is the one most likely to be read as meaning something, and it means nothing.
+  A link still names a color only when it is off the default, so `&mc=plate` and `&mc=sel`
+  are what carry the other two and a plain mesh link carries none.
+
 ### Fixed
 - **The right MCPC on plate 33, and the zonal layer on 35, 37 and 38: four words printed on
   the ink of the thing they name.** A label is seeded where its word is, and where the word

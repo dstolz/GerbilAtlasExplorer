@@ -916,8 +916,11 @@ what the plate prints: one patch per printed boundary.
 
 **The same table colors the meshes.** The 3-D view's *Plate colors* mode reads
 `region_colors` and nothing else, so a structure's mesh is the color its outline is on the
-plate underneath it. The property solved for is inherited rather than re-derived, which is
-what keeps the two views from disagreeing — but it is inherited exactly, and what was solved
+plate underneath it. It is not what the view opens on — that is a hue per structure, which
+has more colors than eight to spend and is the surer way to tell sixty-five cortical fields
+apart — but it is the mode that carries a property rather than only a difference. The
+property solved for is inherited rather than re-derived, which is what keeps the two views
+from disagreeing — but it is inherited exactly, and what was solved
 is adjacency *on a plate*. Two regions that never share a boundary on any section and meet
 only across the 350 µm between two of them were never asked about, and can wear the same
 color where their meshes touch in depth. `tests/js/mesh3d.spec.js` checks the mapping is the
