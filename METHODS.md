@@ -189,8 +189,8 @@ The alternates are stored at the same 1100×703 as the drawings, as grayscale JP
 quality 65: 5.8 MB of Nissl and 5.1 MB of myelin, taking the single file from 7.3 MB to
 18.2 MB. **Gray** and **Contrast** in the toolbar are a CSS filter on the image, and the
 same filter string is set on the canvas the PNG export draws through, so what is saved is
-what was on screen. The 3-D view reads whichever source is selected and rebuilds its volume
-when it changes; it is left out of that filter because a filter on an `<img>` cannot reach
+what was on screen. The 3-D view reads whichever source the pane is on and builds a volume
+per source; it is left out of that filter because a filter on an `<img>` cannot reach
 a 3-D texture, and it stretches the same tissue in the renderer instead — see
 [the tissue curve](#the-tissue-curve) below. A histology section has no contour channel,
 only tissue, so the weight given to the tissue channel differs by source and by mode — a slice is composited once and needs
@@ -857,12 +857,12 @@ single corner would read as one patch if they were painted alike.
 The vertex test answers for boundaries the two regions hold in common and for nothing else,
 and a boundary can be missed by a hair without being shared. **Two regions that come within
 0.05 mm of each other — 2.9 px of the 1100 × 703 frame, about a pixel and a half on screen
-at the zoom the plate opens at — are counted as touching too.** Over the atlas 4,509 pairs
-of names touch on at least one plate; 4,250 of them share a vertex somewhere and 259 never
+at the zoom the plate opens at — are counted as touching too.** Over the atlas 4,506 pairs
+of names touch on at least one plate; 4,247 of them share a vertex somewhere and 259 never
 do, meeting only across a gap under the tolerance — 540 plate-by-plate occurrences, on all
 62 plates. Those are laminae one or two pixels wide (`Py` between `Or` and `Rad` on plate
 30), near-corners where two boundaries pass within a fifth of a pixel without meeting, and
-pinches. **61 of the 259 would be painted alike on the vertex test alone**, and would then
+pinches. **59 of the 259 would be painted alike on the vertex test alone**, and would then
 have read as one region across a gap nobody can see. Folding them in costs nothing: with the
 rule and without it, the atlas needs the same eight colors.
 
@@ -889,7 +889,7 @@ the reverse of the order they came off, where a slot is always free for them. Th
 seeded, so a re-run reproduces the block byte for byte, and `--check` says whether the
 committed one is current. Which of the eight slots a patch takes is settled last and changes
 no boundary: every region asks for the slot hashed from its abbreviation, and the assignment
-granting the most asks — 118 of the 691 — is the one taken.
+granting the most asks — 115 of the 691 — is the one taken.
 
 **Every restart begins somewhere else, and that is what keeps the eighth color findable.**
 Only the tabu tenure was seeded at first, so every restart set out from the one DSATUR
@@ -916,8 +916,11 @@ what the plate prints: one patch per printed boundary.
 
 **The same table colors the meshes.** The 3-D view's *Plate colors* mode reads
 `region_colors` and nothing else, so a structure's mesh is the color its outline is on the
-plate underneath it. The property solved for is inherited rather than re-derived, which is
-what keeps the two views from disagreeing — but it is inherited exactly, and what was solved
+plate underneath it. It is not what the view opens on — that is a hue per structure, which
+has more colors than eight to spend and is the surer way to tell sixty-five cortical fields
+apart — but it is the mode that carries a property rather than only a difference. The
+property solved for is inherited rather than re-derived, which is what keeps the two views
+from disagreeing — but it is inherited exactly, and what was solved
 is adjacency *on a plate*. Two regions that never share a boundary on any section and meet
 only across the 350 µm between two of them were never asked about, and can wear the same
 color where their meshes touch in depth. `tests/js/mesh3d.spec.js` checks the mapping is the
@@ -927,8 +930,9 @@ The block records all of it — the joins, the 26 refusals by name, the patch ev
 belongs to, and the slot it wears. `tests/python/test_data.py` re-derives the adjacency from
 the committed extents and checks the two things that matter: that no two regions touching on
 any plate wear the same slot, and that no pair sharing a patch is ever drawn apart by a
-printed line. The browser tests check the same invariant from the page's own geometry on
-seven plates, and that a region's color never moves as the plate steps.
+printed line. The browser test is the other half of it: that the page carries that table
+whole — every region drawn on any of the 62 plates has a slot, and the same slot on every
+plate it is drawn on.
 
 ## Gross divisions
 
@@ -937,7 +941,7 @@ there is no "hippocampus" in it, only CA1, CA2, CA3, DG and their layers, and no
 only the pontine nuclei, the reticular nuclei, the parabrachial nuclei and the rest. Asking
 for a whole division is a thing people want to do and the published data cannot answer.
 
-`tools/build_groups.py` adds twenty of them. **A division is a list of the atlas's own
+`tools/build_groups.py` adds twenty-one of them. **A division is a list of the atlas's own
 abbreviations and nothing else.** It carries no geometry, no coordinate and no boundary of
 its own; everything it shows is derived, in the app, from its members:
 
@@ -962,7 +966,7 @@ outer boundary of the union: a wall between two members cancels, a wall between 
 something outside the division does not. The survivors are then walked into closed rings —
 every vertex of a region boundary has even degree, so the walk always closes. Nothing is
 unioned numerically, nothing is smoothed, and every edge of the result is an edge the atlas
-drew. `test_group_outlines_close` runs the cancellation over all 451 division–plate pairs;
+drew. `test_group_outlines_close` runs the cancellation over all 454 division–plate pairs;
 the browser test samples points and checks that the ring encloses the same ground the members
 do.
 
@@ -975,12 +979,17 @@ medulla is in both. So this is a covering, not a partition, and the areas of two
 not add.
 
 Most divisions start from the atlas's own system tags, which are already close to
-anatomical containers for some of them (`hippocampal`, `olfactory`, `amygdala`, `cerebellum`,
-`fiber_tract`) and not for others. The corrections are stated as rules rather than as a hand
-list, and each is in the tool beside the division it applies to. Three are worth naming here:
+anatomical containers for some of them (`olfactory`, `amygdala`, `cerebellum`, `fiber_tract`)
+and not for others. The corrections are stated as rules rather than as a hand
+list, and each is in the tool beside the division it applies to. Four are worth naming here:
 
 - **The `thalamus` tag over-applies.** Thirty-three hypothalamic nuclei carry it as well as
-  `hypothalamus`; the thalamus division is the tag minus anything tagged hypothalamic.
+  `hypothalamus`; the thalamus division is the tag minus anything tagged hypothalamic. It
+  also reaches one nucleus at the far caudal end of the diencephalon that the drawing places
+  outside it: the **lithoid nucleus**, printed on plate 33 alone, whose every neighbour there
+  is midbrain — Darkschewitsch, the interstitial nucleus of Cajal, the precommissural
+  nucleus, the intermediate gray of the superior colliculus, the magnocellular nucleus of the
+  posterior commissure and the p1 periaqueductal gray. It is filed under midbrain.
 - **`cortex` is a false friend twice over.** The dorsal and external *cortices of the
   inferior colliculus* carry it and are not cerebral cortex; they are filed under midbrain
   alone. Conversely most cortical fields are tagged by function (`auditory`, `visual`) rather
@@ -988,6 +997,8 @@ list, and each is in the tool beside the division it applies to. Three are worth
 - **The `brainstem` tag is not the brainstem.** It is the pontine and medullary reticular
   core; it holds no midbrain and not the cranial nerve nuclei. The brainstem division is
   built from the three divisions under it instead.
+- **The `hippocampal` tag is the hippocampus *and its surroundings*.** Thirty-seven
+  structures carry it, and two anatomies are inside it. See below.
 
 The **pons against the medulla** is the one boundary the atlas's own geometry can settle, so
 it is drawn off the plates rather than asserted: the pons runs from the first plate that
@@ -997,6 +1008,59 @@ is swept into one of them if more than one plate of it falls inside, or at least
 does. The first clause keeps a long forebrain tract out: the forceps major reaches plate 39
 and is no more pontine for it. The second keeps a straddler in both: the deep dorsal cochlear
 nucleus is on plates 49 and 50, so it is pontine and medullary at once, which is what it is.
+
+The **hippocampal formation against the parahippocampal region** is the opposite case: a
+boundary no geometry here can settle, so it is taken from a source and the source is named.
+The atlas's `hippocampal` tag holds 37 structures and two anatomies. The **hippocampal
+formation** is the archipallial cortex itself — the cornu ammonis and its layers, the dentate
+gyrus and its layers, the subiculum, the indusium griseum and the fasciola cinerea, and the
+white matter the formation is built on (alveus, fimbria, fornix, the hippocampal
+commissures). The **parahippocampal region** is the cortex outside it:
+presubiculum, parasubiculum and postsubiculum, the entorhinal cortices, and the perirhinal
+and ectorhinal belt. Where the line falls between them is what a reader has to be told,
+because both are cortex and the atlas draws no boundary that says which is which.
+
+It falls where Chauhan et al. (2021) put it. Their formation "comprises indusium griseum,
+longitudinal striae, gyrus fasciolaris, hippocampus proper (cornu ammonis, dentate gyrus and
+subiculum) and part of the uncus", it "has archipallial cortex", and the last thing in it is
+the subiculum, which they have "continuous with the six-layered neocortex (para-hippocampal
+gyrus)". The entorhinal cortex in that chapter *is* the parahippocampal gyrus — it is named
+that way every time it appears, as the origin of the perforant path and of the afferents
+reaching the alveus — so it is outside the formation rather than the last thing inside it.
+Two of the things on their list this atlas does not name: the longitudinal striae, which
+traverse the indusium griseum and are not lettered apart from it here, and the uncus, which
+a lissencephalic brain has not got.
+
+Three structures carry the tag and are in neither division: the amygdalohippocampal area,
+filed under amygdala, and the septohippocampal and septofimbrial nuclei, filed under septum
+and basal forebrain. All three are transitions into the formation rather than parts of it —
+the chapter has the septal nuclei sending to the hippocampus through the fornix and
+receiving from it, which is a connection and not a membership — and all three already had a
+home.
+
+The presubiculum, parasubiculum and postsubiculum are the part of this the chapter does not
+settle. It names the presubiculum once, as what delimits CA1 laterally, and the other two
+not at all. They are filed with the parahippocampal region on that reading — the subiculum
+is the last member the chapter lists, and the presubiculum is outside CA1 rather than inside
+it — and it is the one placement in these two divisions the source does not make for us.
+The member lists are written out so it can be put back.
+
+> Chauhan P, Jethwa K, Rathawa A, Chauhan G, Mehra S (2021). The Anatomy of the Hippocampus.
+> In: Pluta R, editor. *Cerebral Ischemia*. Brisbane: Exon Publications. Chapter 2.
+> doi:10.36255/exonpublications.cerebralischemia.2021.hippocampus —
+> https://www.ncbi.nlm.nih.gov/books/NBK575732/
+
+This is a narrower formation than the one in common use after Amaral and Witter, which takes
+the entorhinal cortex and the whole subicular complex in. Neither is derivable from anything
+this atlas draws, so the division follows the definition it cites and writes its members out;
+the broader formation is `HIPP` and `PHR` together, less the perirhinal and ectorhinal belt.
+
+The formation is written as the tag *minus the parahippocampal region* rather than as a hand
+list, which is the `less` rule in `tools/build_groups.py` and the reason the two cannot
+overlap and cannot between them drop a tagged structure. `test_groups_cover_the_atlas`
+asserts both, and that what the two miss is exactly the hippocampal fissure and those three
+transitions. Narrowing the formation moves its caudal end with it: it ran to plate 42 on the
+entorhinal cortex and now ends at plate 38, bregma −5.15 mm, where the subiculum does.
 
 A division's **plate range** is where its gray matter is, not where its members reach. The
 medial lemniscus is part of the pons where it runs through it and part of nothing at plate 30,
@@ -1558,8 +1622,31 @@ there is no library.
 A selected structure is picked out in blue in every mode, hovering a point names it and
 reads its coordinates, clicking one opens its plate, and a ring traces wherever the plate
 viewer currently sits. Anterior/posterior clipping cuts the stack to a slab; **Half**
-cuts it at the midline. The whole thing is built once, the first time the tab is opened,
-in about a second; it needs WebGL 2, and says so plainly if that is missing.
+cuts it at the midline. The whole thing is built the first time the tab is opened, in
+about a second; it needs WebGL 2, and says so plainly if that is missing.
+
+Which of the plate's four sources the stack is read from belongs to the **pane**, not to
+the view, so **Split** can hold a Nissl stack beside a myelin one — two stacks of the same
+62 levels, one showing cells and the other tracts, standing as two brains at the same
+angle. The atlas prints those two stains on consecutive pages of every level, three pages
+apart across the supplement, and turning between them is the comparison it sets up and
+cannot itself complete. Both stacks are built in the same coordinate box off pages the
+authors registered to each other, so everything drawn over them — the plate ring, the
+label cloud, the meshes, the skull, the landmarks — lands in the same place in both panes.
+What they are not is the same tissue twice: the myelin page is an adjacent section, as
+[The three plates of a level](#the-three-plates-of-a-level) says, so a feature can sit a
+section's thickness away from where the Nissl has it.
+
+The GPU holds one texture per staining a drawn pane is on: one where the panes agree,
+which is every view that was possible before they could differ, and two where they do not,
+at 24 MB apiece. A pane put back onto a staining the other one is already holding, and a
+split folded away, cost nothing and read nothing; a staining no drawn pane is on is handed
+back rather than kept against a return to it. Reading a second one costs what the first
+cost and says so over the view while it runs — the pane waiting for it draws everything
+but its stack, and the other one is not interrupted at all. The pane letters carry the
+staining while the two differ, since the toolbar can only speak for the pane it is on. A
+link names A's staining as `&ps3=` and B's as `&ps32=`, each written only where it differs
+from what the link already implies.
 
 The layers are separable because the plates are not line art: they are Nissl
 photomicrographs with a red vector contour overlay printed on top, so isolating the
@@ -1633,9 +1720,9 @@ writes in too — a re-zero renames coordinates in the app and does not move the
 and a file carrying a private origin would be the one thing about it a reader could not
 check.
 
-The stack is 24 MB and the view hands its only copy to the GPU, so the export read the 62
-plates again rather than the page holding a second copy for the length of every visit
-against an export most of them never ran.
+A stack is 24 MB and the view hands its only copy of each to the GPU, so the export read
+the 62 plates again rather than the page holding a second copy for the length of every
+visit against an export most of them never ran.
 
 ### The skull
 

@@ -47,9 +47,12 @@ the whole atlas (all 186 plate images) lives inside it, 22 MB, most of that the 
 - The plate and the 3-D stack each remember their own source, so you can read a Nissl
   stack against the labeled plate — which is what having two views of the same 62 sections
   is for. That is also what each opens on: the plate on the drawing, the stack on the
-  Nissl. A link carries both; one written before the stack had a source of its own still
-  sets them together, which is what it always meant. The projection plots where labels are
-  *printed* rather than pixels, so no staining applies to it and none is offered.
+  Nissl. In the 3-D view the staining belongs to the *pane*, so a split can hold a Nissl
+  stack beside a myelin one: the same 62 levels stacked twice, cells on one side and tracts
+  on the other, as two brains at the same angle. A link carries all three; one written
+  before the stack had a source of its own still sets them together, which is what it
+  always meant. The projection plots where labels are *printed* rather than pixels, so no
+  staining applies to it and none is offered.
 - **Gray** drops the drawing's color so the three read alike, and **Contrast** stretches
   whichever one is showing. Both carry into the PNG.
 - **Color regions** paints the section as a map: every region filled, and no two regions
@@ -100,19 +103,20 @@ the whole atlas (all 186 plate images) lives inside it, 22 MB, most of that the 
   brought it in; a query that matches nothing exactly offers its close matches. Filter by
   system chips (`auditory`, `hippocampal`, `thalamus`, …) to see a whole pathway at once.
 - **Whole divisions** — the atlas names 723 structures and no containers for them: there is
-  no "hippocampus" in the index, only CA1, CA2, CA3, DG and their layers. Twenty gross
-  divisions are added here — cortex and its four lobes, the hippocampal formation, the
-  olfactory areas and the bulb, amygdala, striatum and pallidum, septum and basal forebrain,
-  thalamus, hypothalamus, midbrain, pons, medulla, brainstem, cerebellum, fiber tracts,
-  ventricles — and each behaves like a structure: pick one and it is outlined on the plate
-  in its own color, listed on every plate it is on, plotted in the projection, and drawn in
-  3D as its members' meshes. A division has no geometry of its own. Its outline is its
-  members' outlines with the walls between them dropped, its area the sum of theirs, its
-  coordinate the median of their printed labels — so nothing it shows is a boundary the atlas
-  does not draw. **List them** narrows the structure list to one division's members, which is
-  what the CSV and the label table then write. Divisions overlap on purpose: the brainstem is
-  the midbrain, pons and medulla together, the bulb sits inside the olfactory areas, and a
-  structure's own card says which divisions it is in.
+  no "hippocampus" in the index, only CA1, CA2, CA3, DG and their layers. Twenty-one gross
+  divisions are added here — cortex and its four lobes, the hippocampal formation and the
+  parahippocampal region beside it, the olfactory areas and the bulb, amygdala, striatum and
+  pallidum, septum and basal forebrain, thalamus, hypothalamus, midbrain, pons, medulla,
+  brainstem, cerebellum, fiber tracts, ventricles — and each behaves like a structure: pick
+  one and it is outlined on the plate in its own color, listed on every plate it is on,
+  plotted in the projection, and drawn in 3D as its members' meshes. A division has no
+  geometry of its own. Its outline is its members' outlines with the walls between them
+  dropped, its area the sum of theirs, its coordinate the median of their printed labels —
+  so nothing it shows is a boundary the atlas does not draw. **List them** narrows the
+  structure list to one division's members, which is what the CSV and the label table then
+  write. Divisions overlap on purpose: the brainstem is the midbrain, pons and medulla
+  together, the bulb sits inside the olfactory areas, and a structure's own card says which
+  divisions it is in.
 - **At a coordinate** — go the other way: type bregma / ML / DV and get the structures
   nearest that point. Or hit **Pick on the plate** and just click where you're aiming.
 - Step through the 62 plates and pan around them. **Pinch** to zoom on a touch screen — the
@@ -224,21 +228,30 @@ handful.
   as a mesh. Two settings of their own sit under **Advanced**. **Opacity** takes them from
   solid to a glass shell: below the top of the range they are composited back to front
   instead of hiding each other, so what is inside one shows through it, and so does the
-  tissue behind. **Color** says what a mesh is colored by — the selection, where a division's
-  members are all in its one color because that is what a division is; the **plate's own
-  colors**, the same eight-color solution the section is painted with, so a structure is the
-  same color in the stack as in the plate under it and no two that touch on a plate are
-  alike; or a hue
-  per structure, which is more colors than eight and promises nothing else. Both ride in the
+  tissue behind. **Color** says what a mesh is colored by. It opens on **one per structure**
+  — a hue off each name, so a division comes up as its members rather than as a blob, which
+  is what you are looking at when the meshes are on; it is more colors than eight and
+  promises nothing else, two names can land on the same hue. **Plate colors** is the same
+  eight-color solution the section is painted with, so a structure is the same color in the
+  stack as in the plate under it and no two that touch on a plate are alike. **Selection**
+  puts a division's members all in its one color, because that is what a division is — the
+  right picture of one structure and the wrong one of three hundred. All of it rides in the
   link. Six planes in seven of a mesh are interpolated between
   sections 350 µm apart; see [METHODS](METHODS.md#the-third-dimension). (Needs WebGL 2.)
-- **Split** puts a second 3D view beside the first, sharing the one stack, label cloud and
-  set of meshes — so it costs pixels and nothing else. Everything above belongs to a pane
-  rather than to the view: **A** and **B** choose which pane the toolbar sets, and each can
-  have its own mode, contrast, slab, midline cut, projection, skull, landmarks and meshes —
-  down to how opaque those meshes are and what colors them.
+- **Split** puts a second 3D view beside the first, sharing the one label cloud and set of
+  meshes — and the one stack wherever the two panes are on the same staining, so it costs
+  pixels and nothing else until you ask it for a second one. Everything above belongs to a
+  pane rather than to the view: **A** and **B** choose which pane the toolbar sets, and each
+  can have its own staining, mode, contrast, slab, midline cut, projection, skull, landmarks
+  and meshes — down to how opaque those meshes are and what colors them.
   The sections beside the volume they came from, a whole brain beside a slab, a structure's
-  mesh beside the section it was built from. Clicking into a pane makes it the one the toolbar is on.
+  mesh beside the section it was built from — or **A** on the Nissl and **B** on the myelin,
+  the same 62 levels stacked twice and turned together, which the printed atlas can only
+  offer as two pages you turn between. A pane opens as a copy of the one it was split from,
+  staining and all; reading a second staining costs the few seconds the first cost, said
+  over the view while it runs and with the other pane still drawing, and the pane letters
+  carry the staining while the two differ. Clicking into a pane makes it the one the
+  toolbar is on.
   **Lock** turns, zooms and pans both panes together, holding whatever angle apart they
   were set to — so one pair can be a lateral and a dorsal view of the same brain, moving as
   one. Untick it to rotate them separately; **Reset view** brings a locked pair back onto
@@ -309,8 +322,12 @@ cannot be re-flattened at yours, are unavailable while it is on.
   `tools/build_groups.py` is the rules that produced them — so it can be read and argued with.
   The one boundary the atlas's own geometry settles is the pons against the medulla, drawn at
   the last plate that prints the facial nucleus (plate 49, bregma −9.00 mm); a structure
-  spanning it is in both. Six structures are in no division: two arteries, a blood vessel and
-  three surface fissures, which are landmarks on the section rather than parts of the brain.
+  spanning it is in both. Where the geometry settles nothing the source is named instead: the
+  hippocampal formation stops at the subiculum and the entorhinal, perirhinal and subicular
+  cortices beyond it are the parahippocampal region, which is the line
+  [Chauhan et al. (2021)](https://www.ncbi.nlm.nih.gov/books/NBK575732/) draw. Six structures
+  are in no division: two arteries, a blood vessel and three surface fissures, which are
+  landmarks on the section rather than parts of the brain.
 - The **region outlines** are cut from the atlas's own drawn lines, not from a published
   segmentation — the atlas has none. 3,065 structure–plate entries have one, and each says
   how much of its own boundary the atlas prints: the median is 98%, but **3% of regions are
@@ -438,9 +455,21 @@ row; [`matlab/README.md`](matlab/README.md) has the MATLAB setup and a worked ex
 
 ```
 python3 tools/build_app.py --lean       # rebuild both pages from src/ and data/
-python3 tools/build_app.py --check      # are the committed pages a fresh build
 python3 -m pytest tests/python          # the data's invariants
 npm ci && npx playwright install chromium && npm run build && npm test   # the pages in a browser
+```
+
+Whether a committed artifact is still a fresh build of its inputs is each tool's own
+`--check`, which names the file that is stale and the tool to re-run it with. The tests do
+not repeat those; CI runs them beside the tests, and so should you before a pull request:
+
+```
+python3 tools/check_indexes.py          # the two published indexes against the database
+python3 tools/export_tables.py --check  # the tables, the geojson, the derived fields
+python3 tools/build_groups.py --check   # the gross divisions
+python3 tools/build_region_colors.py --check
+python3 tools/build_facemaps.py --check # the face maps the static fixer page reads
+python3 tools/build_app.py --check      # the committed pages
 ```
 
 ## License

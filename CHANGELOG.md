@@ -46,6 +46,130 @@ carries a `version` block naming the release its derived fields were built for.
   `E` keeping no entry on the left of plate 2 says what the floor did and what it does now --
   that bead is published, and `E` has one.
 
+- **The lithoid nucleus is midbrain, not thalamus.** `Lth` carries the atlas's `thalamus`
+  tag and was in `THAL` on that alone. The drawing puts it elsewhere: it is printed on plate
+  33 and nowhere else, a paired nucleus at ML ±0.4 to ±0.7, DV −4.6 to −5.0, and every one of
+  its six neighbours there is midbrain — the nucleus of Darkschewitsch, the interstitial
+  nucleus of Cajal, the precommissural nucleus, the intermediate gray of the superior
+  colliculus, the magnocellular nucleus of the posterior commissure and the p1 periaqueductal
+  gray. That is the pretectal and periaqueductal company at the midbrain–diencephalon
+  junction, not the dorsal thalamus. **`THAL` goes from 91 members to 90 and `MIDB` from 97
+  to 98**, `BSTEM` with it, 286 to 287; no plate range moves, since plate 33 is inside both
+  divisions already. The rule is a `drop` on the thalamus beside the one that excludes the
+  hypothalamic nuclei, and an `add` on the midbrain, so the tag is still what the division
+  starts from.
+- **The hippocampal formation stops at the subiculum, and the belt beyond it is a division of
+  its own.** `HIPP` had been the atlas's `hippocampal` tag with the hippocampal fissure taken
+  out, and a tag is not an anatomy. It held 36 structures. Nine of them are the transitional
+  cortex *around* the formation rather than part of it — the entorhinal cortices, the
+  perirhinal and ectorhinal cortex, and the presubiculum, parasubiculum and postsubiculum.
+  Three more are transitions *into* it from elsewhere: the amygdalohippocampal area, and the
+  septohippocampal and septofimbrial nuclei, which are septal nuclei and were already filed
+  under septum and basal forebrain.
+
+  The line is now the one [Chauhan et al. (2021)](https://www.ncbi.nlm.nih.gov/books/NBK575732/)
+  draw: the formation comprises the indusium griseum, the longitudinal striae, the gyrus
+  fasciolaris, the hippocampus proper — cornu ammonis, dentate gyrus and subiculum — and part
+  of the uncus, and the subiculum is where it ends, "continuous with the six-layered neocortex
+  (para-hippocampal gyrus)". The entorhinal cortex in that chapter *is* the parahippocampal
+  gyrus, named that way wherever it appears, so it is outside the formation.
+  **`HIPP` goes from 36 members to 24**: the CA fields and their five layers, the dentate
+  gyrus and its three, the four subicular entries, `IG` and `FC`, and the white matter the
+  formation is built on (`alv`, `fi`, `f`, `df`, `dhc`, `vhc`). Its caudal end comes back with
+  it, from plate 42 to plate 38 — bregma −6.55 to −5.15 mm — because what ran to 42 was the
+  entorhinal cortex and the parasubiculum, not the hippocampus. This is a narrower formation
+  than the one Amaral and Witter draw, which takes the entorhinal cortex and the whole
+  subicular complex in. Where two definitions are in use the division follows the one it
+  cites and writes its members out, so the broader one is still there to be read: it is
+  `HIPP` and `PHR` together, less the perirhinal and ectorhinal belt.
+
+  **`PHR`, the parahippocampal region, is the twenty-first division** and holds the nine that
+  left: `PrS`, `PaS`, `Post`, `Ent`, `CEnt`, `LEnt`, `MEnt`, `PRh`, `Ect`, on plates 28–42,
+  bregma −1.65 to −6.55 mm. Six of them carry the atlas's `cortex` tag and are in `CTX` as
+  well; the three subicular cortices carry no tag at all and are in `PHR` alone, which is
+  said in the division's own note. `CTX` and the four lobes are unchanged, and so is every
+  other division — the diff is `HIPP` losing twelve members and `PHR` appearing. The three
+  subicular cortices are the one placement the chapter does not settle: it names the
+  presubiculum once, as what delimits CA1 laterally, and the parasubiculum and postsubiculum
+  not at all. They are here on the reading that the subiculum is the last member it lists,
+  and METHODS says so rather than claiming otherwise.
+
+  The formation is written as the tag *minus* `PHR` minus those three transitions rather than
+  as a hand list, which needed one new rule in `tools/build_groups.py` (`less`, subtract
+  another division) and a resolution order that puts a division after the ones it reads
+  instead of after the ones written above it. `test_groups_cover_the_atlas` now asserts that
+  the two do not overlap, that between them they hold every `hippocampal`-tagged structure bar
+  the fissure and those three, and that neither reaches outside the tag.
+
+- **The tests stop repeating what CI already checks another way.** Thirteen of the 178
+  tests asserted something a step beside them asserted first, and two of those could not
+  fail at all. `pytest tests/python` is 70 tests in 70 s and is now 63 in 49; the browser
+  suite is 102 tests where it was 108, in the same 7 minutes -- the six that went were a
+  second or two apiece, because what the browser suite costs is building the 3-D stack, and
+  none of that moved.
+
+  Five were a build run twice. `test_committed_pages_current`, `test_tables_current`,
+  `test_region_colors_block_is_a_fresh_build`, `test_groups_block_is_a_fresh_build` and
+  `test_every_plate_has_a_face_map_the_page_can_read` are `build_app.py --check`,
+  `export_tables.py --check`, `build_region_colors.py --check`, `build_groups.py --check`
+  and `build_facemaps.py --check`, which CI runs in the same job a few steps earlier. The
+  tools are the better half of the pair: each names the file that went stale and the command
+  that rebuilds it, where the test could only say that two dictionaries differ, and
+  `export_tables --check` reaches the derived fields in the JSON that no test ever read.
+  `test_region_colors_block_is_a_fresh_build` alone was 14.5 s, a second full solve of the
+  coloring. What the tests keep is what a rebuild cannot tell you: `test_region_colors` and
+  `test_region_colors_patches_are_never_split_by_the_atlas` read the coloring back off the
+  geometry, so a solver that agreed with itself and not with the section still fails.
+
+  Two could not fail. `test_the_cut_gzips_the_same_way_twice` compared `gzip.compress(raw,
+  6, mtime=0)` with `gzip.compress(raw, 6, mtime=0)` in one process -- the determinism it
+  was written for is between runs, which is what `build_facemaps.py --check` compares.
+  `test_unstamp_idempotent`'s one assertion is repeated verbatim by
+  `test_build_stamp_carries_the_moment` immediately below it, under a stamp that carries
+  more. `test_the_committed_face_map_is_the_cut_it_claims_to_be` kept the half that is
+  nobody else's -- that a face id read out of the published raster and looked up in the
+  sidecar is the answer `probe` gives from the live cut -- and dropped the byte comparison
+  `--check` makes on all 62 plates rather than on plate 19.
+
+  In the browser, `two regions that all but touch are never the same color` was the same
+  brute force as `tests/python/test_data.py::test_region_colors` on 7 of the 62 plates
+  instead of all of them, off the same committed extents. `stepping from one plate to the
+  next repaints nothing` and `the same plate is the same picture in a second session` are
+  the `moved` check in `every region on every plate carries a color`, which compares every
+  pair of plates and not just consecutive ones. `a phone-sized window does not scroll
+  sideways` ran once per page, and `on a phone the picture is on the first screen in every
+  view` asserts it at the same 390 px across all three views. The build stamp is one
+  `render()` for both pages, so it is read on one of them.
+
+  What went with them: `.claude/skills/atlas-region-fix/SKILL.md` step 6 now names
+  `build_facemaps.py --check`, and step 5 the rebuild that keeps it green -- the face maps
+  are cut from `svg/`, so a corrected tracing leaves the published maps stale and the static
+  fixer page answering **Pick** from an older cut, which the skill never rebuilt. The README
+  lists the six checks beside the tests. Four spec files defined an `adv` helper none of
+  them called.
+
+- **A failing browser job says what the browser saw.** `playwright.config.js` takes
+  `screenshot: 'only-on-failure'`, and CI uploads `test-results/` when the job is red
+  instead of uploading the two built pages when it is green: the pages are a deterministic
+  build of committed data and can be rebuilt from any checkout, and half of what these specs
+  assert is layout. A screenshot costs a passing run nothing. (`trace: 'retain-on-failure'`
+  records every test and throws most of them away; it measured about 15% on this suite,
+  which is not worth paying on every green run.) The two local servers are also no longer
+  reused under `CI`, where a port that answers is a server nobody started and a run green
+  against whatever it happens to be serving.
+
+- **The meshes open in a hue per structure.** The 3-D mesh **Color** control opened on
+  *Selection*, which paints a division's members all in the division's one color. That is
+  the right picture of one structure and the wrong one of sixty-five: a cortex in one teal
+  is a blob that will not say which field you are looking at, and a division is the case
+  that brings anybody to the meshes in the first place. **One per structure** is the default
+  now, and it is listed first in the control; *Plate colors* and *Selection* are both a
+  click away and unchanged. The note under the picture says what the colors are doing in
+  every mode rather than only off the default, because a hue that is the first thing a
+  reader sees is the one most likely to be read as meaning something, and it means nothing.
+  A link still names a color only when it is off the default, so `&mc=plate` and `&mc=sel`
+  are what carry the other two and a plain mesh link carries none.
+
 ### Fixed
 - **The right VMHSh on plate 30 gets its shell back.** The atlas prints both `VMHSh` words
   clear of the section and draws each a line up into the shell of the ventromedial nucleus.
@@ -71,7 +195,30 @@ carries a `version` block naming the release its derived fields were built for.
   none -- which is what a superseded tip looks like from the outside: the extents no longer
   follow it, so it is left where the march stopped.
 
-### Fixed
+- **`S1` gets its left hemisphere on plate 24, and the stria terminalis gives back the
+  cortex it was holding.** The word printed in the left somatosensory band on plate 24 is
+  `S1`, between `S1ULp` above and `S2` below. The label pass read it as `st`, so
+  `label_positions` carried a third box for the stria terminalis at ML −5.83, DV −4.31 — the
+  mirror of the real `S1` box at ML +5.65, DV −4.26 — and that box seeded the left `S1` face
+  as stria terminalis. Nothing downstream could recover: `S1` came out with one ring on the
+  plate where every neighbour drawn beside it (`S1ULp`, `S2`, `GI`, `DI`, `AI`, `S1BF`) has
+  ground in both hemispheres, and the septum and basal forebrain division, which holds `st`,
+  painted a wedge of lateral cortex four and a half millimetres lateral of the stria it
+  names. That wedge is what a reader saw and reported.
+
+  The box is moved from `st` to `S1` in `label_positions` and the extents re-cut. **`S1` on
+  plate 24 goes 0.8575 to 1.4004 mm², one ring to two**, the new one the mirror of the old:
+  ML −6.55 to −4.49 against +4.49 to +6.53, DV −4.54 to −3.97 against −4.59 to −3.92. **`st`
+  goes 0.8803 to 0.3374 mm², three rings to two**, which is the two the atlas prints, beside
+  `ic` in each hemisphere. Exactly 0.5429 mm² moves from one to the other and nothing else on
+  plate 24 moves at all — the whole-atlas re-cut changes two (plate, region) entries and no
+  others. Over the series `S1` goes 12.811 to 13.354 mm² and 3.7425 to 4.0888 mm³, `st` 4.529
+  to 3.986 mm² and 1.3610 to 1.2881 mm³ and six mesh components to five. `S1`'s reported
+  center flips from ML +5.88 to −5.80: the table gives the center of the largest mesh
+  component, and the left one is now the larger. `boundary_edges_shared_exactly` stays 1.0,
+  the located-label count is unchanged at 6346 — one box changed owner, none was added or
+  lost — and so is the count of (plate, name) pairs, 3350, because `st` keeps two boxes on
+  plate 24 and `S1` already had one there.
 - **The right MCPC on plate 33, and the zonal layer on 35, 37 and 38: four words printed on
   the ink of the thing they name.** A label is seeded where its word is, and where the word
   falls on a boundary rather than inside a face `locate()` has nothing to seed and snaps to
@@ -139,6 +286,43 @@ carries a `version` block naming the release its derived fields were built for.
   they are left for a diagnosis of their own.
 
 ### Added
+- **A staining apiece in the split 3-D view: A on the Nissl, B on the myelin.** Which of the
+  plate's sources the stack is read from now belongs to the **pane** rather than to the view,
+  so **Labeled / Nissl / Myelin / MRI** sets the pane the rest of the 3-D toolbar is on, the
+  way the mode, the slab and the camera already do — and the split can stand a Nissl stack
+  beside a myelin one. The atlas prints those two stains on consecutive pages of every one of
+  the 62 levels, and turning between them is the comparison it sets up and cannot itself
+  complete: this is the same 62 levels stacked twice, in the same coordinate box, at the same
+  angle, cells on one side and tracts on the other. Everything drawn over them — the plate
+  ring, the label cloud, the meshes, the skull, the landmarks — lands in the same place in
+  both panes. The drawing beside either of them is the third pairing, and the MRI beside all
+  three is the fourth. What it is not is the same tissue twice: the myelin page is an
+  adjacent section, as it always was, so a feature can sit a section's thickness from where
+  the Nissl has it.
+
+  A pane opens as a copy of the one it was split from, staining included, so a split still
+  changes nothing about the picture. The GPU holds one stack per staining a *drawn* pane is
+  on: one where the panes agree — every view that was possible before they could differ — and
+  two where they do not, at 24 MB apiece. Putting a pane back onto a staining the other one is
+  holding costs nothing and reads nothing, and folding the split away hands back the stack
+  nobody is looking at rather than keeping it against a return to it. Reading a second one
+  costs the few seconds the first cost and says which staining it is reading while it runs;
+  the stack of the pane waiting for it is the only thing that goes missing meanwhile — that
+  pane's shell, meshes, labels and ring keep drawing, and the other pane is not interrupted at
+  all. The pane letters carry the staining while the two differ (**A · Nissl**, **B · Myelin**)
+  and stay bare letters while they agree: the toolbar can only ever speak for the pane it is
+  on, and a picture is better off with less written over it. The note under the view names the
+  other pane's source on the same grounds, with the one caveat that pair carries and the
+  others do not — the myelin page is an adjacent section, so the two panes share the level
+  rather than the tissue.
+
+  A link carries B's staining as `&ps32=`, under `ps3`'s name with the pane's `2` on it like
+  every other second-pane parameter, and writes it only where B is on something other than A —
+  so every link ever written still reads as exactly the view it was written from, and a split
+  on one staining still writes the link it always wrote. `ps3` still names A, which is the
+  whole view wherever there is one pane, and a link carrying only `ps` still sets the plate
+  and the stack together, which is what it always meant. See
+  [METHODS](METHODS.md#the-3-d-view).
 - **Every leader in the atlas, and the label it was drawn from, as one command.**
   `tools/leaders.py`. Where a region is too small or too crowded to hold the word that names
   it, the atlas sets the abbreviation outside and draws a thin line to the place it means;

@@ -65,16 +65,22 @@ hand and say which and why in the commit.
    python3 tools/build_region_extents.py                                  # ~5 min
    python3 tools/build_volumes.py --nifti data/gerbil_atlas_labels.nii.gz # ~3 min
    python3 tools/build_region_colors.py
+   python3 tools/build_facemaps.py                                        # ~1 min
    python3 tools/export_tables.py --refresh-db
    python3 tools/build_app.py --lean
    python3 tools/build_app.py
    ```
+   `build_facemaps.py` is cut from `svg/` and the outline, so a tracing this correction
+   touched leaves the published maps stale -- and the static fixer page answers **Pick**
+   from them, not from the pipeline.
 6. **Check everything.** `python3 tools/check_indexes.py`, `export_tables.py --check`,
-   `build_groups.py --check`, `build_region_colors.py --check`, `build_app.py --check`,
-   `python -m pytest tests/python -q`, `npx playwright test`. Read the numbers the run
-   printed: `boundary_edges_shared_exactly` 1.0, the structure count (688 unless a region
-   gained its first mesh), and the per-(plate, abbr) diff of `region_extents` against
-   `origin/main` -- the named region gains; anything else that moves must be explained.
+   `build_groups.py --check`, `build_region_colors.py --check`, `build_facemaps.py --check`,
+   `build_app.py --check`, `python -m pytest tests/python -q`, `npx playwright test`. Those
+   `--check` runs are where a stale artifact is caught -- the tests do not repeat them. Read
+   the numbers the run printed: `boundary_edges_shared_exactly` 1.0, the structure count
+   (688 unless a region gained its first mesh), and the per-(plate, abbr) diff of
+   `region_extents` against `origin/main` -- the named region gains; anything else that
+   moves must be explained.
 7. **Write it up**, in the repository's voice (read the last three entries of
    `CHANGELOG.md` and the `Region extents` section of `METHODS.md` first). `CHANGELOG.md`,
    under `## [Unreleased]` / `### Fixed`: a bold lead sentence naming the region and plate,

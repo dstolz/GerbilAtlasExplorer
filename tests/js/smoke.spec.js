@@ -1,10 +1,8 @@
 // The built pages in a browser: the bundle from disk, the lean page over http.
 const { test, expect } = require('@playwright/test');
-/* Most of what a view is set by lives in a panel now, and the tuning inside it behind
-   Advanced. Both are closed when the page opens, so a spec that drives one of those
-   controls says so first. */
+/* Most of what a view is set by lives in a panel now, and it is closed when the page opens,
+   so a spec that drives one of those controls says so first. */
 const panel = p => p.evaluate(() => window.__gae.vpan(true));
-const adv   = p => p.evaluate(() => window.__gae.adv(true));
 const path = require('path');
 const fs = require('fs');
 
@@ -55,23 +53,20 @@ for (const [name, url] of [['bundle', BUNDLE], ['lean', LEAN]]) {
       expect(await page.locator('#m3seg button[data-r="volume"]').getAttribute('class')).toContain('on');
       expect(errors).toEqual([]);
     });
-
-    test('the build stamp is consistent', async ({ page }) => {
-      await page.goto(url);
-      const meta = await page.getAttribute('meta[name="gae-build"]', 'content');
-      expect(meta).toMatch(/^\S+ \S+$/);
-      await page.click('#aboutb');
-      await expect(page.locator('#about')).toContainText(meta.split(' ')[0]);
-    });
-
-    test('a phone-sized window does not scroll sideways', async ({ page }) => {
-      await page.setViewportSize({ width: 390, height: 844 });
-      await page.goto(url + '#p30');
-      const w = await page.evaluate(() => [document.documentElement.scrollWidth, innerWidth]);
-      expect(w[0]).toBeLessThanOrEqual(w[1]);
-    });
   });
 }
+
+/* One render() stamps both pages, so this is read on one of them rather than once per page;
+   the markup behind it is tests/python/test_atlaslib.py's. Nor is the phone width checked in
+   the loop above any more: `on a phone the picture is on the first screen in every view`
+   asserts the page does not scroll sideways at 390px, in all three views. */
+test('the build stamp is consistent', async ({ page }) => {
+  await page.goto(LEAN);
+  const meta = await page.getAttribute('meta[name="gae-build"]', 'content');
+  expect(meta).toMatch(/^\S+ \S+$/);
+  await page.click('#aboutb');
+  await expect(page.locator('#about')).toContainText(meta.split(' ')[0]);
+});
 
 /* The build stamps UTC, because it cannot know where the page will be opened; every
    reader sees that same moment on their own clock, with the zone named. */

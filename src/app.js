@@ -26,12 +26,22 @@ const MRIS={};
 const SRC={drawing:IMG, nissl:window.__NISSL__, myelin:window.__MYELIN__, mri:MRIS};
 const SRCN={drawing:'labeled drawing', nissl:'Nissl section', myelin:'myelin section',
             mri:'MRI plane'};
+/* the same four as their own buttons name them, for the one place a staining has to fit in
+   a badge: the letter on a 3-D pane, while the two panes are on different ones */
+const SRCB={drawing:'Labeled', nissl:'Nissl', myelin:'Myelin', mri:'MRI'};
 const srcOK = k => !!(SRC[k] && SRC[k][1]);
 /* The plate and the stack are the same 62 sections seen two ways, and they used to share
    one source on the grounds that a build where the two disagreed would be a puzzle. It is
    not a puzzle, it is the comparison: reading a Nissl stack against the labeled plate is
    what having both views is for. So each remembers its own, and `psrc` is whichever one is
    on screen -- every reader of it below is unchanged, and only setSrc and setTab move it.
+
+   The stack keeps one per pane rather than one for the view, so a split can stand the
+   Nissl beside the myelin: the same 62 levels stacked twice, cells on one side and tracts
+   on the other, which the atlas itself can only offer as two pages you turn between. A
+   staining is reached by a key -- 'plate', or the index of the pane -- so nothing below has
+   to know which of the two it is holding, and srcTab() names whichever the view on screen
+   is setting.
 
    The stack opens on the Nissl rather than the drawing, because the two views want
    different things out of the same sections. The drawing is ink on white: printed
@@ -40,9 +50,12 @@ const srcOK = k => !!(SRC[k] && SRC[k][1]);
    the brain comes up looking like a brain. The labeled plate is still one button away, and
    the plate view still opens on it, which is the pairing the two views are for. A build
    without the histology has no Nissl to open on and falls back to the drawing. */
-const PSRC={plate:'drawing', v3d: srcOK('nissl') ? 'nissl' : 'drawing'};
-const V3SRC=PSRC.v3d;              /* what a link is read against, and written short of */
-const srcTab = () => tab==='v3d' ? 'v3d' : 'plate';
+const PSRC={plate:'drawing'};
+const V3SRC = srcOK('nissl') ? 'nissl' : 'drawing';
+                                   /* what a link is read against, and written short of */
+const srcHold = k => k==='plate' ? PSRC.plate : V3P[k].src;
+const srcKeep = (k,v) => { if(k==='plate') PSRC.plate=v; else V3P[k].src=v; };
+const srcTab = () => tab==='v3d' ? v3ed : 'plate';
 let psrc='drawing', pgray=false, pctr=100;
 const plateImg = (n,k=psrc) => ((srcOK(k)?SRC[k]:IMG)[n])||'';
 /* gray and contrast are a display filter, not a second copy of the image: the same string
@@ -513,7 +526,7 @@ function draw(){
           (r.first_plate===r.last_plate?r.first_plate:r.first_plate+'–'+r.last_plate)}</span>
      </div>`;
   /* The divisions sit above the structures under a header that folds them away, because
-     they are twenty rows in front of seven hundred and somebody who never wants them
+     they are twenty-one rows in front of seven hundred and somebody who never wants them
      should be able to say so once. Folded, the header still says how many matched. */
   const gh = gresults.length
     ? `<div class="ghead${gopen?' open':''}" id="ghead" role="button" tabindex="0" aria-expanded="${gopen?'true':'false'}"
@@ -3357,27 +3370,29 @@ const MESHOP=.92;
 
 /* ---------- the panes ----------
    Everything the 3-D toolbar sets belongs to a pane and not to the app: what is drawn
-   (mode, density, the tissue curve, the slab, the midline cut, the projection, the skull,
-   the landmarks, the meshes) and where it is drawn from (orbit, distance, pan, named
-   viewpoint). One pane is the whole view, which is what this was. A second is the same
-   brain rendered a second way, or seen from a second angle, beside it -- the pair of
-   pictures the printed atlas cannot give you at all, and the reason for splitting rather
-   than switching.
+   (mode, staining, density, the tissue curve, the slab, the midline cut, the projection,
+   the skull, the landmarks, the meshes) and where it is drawn from (orbit, distance, pan,
+   named viewpoint). One pane is the whole view, which is what this was. A second is the
+   same brain rendered a second way, read from a second staining, or seen from a second
+   angle, beside it -- the pair of pictures the printed atlas cannot give you at all, and
+   the reason for splitting rather than switching.
 
-   Both panes read the one volume texture, the one label cloud and the one mesh cache, so
-   a second pane costs pixels and nothing else: no second context, no second 24 MB upload.
+   The two panes read the one label cloud and the one mesh cache, and the one volume
+   texture wherever they are on the same staining -- so a second pane costs pixels and
+   nothing else until it is asked for a different one, and one 24 MB upload apiece when it
+   is. Which is the whole of what A on the Nissl beside B on the myelin costs.
 
-   A pane opens as a copy of the one it was split from. A split that changed the picture
-   would be a split you had to undo before you could compare anything.
+   A pane opens as a copy of the one it was split from, staining included. A split that
+   changed the picture would be a split you had to undo before you could compare anything.
 
    A pane opens ray-marched. The stack of quads is the honest picture of what this is --
    62 sections and the gaps between them -- but it is not what somebody who has just
    clicked 3-D is looking for, and at the default oblique angle it is 62 edge-on cards.
    The march reads the same field and shows the brain as a solid, so that is the first
    sight of it; Contours is one button away and the note still says what the stack is. */
-const v3pane=()=>({mode:'volume', op:.42, t0:0, t1:1, gam:1, a:0, b:61,
+const v3pane=()=>({mode:'volume', src:V3SRC, op:.42, t0:0, t1:1, gam:1, a:0, b:61,
                    half:false, ortho:false, sk:false, sko:.32, m:false, ms:false, lm:false,
-                   mop:MESHOP, mcol:'sel',
+                   mop:MESHOP, mcol:'each',
                    az:-.82, el:.30, dist:26, tx:0, ty:0, view:'obl'});
 const V3P=[v3pane(), v3pane()];
 let v3two=false;                   /* the second pane is drawn */
@@ -3614,16 +3629,27 @@ void main(){
    to be seen through 62 of them; a ray is composited at 288 samples along its length, and
    at anything near the slice weight a section this dark goes opaque a fifth of the way in.
    Both are still a starting point: Density is the control that moves them. */
-const v3ink = Q => psrc==='drawing' ? .30 : (Q.mode==='volume' ? .10 : 1.0);
-let pSlice,pVol,pPts,pLine,pSkull, vaoQ,vaoB,vaoP, texV, bufF, nPT=0;
+const v3ink = Q => Q.src==='drawing' ? .30 : (Q.mode==='volume' ? .10 : 1.0);
+let pSlice,pVol,pPts,pLine,pSkull, vaoQ,vaoB,vaoP, bufF, nPT=0;
 let vaoS=null, nSK=0;                      /* skull mesh, built on first use */
-const v3box=new Array(V3D).fill(null);   /* section bounds per plate, set during the build */
+/* The stacks the GPU is holding, one per staining a drawn pane is on: the texture, and the
+   bounds of the section on each plate -- which are read off during the build and belong to
+   the staining, because a photographed section and the drawing of it do not end on the same
+   pixel. Two panes on one staining share the one entry; only what a drawn pane is asking
+   for is kept, since a stack is 24 MB and one nobody is looking at is 24 MB of somebody's
+   graphics memory. */
+const V3TEX={};
+/* the stainings the drawn panes want, whether every one of them is up, and whether any of
+   them is -- a pane whose staining is still being read draws everything but its stack */
+const v3want = () => [...new Set(V3P.slice(0, v3two?2:1).map(q=>q.src))];
+const v3has  = () => v3want().every(k=>V3TEX[k]);
+const v3has0 = () => v3want().some(k=>V3TEX[k]);
 /* air on the MRI is not quite zero -- it carries the scanner's own noise floor, a few
    counts of it -- so the surround is read off just above that rather than at nothing */
 const MRIAIR=24;
 
 /* ---------- build the volume from the plate images ---------- */
-async function v3build(onp, src=psrc, box=v3box){
+async function v3build(onp, src=psrc, box=null){
   /* The MRI is a photograph of tissue in air, not ink on paper, and every assumption
      below is the wrong way round for it: it has no contour channel, its background is
      black rather than white, and there is no marginalia to cull. Read straight off the
@@ -3961,16 +3987,25 @@ function v3skullBuild(){
   nSK=idx.length;
 }
 
-function v3upload(vol){
-  if(texV) gl.deleteTexture(texV);          /* a rebuild makes a new one every time */
-  texV=gl.createTexture();
-  gl.bindTexture(gl.TEXTURE_3D,texV);
+function v3upload(src,vol,box){
+  if(V3TEX[src]) gl.deleteTexture(V3TEX[src].tex);   /* a rebuild makes a new one */
+  const tex=gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_3D,tex);
   gl.pixelStorei(gl.UNPACK_ALIGNMENT,1);
   gl.texImage3D(gl.TEXTURE_3D,0,gl.RG8,V3W,V3H,V3D,0,gl.RG,gl.UNSIGNED_BYTE,vol);
   gl.texParameteri(gl.TEXTURE_3D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);
   gl.texParameteri(gl.TEXTURE_3D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
   for(const p of [gl.TEXTURE_WRAP_S,gl.TEXTURE_WRAP_T,gl.TEXTURE_WRAP_R])
     gl.texParameteri(gl.TEXTURE_3D,p,gl.CLAMP_TO_EDGE);
+  V3TEX[src]={tex,box};
+}
+/* and what no drawn pane is asking for any more goes back. Run after a build and after
+   anything that changes which stainings are on screen, so what is held is exactly what is
+   being looked at -- at most two, and one wherever the panes agree. */
+function v3trim(){
+  if(!gl) return;
+  const want=new Set(v3want());
+  for(const k in V3TEX) if(!want.has(k)){ gl.deleteTexture(V3TEX[k].tex); delete V3TEX[k]; }
 }
 
 /* which points are in the current filter, and which one is selected */
@@ -4011,6 +4046,14 @@ function v3chrome(R){
   v3lmLab(R);
   const box=$('v3pn');
   box.hidden=!v3two;
+  /* The letter says which pane this is, and carries the staining as well while the two are
+     on different ones -- the one case the toolbar cannot cover, since it is showing the pane
+     it is on. Where they agree the letter stays a letter: the staining is already named in
+     the strip above, and a picture is better off with less written over it. Written even
+     while the pair is folded away, so a re-split cannot bring back the letters the last one
+     was wearing. */
+  const two = v3two && V3P[0].src!==V3P[1].src;
+  for(const i of [0,1]) $('v3lb'+i).textContent = (i?'B':'A')+(two?' · '+SRCB[V3P[i].src]:'');
   if(!v3two) return;
   const a=R[0], b=R[1], side=a[1]===b[1];
   const d=$('v3dv').style;
@@ -4203,7 +4246,13 @@ function v3draw(Q,w,h,dpr){
   };
   skull(false);
 
-  if(Q.mode==='contour'){
+  /* this pane's own stack. Absent only while a staining it has just been switched to is
+     still being read: the rest of the pane -- the shell, the meshes, the labels, the ring
+     -- is drawn from data that has nothing to do with the staining, so it keeps going
+     rather than the pane going blank under the reader. */
+  const T=V3TEX[Q.src];
+
+  if(Q.mode==='contour'&&T){
     gl.useProgram(pSlice); gl.bindVertexArray(vaoQ);
     gl.uniformMatrix4fv(U(pSlice,'u_mvp'),false,M);
     gl.uniform1f(U(pSlice,'u_op'),Q.op);
@@ -4213,7 +4262,7 @@ function v3draw(Q,w,h,dpr){
     gl.uniform3fv(U(pSlice,'u_ce'),v3col.ce);
     gl.uniform3fv(U(pSlice,'u_ti'),v3col.ti);
     gl.uniform1i(U(pSlice,'u_vol'),0);
-    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_3D,texV);
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_3D,T.tex);
     gl.uniform3f(U(pSlice,'u_u'),V3X1-V3X0,0,0);
     gl.uniform3f(U(pSlice,'u_v'),0,w3y(V3Y1)-w3y(V3Y0),0);
     const uo=U(pSlice,'u_o'), uz=U(pSlice,'u_z');
@@ -4227,7 +4276,7 @@ function v3draw(Q,w,h,dpr){
       gl.uniform1f(uz,(k+.5)/V3D);             /* the center of layer k, not a point between two */
       gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
     }
-  } else if(Q.mode==='volume'){
+  } else if(Q.mode==='volume'&&T){
     gl.useProgram(pVol); gl.bindVertexArray(vaoB);
     gl.enable(gl.CULL_FACE); gl.cullFace(gl.FRONT);
     gl.uniformMatrix4fv(U(pVol,'u_mvp'),false,M);
@@ -4246,13 +4295,14 @@ function v3draw(Q,w,h,dpr){
     gl.uniform1f(U(pVol,'u_half'),Q.half?1:0);
     gl.uniform1f(U(pVol,'u_z0'),z0); gl.uniform1f(U(pVol,'u_z1'),z1);
     gl.uniform1i(U(pVol,'u_vol'),0);
-    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_3D,texV);
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_3D,T.tex);
     gl.drawElements(gl.TRIANGLES,36,gl.UNSIGNED_SHORT,0);
     gl.disable(gl.CULL_FACE);
   }
 
-  /* the plate the rest of the app is showing, traced where its section actually sits */
-  const bx=v3box[cur-1];
+  /* the plate the rest of the app is showing, traced where its section actually sits --
+     on this pane's own staining, which is where its section is */
+  const bx=T&&T.box[cur-1];
   if(Q.mode!=='points' && bx && cur-1>=Q.a && cur-1<=Q.b){
     const zc=w3z(plateOf[cur].bregma), m=.18;      /* a little air around the section */
     const lx=V3X0+(V3X1-V3X0)*Math.max(0,bx[0]-.01), hx=V3X0+(V3X1-V3X0)*Math.min(1,bx[2]+.01);
@@ -4561,6 +4611,9 @@ function v3split(on){
   /* a pane copied from one that was already showing bone or meshes needs neither built
      nor fetched again -- both are shared -- but a deep link may open one before either is */
   else { if(V3P[1].sk) v3skullBuild(); if(V3P[1].m) meshLoad(); }
+  /* the copy is on A's staining, so a split reads nothing; folding it away is what can
+     leave a stack nobody is looking at, and this is what gives it back */
+  if(v3ready) v3resrc();
   v3ui(); v3note(); v3frame(); queueHash();
 }
 $('v3sp').onchange=e=>v3split(e.target.checked);
@@ -4572,6 +4625,10 @@ $('v3lk').onchange=e=>{ v3lock=e.target.checked; v3note(); queueHash(); };
    pane, on a deep link. One function does it, so none of them can be forgotten. */
 function v3ui(){
   const Q=v3E();
+  /* the staining is one of them: it belongs to the pane like the mode and the camera, and
+     the row that sets it is the one shared with the plate, so it is put back through the
+     same call the plate's own switch goes through */
+  if(tab==='v3d'&&psrc!==Q.src){ psrc=Q.src; srcShow(); }
   [...$('m3seg').children].forEach(b=>b.classList.toggle('on',b.dataset.r===Q.mode));
   $('m3sel').value=Q.mode;
   v3tui();
@@ -4750,11 +4807,13 @@ function meshHue(ab){
 }
 /* Three answers to what a mesh is colored by, and the pane says which.
 
-   Selection is what this always did: the thing you asked for in the color the plate marks
-   it in, and a division's members all in the division's one color, because they are parts
-   of a thing and twenty hues would read as twenty things. That is the right picture of one
-   structure and the wrong one of three hundred -- a cortex in one color is a single blob,
-   and which lobe you are looking at is exactly what it will not say.
+   One per structure gives every mesh its name's own hue, a division's members included:
+   more colors than eight, so more of them are told apart at a glance. It is what the view
+   opens on, because the case that brings anybody here with the meshes on is a division --
+   one structure is one shape and any color draws it, but a cortex is sixty-five, and the
+   picture has to say which of them you are looking at before it says anything else. It
+   promises no more than that -- the name is hashed into 360 degrees, so two of them can
+   land on the same hue or next door to each other, and nothing about a hue is a fact.
 
    Plate colors is the plate's own coloring lifted into the third dimension: `region_colors`,
    the slot each region wears on every plate it is drawn on, solved once so that no two
@@ -4763,12 +4822,14 @@ function meshHue(ab){
    means nothing beyond "not my neighbor". Adjacency in depth was not part of the solve, so
    two meshes that meet only between sections can come out alike; METHODS says so too.
 
-   One per structure gives every mesh its name's own hue, a division's members included:
-   more colors than eight, so more of them are told apart at a glance. It promises no more
-   than that -- the name is hashed into 360 degrees, so two of them can land on the same
-   hue or next door to each other, and nothing about a hue is a fact. */
+   Selection is what this did first: the thing you asked for in the color the plate marks it
+   in, and a division's members all in the division's one color, because they are parts of a
+   thing and twenty hues would read as twenty things. That is the right picture of one
+   structure and the wrong one of three hundred, which is why it is no longer the one the
+   view opens on -- it is the mode to reach for when the mesh is the answer to "where is
+   this", rather than "which of these am I looking at". */
 function meshColor(ab,Q){
-  const mode=(Q&&Q.mcol)||'sel';
+  const mode=(Q&&Q.mcol)||'each';
   /* a region the coloring has no slot for keeps its name's hue rather than going
      uncolored -- there are none in a full build, and a partial one still draws */
   if(mode==='plate') return MCBY[ab]===undefined ? meshHue(ab) : MCRGB[MCBY[ab]%MCRGB.length];
@@ -4993,10 +5054,22 @@ function v3note(){
      pane's and not the other's */
   const Q=v3E();
   const who = v3two ? `<b>Pane ${v3ed?'B':'A'}.</b> ` : '';
-  const pair = v3two
+  /* What the other pane is made of, said only where it is something else: two stacks of the
+     same 62 levels read from different sources are the comparison the split is for, and the
+     note is the only place either pane's source is named in words. The Nissl beside the
+     myelin gets the one caveat that pair carries and the others do not -- the myelin page is
+     an adjacent section, so what the two panes share is the level and not the tissue. */
+  const oth = v3two ? V3P[1-v3ed].src : Q.src;
+  const other = oth!==Q.src
+    ? ` Pane ${v3ed?'A':'B'} is stacked from the ${SRCN[oth]}s: the same 62 levels in the`+
+      ` same coordinate box, read from the other source.`+
+      ([oth,Q.src].every(k=>k==='nissl'||k==='myelin')
+        ? ` The myelin page is an adjacent section, so the two panes share the level rather`+
+          ` than the tissue.` : '') : '';
+  const pair = other + (v3two
     ? (v3lock ? ` The two panes are locked: they turn, zoom and pan together, holding whatever`+
                 ` angle apart they were set to. Reset view brings both back onto the default.`
-              : ` The two panes turn independently.`) : '';
+              : ` The two panes turn independently.`) : '');
   /* the slab's own AP bounds, quoted from wherever zero is -- a re-zero does not move the
      plates, only what their APs are called, and this line is the only place the 3-D view
      names one */
@@ -5047,10 +5120,12 @@ function v3note(){
          unsaid and should not is how many of them are actually there -- the members the
          atlas draws no region for have no mesh either, and past the cap the rest are the
          largest ones, so the shape on screen is short of the division by a stated amount. */
-      /* What the colors are doing and what they are not, said whenever they are not doing
-         what they have always done. The plate's coloring carries its own meaning into the
-         third dimension unchanged -- "not my neighbor", and nothing else -- and a hue per
-         name carries none at all. */
+      /* What the colors are doing and what they are not -- said in every mode, including
+         the one the view opens on, because a reader who is not told will read something
+         into a hue and there is nothing in it to read. The plate's coloring carries its
+         own meaning into the third dimension unchanged -- "not my neighbor", and nothing
+         else -- a hue per name carries none at all, and the selection's one color is the
+         one case where the color is saying something: these are all the same thing. */
       const paint = Q.mcol==='plate'
         ? ' Colored the way the plate colors them \u2014 no two regions that touch on a'+
           ' plate alike, and the same color on every plate a region is drawn on;'+
@@ -5058,6 +5133,9 @@ function v3note(){
         : Q.mcol==='each'
         ? ' Every structure in a hue off its own name \u2014 enough to tell them apart,'+
           ' and nothing more: two names can land on the same hue.'
+        : isGrp(sel)
+        ? ' All in the division\u2019s one color, which says they are parts of it and'+
+          ' nothing about which part.'
         : '';
       /* a translucent render is a picture with the sorting stated, for the same reason the
          windowed one is: the reader cannot see from it that anything was done */
@@ -5093,55 +5171,70 @@ function v3note(){
   const q=(sel&&ptsOf[sel])||[];
   const on = sel&&q.length ? ` <b>${esc(selName())}</b> is picked out in ${selHue()}.`
            : (results.length<S.length ? ` The current filter is picked out in it.` : '');
-  const what = psrc==='drawing' ? `The atlas's own drawn contours` : `The 62 ${SRCN[psrc]}s`;
+  const what = Q.src==='drawing' ? `The atlas's own drawn contours` : `The 62 ${SRCN[Q.src]}s`;
   N.innerHTML = who + (Q.mode==='contour'
     ? `${what}, each at its true bregma. It reads as a stack because that is what it is — 62 sections, 350 µm apart.`
-    : `The same field ray-marched. Sampling along the brain is 20× coarser than across it, so the streaks are interpolation, not anatomy.`)+
+    : `${what}, read as one field and ray-marched. Sampling along the brain is 20× coarser than across it, so the streaks are interpolation, not anatomy.`)+
     on+` The ring marks plate ${cur}.`+tone+slab+half+proj+turn+bone+land+mesh+pair;
 }
 
-/* changing the plate source changes what the stack is made of, so it is read again from
-   the top. Nothing is done until the view has been opened at least once: an unbuilt stack
-   already reads whatever source is current when it is finally built. */
+/* changing a pane's staining changes what its stack is made of, so the new one is read
+   from the plates -- unless the other pane is already on it, in which case the two share
+   the copy that is up and nothing is read at all. Nothing is done until the view has been
+   opened at least once: an unbuilt stack already reads whatever the panes are set to when
+   it is finally built. */
 function v3resrc(){
   if(!v3ready||v3busy) return;
-  v3ready=false;
   v3open();
   if(tab==='v3d') v3frame();
 }
-/* built on first sight, not on load: it costs a second and most visits never open it */
+/* Built on first sight, not on load: it costs a second and most visits never open it. And
+   built per staining a drawn pane is on -- one for a view whose panes agree, which is every
+   view that was ever possible before the panes could differ, and two for a Nissl beside a
+   myelin. Whatever is already up is left alone: folding the split away or putting a pane
+   back on a staining the other one is holding costs nothing. */
 function v3open(){
-  if(v3ready||v3busy) { if(v3ready){ v3flags(); v3frame(); } return; }
+  if(v3busy) return;                        /* a read is running; it re-checks when it lands */
   if(v3fail){ V3MSG.hidden=false; V3MSG.innerHTML=`<b>3-D is not available here</b><span>${esc(v3fail)}</span>`; return; }
+  const miss=v3want().filter(k=>!V3TEX[k]);
+  if(!miss.length){ v3trim(); if(v3ready){ v3flags(); v3frame(); } return; }
   v3busy=true;
   V3MSG.hidden=false;
-  V3MSG.innerHTML='<b>Building the 3-D view</b>'+
-    '<span>Reading the 62 plates already loaded. This happens once.</span>'+
+  /* the first read is the view being built; every one after it is a staining being read
+     into a view that is already on screen behind this, and says which */
+  V3MSG.innerHTML=(v3ready
+    ? `<b>Reading the ${esc(miss.map(k=>SRCN[k]+'s').join(' and the '))}</b>`+
+      `<span>62 plates${miss.length>1?' apiece':''}.`+
+      `${v3two&&v3has0()?' The other pane keeps drawing.':''}</span>`
+    : '<b>Building the 3-D view</b>'+
+      '<span>Reading the 62 plates already loaded. This happens once.</span>')+
     '<span class="v3bar"><i id="v3pg"></i></span>';
   const pg=$('v3pg');
-  /* the source the stack is read from is the one showing when the read starts; the
-     buttons stay live while it runs, so it can have changed by the time it is done */
-  const src=psrc;
+  /* the stainings read are the ones the panes are on when the read starts; the buttons stay
+     live while it runs, so they can have changed by the time it is done */
   setTimeout(async()=>{
     try{
       if(!v3init()) throw new Error(v3fail);
-      const vol=await v3build(f=>{ if(pg) pg.style.width=(f*100).toFixed(0)+'%'; }, src);
-      v3src=src;
-      v3upload(vol);
+      for(let i=0;i<miss.length;i++){
+        const box=new Array(V3D).fill(null);
+        const vol=await v3build(f=>{ if(pg) pg.style.width=((i+f)/miss.length*100).toFixed(0)+'%'; },
+                                miss[i], box);
+        v3upload(miss[i],vol,box);
+      }
       if(V3P.some(q=>q.sk)) v3skullBuild();   /* a deep link can ask for bone before GL exists */
       v3ready=true; V3MSG.hidden=true;
+      v3trim();                               /* a staining left behind by a switch under the read */
       v3flags(); v3frame();
     }catch(err){
       v3fail=String(err&&err.message||err);
       V3MSG.innerHTML=`<b>3-D could not start</b><span>${esc(v3fail)}</span>`;
     }finally{ v3busy=false; }
-    if(v3ready&&PSRC.v3d!==src) v3resrc();   /* it changed under the build: read it again */
+    if(!v3fail&&!v3has()) v3open();          /* it changed under the read: read that too */
   },30);
 }
 new ResizeObserver(()=>{ if(tab==='v3d') v3frame(); }).observe(V3WRAP);
 
 /* ---------- deep links: #p30/MGV, plus the view state when it is not the default ---------- */
-let v3src=V3SRC;            /* the source the stack currently in the GPU was read from */
 let hashT=null, lastWritten='';
 function queueHash(){ clearTimeout(hashT); hashT=setTimeout(writeHash,180); }
 function writeHash(){
@@ -5168,8 +5261,9 @@ function writeHash(){
      before there was a ps3 meant. ps3 rides wherever that reading would land somewhere
      else: where the stack is off its own default, or where the plate is named and the
      stack is something other than it. Where the link already says what the stack is, it
-     stays out. */
-  if(PSRC.v3d !== (ps || V3SRC)) h+='&ps3='+PSRC.v3d;
+     stays out. It names pane A, which is the whole view wherever there is one pane; the
+     second pane's staining goes with the rest of its settings below. */
+  if(V3P[0].src !== (ps || V3SRC)) h+='&ps3='+V3P[0].src;
   if(pctr!==100) h+='&ct='+pctr;
   if(pview!=='dv') h+='&pj='+pview;
   if(cmpOn) h+='&cmp='+cmpWhat;
@@ -5201,6 +5295,10 @@ function writeHash(){
        written while Contours was the default carried no r either and now reads as the
        volume -- the same field, marched instead of stacked, which is what changed here */
     if(Q.mode!=='volume') h+='&r'+x+'='+Q.mode;
+    /* B's staining, under ps3's name with the pane's 2 on it. A pane opens as a copy of A,
+       so the pair that agree -- every split there was before the panes could differ -- says
+       nothing, and only a Nissl beside a myelin costs a parameter. */
+    if(i&&Q.src!==V3P[0].src) h+='&ps3'+x+'='+Q.src;
     /* the tissue curve, as density, floor, ceiling and gamma in hundredths -- four numbers
        because they are one setting, and a render tuned to show a nucleus is worth sending
        with the viewpoint that shows it. Written only when one of them is off its default,
@@ -5213,11 +5311,11 @@ function writeHash(){
     if(Q.sk) h+='&sk'+x+'='+Math.round(Q.sko*100);
     if(Q.lm) h+='&lm'+x+'=1';
     /* the two mesh settings ride with the meshes the way the bone opacity rides with the
-       skull, and only when they are off their defaults -- so every link ever written for
-       a mesh still reads as exactly the mesh it was written for */
+       skull, and only when they are off their defaults, so the plain toggle writes the
+       short link */
     if(Q.m){ h+='&mh'+x+'=1';
       if(Q.mop!==MESHOP) h+='&mo'+x+'='+Math.round(Q.mop*100);
-      if(Q.mcol!=='sel') h+='&mc'+x+'='+Q.mcol; }
+      if(Q.mcol!=='each') h+='&mc'+x+'='+Q.mcol; }
   });
   if(v3two){ h+='&sp='+(1+v3ed); if(!v3lock) h+='&lk=0'; }
   /* fo used to be a bare 1 for "an origin is set". It now carries the landmark as 1 + its
@@ -5252,19 +5350,27 @@ function readHash(){
   const ct=Math.round(+par.ct);
   pctr = Number.isFinite(ct) ? Math.min(260,Math.max(60,ct)) : 100;
   pgray = v.includes('y');
-  const was=psrc;
+  /* what the link asks the plate and the two panes to show, before a build that has not
+     got one of them has its say. ps named the plate's source before the stack had one of
+     its own, so a link carrying only it still sets both; a pane opens as a copy of A, so a
+     link that does not name B's staining is a link where B is on A's. */
+  const askP = par.ps || 'drawing';
+  const askA = par.ps3 || par.ps || V3SRC;
+  const askB = par.ps32 || askA;
+  const want3 = v3want();       /* what the GPU is holding for, before the link moves it */
   /* a link can name the MRI before the probe that finds it has come back. Falling to the
      drawing is still right for now -- the images may not be there at all -- so remember
-     the ask and let mriLoad honour it if they are. */
+     the ask and let mriLoad honour it if they are. Held per holder: the plate, or the pane. */
   if(!srcOK('mri')){
-    const w=[]; if(par.ps==='mri') w.push('plate');
-    if(par.ps3==='mri' || (!par.ps3 && par.ps==='mri')) w.push('v3d');   /* same reading as below */
+    const w=[];
+    if(askP==='mri') w.push('plate');
+    if(askA==='mri') w.push(0);
+    if(askB==='mri'&&[1,2].includes(parseInt(par.sp,10))) w.push(1);   /* read as sp is below */
     mriWant = w.length ? w : null;
   }
-  PSRC.plate = srcOK(par.ps) ? par.ps : 'drawing';
-  PSRC.v3d   = srcOK(par.ps3) ? par.ps3 : srcOK(par.ps) ? PSRC.plate : V3SRC;
-  psrc = PSRC[srcTab()];
-  if(v3ready&&PSRC.v3d!==was) v3resrc();
+  PSRC.plate = srcOK(askP) ? askP : 'drawing';
+  V3P[0].src = srcOK(askA) ? askA : srcOK(askP) ? PSRC.plate : V3SRC;
+  psrc = srcHold(srcTab());
   /* set before go(), which is what paints the plate: after it the first frame would be
      the plain plate and the second the colored one */
   const cw=Math.round(+par.cw);
@@ -5300,6 +5406,9 @@ function readHash(){
     if(i&&!v3two) return;
     const x=i?'2':'';
     Q.mode = par['r'+x]==='contour'||par['r'+x]==='points' ? par['r'+x] : 'volume';
+    /* A's was read above, before go() painted the plate off it; B's is read here with the
+       rest of B, and is A's wherever the link does not say otherwise */
+    if(i) Q.src = srcOK(askB) ? askB : V3P[0].src;
     /* read positionally and a short list forgiven, the way fr and tg are: a link carrying
        only a density still sets one. Missing altogether, all four go back to the values
        this view has always drawn with, so a bare #p30 arriving by hashchange clears a
@@ -5328,10 +5437,15 @@ function readHash(){
     const mo=parseInt(par['mo'+x],10);
     Q.mop = Number.isFinite(mo)&&mo>=10&&mo<=100 ? mo/100 : MESHOP;
     const mc=par['mc'+x];
-    /* a mode this build cannot draw reads as the default rather than as nothing */
-    Q.mcol = mc==='each'||(mc==='plate'&&MCOK) ? mc : 'sel';
+    /* no mode named, or one this build cannot draw, reads as the default rather than as
+       nothing */
+    Q.mcol = mc==='sel'||(mc==='plate'&&MCOK) ? mc : 'each';
     if(Q.m) meshLoad();
   });
+  /* the stainings the link leaves the panes on, against the ones the GPU was holding for:
+     read what is new, drop what nothing is looking at any more, and do neither where the
+     link asked for exactly what is already up */
+  if(v3ready&&v3want().join()!==want3.join()) v3resrc();
   v3ui(); v3frame();
 
   /* the frame is sticky: a link carrying one sets it, a link without one leaves whatever
@@ -5612,18 +5726,18 @@ function setTab(t){
   $('qs3d').hidden    = $('ctl3d').hidden    = $('adv3d').hidden    = t!=='v3d';
   /* the projection has nothing to tune, so its disclosure goes rather than opening empty */
   $('advh').hidden = t==='proj';
-  /* each view keeps its own staining, so arriving at one puts its own back on screen */
-  psrc=PSRC[srcTab()];
+  /* each view keeps its own staining -- the 3-D one per pane -- so arriving at one puts
+     its own back on screen */
+  psrc=srcHold(srcTab());
   srcCtl(); srcShow(); vqsSync();
   hideTip(); pjHide(); v3hide();
   infOpen(false);
   advSync(); vpanSync();
   if(t==='plate'){ fitW=0; fit(); applyView(); }
   else if(t==='v3d'){
+    /* v3open() builds nothing it already holds, so this is both the first build and the
+       one that catches up a pane set to a staining the GPU has not been asked for yet */
     v3note(); v3open();
-    /* the stack in the GPU was read from whatever was showing when it was built; if this
-       view has been set to something else since, it is a plate short and has to re-read */
-    if(v3ready&&v3src!==psrc) v3resrc();
   }
   else pjGuide();
   queueHash();
@@ -5668,10 +5782,12 @@ function setSrc(k){
   if(!srcOK(k)&&k!=='drawing') return;
   /* mark() rather than markSel(): the notes under the plate -- the colors, the dashed
      track -- belong to the picture, not to which of the four sources is on it */
-  PSRC[srcTab()]=psrc=k;
+  srcKeep(srcTab(),k); psrc=k;
   srcShow(); mark(); v3note(); queueHash();
-  /* only the stack has to be read again, and only when it is the view being set */
-  if(tab==='v3d') v3resrc();
+  /* only the stack has to be read again, and only when it is the view being set. The frame
+     is asked for either way: the pane letters carry the staining while the two differ, and
+     a read that is already in hand schedules no draw of its own. */
+  if(tab==='v3d'){ v3resrc(); v3frame(); }
 }
 [...$('srcseg').children].forEach(b=>{
   if(b.dataset.s==='mri') return;              /* decided at run time, not by the build */
@@ -5731,7 +5847,7 @@ const slabDef = Q=>Q.a===0&&Q.b===61;
 /* one group, one count -- the same way the four sliders of the tissue curve count once.
    Only while the meshes are on, because that is the only time either setting draws
    anything, and it is when the link carries them. */
-const meshDef = Q=>!Q.m||(Q.mop===MESHOP&&Q.mcol==='sel');
+const meshDef = Q=>!Q.m||(Q.mop===MESHOP&&Q.mcol==='each');
 function advCount(){
   if(tab==='plate') return (ctrDef()?0:1)+((pgray&&psrc==='drawing')?1:0);
   if(tab==='v3d'){ const Q=v3E(); return (v3tdef(Q)?0:1)+(slabDef(Q)?0:1)+(meshDef(Q)?0:1); }
@@ -5849,10 +5965,10 @@ function mriLoad(){
     if(opt) opt.hidden=false;
     srcCtl();
     if(mriWant){
-      for(const k of mriWant) PSRC[k]='mri';
+      for(const k of mriWant) srcKeep(k,'mri');
       mriWant=null;
-      psrc=PSRC[srcTab()]; srcShow(); mark(); v3note(); queueHash();
-      if(tab==='v3d') v3resrc();
+      psrc=srcHold(srcTab()); srcShow(); mark(); v3note(); queueHash();
+      if(tab==='v3d'){ v3resrc(); v3frame(); }
     }
     else if(cmpWhat==='mri'&&cmpOn) cmpShow();
   };
@@ -6459,6 +6575,7 @@ window.__gae={toFrame,fromFrame,writeHash,readHash,tgSolve,tgPath,tgFootprint,pl
   select,go,clear,frameSet,frameApply,FRAME,frmBuild,BUILD,S,P,byAb,ptsOf,regBuild,plateAt,inBrain,
   coordsOf,tgJSON,tgNotes,meshList,setCmp,anMake,notes:()=>NOTES,mesh:()=>MESH,
   v3split,v3edit,v3rects,panes:()=>V3P.map(q=>({...q})),
+  v3want,v3srcs:()=>Object.keys(V3TEX).sort(),
   v3build,v3niiBuf,meshSTL,
   GRP,isGrp,regIn,grpsOf,mcBuild,mcSet,MCPAL,meshColor,meshKey,
   setMax,

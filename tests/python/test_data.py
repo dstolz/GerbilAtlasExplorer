@@ -285,9 +285,10 @@ def test_region_colors_patches_are_never_split_by_the_atlas(db):
                 assert w[a] and w[b], (plate, a, b)
 
 
-def test_region_colors_block_is_a_fresh_build(db):
-    import build_region_colors as B
-    assert db['region_colors'] == B.block(db)
+# That the committed `region_colors` block is itself a fresh solve is not asserted here:
+# `tools/build_region_colors.py --check` is that comparison and CI runs it beside this file.
+# The two tests above are the ones a fresh build cannot give you -- they read the coloring
+# back off the geometry, so a solver that agreed with itself and not with the section fails.
 
 
 def test_brain_outline(db):
@@ -441,7 +442,8 @@ def test_nifti_labels_match_the_meshes():
 # the app derives its outline, area and mesh from the members'. So what has to hold here is
 # that the lists are well formed, that they cover the atlas, and -- the one the outline
 # depends on -- that the members' boundaries still cancel into closed rings when the walls
-# between them are dropped. See tools/build_groups.py.
+# between them are dropped. See tools/build_groups.py. Whether the committed block is a
+# fresh build of that file is `tools/build_groups.py --check`, which CI runs beside this one.
 
 FREE_OF_ANY_DIVISION = {'acer', 'mcer', 'BV', 'rf', 'ri', 'hif'}
 
@@ -450,7 +452,7 @@ def test_groups_are_well_formed(db):
     G = db['groups']['data']
     S = {s['abbr'] for s in db['structures']}
     breg = A.bregma_of(db)
-    assert len(G) == 20
+    assert len(G) == 21
     assert len({g['id'] for g in G}) == len(G)
     assert len({g['abbr'] for g in G}) == len(G)
     assert len({g['name'] for g in G}) == len(G)
@@ -482,6 +484,14 @@ def test_groups_cover_the_atlas(db):
     assert by['bulb'] <= by['olf']
     for lobe in ('fcx', 'pcx', 'tcx', 'ocx'):
         assert by[lobe] <= by['ctx'], lobe
+    # The hippocampal formation stops where the archicortex does, and the transitional
+    # belt beyond the subiculum is the parahippocampal region: the two do not overlap,
+    # and between them they hold every structure carrying the atlas's hippocampal tag
+    # bar the hippocampal fissure and the three transitions filed elsewhere.
+    assert not by['hipp'] & by['phr']
+    tagged = {s['abbr'] for s in db['structures'] if 'hippocampal' in s['systems']}
+    assert tagged - (by['hipp'] | by['phr']) == {'hif', 'AHi', 'SFi', 'SHi'}
+    assert by['hipp'] | by['phr'] <= tagged
     # a division is only on plates its members reach
     for g in G:
         member_plates = {p for a in g['members']
@@ -539,8 +549,3 @@ def test_group_outlines_close(db):
                 rings += 1
             checked += 1
     assert checked >= 400 and rings >= checked
-
-
-def test_groups_block_is_a_fresh_build(db):
-    import build_groups as B
-    assert db['groups'] == B.block(db)
