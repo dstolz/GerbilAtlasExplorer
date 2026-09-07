@@ -29,11 +29,12 @@ the `E/OV` on plate 4, which the summary never measured on its own.
 
 Which region an end falls in is answered exactly as the app answers a click: the extents
 of that plate, even-odd, at the point itself. The region the label names is the expected
-answer, and 178 of the 240 give it. No region at all -- 54 of them -- means an unassigned
+answer, and 194 of the 240 give it. No region at all -- 37 of them -- means an unassigned
 face, or a structure so thin that its simplified outline does not quite hold the point
-that seeded it; it is not a fault by itself, and neither is a face under the 600 px the
-extraction publishes, which is what leaves `I` on plate 23, `LVPO` on 44 and `RPa` on 58
-with a tip in the middle of a face they solely own and no area to show for it.
+that seeded it; it is not a fault by itself. A face too small to publish used to be the
+other half of this number -- `I` on plate 23, `LVPO` on 44 and `RPa` on 58 each sat in the
+middle of a face they solely owned with no area to show for it -- until `MIN_AREA_PX` came
+down to `MIN_FACE_PX` and those faces were published.
 
 A tip in a *neighbor's* ground is the one that reads as a question, and there are eight.
 Five are names that name no region at all: a fissure is the line between two regions, so

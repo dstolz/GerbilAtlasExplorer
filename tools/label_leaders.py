@@ -195,10 +195,10 @@ TIP_READ = {
                   "24 px short, out in the granule layer; the line's own black ink runs "
                   "205 px from the word and ends here, inside the ventricle. The "
                   "ventricle on this hemisphere is cut into beads of 41 to 1363 px, so "
-                  "the bead this lands in is under MIN_AREA_PX and E keeps no entry on "
-                  "this side -- which is the honest outcome, and better than what the "
-                  "printed box seeded, a scrap of the section's own edge with the word "
-                  "sitting on it."),
+                  "the bead this lands in was under MIN_AREA_PX while that floor stood "
+                  "at 600 and E kept no entry on this side; at 400 the bead is published "
+                  "and E has one. Either way it beats what the printed box seeded, a "
+                  "scrap of the section's own edge with the word sitting on it."),
     (4, 'OV', 1): ((0.4221, 0.6154),
                    "the left-hand E/OV line on plate 4 -- the march reaches it from `OV`, "
                    "and `E` takes it from the group. Its recorded end is 45.6 px from the "

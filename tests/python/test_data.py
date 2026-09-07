@@ -387,7 +387,11 @@ def test_volumes_consistent(db):
     # lettered on plates 22-25 and takes an extent on all four.
     # 690 rather than 689: p1PAG, whose italic word no label pass had read, so it had
     # no box anywhere and nothing to seed with. It is located on plates 32-34 now.
-    assert V['summary']['structures'] == len(V['data']) == 690
+    # 691 rather than 690: Obex, whose only territory anywhere is its share of the face
+    # on plate 57 that it, IB and sol seed between them. That share sat under
+    # MIN_AREA_PX while the floor stood at 600, so it was cut every time; at 400 it is
+    # published, and Obex has a mesh.
+    assert V['summary']['structures'] == len(V['data']) == 691
     assert not (have & set(db['features']['data']))
     assert 'little-endian' in V['note']
     for ab, e in V['data'].items():

@@ -32,8 +32,9 @@ test('every region on every plate carries a color, and one color only', async ({
   expect(out.regions).toBeGreaterThan(3000);
   // 689 rather than 688: SHy, which the published index does not list, is drawn and
   // carries extents on plates 22-25. 690 rather than 689: p1PAG, located on plates
-  // 32-34 once its italic word was read.
-  expect(out.named).toBe(690);
+  // 32-34 once its italic word was read. 691 rather than 690: Obex, whose only
+  // territory anywhere was cut by MIN_AREA_PX while that floor stood above MIN_FACE_PX.
+  expect(out.named).toBe(691);
   // eight is what a color that holds across the atlas costs, and no plate asks for more
   expect(out.pal).toBe(8);
   expect(Math.max(...out.counts)).toBeLessThanOrEqual(out.pal);
