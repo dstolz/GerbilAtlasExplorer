@@ -60,6 +60,64 @@ carries a `version` block naming the release its derived fields were built for.
   instead of after the ones written above it. `test_groups_cover_the_atlas` now asserts that
   the two do not overlap, that between them they hold every `hippocampal`-tagged structure bar
   the fissure and those three, and that neither reaches outside the tag.
+
+- **The tests stop repeating what CI already checks another way.** Thirteen of the 178
+  tests asserted something a step beside them asserted first, and two of those could not
+  fail at all. `pytest tests/python` is 70 tests in 70 s and is now 63 in 49; the browser
+  suite is 102 tests where it was 108, in the same 7 minutes -- the six that went were a
+  second or two apiece, because what the browser suite costs is building the 3-D stack, and
+  none of that moved.
+
+  Five were a build run twice. `test_committed_pages_current`, `test_tables_current`,
+  `test_region_colors_block_is_a_fresh_build`, `test_groups_block_is_a_fresh_build` and
+  `test_every_plate_has_a_face_map_the_page_can_read` are `build_app.py --check`,
+  `export_tables.py --check`, `build_region_colors.py --check`, `build_groups.py --check`
+  and `build_facemaps.py --check`, which CI runs in the same job a few steps earlier. The
+  tools are the better half of the pair: each names the file that went stale and the command
+  that rebuilds it, where the test could only say that two dictionaries differ, and
+  `export_tables --check` reaches the derived fields in the JSON that no test ever read.
+  `test_region_colors_block_is_a_fresh_build` alone was 14.5 s, a second full solve of the
+  coloring. What the tests keep is what a rebuild cannot tell you: `test_region_colors` and
+  `test_region_colors_patches_are_never_split_by_the_atlas` read the coloring back off the
+  geometry, so a solver that agreed with itself and not with the section still fails.
+
+  Two could not fail. `test_the_cut_gzips_the_same_way_twice` compared `gzip.compress(raw,
+  6, mtime=0)` with `gzip.compress(raw, 6, mtime=0)` in one process -- the determinism it
+  was written for is between runs, which is what `build_facemaps.py --check` compares.
+  `test_unstamp_idempotent`'s one assertion is repeated verbatim by
+  `test_build_stamp_carries_the_moment` immediately below it, under a stamp that carries
+  more. `test_the_committed_face_map_is_the_cut_it_claims_to_be` kept the half that is
+  nobody else's -- that a face id read out of the published raster and looked up in the
+  sidecar is the answer `probe` gives from the live cut -- and dropped the byte comparison
+  `--check` makes on all 62 plates rather than on plate 19.
+
+  In the browser, `two regions that all but touch are never the same color` was the same
+  brute force as `tests/python/test_data.py::test_region_colors` on 7 of the 62 plates
+  instead of all of them, off the same committed extents. `stepping from one plate to the
+  next repaints nothing` and `the same plate is the same picture in a second session` are
+  the `moved` check in `every region on every plate carries a color`, which compares every
+  pair of plates and not just consecutive ones. `a phone-sized window does not scroll
+  sideways` ran once per page, and `on a phone the picture is on the first screen in every
+  view` asserts it at the same 390 px across all three views. The build stamp is one
+  `render()` for both pages, so it is read on one of them.
+
+  What went with them: `.claude/skills/atlas-region-fix/SKILL.md` step 6 now names
+  `build_facemaps.py --check`, and step 5 the rebuild that keeps it green -- the face maps
+  are cut from `svg/`, so a corrected tracing leaves the published maps stale and the static
+  fixer page answering **Pick** from an older cut, which the skill never rebuilt. The README
+  lists the six checks beside the tests. Four spec files defined an `adv` helper none of
+  them called.
+
+- **A failing browser job says what the browser saw.** `playwright.config.js` takes
+  `screenshot: 'only-on-failure'`, and CI uploads `test-results/` when the job is red
+  instead of uploading the two built pages when it is green: the pages are a deterministic
+  build of committed data and can be rebuilt from any checkout, and half of what these specs
+  assert is layout. A screenshot costs a passing run nothing. (`trace: 'retain-on-failure'`
+  records every test and throws most of them away; it measured about 15% on this suite,
+  which is not worth paying on every green run.) The two local servers are also no longer
+  reused under `CI`, where a port that answers is a server nobody started and a run green
+  against whatever it happens to be serving.
+
 - **The meshes open in a hue per structure.** The 3-D mesh **Color** control opened on
   *Selection*, which paints a division's members all in the division's one color. That is
   the right picture of one structure and the wrong one of sixty-five: a cortex in one teal

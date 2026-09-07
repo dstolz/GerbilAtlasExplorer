@@ -5,7 +5,6 @@
 const { test, expect } = require('@playwright/test');
 /* the controls these specs drive live in the view's panel, which opens closed */
 const panel = p => p.evaluate(() => window.__gae.vpan(true));
-const adv   = p => p.evaluate(() => window.__gae.adv(true));
 
 const path = require('path');
 

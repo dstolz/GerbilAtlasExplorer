@@ -930,8 +930,9 @@ The block records all of it — the joins, the 26 refusals by name, the patch ev
 belongs to, and the slot it wears. `tests/python/test_data.py` re-derives the adjacency from
 the committed extents and checks the two things that matter: that no two regions touching on
 any plate wear the same slot, and that no pair sharing a patch is ever drawn apart by a
-printed line. The browser tests check the same invariant from the page's own geometry on
-seven plates, and that a region's color never moves as the plate steps.
+printed line. The browser test is the other half of it: that the page carries that table
+whole — every region drawn on any of the 62 plates has a slot, and the same slot on every
+plate it is drawn on.
 
 ## Gross divisions
 

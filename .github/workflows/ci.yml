@@ -34,6 +34,12 @@ jobs:
         run: python tools/build_facemaps.py --check
       - name: The committed pages are a fresh build
         run: python tools/build_app.py --check
+      # Whether a committed artifact is a fresh build is the five --check steps above and not
+      # a test: each is the tool's own comparison, names the file that is stale and the tool
+      # to re-run it with, and export_tables --check reaches derived fields in the JSON that
+      # no test ever read. What pytest carries is what a rebuild cannot tell you -- the
+      # database's own invariants, the library, and the fixer's answers against the
+      # pipeline's.
       - name: Data invariants and the shared library
         run: python -m pytest tests/python -q
 
@@ -61,11 +67,13 @@ jobs:
           python tools/build_app.py --lean --commit "${GITHUB_SHA::7}"
           python tools/build_app.py --site build/site --commit "${GITHUB_SHA::7}"
       - run: npx playwright test
+      # The pages were uploaded here; they are a deterministic build of committed data and
+      # can be rebuilt from any checkout. What cannot is what the browser saw when a test
+      # failed, which is what playwright.config.js's `screenshot: 'only-on-failure'` leaves
+      # in test-results/ -- and half of what these specs assert is layout.
       - uses: actions/upload-artifact@v4
-        if: always()
+        if: failure()
         with:
-          name: pages
-          path: |
-            gerbil_atlas_explorer.html
-            index.html
+          name: playwright-failures
+          path: test-results/
           retention-days: 7
