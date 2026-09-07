@@ -47,9 +47,12 @@ the whole atlas (all 186 plate images) lives inside it, 22 MB, most of that the 
 - The plate and the 3-D stack each remember their own source, so you can read a Nissl
   stack against the labeled plate — which is what having two views of the same 62 sections
   is for. That is also what each opens on: the plate on the drawing, the stack on the
-  Nissl. A link carries both; one written before the stack had a source of its own still
-  sets them together, which is what it always meant. The projection plots where labels are
-  *printed* rather than pixels, so no staining applies to it and none is offered.
+  Nissl. In the 3-D view the staining belongs to the *pane*, so a split can hold a Nissl
+  stack beside a myelin one: the same 62 levels stacked twice, cells on one side and tracts
+  on the other, as two brains at the same angle. A link carries all three; one written
+  before the stack had a source of its own still sets them together, which is what it
+  always meant. The projection plots where labels are *printed* rather than pixels, so no
+  staining applies to it and none is offered.
 - **Gray** drops the drawing's color so the three read alike, and **Contrast** stretches
   whichever one is showing. Both carry into the PNG.
 - **Color regions** paints the section as a map: every region filled, and no two regions
@@ -235,13 +238,20 @@ handful.
   right picture of one structure and the wrong one of three hundred. All of it rides in the
   link. Six planes in seven of a mesh are interpolated between
   sections 350 µm apart; see [METHODS](METHODS.md#the-third-dimension). (Needs WebGL 2.)
-- **Split** puts a second 3D view beside the first, sharing the one stack, label cloud and
-  set of meshes — so it costs pixels and nothing else. Everything above belongs to a pane
-  rather than to the view: **A** and **B** choose which pane the toolbar sets, and each can
-  have its own mode, contrast, slab, midline cut, projection, skull, landmarks and meshes —
-  down to how opaque those meshes are and what colors them.
+- **Split** puts a second 3D view beside the first, sharing the one label cloud and set of
+  meshes — and the one stack wherever the two panes are on the same staining, so it costs
+  pixels and nothing else until you ask it for a second one. Everything above belongs to a
+  pane rather than to the view: **A** and **B** choose which pane the toolbar sets, and each
+  can have its own staining, mode, contrast, slab, midline cut, projection, skull, landmarks
+  and meshes — down to how opaque those meshes are and what colors them.
   The sections beside the volume they came from, a whole brain beside a slab, a structure's
-  mesh beside the section it was built from. Clicking into a pane makes it the one the toolbar is on.
+  mesh beside the section it was built from — or **A** on the Nissl and **B** on the myelin,
+  the same 62 levels stacked twice and turned together, which the printed atlas can only
+  offer as two pages you turn between. A pane opens as a copy of the one it was split from,
+  staining and all; reading a second staining costs the few seconds the first cost, said
+  over the view while it runs and with the other pane still drawing, and the pane letters
+  carry the staining while the two differ. Clicking into a pane makes it the one the
+  toolbar is on.
   **Lock** turns, zooms and pans both panes together, holding whatever angle apart they
   were set to — so one pair can be a lateral and a dorsal view of the same brain, moving as
   one. Untick it to rotate them separately; **Reset view** brings a locked pair back onto

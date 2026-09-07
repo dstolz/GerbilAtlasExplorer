@@ -643,8 +643,12 @@ label.z.anlab{display:inline-block;cursor:pointer}
    thing being compared is inside it, and a loud border reads as part of the picture */
 .v3on{position:absolute;box-sizing:border-box;border:1px solid var(--accent);
   border-radius:3px;opacity:.38}
+/* the letter, and the staining beside it while the two panes are on different ones -- which
+   is the one thing the toolbar cannot say, since it is showing the pane it is on. Kept on
+   one line: it is a caption on a picture, not a paragraph. */
 .v3lb{position:absolute;font-size:11px;font-weight:600;line-height:1.4;padding:1px 6px;
-  border-radius:4px;background:var(--panel2);color:var(--muted);border:1px solid var(--line)}
+  border-radius:4px;background:var(--panel2);color:var(--muted);border:1px solid var(--line);
+  white-space:nowrap}
 .v3lb.on{color:var(--accent);border-color:var(--accent)}
 /* The landmark names. The marks themselves are geometry in the scene -- they turn with the
    brain and are hidden by nothing, the way the ear-bar axis really is not hidden by a head

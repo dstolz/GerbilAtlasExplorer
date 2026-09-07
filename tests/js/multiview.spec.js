@@ -7,6 +7,8 @@ const adv   = p => p.evaluate(() => window.__gae.adv(true));
 const path = require('path');
 
 const BUNDLE = 'file://' + path.join(__dirname, '..', '..', 'gerbil_atlas_explorer.html');
+// the MRI is fetched per plate, so it is only a source on the page served over http
+const LEAN = 'http://127.0.0.1:8765/index.html';
 
 // The stack is built on first sight of the view and takes a few seconds under swiftshader.
 // v3ready is a module-scope `let` in a classic script, so it is not a property of window:
@@ -148,6 +150,83 @@ test.describe('the second 3-D pane', () => {
     const h = await page.evaluate(() => location.hash);
     expect(h).not.toContain('sp=');
     expect(h).not.toContain('2=');
+  });
+
+  // A on the Nissl and B on the myelin: the same 62 levels stacked twice, which the atlas
+  // itself can only offer as two pages you turn between, and which a split could not hold
+  // until each pane kept its own staining.
+  test('each pane holds its own staining, and the GPU one stack per staining', async ({ page }) => {
+    await open(page, '#p30&t=v3d');
+    const held = () => page.evaluate(() => window.__gae.v3srcs());
+    const letters = () => page.evaluate(() =>
+      [0, 1].map(i => document.getElementById('v3lb' + i).textContent));
+    const shot = () => page.evaluate(() => { v3render(); return document.getElementById('v3c').toDataURL(); });
+    expect(await held()).toEqual(['nissl']);            // the stack opens on the Nissl
+
+    await page.click('#v3sp');
+    expect(await held()).toEqual(['nissl']);            // a copy is on A's staining: nothing read
+    expect(await letters()).toEqual(['A', 'B']);        // and nothing to say about it
+    const same = await shot();
+
+    await page.click('#v3pseg button[data-p="1"]');
+    await page.click('#srcseg button[data-s="myelin"]');
+    await page.waitForFunction(() => window.__gae.v3srcs().length === 2, null, { timeout: 90000 });
+    expect((await panes(page)).map(q => q.src)).toEqual(['nissl', 'myelin']);
+    expect(await held()).toEqual(['myelin', 'nissl']);  // one stack apiece, and only those two
+    expect(await letters()).toEqual(['A · Nissl', 'B · Myelin']);
+    expect(await shot()).not.toBe(same);                // B is drawn from its own stack
+
+    // the row that sets the staining is the toolbar's, so it follows A and B like the rest
+    expect(await page.locator('#srcseg button.on').textContent()).toBe('Myelin');
+    await page.click('#v3pseg button[data-p="0"]');
+    expect(await page.locator('#srcseg button.on').textContent()).toBe('Nissl');
+    expect((await st(page)).psrc).toBe('nissl');
+
+    // and folding the split away hands back the stack nobody is looking at
+    await page.click('#v3sp');
+    expect(await held()).toEqual(['nissl']);
+    expect(await letters()).toEqual(['A', 'B']);
+  });
+
+  test('a link carries the second pane\u2019s staining, and says nothing where the two agree', async ({ page }) => {
+    await open(page, '#p30&t=v3d');
+    await page.click('#v3sp');
+    await page.evaluate(() => window.__gae.writeHash());
+    // both on the stack's own default: the link is the one it has always been
+    expect(await page.evaluate(() => location.hash)).not.toMatch(/ps3/);
+
+    await page.click('#v3pseg button[data-p="1"]');
+    await page.click('#srcseg button[data-s="drawing"]');
+    await page.evaluate(() => window.__gae.writeHash());
+    const h = await page.evaluate(() => location.hash);
+    expect(h).toContain('ps32=drawing');
+    expect(h).not.toMatch(/[#&]ps3=/);                  // A is on the default, so A says nothing
+
+    // and it reads back, without waiting for either stack: the panes are set by the link
+    await page.goto(BUNDLE + '#p30&t=v3d&sp=1&ps3=myelin&ps32=drawing');
+    await page.waitForFunction(() => !!window.__gae, null, { timeout: 90000 });
+    expect((await panes(page)).map(q => q.src)).toEqual(['myelin', 'drawing']);
+    // ps names the plate and still sets a stack that is not named itself
+    await page.goto(BUNDLE + '#p30&t=v3d&ps=myelin');
+    await page.waitForFunction(() => !!window.__gae, null, { timeout: 90000 });
+    expect((await panes(page))[0].src).toBe('myelin');
+    expect((await st(page)).psrc).toBe('myelin');
+  });
+
+  // The MRI arrives after the page does, so a link naming it names something that is not a
+  // source yet; what the link asked for is held per holder -- the plate, or the pane -- and
+  // handed over when the probe lands.
+  test('a link can put a pane on the MRI before the MRI is there', async ({ page }) => {
+    await page.goto(LEAN + '#p30&t=v3d&sp=1&ps3=mri&ps32=nissl');
+    // no wait for the stacks: what is under test is where the link left the panes
+    await page.waitForFunction(() => window.__gae && window.__gae.panes()[0].src === 'mri',
+                               null, { timeout: 30000 });
+    expect((await panes(page)).map(q => q.src)).toEqual(['mri', 'nissl']);
+    expect((await st(page)).psrc).toBe('mri');            // the toolbar is on A
+    await expect(page.locator('#srcseg button[data-s="mri"]')).toHaveClass(/on/);
+    expect(await page.evaluate(() =>
+      [0, 1].map(i => document.getElementById('v3lb' + i).textContent)))
+      .toEqual(['A · MRI', 'B · Nissl']);
   });
 
   test('each pane draws its own picture', async ({ page }) => {
