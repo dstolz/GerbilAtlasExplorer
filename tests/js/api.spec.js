@@ -174,7 +174,7 @@ test('a division behaves like a structure: card, link, projection, meshes', asyn
   expect(o.hash).toBe('#p30/%40hipp');
   expect(o.name).toBe('hippocampal formation');
   expect(o.label).toBe('HIPP');
-  expect(o.members).toBe(36);
+  expect(o.members).toBe(24);
   expect(o.outlined).toBe(1);
   expect(o.dots).toBeGreaterThan(100);
   expect(o.inCA1).toEqual(['hipp']);

@@ -446,7 +446,7 @@ def test_groups_are_well_formed(db):
     G = db['groups']['data']
     S = {s['abbr'] for s in db['structures']}
     breg = A.bregma_of(db)
-    assert len(G) == 20
+    assert len(G) == 21
     assert len({g['id'] for g in G}) == len(G)
     assert len({g['abbr'] for g in G}) == len(G)
     assert len({g['name'] for g in G}) == len(G)
@@ -478,6 +478,14 @@ def test_groups_cover_the_atlas(db):
     assert by['bulb'] <= by['olf']
     for lobe in ('fcx', 'pcx', 'tcx', 'ocx'):
         assert by[lobe] <= by['ctx'], lobe
+    # The hippocampal formation stops where the archicortex does, and the transitional
+    # belt beyond the subiculum is the parahippocampal region: the two do not overlap,
+    # and between them they hold every structure carrying the atlas's hippocampal tag
+    # bar the hippocampal fissure and the three transitions filed elsewhere.
+    assert not by['hipp'] & by['phr']
+    tagged = {s['abbr'] for s in db['structures'] if 'hippocampal' in s['systems']}
+    assert tagged - (by['hipp'] | by['phr']) == {'hif', 'AHi', 'SFi', 'SHi'}
+    assert by['hipp'] | by['phr'] <= tagged
     # a division is only on plates its members reach
     for g in G:
         member_plates = {p for a in g['members']

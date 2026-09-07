@@ -24,12 +24,18 @@ Rules are declarative so they can be read and argued with:
     sys      seed from these system tags (any of)
     nsys     then drop anything carrying these tags
     match    then add anything whose name matches this regex
+    less     then remove everything in these groups -- how the hippocampal formation is
+             cut out of the tag it starts in
     add      then add these abbreviations outright
     drop     then remove these abbreviations outright
     span     add every structure whose plate range overlaps this one, except those
              already claimed by the groups in `unless` -- how the hindbrain is cut
     of       union of other groups, evaluated after them
     alias    other names for the division, so the search box finds it by them too
+
+A rule that names other groups -- `less`, `of`, `span ... unless` -- is resolved after
+them, whatever order GROUPS is written in, so the list can stay in the order the app
+should show them.
 
 Usage:
 
@@ -56,8 +62,10 @@ MEDULLA_PLATES = (50, 62)
 MIDBRAIN_ROSTRAL = 33          # nothing rostral of this plate is swept into the hindbrain
 
 # Everything the hindbrain sweep must not swallow: a forebrain nucleus that happens to
-# reach plate 39, a cerebellar peduncle, a ventricle.
-ROSTRAL = ('ctx', 'hipp', 'olf', 'amyg', 'stri', 'bfor', 'thal', 'hypo', 'midb', 'cblm', 'vent')
+# reach plate 39, the parahippocampal belt that runs back to plate 42, a cerebellar
+# peduncle, a ventricle.
+ROSTRAL = ('ctx', 'hipp', 'phr', 'olf', 'amyg', 'stri', 'bfor', 'thal', 'hypo', 'midb',
+           'cblm', 'vent')
 
 # Not in any division, and correctly so: two arteries, a generic vessel, and three
 # surface fissures. They are landmarks on the section, not parts of the brain.
@@ -76,12 +84,35 @@ GROUPS = [
          drop=('DCIC', 'ECIC')),
 
     dict(id='hipp', abbr='HIPP', name='hippocampal formation',
-         alias=('hippocampus', 'hippocampal', 'archicortex'),
-         note="The atlas's hippocampal tag: the CA fields and their layers, the dentate "
-              'gyrus, the subicular complex, entorhinal cortex, and the fiber systems the '
-              'formation is defined by (fornix, fimbria, alveus, the hippocampal commissures).',
+         alias=('hippocampus', 'hippocampal', 'archicortex', 'archipallium', 'allocortex',
+                'cornu ammonis'),
+         note='The formation as Chauhan et al. (2021) list it: the indusium griseum, the '
+              'fasciola cinerea (gyrus fasciolaris), and the hippocampus proper -- cornu '
+              'ammonis, dentate gyrus and subiculum -- with the layers the atlas names '
+              'separately and the white matter the formation is built on (alveus, fimbria, '
+              'fornix, the hippocampal commissures). It is archipallial cortex, and it ends '
+              'at the subiculum, which that chapter has continuous with the six-layered '
+              'neocortex of the parahippocampal gyrus. The belt beyond it is the '
+              'parahippocampal region and is filed there; the amygdalohippocampal area and '
+              "the two septal nuclei carrying the atlas's hippocampal tag are filed under "
+              'amygdala and under septum and basal forebrain.',
          sys=('hippocampal',),
-         drop=('hif',)),
+         less=('phr',),
+         drop=('hif', 'AHi', 'SFi', 'SHi')),
+
+    dict(id='phr', abbr='PHR', name='parahippocampal region',
+         alias=('parahippocampal', 'parahippocampal region', 'retrohippocampal',
+                'periallocortex', 'rhinal cortex', 'subicular complex'),
+         note='The cortex between the hippocampal formation and the neocortex proper: '
+              'presubiculum, parasubiculum and postsubiculum, the entorhinal cortices, and '
+              'the perirhinal and ectorhinal belt. Chauhan et al. (2021) end the formation at '
+              'the subiculum, which they have continuous with the six-layered neocortex of '
+              'the parahippocampal gyrus, and the entorhinal cortex in that chapter is that '
+              'gyrus rather than part of the formation -- so everything from the presubiculum '
+              "outwards is here. Six of the nine carry the atlas's cortex tag and are in "
+              'cerebral cortex as well; the three subicular cortices carry no tag at all and '
+              'are in this alone.',
+         add=('PrS', 'PaS', 'Post', 'Ent', 'CEnt', 'LEnt', 'MEnt', 'PRh', 'Ect')),
 
     dict(id='olf', abbr='OLF', name='olfactory areas',
          alias=('olfactory', 'rhinencephalon', 'paleocortex'),
@@ -225,21 +256,44 @@ GROUPS = [
 ]
 
 
+def reads(g):
+    """The groups a rule has to have resolved before it can be resolved itself."""
+    return tuple(g.get('unless', ())) + tuple(g.get('of', ())) + tuple(g.get('less', ()))
+
+
+def in_dependency_order(groups):
+    """The rules, every one of them after the ones it reads."""
+    known = {g['id'] for g in groups}
+    for g in groups:
+        unknown = [k for k in reads(g) if k not in known]
+        if unknown:
+            sys.exit('build_groups: %s reads groups that do not exist: %s'
+                     % (g['id'], ', '.join(unknown)))
+    out, done, left = [], set(), list(groups)
+    while left:
+        ready = [g for g in left if all(k in done for k in reads(g))]
+        if not ready:
+            sys.exit('build_groups: these rules read each other in a cycle: %s'
+                     % ', '.join(g['id'] for g in left))
+        out += ready
+        done |= {g['id'] for g in ready}
+        left = [g for g in left if g['id'] not in done]
+    return out
+
+
 def resolve(structs):
     """Every group as an ordered list of member abbreviations, and the plates it is on.
 
-    Order-independent: a group that reads other groups (`span ... unless`, `of`) is
-    resolved after the ones it reads, whatever order GROUPS is written in, so the list
+    Order-independent: a group that reads other groups (`span ... unless`, `of`, `less`)
+    is resolved after the ones it reads, whatever order GROUPS is written in, so the list
     can stay in the order the app should show them.
     """
     byab = {s['abbr']: s for s in structs}
     members, window = {}, {}
-    plain = [g for g in GROUPS if not g.get('span') and not g.get('of')]
-    swept = [g for g in GROUPS if g.get('span')]
-    joins = [g for g in GROUPS if g.get('of')]
-    if len(plain) + len(swept) + len(joins) != len(GROUPS):
-        sys.exit('build_groups: a group both sweeps a span and unions other groups')
-    for g in plain + swept + joins:
+    for g in GROUPS:
+        if g.get('span') and g.get('of'):
+            sys.exit('build_groups: %s both sweeps a span and unions other groups' % g['id'])
+    for g in in_dependency_order(GROUPS):
         m = set()
         for t in g.get('sys', ()):
             m |= {s['abbr'] for s in structs if t in s['systems']}
@@ -250,10 +304,6 @@ def resolve(structs):
             m |= {s['abbr'] for s in structs if rx.search(s['name'])}
         if g.get('span'):
             a, b = g['span']
-            missing = [k for k in g.get('unless', ()) if k not in members]
-            if missing:
-                sys.exit('build_groups: %s excludes groups that do not exist: %s'
-                         % (g['id'], ', '.join(missing)))
             taken = set().union(set(), *(members[k] for k in g.get('unless', ())))
             for s in structs:
                 if s['abbr'] in taken or s['abbr'] in FREE:
@@ -269,9 +319,9 @@ def resolve(structs):
                 if over > 1 or over * 2 >= s['n_plates']:
                     m.add(s['abbr'])
         for k in g.get('of', ()):
-            if k not in members:
-                sys.exit('build_groups: %s unions a group that does not exist: %s' % (g['id'], k))
             m |= set(members[k])
+        for k in g.get('less', ()):
+            m -= set(members[k])
         m |= set(g.get('add', ()))
         m -= set(g.get('drop', ()))
         unknown = sorted(x for x in m if x not in byab)
