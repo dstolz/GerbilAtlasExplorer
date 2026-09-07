@@ -6,6 +6,42 @@ carries a `version` block naming the release its derived fields were built for.
 ## [Unreleased]
 
 ### Changed
+- **The hippocampal formation stops at the subiculum, and the belt beyond it is a division of
+  its own.** `HIPP` had been the atlas's `hippocampal` tag with the hippocampal fissure taken
+  out, and a tag is not an anatomy. It held 36 structures. Nine of them are the transitional
+  cortex *around* the formation rather than part of it — the entorhinal cortices, the
+  perirhinal and ectorhinal cortex, and the presubiculum, parasubiculum and postsubiculum.
+  Three more are transitions *into* it from elsewhere: the amygdalohippocampal area, and the
+  septohippocampal and septofimbrial nuclei, which are septal nuclei and were already filed
+  under septum and basal forebrain.
+
+  The line is now the one [Chauhan et al. (2021)](https://www.ncbi.nlm.nih.gov/books/NBK575732/)
+  draw: the formation is the indusium griseum, the gyrus fasciolaris, and the hippocampus
+  proper — cornu ammonis, dentate gyrus and subiculum — and the subiculum is the transitional
+  zone *between* the entorhinal and hippocampal cortices, which puts entorhinal cortex outside
+  it. **`HIPP` goes from 36 members to 24**: the CA fields and their five layers, the dentate
+  gyrus and its three, the four subicular entries, `IG` and `FC`, and the white matter the
+  formation is built on (`alv`, `fi`, `f`, `df`, `dhc`, `vhc`). Its caudal end comes back with
+  it, from plate 42 to plate 38 — bregma −6.55 to −5.15 mm — because what ran to 42 was the
+  entorhinal cortex and the parasubiculum, not the hippocampus. This is a narrower formation
+  than the one Amaral and Witter draw, which takes the entorhinal cortex and the whole
+  subicular complex in. Where two definitions are in use the division follows the one it
+  cites and writes its members out, so the broader one is still there to be read: it is
+  `HIPP` and `PHR` together, less the perirhinal and ectorhinal belt.
+
+  **`PHR`, the parahippocampal region, is the twenty-first division** and holds the nine that
+  left: `PrS`, `PaS`, `Post`, `Ent`, `CEnt`, `LEnt`, `MEnt`, `PRh`, `Ect`, on plates 28–42,
+  bregma −1.65 to −6.55 mm. Six of them carry the atlas's `cortex` tag and are in `CTX` as
+  well; the three subicular cortices carry no tag at all and are in `PHR` alone, which is
+  said in the division's own note. `CTX` and the four lobes are unchanged, and so is every
+  other division — the diff is `HIPP` losing twelve members and `PHR` appearing.
+
+  The formation is written as the tag *minus* `PHR` minus those three transitions rather than
+  as a hand list, which needed one new rule in `tools/build_groups.py` (`less`, subtract
+  another division) and a resolution order that puts a division after the ones it reads
+  instead of after the ones written above it. `test_groups_cover_the_atlas` now asserts that
+  the two do not overlap, that between them they hold every `hippocampal`-tagged structure bar
+  the fissure and those three, and that neither reaches outside the tag.
 - **The meshes open in a hue per structure.** The 3-D mesh **Color** control opened on
   *Selection*, which paints a division's members all in the division's one color. That is
   the right picture of one structure and the wrong one of sixty-five: a cortex in one teal
