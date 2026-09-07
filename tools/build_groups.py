@@ -84,15 +84,18 @@ GROUPS = [
          drop=('DCIC', 'ECIC')),
 
     dict(id='hipp', abbr='HIPP', name='hippocampal formation',
-         alias=('hippocampus', 'hippocampal', 'archicortex', 'allocortex', 'cornu ammonis'),
-         note='The formation as Chauhan et al. (2021) draw it: the indusium griseum and the '
-              'fasciola cinerea, the cornu ammonis and its layers, the dentate gyrus and its '
-              'layers, the subiculum, and the white matter the formation is built on (alveus, '
-              'fimbria, fornix, the hippocampal commissures). This is three-layered '
-              'archicortex and stops where that does. The transitional belt beyond the '
-              'subiculum is the parahippocampal region and is filed there; the '
-              "amygdalohippocampal area and the two septal nuclei carrying the atlas's "
-              'hippocampal tag are filed under amygdala and under septum and basal forebrain.',
+         alias=('hippocampus', 'hippocampal', 'archicortex', 'archipallium', 'allocortex',
+                'cornu ammonis'),
+         note='The formation as Chauhan et al. (2021) list it: the indusium griseum, the '
+              'fasciola cinerea (gyrus fasciolaris), and the hippocampus proper -- cornu '
+              'ammonis, dentate gyrus and subiculum -- with the layers the atlas names '
+              'separately and the white matter the formation is built on (alveus, fimbria, '
+              'fornix, the hippocampal commissures). It is archipallial cortex, and it ends '
+              'at the subiculum, which that chapter has continuous with the six-layered '
+              'neocortex of the parahippocampal gyrus. The belt beyond it is the '
+              'parahippocampal region and is filed there; the amygdalohippocampal area and '
+              "the two septal nuclei carrying the atlas's hippocampal tag are filed under "
+              'amygdala and under septum and basal forebrain.',
          sys=('hippocampal',),
          less=('phr',),
          drop=('hif', 'AHi', 'SFi', 'SHi')),
@@ -100,14 +103,15 @@ GROUPS = [
     dict(id='phr', abbr='PHR', name='parahippocampal region',
          alias=('parahippocampal', 'parahippocampal region', 'retrohippocampal',
                 'periallocortex', 'rhinal cortex', 'subicular complex'),
-         note='The transitional cortex between the three-layered hippocampal allocortex and '
-              'the six-layered neocortex: presubiculum, parasubiculum and postsubiculum, the '
-              'entorhinal cortices, and the perirhinal and ectorhinal belt. Chauhan et al. '
-              '(2021) put the boundary at the subiculum, which they call the transitional '
-              'zone between the entorhinal and hippocampal cortices, so everything from the '
-              'presubiculum outwards is here rather than in the hippocampal formation. Six '
-              "of the nine carry the atlas's cortex tag and are in cerebral cortex as well; "
-              'the three subicular cortices carry no tag at all and are in this alone.',
+         note='The cortex between the hippocampal formation and the neocortex proper: '
+              'presubiculum, parasubiculum and postsubiculum, the entorhinal cortices, and '
+              'the perirhinal and ectorhinal belt. Chauhan et al. (2021) end the formation at '
+              'the subiculum, which they have continuous with the six-layered neocortex of '
+              'the parahippocampal gyrus, and the entorhinal cortex in that chapter is that '
+              'gyrus rather than part of the formation -- so everything from the presubiculum '
+              "outwards is here. Six of the nine carry the atlas's cortex tag and are in "
+              'cerebral cortex as well; the three subicular cortices carry no tag at all and '
+              'are in this alone.',
          add=('PrS', 'PaS', 'Post', 'Ent', 'CEnt', 'LEnt', 'MEnt', 'PRh', 'Ect')),
 
     dict(id='olf', abbr='OLF', name='olfactory areas',

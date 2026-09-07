@@ -1006,26 +1006,38 @@ nucleus is on plates 49 and 50, so it is pontine and medullary at once, which is
 The **hippocampal formation against the parahippocampal region** is the opposite case: a
 boundary no geometry here can settle, so it is taken from a source and the source is named.
 The atlas's `hippocampal` tag holds 37 structures and two anatomies. The **hippocampal
-formation** is the three-layered archicortex — the cornu ammonis and its layers, the dentate
+formation** is the archipallial cortex itself — the cornu ammonis and its layers, the dentate
 gyrus and its layers, the subiculum, the indusium griseum and the fasciola cinerea, and the
 white matter the formation is built on (alveus, fimbria, fornix, the hippocampal
-commissures). The **parahippocampal region** is the transitional cortex outside it:
+commissures). The **parahippocampal region** is the cortex outside it:
 presubiculum, parasubiculum and postsubiculum, the entorhinal cortices, and the perirhinal
 and ectorhinal belt. Where the line falls between them is what a reader has to be told,
 because both are cortex and the atlas draws no boundary that says which is which.
 
-It falls where Chauhan et al. (2021) put it. They give the formation as the indusium
-griseum, the longitudinal striae, the gyrus fasciolaris, the hippocampus proper — cornu
-ammonis, dentate gyrus and subiculum — and part of the uncus, and they call the subiculum
-the transitional zone *between* the entorhinal and hippocampal cortices. So the entorhinal
-cortex is beyond the formation rather than inside it, and everything from the presubiculum
-outwards goes with it. Two of the things on their list this atlas does not name: the
-longitudinal striae, which run in the indusium griseum and are not lettered apart from it
-here, and the uncus, which a lissencephalic brain has not got. Three more structures carry
-the tag and are in neither division: the amygdalohippocampal area, filed under amygdala, and
-the septohippocampal and septofimbrial nuclei, filed under septum and basal forebrain. All
-three are transitions into the formation rather than parts of it, and all three already had
-a home.
+It falls where Chauhan et al. (2021) put it. Their formation "comprises indusium griseum,
+longitudinal striae, gyrus fasciolaris, hippocampus proper (cornu ammonis, dentate gyrus and
+subiculum) and part of the uncus", it "has archipallial cortex", and the last thing in it is
+the subiculum, which they have "continuous with the six-layered neocortex (para-hippocampal
+gyrus)". The entorhinal cortex in that chapter *is* the parahippocampal gyrus — it is named
+that way every time it appears, as the origin of the perforant path and of the afferents
+reaching the alveus — so it is outside the formation rather than the last thing inside it.
+Two of the things on their list this atlas does not name: the longitudinal striae, which
+traverse the indusium griseum and are not lettered apart from it here, and the uncus, which
+a lissencephalic brain has not got.
+
+Three structures carry the tag and are in neither division: the amygdalohippocampal area,
+filed under amygdala, and the septohippocampal and septofimbrial nuclei, filed under septum
+and basal forebrain. All three are transitions into the formation rather than parts of it —
+the chapter has the septal nuclei sending to the hippocampus through the fornix and
+receiving from it, which is a connection and not a membership — and all three already had a
+home.
+
+The presubiculum, parasubiculum and postsubiculum are the part of this the chapter does not
+settle. It names the presubiculum once, as what delimits CA1 laterally, and the other two
+not at all. They are filed with the parahippocampal region on that reading — the subiculum
+is the last member the chapter lists, and the presubiculum is outside CA1 rather than inside
+it — and it is the one placement in these two divisions the source does not make for us.
+The member lists are written out so it can be put back.
 
 > Chauhan P, Jethwa K, Rathawa A, Chauhan G, Mehra S (2021). The Anatomy of the Hippocampus.
 > In: Pluta R, editor. *Cerebral Ischemia*. Brisbane: Exon Publications. Chapter 2.

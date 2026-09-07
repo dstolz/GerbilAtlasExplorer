@@ -16,10 +16,12 @@ carries a `version` block naming the release its derived fields were built for.
   under septum and basal forebrain.
 
   The line is now the one [Chauhan et al. (2021)](https://www.ncbi.nlm.nih.gov/books/NBK575732/)
-  draw: the formation is the indusium griseum, the gyrus fasciolaris, and the hippocampus
-  proper — cornu ammonis, dentate gyrus and subiculum — and the subiculum is the transitional
-  zone *between* the entorhinal and hippocampal cortices, which puts entorhinal cortex outside
-  it. **`HIPP` goes from 36 members to 24**: the CA fields and their five layers, the dentate
+  draw: the formation comprises the indusium griseum, the longitudinal striae, the gyrus
+  fasciolaris, the hippocampus proper — cornu ammonis, dentate gyrus and subiculum — and part
+  of the uncus, and the subiculum is where it ends, "continuous with the six-layered neocortex
+  (para-hippocampal gyrus)". The entorhinal cortex in that chapter *is* the parahippocampal
+  gyrus, named that way wherever it appears, so it is outside the formation.
+  **`HIPP` goes from 36 members to 24**: the CA fields and their five layers, the dentate
   gyrus and its three, the four subicular entries, `IG` and `FC`, and the white matter the
   formation is built on (`alv`, `fi`, `f`, `df`, `dhc`, `vhc`). Its caudal end comes back with
   it, from plate 42 to plate 38 — bregma −6.55 to −5.15 mm — because what ran to 42 was the
@@ -34,7 +36,11 @@ carries a `version` block naming the release its derived fields were built for.
   bregma −1.65 to −6.55 mm. Six of them carry the atlas's `cortex` tag and are in `CTX` as
   well; the three subicular cortices carry no tag at all and are in `PHR` alone, which is
   said in the division's own note. `CTX` and the four lobes are unchanged, and so is every
-  other division — the diff is `HIPP` losing twelve members and `PHR` appearing.
+  other division — the diff is `HIPP` losing twelve members and `PHR` appearing. The three
+  subicular cortices are the one placement the chapter does not settle: it names the
+  presubiculum once, as what delimits CA1 laterally, and the parasubiculum and postsubiculum
+  not at all. They are here on the reading that the subiculum is the last member it lists,
+  and METHODS says so rather than claiming otherwise.
 
   The formation is written as the tag *minus* `PHR` minus those three transitions rather than
   as a hand list, which needed one new rule in `tools/build_groups.py` (`less`, subtract
