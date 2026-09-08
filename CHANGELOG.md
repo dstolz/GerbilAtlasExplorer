@@ -171,6 +171,33 @@ carries a `version` block naming the release its derived fields were built for.
   are what carry the other two and a plain mesh link carries none.
 
 ### Fixed
+- **A correction is merged with a credential that is still alive, and only once a fix has
+  arrived on the branch.** `.github/workflows/apply-correction.yml` merged as
+  `steps.claude.outputs.github_token` -- the installation token
+  `anthropics/claude-code-action` mints for itself -- and the last step the action runs
+  revokes that token. So the merge step read a credential that had been dead for four tenths
+  of a second: **both runs that got past the dispatch failed with `HTTP 401: Bad
+  credentials` from `gh pr list`**, the first corrections ever to reach a session left
+  unapplied on their branches. The merge is the workflow's own `GITHUB_TOKEN` now. Nothing
+  is lost by the swap -- what that token cannot do is start a workflow, and the checks these
+  steps wait on are on the head commit already, put there by the session's own push, which
+  is made with the app token and is why the action is still handed no `github_token`.
+
+  The 401 also stopped something worse. The action's `success` is the session having
+  stopped without erroring, and that is equally what it does when it reads the plate, says
+  what it would change and ends the turn -- which is what both of those runs did, the second
+  of them in **38 turns and five minutes against a rebuild that alone takes ten**, and
+  neither leaving `RAPir` on plate 28 any different. Had the token been alive, the step would have opened a pull request titled
+  after the correction, squash-merged `corrections/<id>.json` onto main with nothing
+  applied, and deleted the branch that was going to carry the fix. What is asked now is the
+  branch rather than the exit code: a run merges only where `origin/main...origin/<branch>`
+  carries a file outside `corrections/`, and where it does not the run fails with the
+  session's own last message in the job summary, which is the only account the hidden
+  transcript leaves of why it stopped. A second check refuses a branch whose fix edited the
+  correction it was applying, by that correction's id and its snapshot with it: the file a
+  reader drew is the record of what they said, and the `corrections/**` paths filter that
+  keeps a fix commit from starting this workflow again rests on its never changing.
+
 - **The browser suite stops reading a link before the page has read it.** `page.goto()` to
   the same file with a different fragment is a same-document navigation: nothing reloads,
   `window.__gae` is the one the spec has been driving all along, and `readHash` runs off the
