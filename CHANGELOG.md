@@ -192,6 +192,34 @@ carries a `version` block naming the release its derived fields were built for.
   are what carry the other two and a plain mesh link carries none.
 
 ### Fixed
+- **A correction reaches its session on an installer that left no binary behind.**
+  `anthropics/claude-code-action` installs Claude Code itself -- `curl -fsSL
+  https://claude.ai/install.sh | bash -s -- <version>`, the version a constant bumped with
+  each release of the action -- and then hands the SDK `~/.local/bin/claude` on the strength
+  of the installer's exit code alone. The installer that 2.1.265 brought (v1.0.218 of the
+  action, which `v1` moved to on the evening of 2026-09-08) printed "claude command at
+  ~/.local/bin/claude missing or broken (~/.local/bin does not exist)", then its success
+  banner, and exited 0, where 2.1.263 that morning had placed the launcher. So **both
+  dispatches made after the tag moved -- `E` on plate 3 and `RAPir` on plate 28 -- died at
+  the SDK with `Claude Code native binary not found` before a prompt was read**, ninety
+  seconds in and with nothing on either branch.
+
+  The install is a step of `.github/workflows/apply-correction.yml` now, at the version the
+  action itself pinned when a run last went the distance, and it is moved by hand once the
+  action's pin has moved and a run on it has reached the session. The step makes
+  `~/.local/bin` first, which the 2.1.265 installer no longer does for itself; falls back to
+  the binary at its versioned path under `~/.local/share/claude/versions/` where an installer
+  downloaded it and failed only to place the launcher over it; and fails in its own name,
+  saying what it looked for, where it finds neither. The path is given to the action as
+  `path_to_claude_code_executable`, which is what skips the action's own install. Checked:
+  the file parses and the step passes `bash -n`; the block was run under the shell Actions
+  uses (`-e -o pipefail`) against a stand-in installer that placed the launcher, placed only
+  the versioned binary, placed nothing, and exited non-zero -- the first two hand the action a
+  path that answers `--version`, the third stops on the `::error::`, and the fourth stops on
+  the installer's own exit code. The first draft of the block lost the third case to
+  `pipefail`: `find` over a directory that is not there failed the assignment before the
+  message was reached, and the step exited 1 with nothing said.
+
 - **A correction is merged with a credential that is still alive, and only once a fix has
   arrived on the branch.** `.github/workflows/apply-correction.yml` merged as
   `steps.claude.outputs.github_token` -- the installation token
