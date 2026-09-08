@@ -92,8 +92,10 @@ hand and say which and why in the commit.
 8. **Commit and push** to the same `correction/<id>` branch. The title is a sentence about
    the region (`The optic chiasm gets its plate back`); the body says the cause and the
    numbers; end with `Co-authored-by: Daniel <dstolz@umd.edu>`. Then open the pull request
-   against `main` with `gh pr create`, the write-up as its body. Do not merge: the workflow
-   merges once CI is green.
+   against `main` with `gh pr create`, the write-up as its body. Commit
+   `qc/chk_corr_<id>.png` with the fix: the correction file is what the reader drew, and
+   that picture is what it did. Do not merge, and do not wait to be told to: the workflow
+   waits on CI and stops at the pull request, which a person reads before it lands.
 
 ## Never
 
