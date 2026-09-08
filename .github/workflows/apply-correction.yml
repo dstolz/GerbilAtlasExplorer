@@ -31,6 +31,18 @@
 # GITHUB_TOKEN would not -- so the correction's own pull request would never get a check to
 # wait for.
 #
+# The action is not left to install Claude Code either. It does that with `curl -fsSL
+# https://claude.ai/install.sh | bash -s -- <version>`, the version a constant bumped with
+# each release of the action, and then hands the SDK `~/.local/bin/claude` on the strength of
+# the installer's exit code alone. The installer that 2.1.265 brought -- v1.0.218 of the
+# action, which `v1` moved to on the evening of 2026-09-08 -- printed "claude command at
+# ~/.local/bin/claude missing or broken (~/.local/bin does not exist)", then the success
+# banner, and exited 0, where 2.1.263 that morning had placed the launcher. Both runs after
+# the tag moved died at the SDK with "Claude Code native binary not found" before a prompt
+# was read. So the install is a step of this workflow, at a version that has carried a run,
+# checked for the binary it was meant to leave, and given to the action by path, which is
+# what `path_to_claude_code_executable` skips the action's own install for.
+#
 # The session's own commits touch data/, svg/, tools/ and the docs, never corrections/, so
 # the paths filter is what keeps them from starting this again. The actor guard is the belt
 # to that brace and not the thing relied on: the actor string on an App-token push is read
@@ -113,6 +125,31 @@ jobs:
       - name: Read them
         run: python3 tools/corrections.py validate ${{ steps.files.outputs.list }}
 
+      # The version is the one the action itself pinned when a run last went the distance
+      # (v1.0.217, 2.1.263) and is moved by hand, once the action's own pin has moved and a
+      # run on it has reached the session. The directory is made first because the 2.1.265
+      # installer no longer makes it; the fallback is for an installer that downloaded the
+      # binary to its versioned path and failed only to place the launcher over it, which
+      # is what the 2.1.265 notes describe; and a step that finds neither fails here, naming
+      # what it looked for, rather than at the SDK with a stack trace.
+      - name: Install Claude Code
+        id: cli
+        env:
+          VERSION: '2.1.263'
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          curl -fsSL https://claude.ai/install.sh | bash -s -- "$VERSION"
+          bin="$HOME/.local/bin/claude"
+          if [ ! -x "$bin" ]; then
+            bin=$(find "$HOME/.local/share/claude/versions" -maxdepth 1 -type f -name "$VERSION*" -perm -u+x 2>/dev/null | head -n 1 || true)
+          fi
+          if [ -z "$bin" ] || [ ! -x "$bin" ]; then
+            echo "::error::the installer exited 0 and left no claude binary at ~/.local/bin/claude or under ~/.local/share/claude/versions/$VERSION"
+            exit 1
+          fi
+          "$bin" --version
+          echo "path=$bin" >> "$GITHUB_OUTPUT"
+
       - name: Apply them
         id: claude
         uses: anthropics/claude-code-action@v1
@@ -120,6 +157,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          path_to_claude_code_executable: ${{ steps.cli.outputs.path }}
           # The run was raised by the dispatch above, so the actor on it is
           # github-actions[bot] and not whoever pushed; the action refuses a non-human
           # actor unless the bot is named here. Only a workflow of this repository is
