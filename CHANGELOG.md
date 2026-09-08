@@ -6,6 +6,27 @@ carries a `version` block naming the release its derived fields were built for.
 ## [Unreleased]
 
 ### Changed
+- **A correction stops at its pull request, to be read before it lands.** The workflow
+  squash-merged the fix onto main itself the moment CI went green, so what the atlas says a
+  structure is -- its area, its boundary, its mesh, its share of the label volume -- would
+  have changed on the word of one unattended session. Which of the four causes a plate shows
+  is a judgment made by reading the drawing, and it is worth a second pair of eyes. So the
+  run waits on ci.yml, writes the pull request into the job summary, and stops there;
+  **merging is the reader's**. What there is to read is the write-up and its numbers -- the
+  region's area before and after, what else on the plate moved and why,
+  `boundary_edges_shared_exactly` -- and `qc/chk_corr_<id>.png`, which the session commits
+  with the fix now, `qc/` being where this repository has always kept the render that shows
+  a build was right. The correction file is what a reader drew; that picture is what it did.
+
+  The prompt closes the other way out of the job. A session with nobody at the other end
+  that meets an either/or -- and `RAPir` on plate 28 is one, `inspect` offering it a seed of
+  its own or a `label_index` that withdraws the printed box -- can end its turn having
+  decided nothing, which is what both runs of it did. It is now told to take the reading the
+  drawing supports, apply it, and put in the pull request which it took, what the
+  alternative was and what would tell them apart, a question being answerable by the person
+  who reads it and not by a run that has already ended. Stopping is for the plate that
+  supports none of the four causes, and there the session's last message is the summary.
+
 - **The publication floor comes down to the face floor, and 40 regions the atlas draws are
   published for the first time.** `MIN_AREA_PX` was 600 page px against a `MIN_FACE_PX` of
   400, so the extraction spent one test deciding a face was a region rather than tracer
@@ -171,6 +192,88 @@ carries a `version` block naming the release its derived fields were built for.
   are what carry the other two and a plain mesh link carries none.
 
 ### Fixed
+- **A correction is merged with a credential that is still alive, and only once a fix has
+  arrived on the branch.** `.github/workflows/apply-correction.yml` merged as
+  `steps.claude.outputs.github_token` -- the installation token
+  `anthropics/claude-code-action` mints for itself -- and the last step the action runs
+  revokes that token. So the merge step read a credential that had been dead for four tenths
+  of a second: **both runs that got past the dispatch failed with `HTTP 401: Bad
+  credentials` from `gh pr list`**, the first corrections ever to reach a session left
+  unapplied on their branches. The merge is the workflow's own `GITHUB_TOKEN` now. Nothing
+  is lost by the swap -- what that token cannot do is start a workflow, and the checks these
+  steps wait on are on the head commit already, put there by the session's own push, which
+  is made with the app token and is why the action is still handed no `github_token`.
+
+  The 401 also stopped something worse. The action's `success` is the session having
+  stopped without erroring, and that is equally what it does when it reads the plate, says
+  what it would change and ends the turn -- which is what both of those runs did, the second
+  of them in **38 turns and five minutes against a rebuild that alone takes ten**, and
+  neither leaving `RAPir` on plate 28 any different. Had the token been alive, the step
+  would have opened a pull request titled after the correction, squash-merged
+  `corrections/<id>.json` onto main with nothing applied, and deleted the branch that was
+  going to carry the fix. What is asked now is the branch rather than the exit code: a run
+  merges only where `origin/main...origin/<branch>` carries a file outside `corrections/`,
+  and where it does not the run fails with the session's own last message in the job
+  summary, which is the only account the hidden transcript leaves of why it stopped. A
+  second check refuses a branch whose fix edited the correction it was applying, by that
+  correction's id and its snapshot with it: the file a reader drew is the record of what
+  they said, and the `corrections/**` paths filter that keeps a fix commit from starting
+  this workflow again rests on its never changing.
+
+  The session is given a model now rather than the action's default. The work is long --
+  eight steps, a ten-minute rebuild, then every check -- and it turns on a judgment the
+  correction file does not make for it: which of the four causes the plate shows. The one
+  correction of this kind carried the whole way, `och` on plate 22 (#79), was done on Opus,
+  and the two runs that stopped five minutes in took the default; `claude_args` names
+  `claude-opus-5`, the action having no model input of its own.
+
+- **The browser suite stops reading a link before the page has read it.** `page.goto()` to
+  the same file with a different fragment is a same-document navigation: nothing reloads,
+  `window.__gae` is the one the spec has been driving all along, and `readHash` runs off the
+  `hashchange` event in a task of its own. Three assertions sat across that gap. The one that
+  fell over is in `multiview.spec.js`, where the wait -- `waitForFunction(() => !!window.__gae)`
+  -- is satisfied by the object that is already there: on a runner slow enough it read pane A
+  still holding what the clicks above had left it on, **`nissl` where the link says `myelin`**,
+  which is how a branch whose whole diff is two files under `corrections/` came back red. The
+  other two are in `colors.spec.js` and waited for nothing at all -- `writeHash()` a beat
+  early writes out the `cw=70` the next link drops, and the SVG export is taken off the
+  colors the last link set.
+
+  All three go through `about:blank` now, which `smoke.spec.js` and `landmarks3d.spec.js`
+  already did and `frameview.spec.js` covers with a sleep. That is the load a pasted link
+  really is, and it is what makes the wait mean something: `window.__gae` is published after
+  `readHash()` has run, both at the end of the script, so the spec still reads the panes the
+  link set without waiting on a stack -- which is the thing it is there to assert. 109
+  browser tests pass.
+
+- **A pushed correction reaches the session it is addressed to.**
+  `.github/workflows/apply-correction.yml` handed `anthropics/claude-code-action` the `push`
+  that carries `corrections/<id>.json`, and the action reads the event that started it: it
+  parses issues, pull requests and their comments and reviews, `workflow_dispatch`,
+  `repository_dispatch`, `schedule` and `workflow_run`, and throws `Unsupported event type:
+  push` on anything else before it looks at the prompt at all. So the workflow that carries
+  every correction into the pipeline had never applied one -- **its first run ever, and the
+  re-push after it, both failed the same way about a minute in**, with the branch and its
+  file untouched.
+
+  The push now dispatches this same workflow on the same branch, and the run that comes back
+  does the work. That hop is one `GITHUB_TOKEN` is allowed to make -- `workflow_dispatch` and
+  `repository_dispatch` are the two events it can raise -- so the dispatching job wants
+  `actions: write` and no secret of its own, checks nothing out, and a dispatch runs the
+  workflow file on the ref it names, so a correction is still applied by its own checkout of
+  the pipeline. The `corrections/**` paths filter, which is what keeps the session's own
+  pushes from starting this again, still sits on the push where it always did.
+
+  What the hop costs is the actor: the second run is raised by the first, so it reads
+  `github-actions[bot]` rather than whoever pushed, and the action refuses a non-human actor
+  unless it is named -- hence `allowed_bots: github-actions`, which opens nothing to an
+  account outside the repository, since only a workflow of this one is handed a
+  `GITHUB_TOKEN`. The `correction` input is optional now, blank meaning what the push has
+  always meant, every correction the branch adds to `main`; it is read through the
+  environment rather than interpolated into the shell; and the one-run-at-a-time lock moves
+  from the workflow to the applying job, so the dispatch is never queued behind the apply it
+  is trying to start.
+
 - **A draft in the region fixer stays on the plate it was made on.** The page kept one draft
   for the whole session and only rewrote its plate number when the plate changed, so a seed
   placed on plate 19 was still in the marks list on plate 20 -- drawn at the same page pixel,
