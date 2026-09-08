@@ -1,5 +1,5 @@
 abbr,name,systems,first_plate,last_plate,n_plates,plates,n_labels,n_plates_labeled,label_ap_bregma_median_mm,label_ml_abs_median_mm,label_dv_median_mm,n_plates_with_extent,area_mm2_sum,area_mm2_max,traced_fraction_min,volume_mm3,mesh_grade,n_components,center_ml_mm,center_dv_mm,center_ap_mm
-1,layer 1 of cortex,cortex,11,33,23,11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33,55,18,-0.25,3.75,-7.6,17,18.808,1.781,0.96,6.2369,surface,7,-1.06,-7.58,0.08
+1,layer 1 of cortex,cortex,11,33,23,11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33,54,17,-0.25,3.75,-7.61,17,18.808,1.781,0.96,6.2369,surface,7,-1.06,-7.58,0.08
 10Cb,10th cerebellar lobule (nodule),cerebellum,50,55,6,50 51 52 53 54 55,6,6,-10.23,0.04,-4.77,6,10.186,2.639,0.71,3.9733,surface,1,0.08,-4.72,-10.27
 10N,dorsal motor nucleus of vagus,motor,53,58,6,53 54 55 56 57 58,10,6,-11.27,0.36,-6.01,6,0.773,0.165,0.94,0.25,surface,2,0.03,-5.98,-10.99
 10n,vagus nerve,motor,52,52,1,52,3,1,-10.05,1.56,-6.64,1,0.587,0.587,0.76,0.1914,slab,3,-1.66,-6.78,-10.05
@@ -52,9 +52,9 @@ A13,A13 dopamine cells,monoaminergic,28,29,2,28 29,2,1,-2,0.86,-6.44,1,0.789,0.7
 A5,A5 noradrenaline cells,monoaminergic,44,47,4,44 45 46 47,7,4,-7.95,1.76,-7.3,4,0.605,0.206,0.41,0.2368,surface,2,-1.83,-7.32,-7.84
 AA,anterior amygdaloid area,amygdala,24,26,3,24 25 26,5,3,-0.6,2.6,-7.66,3,2.212,1.419,0.39,0.8444,surface,2,3.07,-7.53,-0.4
 AAF,anterior auditory field,auditory,28,29,2,28 29,4,2,-1.82,6.18,-4.34,0,,,,,,,,,
-aca,"anterior commissure, anterior part",fiber_tract,11,24,14,11 12 13 14 15 16 17 18 19 20 21 22 23 24,24,13,1.85,1.22,-6.46,13,3.14,0.427,0.81,1.1353,surface,3,-0.54,-6.37,1.54
+aca,"anterior commissure, anterior part",fiber_tract,11,24,14,11 12 13 14 15 16 17 18 19 20 21 22 23 24,24,13,1.85,1.22,-6.46,13,3.139,0.427,0.81,1.1353,surface,3,-0.54,-6.37,1.54
 AcbC,"accumbens nucleus, core",basal_forebrain,16,21,6,16 17 18 19 20 21,12,6,1.68,1.2,-6.38,6,8.362,1.934,0.91,3.0183,surface,2,-1.28,-6.34,1.55
-AcbSh,"accumbens nucleus, shell",basal_forebrain,16,21,6,16 17 18 19 20 21,11,6,1.85,0.75,-6.52,6,6.046,1.546,0.78,2.1476,surface,2,0.74,-6.56,1.67
+AcbSh,"accumbens nucleus, shell",basal_forebrain,16,21,6,16 17 18 19 20 21,11,6,1.85,0.75,-6.52,6,6.047,1.546,0.78,2.1476,surface,2,0.74,-6.56,1.67
 acer,anterior cerebral artery,vascular;ventricular,23,23,1,23,2,1,0.1,1.11,-8.29,0,,,,,,,,,
 aci,"anterior commissure, intrabulbar part",fiber_tract;olfactory,1,10,10,1 2 3 4 5 6 7 8 9 10,18,10,6.22,1.31,-5.35,8,4.737,1.536,0.94,1.2938,surface,5,-0.98,-5.69,7.06
 ACo,anterior cortical amygdaloid nucleus,amygdala,24,28,5,24 25 26 27 28,9,5,-0.95,3.24,-8.13,5,5.365,1.751,0.83,1.9614,surface,2,-3.29,-8.23,-0.92
@@ -65,7 +65,7 @@ AHA,"anterior hypothalamic area, anterior part",hypothalamus;thalamus,25,26,2,25
 AHC,"anterior hypothalamic area, central part",hypothalamus;thalamus,27,28,2,27 28,3,2,-1.3,0.86,-7.31,2,1.216,1.139,0.54,0.3298,slab,2,0.61,-7.26,-1.37
 AHi,amygdalohippocampal area,amygdala;hippocampal,29,33,5,29 30 31 32 33,10,5,-2.7,3.52,-7.42,5,5.189,2.186,0.98,1.9825,surface,2,3.43,-7.42,-2.53
 AHP,"anterior hypothalamic area, posterior part",hypothalamus;thalamus,28,28,1,28,1,1,-1.65,0.6,-6.85,1,0.414,0.414,0.9,0.1176,slab,1,0.64,-6.87,-1.65
-AI,agranular insular cortex,cortex,11,27,17,11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27,35,17,1.5,2.92,-6.09,15,20.783,2.358,0.56,7.6108,surface,3,-4.1,-6.17,0.62
+AI,agranular insular cortex,cortex,11,27,17,11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27,35,17,1.5,2.92,-6.09,15,20.783,2.358,0.56,7.6091,surface,3,-4.1,-6.17,0.62
 ALPO,anterolateral periolivary nucleus,auditory,44,44,1,44,1,1,-7.25,2.58,-7.85,1,0.107,0.107,0.94,0.0324,slab,4,-1.72,-8.38,-7.25
 alv,alveus of the hippocampus,fiber_tract;hippocampal,27,38,12,27 28 29 30 31 32 33 34 35 36 37 38,29,12,-2.7,3.89,-2.55,12,8.268,1.771,0.6,2.4869,surface,15,4.88,-4.2,-3.36
 AM,anteromedial thalamic nucleus,thalamus,25,28,4,25 26 27 28,8,4,-1.12,0.83,-5.23,4,2.037,0.898,0.72,0.8164,surface,2,-0.86,-5.26,-1.11
@@ -325,7 +325,7 @@ LM,lateral mammillary nucleus,hypothalamus,33,35,3,33 34 35,6,3,-3.75,1.04,-7.46
 LMol,lacunosum moleculare layer of the hippocampus,hippocampal,29,36,8,29 30 31 32 33 34 35 36,16,8,-3.22,4.6,-3.51,8,15.284,3.607,0.92,5.5108,surface,2,3.58,-3.49,-3.55
 LNTB,lateral nucleus of the trapezoid body,auditory,44,47,4,44 45 46 47,6,4,-7.78,1.95,-8.42,3,0.335,0.14,0.88,0.1176,slab,3,-1.87,-8.22,-7.43
 lo,lateral olfactory tract,fiber_tract;olfactory,5,25,21,5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25,37,21,2.55,2.12,-6.97,19,6.63,0.817,0.48,2.1791,surface,9,-2.74,-7.5,1.28
-LO,lateral orbital cortex,cortex,8,16,9,8 9 10 11 12 13 14 15 16,17,9,3.95,1.55,-5.24,9,8.983,1.929,0.3,3.2545,surface,3,-1.66,-5.36,3.83
+LO,lateral orbital cortex,cortex,8,16,9,8 9 10 11 12 13 14 15 16,17,9,3.95,1.55,-5.24,9,8.986,1.929,0.3,3.2565,surface,3,-1.66,-5.36,3.83
 LOT,nucleus of the lateral olfactory tract,fiber_tract;olfactory,25,26,2,25 26,4,2,-0.77,2.61,-8,2,0.496,0.255,0.66,0.1908,slab,2,-2.65,-8.08,-0.71
 LPAG,lateral periaqueductal gray,midbrain;ventricular,35,42,8,35 36 37 38 39 40 41 42,16,8,-5.33,0.67,-3.99,8,6.542,1.139,0.81,2.3791,surface,2,0,-4,-5.52
 LPB,lateral parabrachial nucleus,brainstem,45,45,1,45,2,1,-7.6,2.2,-5.34,1,0.467,0.467,1,0.173,slab,2,-1.67,-5.25,-7.63
@@ -698,7 +698,7 @@ VMHVL,"ventromedial hypothalamic nucleus, ventrolateral part",hypothalamus;thala
 VMPO,ventromedial preoptic nucleus,hypothalamus;visual,23,24,2,23 24,2,1,-0.25,0.32,-7.72,1,0.521,0.521,0.41,0.1833,slab,2,0.51,-7.78,-0.26
 VNLL,ventral nucleus of the lateral lemniscus,auditory;fiber_tract,40,40,1,40,2,1,-5.85,1.72,-6.19,1,0.315,0.315,0.99,0.134,slab,2,-2,-5.94,-5.86
 VNTB,ventral nucleus of the trapezoid body,auditory,43,47,5,43 44 45 46 47,8,5,-7.6,1.13,-8.66,5,1.106,0.374,0.92,0.3896,surface,3,-1.3,-8.5,-7.22
-VO,ventral orbital cortex,cortex,9,16,8,9 10 11 12 13 14 15 16,16,8,3.78,1.08,-5.55,8,8.41,1.384,0.59,2.9135,surface,2,-1.2,-5.5,3.71
+VO,ventral orbital cortex,cortex,9,16,8,9 10 11 12 13 14 15 16,16,8,3.78,1.08,-5.55,8,8.412,1.387,0.59,2.9131,surface,2,-1.2,-5.5,3.71
 VP,ventral pallidum,basal_forebrain,16,25,10,16 17 18 19 20 21 22 23 24 25,28,10,1.32,1.48,-7.1,10,6.246,1.883,0.26,2.1015,surface,7,-1.86,-7,-0.05
 VPL,ventral posterolateral thalamic nucleus,somatosensory;thalamus,28,31,4,28 29 30 31,8,4,-2.17,2.82,-5.13,4,3.162,0.952,0.92,1.1185,surface,2,2.78,-5.07,-2.13
 VPM,ventral posteromedial thalamic nucleus,somatosensory;thalamus,28,32,5,28 29 30 31 32,10,5,-2.35,2.45,-4.92,5,9.937,2.751,0.95,3.4925,surface,2,2.42,-4.83,-2.25

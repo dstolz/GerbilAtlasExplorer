@@ -192,6 +192,33 @@ carries a `version` block naming the release its derived fields were built for.
   are what carry the other two and a plain mesh link carries none.
 
 ### Fixed
+- **The `1` printed on plate 16 was the `LO` beside it, read twice.** Layer 1 of cortex had
+  a located label on plate 16 at ML +1.96, DV −5.66 and no region anywhere on the plate — the
+  only plate between 11 and 33 where it carries a box and gets no ring, and every plate from
+  17 on gives it one ring per box. The box was not a `1`. It sits on the printed word `LO`,
+  0.0020 of the frame from `LO`'s own box in x and 0.0008 in y, which is inside a single
+  glyph: the label pass read the right-hemisphere `LO` a second time as a `1`. Plate 16 is
+  the only plate in the atlas where the `1` box overlaps another structure's box at all, so
+  this is one misread word rather than a rule that needs changing. The layer-1 digits the
+  plate really does print — beside `Pir`, `DTT` and `Tu` — were never located, and still are
+  not; that is the ordinary shortfall the label pass has on the small digits, not this.
+
+  What the phantom cost was a seed. It claimed a face between `LO` and `VO`, the face came
+  out under the publication floor and was culled, and the ground it had taken stayed
+  unassigned — a white notch beside `LO` in the QC render, with a `1` printed on `LO`'s own
+  word and nothing to hover. Removing the box gives that ground back to the regions the atlas
+  draws around it: on plate 16 **`LO` goes 0.8558 to 0.8590 mm², `VO` 1.3842 to 1.3866,
+  `AcbSh` 0.8746 to 0.8757 and `aca` 0.3052 to 0.3041** — four entries on one plate, and the
+  whole-atlas re-cut changes no others. Seeds on the plate go 68 to 67 and the region count
+  stays 34.
+
+  Over the atlas the located-label count goes **6346 to 6345** and the count of (plate, name)
+  pairs **3350 to 3349** — `1` no longer has a box on plate 16, and plate 16 joins 11 through
+  15 as a plate where the index lists layer 1 and no copy of the word was read. Three test
+  literals move with them, in `test_label_positions` and in `test_atlaslib`'s label-table
+  row count. `faces_named_by_one_abbreviation` rises 3515 to 3516, since the face by `LO` is
+  now claimed by one name instead of contested, and `boundary_edges_shared_exactly` stays 1.0.
+
 - **A correction reaches its session on an installer that left no binary behind.**
   `anthropics/claude-code-action` installs Claude Code itself -- `curl -fsSL
   https://claude.ai/install.sh | bash -s -- <version>`, the version a constant bumped with
@@ -219,6 +246,7 @@ carries a `version` block naming the release its derived fields were built for.
   the installer's own exit code. The first draft of the block lost the third case to
   `pipefail`: `find` over a directory that is not there failed the assignment before the
   message was reached, and the step exited 1 with nothing said.
+
 
 - **A correction is merged with a credential that is still alive, and only once a fix has
   arrived on the branch.** `.github/workflows/apply-correction.yml` merged as
