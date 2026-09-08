@@ -171,6 +171,25 @@ carries a `version` block naming the release its derived fields were built for.
   are what carry the other two and a plain mesh link carries none.
 
 ### Fixed
+- **The browser suite stops reading a link before the page has read it.** `page.goto()` to
+  the same file with a different fragment is a same-document navigation: nothing reloads,
+  `window.__gae` is the one the spec has been driving all along, and `readHash` runs off the
+  `hashchange` event in a task of its own. Three assertions sat across that gap. The one that
+  fell over is in `multiview.spec.js`, where the wait -- `waitForFunction(() => !!window.__gae)`
+  -- is satisfied by the object that is already there: on a runner slow enough it read pane A
+  still holding what the clicks above had left it on, **`nissl` where the link says `myelin`**,
+  which is how a branch whose whole diff is two files under `corrections/` came back red. The
+  other two are in `colors.spec.js` and waited for nothing at all -- `writeHash()` a beat
+  early writes out the `cw=70` the next link drops, and the SVG export is taken off the
+  colors the last link set.
+
+  All three go through `about:blank` now, which `smoke.spec.js` and `landmarks3d.spec.js`
+  already did and `frameview.spec.js` covers with a sleep. That is the load a pasted link
+  really is, and it is what makes the wait mean something: `window.__gae` is published after
+  `readHash()` has run, both at the end of the script, so the spec still reads the panes the
+  link set without waiting on a stack -- which is the thing it is there to assert. 109
+  browser tests pass.
+
 - **A pushed correction reaches the session it is addressed to.**
   `.github/workflows/apply-correction.yml` handed `anthropics/claude-code-action` the `push`
   that carries `corrections/<id>.json`, and the action reads the event that started it: it
