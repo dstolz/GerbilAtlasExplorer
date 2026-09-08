@@ -6,6 +6,27 @@ carries a `version` block naming the release its derived fields were built for.
 ## [Unreleased]
 
 ### Changed
+- **A correction stops at its pull request, to be read before it lands.** The workflow
+  squash-merged the fix onto main itself the moment CI went green, so what the atlas says a
+  structure is -- its area, its boundary, its mesh, its share of the label volume -- would
+  have changed on the word of one unattended session. Which of the four causes a plate shows
+  is a judgment made by reading the drawing, and it is worth a second pair of eyes. So the
+  run waits on ci.yml, writes the pull request into the job summary, and stops there;
+  **merging is the reader's**. What there is to read is the write-up and its numbers -- the
+  region's area before and after, what else on the plate moved and why,
+  `boundary_edges_shared_exactly` -- and `qc/chk_corr_<id>.png`, which the session commits
+  with the fix now, `qc/` being where this repository has always kept the render that shows
+  a build was right. The correction file is what a reader drew; that picture is what it did.
+
+  The prompt closes the other way out of the job. A session with nobody at the other end
+  that meets an either/or -- and `RAPir` on plate 28 is one, `inspect` offering it a seed of
+  its own or a `label_index` that withdraws the printed box -- can end its turn having
+  decided nothing, which is what both runs of it did. It is now told to take the reading the
+  drawing supports, apply it, and put in the pull request which it took, what the
+  alternative was and what would tell them apart, a question being answerable by the person
+  who reads it and not by a run that has already ended. Stopping is for the plate that
+  supports none of the four causes, and there the session's last message is the summary.
+
 - **The publication floor comes down to the face floor, and 40 regions the atlas draws are
   published for the first time.** `MIN_AREA_PX` was 600 page px against a `MIN_FACE_PX` of
   400, so the extraction spent one test deciding a face was a region rather than tracer

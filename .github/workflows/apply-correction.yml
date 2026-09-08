@@ -4,8 +4,10 @@
 # follows .claude/skills/atlas-region-fix/SKILL.md -- diagnoses the input at fault, fixes
 # it, rebuilds the extents and everything cut from them, runs every check, writes the
 # CHANGELOG and METHODS entries, pushes to the same branch and opens a pull request -- and
-# the last two steps ask the branch whether a fix arrived on it and merge the pull request
-# once CI is green. GitHub Pages serves main, so the site updates on the merge.
+# the last two steps ask the branch whether a fix arrived on it and wait on CI. The run
+# stops at the pull request: a correction is a change to what the atlas says a structure
+# is, and it is read by a person before it lands. GitHub Pages serves main, so the site
+# updates when that merge is made.
 #
 # The push does not run the session. The action reads the event that started it, and `push`
 # is not one it knows: it parses issues, pull requests and their comments and reviews,
@@ -137,6 +139,21 @@ jobs:
             check, write the CHANGELOG and METHODS entries, commit, push to this same branch,
             and open a pull request against main with `gh pr create`. Do not merge it, and do
             not edit the correction file. Python dependencies and Playwright are installed.
+
+            Nobody is at the other end of this run. Where the evidence allows more than one
+            reading -- which of the four causes it is, or which of two fixes for the one it
+            is -- take the reading the drawing supports, apply it, and say in the pull
+            request which you took, what the alternative was, and what would tell them
+            apart. Do not end the run to ask: the correction is read by a person before it
+            is merged, and that is where a question belongs, whereas a session that stops
+            without a commit leaves the plate exactly as it was. The one case for stopping
+            is a plate that supports none of the four causes: say that in your last message,
+            which is what the job summary shows.
+
+            Leave the pull request reviewable. Commit `qc/chk_corr_<id>.png` from `inspect
+            --qc` beside the fix -- the correction file is what the reader drew and that
+            picture is what it did -- and give the body the region's area before and after,
+            what else on the plate moved and why, and `boundary_edges_shared_exactly`.
           # The model is named rather than left to the action's default. This is a long job
           # -- eight steps, a ten-minute rebuild, then every check -- and it turns on a
           # judgment the correction file does not make for it: which of the four causes the
@@ -205,7 +222,13 @@ jobs:
             fi
           done
 
-      - name: Merge when CI is green
+      # The run ends at a green pull request rather than on main. A correction changes what
+      # the atlas says a structure is -- an area, a boundary, a mesh, the label volume --
+      # and the four causes are told apart by reading a plate, which is a judgment worth a
+      # second pair of eyes before it is published. So the merge is the reader's: this waits
+      # on ci.yml, writes the pull request into the job summary, and stops. What it leaves
+      # to read is the write-up, the numbers in it, and `qc/chk_corr_<id>.png` in the diff.
+      - name: Wait on CI, and leave the pull request to be read
         env:
           GH_TOKEN: ${{ github.token }}
           BRANCH: ${{ github.ref_name }}
@@ -214,16 +237,25 @@ jobs:
           if [ -z "$pr" ]; then
             # The session opens its own pull request; this is for the run that pushed a fix
             # and did not, and it wants Settings -> Actions -> "Allow GitHub Actions to
-            # create and approve pull requests", which merging one does not.
+            # create and approve pull requests".
             gh pr create --base main --head "$BRANCH" --fill-first
             pr=$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number')
           fi
-          echo "pull request #$pr"
-          # With a branch-protection rule, auto-merge waits for the checks it requires.
-          # Without one GitHub refuses to arm it, so wait on the checks here and merge.
-          if gh pr merge "$pr" --auto --squash --delete-branch; then
-            exit 0
-          fi
+          url=$(gh pr view "$pr" --json url --jq .url)
+          echo "pull request #$pr -- $url"
           sleep 90                                     # let ci.yml register on the head
-          gh pr checks "$pr" --watch --fail-level error
-          gh pr merge "$pr" --squash --delete-branch
+          if gh pr checks "$pr" --watch --fail-level error; then
+            state='CI is green. Read it and merge it -- the run stops here.'
+            failed=0
+          else
+            state='CI is red on the fix. It wants another pass before it is worth reading.'
+            failed=1
+          fi
+          {
+            echo "### The correction is applied, and waiting to be read"
+            echo
+            echo "[Pull request #$pr]($url) -- $state"
+            echo
+            echo 'The picture of what the correction did is `qc/chk_corr_<id>.png`, in the diff.'
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit "$failed"
