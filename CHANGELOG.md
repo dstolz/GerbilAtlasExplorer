@@ -192,6 +192,47 @@ carries a `version` block naming the release its derived fields were built for.
   are what carry the other two and a plain mesh link carries none.
 
 ### Fixed
+- **The rostral amygdalopiriform area gets the whole column the atlas draws it as, on the
+  left of plate 28.** `RAPir` is printed once on that hemisphere and the plate sets the word
+  on the thin band between two laminar lines, so the extraction was as generous as the plate
+  is lettered and no more: the word seeded the **899 px** band it sits in, and the **6,853
+  px** face deep to it and the **3,140 px** face between it and the pia -- the rest of the
+  same cortical column, standing between the same two areal borders, the dotted one against
+  `Pir` and the one against `PLCo` -- went unnamed, nothing the plate prints lettering
+  either. The layers of `Pir` and `PLCo` on both sides of them carry a digit apiece;
+  `RAPir`'s do not, and one printed word can seed one face. So the region came out as
+  **0.0522 mm² of band inside the 0.5641 the drawing encloses**, which is what the reader
+  who drew `corrections/20260908T142315Z-p28-RAPir.json` marked, a seed to each of the three
+  faces.
+
+  Three rows of `seed_overrides` with `i = -1`, one per seed, written by `corrections.py
+  apply`; the third lands in the face the printed word already seeds and changes nothing.
+  **`RAPir` on plate 28 goes 0.1432 to 0.6551 mm²**, its left hemisphere 0.0522 to 0.5641
+  against the right's 0.0910, and over the series the structure goes 1.206 to 1.718 mm² and
+  0.4246 to 0.5711 mm³, its centre moving ML −4.88 to −4.75, DV −8.07 to −8.19 and AP −2.24
+  to −1.98 as plate 28, its rostral end, stops being a scrap. The new outline is ink the
+  atlas drew for **99.6%** of its length: nine page pixels of it fall off the tracing,
+  single pixels where the simplified ring cuts a corner, and the traced share reads 0.996
+  where the band alone read 1.000.
+
+  That the column is one region and not three is what the drawing says on the plates either
+  side. On plate 30 `RAPir` is a single undivided face of 9,267 px running from the pia to
+  `BLP` and `BMP`, and on the right of plate 29 the word falls in the deep part of the
+  column and takes 4,036 px of it -- the same anatomy the left of 29 letters as a 1,281 px
+  band, for no reason but where the word is set. **Eight other entries on plate 28 move and
+  every one by 0.0036 mm² or less** -- `3` −0.0036, `BMP` −0.0034, `1` −0.0013, `PLCo`
+  −0.0008, `Pir` −0.0004, `VEn` −0.0002, `sm` −0.0001, `LHb` +0.0001 -- which is the
+  watershed's share of the ink those faces now divide with a neighbour that has a name.
+  Half a square millimetre of what `RAPir` gains was holding no name at all: in three
+  dimensions `unnamed_fraction` goes 0.0348 to **0.0346**, and thirteen structures' volumes
+  move, `1` coming out in six mesh components rather than seven and the other eleven in the
+  fourth decimal. `structure_plate_entries` stays 3,118, polygons 6,012 and the coloring 691
+  regions in 631 patches; points go 168,740 to 168,751, faces named by one abbreviation
+  3,515 to 3,517, seeds moved by hand 26 to 29, `section_covered_mean` 0.9483 to 0.9484,
+  `label_inside_its_own_region` 0.9776 either way, and **`boundary_edges_shared_exactly`
+  stays 1.0**. 63 Python tests and 109 browser tests pass, and `--check` on the tables,
+  groups, colors, face maps and pages is clean.
+
 - **A correction reaches its session on an installer that left no binary behind.**
   `anthropics/claude-code-action` installs Claude Code itself -- `curl -fsSL
   https://claude.ai/install.sh | bash -s -- <version>`, the version a constant bumped with
