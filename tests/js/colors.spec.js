@@ -87,7 +87,10 @@ test('the link carries the colors and the wash', async ({ page }) => {
   const h = await page.evaluate(() => { window.__gae.writeHash(); return location.hash; });
   expect(h).toContain('v=C');
   expect(h).toContain('cw=70');
-  // the wash rides only when it has been moved: the plain toggle writes the short link
+  // the wash rides only when it has been moved: the plain toggle writes the short link.
+  // Through about:blank, or the goto is a same-document navigation and writeHash below can
+  // run before the hashchange readHash does -- writing out the 70 this link drops.
+  await page.goto('about:blank');
   await page.goto(BUNDLE + '#p30&v=C');
   const h2 = await page.evaluate(() => { window.__gae.writeHash(); return location.hash; });
   expect(h2).toContain('v=C');
@@ -104,8 +107,11 @@ test('the SVG export carries the colors as one named group', async ({ page }) =>
   const pal = await page.evaluate(() => window.__gae.MCPAL);
   for (const c of pal) expect(svg).toContain(`fill="${c}"`);
   expect(svg).toContain('Regions colored so that no two that touch are alike');
-  // and does not when the plate is not colored
+  // and does not when the plate is not colored -- through about:blank, so the export is
+  // taken off a page that has read this link rather than one still holding the last
+  await page.goto('about:blank');
   await page.goto(BUNDLE + '#p30');
+  await panel(page);
   const [dl2] = await Promise.all([page.waitForEvent('download'), page.click('#esvg')]);
   expect(fs.readFileSync(await dl2.path(), 'utf8')).not.toContain('region-colors');
 });

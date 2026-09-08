@@ -4,8 +4,20 @@
 # follows .claude/skills/atlas-region-fix/SKILL.md -- diagnoses the input at fault, fixes
 # it, rebuilds the extents and everything cut from them, runs every check, writes the
 # CHANGELOG and METHODS entries, pushes to the same branch and opens a pull request -- and
-# the last step merges the pull request once CI is green. GitHub Pages serves main, so the
-# site updates on the merge.
+# the last two steps ask the branch whether a fix arrived on it and wait on CI. The run
+# stops at the pull request: a correction is a change to what the atlas says a structure
+# is, and it is read by a person before it lands. GitHub Pages serves main, so the site
+# updates when that merge is made.
+#
+# The push does not run the session. The action reads the event that started it, and `push`
+# is not one it knows: it parses issues, pull requests and their comments and reviews,
+# workflow_dispatch, repository_dispatch, schedule and workflow_run, and throws
+# `Unsupported event type: push` before it looks at the prompt at all. So the push does the
+# one thing it can -- it dispatches this same workflow on the same branch -- and the run
+# that comes back does the work. workflow_dispatch is one of the two events GITHUB_TOKEN is
+# allowed to raise, which is what lets the hop be made with no secret of its own, and a
+# dispatch runs the workflow file on the ref it names, so a correction is still applied by
+# its own checkout of the pipeline.
 #
 # Setup, once: `claude /install-github-app` from a local terminal, taking the subscription
 # option. That installs the Claude GitHub App on the repository and writes the one secret
@@ -32,19 +44,33 @@ on:
   workflow_dispatch:
     inputs:
       correction:
-        description: 'corrections/<id>.json to apply, on the branch this is run from'
-        required: true
+        description: 'corrections/<id>.json to apply, on the branch this is run from; blank takes every correction the branch adds to main'
+        required: false
         type: string
 
-concurrency:
-  group: correction-${{ github.ref }}
-  cancel-in-progress: false
-
 jobs:
+  # The hop. Nothing is checked out here: which corrections the branch carries is read on
+  # the other side, where a checkout is being made anyway, so this is a token and one API
+  # call.
+  dispatch:
+    if: github.event_name == 'push' && github.actor != 'claude[bot]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read                    # to resolve the ref the dispatch names
+      actions: write
+    steps:
+      - name: Hand the branch to a run the action can read
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run apply-correction.yml --repo "$GITHUB_REPOSITORY" --ref "$GITHUB_REF_NAME"
+
   apply:
-    if: github.event_name == 'workflow_dispatch' || github.actor != 'claude[bot]'
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 150
+    concurrency:                        # on the job, so the dispatch above is never queued behind an apply
+      group: correction-${{ github.ref }}
+      cancel-in-progress: false
     permissions:
       contents: write
       pull-requests: write
@@ -73,10 +99,11 @@ jobs:
 
       - name: Which corrections this branch carries
         id: files
+        env:
+          CORRECTION: ${{ inputs.correction }}
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            list="${{ inputs.correction }}"
-          else
+          list="$CORRECTION"
+          if [ -z "$list" ]; then
             git fetch origin main
             list=$(git diff --name-only origin/main...HEAD -- 'corrections/*.json' | tr '\n' ' ')
           fi
@@ -93,6 +120,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          # The run was raised by the dispatch above, so the actor on it is
+          # github-actions[bot] and not whoever pushed; the action refuses a non-human
+          # actor unless the bot is named here. Only a workflow of this repository is
+          # handed a GITHUB_TOKEN, so naming it opens nothing to an account outside it.
+          allowed_bots: github-actions
           # `actions: read` above is the workflow's own grant; the token the action mints
           # for itself is scoped by this, and without it the session cannot read the CI it
           # is trying to get green.
@@ -107,27 +139,123 @@ jobs:
             check, write the CHANGELOG and METHODS entries, commit, push to this same branch,
             and open a pull request against main with `gh pr create`. Do not merge it, and do
             not edit the correction file. Python dependencies and Playwright are installed.
+
+            Nobody is at the other end of this run. Where the evidence allows more than one
+            reading -- which of the four causes it is, or which of two fixes for the one it
+            is -- take the reading the drawing supports, apply it, and say in the pull
+            request which you took, what the alternative was, and what would tell them
+            apart. Do not end the run to ask: the correction is read by a person before it
+            is merged, and that is where a question belongs, whereas a session that stops
+            without a commit leaves the plate exactly as it was. The one case for stopping
+            is a plate that supports none of the four causes: say that in your last message,
+            which is what the job summary shows.
+
+            Leave the pull request reviewable. Commit `qc/chk_corr_<id>.png` from `inspect
+            --qc` beside the fix -- the correction file is what the reader drew and that
+            picture is what it did -- and give the body the region's area before and after,
+            what else on the plate moved and why, and `boundary_edges_shared_exactly`.
+          # The model is named rather than left to the action's default. This is a long job
+          # -- eight steps, a ten-minute rebuild, then every check -- and it turns on a
+          # judgment the correction file does not make for it: which of the four causes the
+          # plate shows. The one correction of this kind carried the whole way, `och` on
+          # plate 22 (#79), was done on Opus; the two runs that stopped five minutes in with
+          # nothing pushed took the default. The action has no model input of its own, and
+          # claude_args goes straight to the CLI, where `--effort xhigh` is the step above
+          # the default should a run still come back thin.
           claude_args: |
             --allowedTools "Bash,Read,Edit,Write,Glob,Grep"
+            --model claude-opus-5
             --max-turns 300
 
-      - name: Merge when CI is green
-        if: steps.claude.outcome == 'success'
+      # The action mints an installation token for itself, hands it out as
+      # `steps.claude.outputs.github_token`, and revokes it in the last step it runs -- so
+      # by the time any step of this job can read that output the credential behind it is
+      # gone. That is what both runs which got this far hit: the revoke, and four tenths of
+      # a second later a 401 from `gh pr list`. Everything below is the workflow's own
+      # GITHUB_TOKEN instead. What that token cannot do is start a workflow, and nothing
+      # here needs it to: ci.yml runs on `push: branches: ['**']`, so the session's own
+      # push -- made with the app token, which is the reason the action is handed no
+      # `github_token` -- has already put the checks these steps wait on onto the head
+      # commit, whoever opens the pull request over them.
+
+      - name: The session left a fix on the branch
         env:
-          GH_TOKEN: ${{ steps.claude.outputs.github_token || github.token }}
+          BRANCH: ${{ github.ref_name }}
+          LIST: ${{ steps.files.outputs.list }}
+          EXECUTION: ${{ steps.claude.outputs.execution_file }}
+        run: |
+          git fetch origin main "$BRANCH"
+          fix=$(git diff --name-only origin/main...origin/"$BRANCH" | grep -v '^corrections/' || true)
+          # The action's own success is the session having stopped without erroring, which
+          # is also what it does when it reads the plate, says what it would change and
+          # ends the turn -- the run that reported it last did so in 38 turns and five
+          # minutes, against a rebuild that alone takes ten. Merging on that alone puts
+          # the correction file on main with nothing applied and
+          # closes the branch that was going to carry the fix, so what is asked is the
+          # branch and not the exit code. The transcript stays hidden as the action left
+          # it; what the session said last is the only account of why it stopped.
+          if [ -z "$fix" ]; then
+            said=$(jq -r '[.[]? | select(.type == "result")] | last | .result // empty' "$EXECUTION" 2>/dev/null || true)
+            {
+              echo "### The correction was not applied"
+              echo
+              echo "\`$BRANCH\` carries nothing but $LIST, so there is no fix to merge."
+              echo
+              echo "What the session said before it stopped:"
+              echo
+              echo '```'
+              echo "${said:-(the run left no final message)}"
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "::error::the session ended without a fix on $BRANCH; the correction is unapplied"
+            exit 1
+          fi
+          printf 'the fix touches:\n%s\n' "$fix"
+          # A fix that edits the file it is applying breaks both the loop guard the paths
+          # filter above rests on and the record of what the reader drew. Each correction
+          # is asked about with its snapshot and by name: a branch that merged main in
+          # carries the corrections main has, and those were applied long ago.
+          for f in $LIST; do
+            if ! git diff --quiet "$GITHUB_SHA" origin/"$BRANCH" -- "${f%.json}.*"; then
+              echo "::error::the session edited $f or its snapshot, and both are the reader's own record"
+              exit 1
+            fi
+          done
+
+      # The run ends at a green pull request rather than on main. A correction changes what
+      # the atlas says a structure is -- an area, a boundary, a mesh, the label volume --
+      # and the four causes are told apart by reading a plate, which is a judgment worth a
+      # second pair of eyes before it is published. So the merge is the reader's: this waits
+      # on ci.yml, writes the pull request into the job summary, and stops. What it leaves
+      # to read is the write-up, the numbers in it, and `qc/chk_corr_<id>.png` in the diff.
+      - name: Wait on CI, and leave the pull request to be read
+        env:
+          GH_TOKEN: ${{ github.token }}
           BRANCH: ${{ github.ref_name }}
         run: |
           pr=$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number')
           if [ -z "$pr" ]; then
+            # The session opens its own pull request; this is for the run that pushed a fix
+            # and did not, and it wants Settings -> Actions -> "Allow GitHub Actions to
+            # create and approve pull requests".
             gh pr create --base main --head "$BRANCH" --fill-first
             pr=$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number')
           fi
-          echo "pull request #$pr"
-          # With a branch-protection rule, auto-merge waits for the checks it requires.
-          # Without one GitHub refuses to arm it, so wait on the checks here and merge.
-          if gh pr merge "$pr" --auto --squash --delete-branch; then
-            exit 0
-          fi
+          url=$(gh pr view "$pr" --json url --jq .url)
+          echo "pull request #$pr -- $url"
           sleep 90                                     # let ci.yml register on the head
-          gh pr checks "$pr" --watch --fail-level error
-          gh pr merge "$pr" --squash --delete-branch
+          if gh pr checks "$pr" --watch --fail-level error; then
+            state='CI is green. Read it and merge it -- the run stops here.'
+            failed=0
+          else
+            state='CI is red on the fix. It wants another pass before it is worth reading.'
+            failed=1
+          fi
+          {
+            echo "### The correction is applied, and waiting to be read"
+            echo
+            echo "[Pull request #$pr]($url) -- $state"
+            echo
+            echo 'The picture of what the correction did is `qc/chk_corr_<id>.png`, in the diff.'
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit "$failed"
