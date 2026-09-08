@@ -137,8 +137,17 @@ jobs:
             check, write the CHANGELOG and METHODS entries, commit, push to this same branch,
             and open a pull request against main with `gh pr create`. Do not merge it, and do
             not edit the correction file. Python dependencies and Playwright are installed.
+          # The model is named rather than left to the action's default. This is a long job
+          # -- eight steps, a ten-minute rebuild, then every check -- and it turns on a
+          # judgment the correction file does not make for it: which of the four causes the
+          # plate shows. The one correction of this kind carried the whole way, `och` on
+          # plate 22 (#79), was done on Opus; the two runs that stopped five minutes in with
+          # nothing pushed took the default. The action has no model input of its own, and
+          # claude_args goes straight to the CLI, where `--effort xhigh` is the step above
+          # the default should a run still come back thin.
           claude_args: |
             --allowedTools "Bash,Read,Edit,Write,Glob,Grep"
+            --model claude-opus-5
             --max-turns 300
 
       # The action mints an installation token for itself, hands it out as

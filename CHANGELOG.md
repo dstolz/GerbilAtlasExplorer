@@ -187,16 +187,24 @@ carries a `version` block naming the release its derived fields were built for.
   stopped without erroring, and that is equally what it does when it reads the plate, says
   what it would change and ends the turn -- which is what both of those runs did, the second
   of them in **38 turns and five minutes against a rebuild that alone takes ten**, and
-  neither leaving `RAPir` on plate 28 any different. Had the token been alive, the step would have opened a pull request titled
-  after the correction, squash-merged `corrections/<id>.json` onto main with nothing
-  applied, and deleted the branch that was going to carry the fix. What is asked now is the
-  branch rather than the exit code: a run merges only where `origin/main...origin/<branch>`
-  carries a file outside `corrections/`, and where it does not the run fails with the
-  session's own last message in the job summary, which is the only account the hidden
-  transcript leaves of why it stopped. A second check refuses a branch whose fix edited the
-  correction it was applying, by that correction's id and its snapshot with it: the file a
-  reader drew is the record of what they said, and the `corrections/**` paths filter that
-  keeps a fix commit from starting this workflow again rests on its never changing.
+  neither leaving `RAPir` on plate 28 any different. Had the token been alive, the step
+  would have opened a pull request titled after the correction, squash-merged
+  `corrections/<id>.json` onto main with nothing applied, and deleted the branch that was
+  going to carry the fix. What is asked now is the branch rather than the exit code: a run
+  merges only where `origin/main...origin/<branch>` carries a file outside `corrections/`,
+  and where it does not the run fails with the session's own last message in the job
+  summary, which is the only account the hidden transcript leaves of why it stopped. A
+  second check refuses a branch whose fix edited the correction it was applying, by that
+  correction's id and its snapshot with it: the file a reader drew is the record of what
+  they said, and the `corrections/**` paths filter that keeps a fix commit from starting
+  this workflow again rests on its never changing.
+
+  The session is given a model now rather than the action's default. The work is long --
+  eight steps, a ten-minute rebuild, then every check -- and it turns on a judgment the
+  correction file does not make for it: which of the four causes the plate shows. The one
+  correction of this kind carried the whole way, `och` on plate 22 (#79), was done on Opus,
+  and the two runs that stopped five minutes in took the default; `claude_args` names
+  `claude-opus-5`, the action having no model input of its own.
 
 - **The browser suite stops reading a link before the page has read it.** `page.goto()` to
   the same file with a different fragment is a same-document navigation: nothing reloads,
