@@ -282,7 +282,13 @@ jobs:
           url=$(gh pr view "$pr" --json url --jq .url)
           echo "pull request #$pr -- $url"
           sleep 90                                     # let ci.yml register on the head
-          if gh pr checks "$pr" --watch --fail-level error; then
+          # `--watch` holds until every check on the head has finished, and `--fail-fast`
+          # lets go at the first one that fails; the exit code is 0 for all green and 1
+          # otherwise. Those are the two flags `gh pr checks` has for this, per the usage
+          # it printed on the runner -- the `--fail-level error` this first read was a flag
+          # of nothing, and the runs that opened #109 and #110 ended red on it with CI
+          # green on both.
+          if gh pr checks "$pr" --watch --fail-fast; then
             state='CI is green. Read it and merge it -- the run stops here.'
             failed=0
           else

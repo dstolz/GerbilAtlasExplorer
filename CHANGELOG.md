@@ -192,6 +192,17 @@ carries a `version` block naming the release its derived fields were built for.
   are what carry the other two and a plain mesh link carries none.
 
 ### Fixed
+- **A correction's run ends green when its pull request does.** The last step of
+  `.github/workflows/apply-correction.yml` waited on CI with `gh pr checks --watch
+  --fail-level error`, and `--fail-level` is a flag of nothing: `gh` printed its usage and
+  exited 1, so **the first two runs to carry a correction the whole way -- `RAPir` on plate
+  28 (#109) and `E` on plate 3 (#110), fixes pushed, pull requests opened, CI green on
+  both -- were reported as failures** ninety seconds after the pull request was named.
+  The flag is `--fail-fast` now, which with `--watch` holds until every check on the head
+  has finished or the first has failed, exiting 0 for green and 1 otherwise; those are the
+  two flags the runner's own usage lists for this. Checked: the file parses, the block
+  passes `bash -n`, and the flag list is read off what `gh` printed in both runs.
+
 - **The `1` printed on plate 16 was the `LO` beside it, read twice.** Layer 1 of cortex had
   a located label on plate 16 at ML +1.96, DV −5.66 and no region anywhere on the plate — the
   only plate between 11 and 33 where it carries a box and gets no ring, and every plate from
