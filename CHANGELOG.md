@@ -171,6 +171,34 @@ carries a `version` block naming the release its derived fields were built for.
   are what carry the other two and a plain mesh link carries none.
 
 ### Fixed
+- **A pushed correction reaches the session it is addressed to.**
+  `.github/workflows/apply-correction.yml` handed `anthropics/claude-code-action` the `push`
+  that carries `corrections/<id>.json`, and the action reads the event that started it: it
+  parses issues, pull requests and their comments and reviews, `workflow_dispatch`,
+  `repository_dispatch`, `schedule` and `workflow_run`, and throws `Unsupported event type:
+  push` on anything else before it looks at the prompt at all. So the workflow that carries
+  every correction into the pipeline had never applied one -- **its first run ever, and the
+  re-push after it, both failed the same way about a minute in**, with the branch and its
+  file untouched.
+
+  The push now dispatches this same workflow on the same branch, and the run that comes back
+  does the work. That hop is one `GITHUB_TOKEN` is allowed to make -- `workflow_dispatch` and
+  `repository_dispatch` are the two events it can raise -- so the dispatching job wants
+  `actions: write` and no secret of its own, checks nothing out, and a dispatch runs the
+  workflow file on the ref it names, so a correction is still applied by its own checkout of
+  the pipeline. The `corrections/**` paths filter, which is what keeps the session's own
+  pushes from starting this again, still sits on the push where it always did.
+
+  What the hop costs is the actor: the second run is raised by the first, so it reads
+  `github-actions[bot]` rather than whoever pushed, and the action refuses a non-human actor
+  unless it is named -- hence `allowed_bots: github-actions`, which opens nothing to an
+  account outside the repository, since only a workflow of this one is handed a
+  `GITHUB_TOKEN`. The `correction` input is optional now, blank meaning what the push has
+  always meant, every correction the branch adds to `main`; it is read through the
+  environment rather than interpolated into the shell; and the one-run-at-a-time lock moves
+  from the workflow to the applying job, so the dispatch is never queued behind the apply it
+  is trying to start.
+
 - **A draft in the region fixer stays on the plate it was made on.** The page kept one draft
   for the whole session and only rewrote its plate number when the plate changed, so a seed
   placed on plate 19 was still in the marks list on plate 20 -- drawn at the same page pixel,

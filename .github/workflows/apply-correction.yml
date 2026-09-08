@@ -7,6 +7,16 @@
 # the last step merges the pull request once CI is green. GitHub Pages serves main, so the
 # site updates on the merge.
 #
+# The push does not run the session. The action reads the event that started it, and `push`
+# is not one it knows: it parses issues, pull requests and their comments and reviews,
+# workflow_dispatch, repository_dispatch, schedule and workflow_run, and throws
+# `Unsupported event type: push` before it looks at the prompt at all. So the push does the
+# one thing it can -- it dispatches this same workflow on the same branch -- and the run
+# that comes back does the work. workflow_dispatch is one of the two events GITHUB_TOKEN is
+# allowed to raise, which is what lets the hop be made with no secret of its own, and a
+# dispatch runs the workflow file on the ref it names, so a correction is still applied by
+# its own checkout of the pipeline.
+#
 # Setup, once: `claude /install-github-app` from a local terminal, taking the subscription
 # option. That installs the Claude GitHub App on the repository and writes the one secret
 # this reads, CLAUDE_CODE_OAUTH_TOKEN; by hand it is `claude setup-token` and `gh secret
@@ -32,19 +42,33 @@ on:
   workflow_dispatch:
     inputs:
       correction:
-        description: 'corrections/<id>.json to apply, on the branch this is run from'
-        required: true
+        description: 'corrections/<id>.json to apply, on the branch this is run from; blank takes every correction the branch adds to main'
+        required: false
         type: string
 
-concurrency:
-  group: correction-${{ github.ref }}
-  cancel-in-progress: false
-
 jobs:
+  # The hop. Nothing is checked out here: which corrections the branch carries is read on
+  # the other side, where a checkout is being made anyway, so this is a token and one API
+  # call.
+  dispatch:
+    if: github.event_name == 'push' && github.actor != 'claude[bot]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read                    # to resolve the ref the dispatch names
+      actions: write
+    steps:
+      - name: Hand the branch to a run the action can read
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run apply-correction.yml --repo "$GITHUB_REPOSITORY" --ref "$GITHUB_REF_NAME"
+
   apply:
-    if: github.event_name == 'workflow_dispatch' || github.actor != 'claude[bot]'
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 150
+    concurrency:                        # on the job, so the dispatch above is never queued behind an apply
+      group: correction-${{ github.ref }}
+      cancel-in-progress: false
     permissions:
       contents: write
       pull-requests: write
@@ -73,10 +97,11 @@ jobs:
 
       - name: Which corrections this branch carries
         id: files
+        env:
+          CORRECTION: ${{ inputs.correction }}
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            list="${{ inputs.correction }}"
-          else
+          list="$CORRECTION"
+          if [ -z "$list" ]; then
             git fetch origin main
             list=$(git diff --name-only origin/main...HEAD -- 'corrections/*.json' | tr '\n' ' ')
           fi
@@ -93,6 +118,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          # The run was raised by the dispatch above, so the actor on it is
+          # github-actions[bot] and not whoever pushed; the action refuses a non-human
+          # actor unless the bot is named here. Only a workflow of this repository is
+          # handed a GITHUB_TOKEN, so naming it opens nothing to an account outside it.
+          allowed_bots: github-actions
           # `actions: read` above is the workflow's own grant; the token the action mints
           # for itself is scoped by this, and without it the session cannot read the CI it
           # is trying to get green.
