@@ -201,11 +201,20 @@ test.describe('the second 3-D pane', () => {
     expect(h).toContain('ps32=drawing');
     expect(h).not.toMatch(/[#&]ps3=/);                  // A is on the default, so A says nothing
 
-    // and it reads back, without waiting for either stack: the panes are set by the link
+    // and it reads back, without waiting for either stack: the panes are set by the link.
+    // The about:blank is not decoration. goto() to the same URL with a different fragment
+    // is a same-document navigation, so `window.__gae` is still the one this test has spent
+    // the paragraph above driving and the wait passes on it, while readHash runs off the
+    // hashchange event in a task that may not have come round yet. Read that beat early, A
+    // is whatever the clicks left it holding -- which is how this arrives as `nissl` beside
+    // a `drawing` B, on a runner slow enough. On a load `__gae` is published after readHash
+    // has run, so the wait means what it says and the stacks are still not waited on.
+    await page.goto('about:blank');
     await page.goto(BUNDLE + '#p30&t=v3d&sp=1&ps3=myelin&ps32=drawing');
     await page.waitForFunction(() => !!window.__gae, null, { timeout: 90000 });
     expect((await panes(page)).map(q => q.src)).toEqual(['myelin', 'drawing']);
     // ps names the plate and still sets a stack that is not named itself
+    await page.goto('about:blank');
     await page.goto(BUNDLE + '#p30&t=v3d&ps=myelin');
     await page.waitForFunction(() => !!window.__gae, null, { timeout: 90000 });
     expect((await panes(page))[0].src).toBe('myelin');
