@@ -361,7 +361,11 @@ def write_nifti(path, labels, grid, descrip='', unnamed=65000):
     struct.pack_into('<4f', h, 296, 0, res, 0, y0)                     # srow_y
     struct.pack_into('<4f', h, 312, 0, 0, res, z0)                     # srow_z
     struct.pack_into('<4s', h, 344, b'n+1\0')                          # magic
-    with gzip.open(path, 'wb', compresslevel=6) as fh:
+    # mtime 0 and no name in the gzip header, so the same volume is the same file: with
+    # the default header every rebuild changed the committed bytes and nothing else, and
+    # a binary that changes on every run conflicts between any two branches.
+    with open(path, 'wb') as raw, gzip.GzipFile(filename='', mode='wb', compresslevel=6,
+                                                 fileobj=raw, mtime=0) as fh:
         fh.write(bytes(h))
         fh.write(b'\0\0\0\0')                                          # no extensions
         fh.write(arr.tobytes(order='F'))

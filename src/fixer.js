@@ -442,15 +442,28 @@ const Static = {
       }
       return j;
     };
+    // One commit through the Git Data API -- blob, tree, commit, then the branch pointed
+    // at it. Two `contents` PUTs were two commits and two pushes, and every push of a
+    // correction file dispatches apply-correction.yml, so the workflow ran twice.
     const branch = 'correction/' + doc.id;
     const head = await api_('/git/ref/heads/' + REPO.base);
+    const parent = await api_('/git/commits/' + head.object.sha);
+    const blob = async (content) => (await api_('/git/blobs', {method: 'POST',
+      body: JSON.stringify({content, encoding: 'base64'})})).sha;
+    const tree = [{path: 'corrections/' + doc.id + '.json', mode: '100644', type: 'blob',
+      sha: await blob(b64(text))}];
+    if (png) {
+      tree.push({path: 'corrections/' + doc.id + '.png', mode: '100644', type: 'blob',
+        sha: await blob(png.replace(/^data:[^,]*,/, ''))});
+    }
+    const made = await api_('/git/trees', {method: 'POST',
+      body: JSON.stringify({base_tree: parent.tree.sha, tree})});
+    const commit = await api_('/git/commits', {method: 'POST', body: JSON.stringify({
+      message: 'Correction: ' + doc.abbr + ' on plate ' + doc.plate
+        + '\n\n' + doc.problem + '\n\nCorrection-Id: ' + doc.id,
+      tree: made.sha, parents: [head.object.sha]})});
     await api_('/git/refs', {method: 'POST',
-      body: JSON.stringify({ref: 'refs/heads/' + branch, sha: head.object.sha})});
-    const put = (path, content) => api_('/contents/' + path, {method: 'PUT',
-      body: JSON.stringify({message: 'Correction: ' + doc.abbr + ' on plate ' + doc.plate
-        + '\n\n' + doc.problem + '\n\nCorrection-Id: ' + doc.id, content, branch})});
-    await put('corrections/' + doc.id + '.json', b64(text));
-    if (png) await put('corrections/' + doc.id + '.png', png.replace(/^data:[^,]*,/, ''));
+      body: JSON.stringify({ref: 'refs/heads/' + branch, sha: commit.sha})});
     const url = 'https://github.com/' + REPO.owner + '/' + REPO.repo;
     return {id: doc.id, dry: false, branch, json: text, url: url + '/tree/' + branch,
       actions: url + '/actions/workflows/apply-correction.yml'};
@@ -532,6 +545,7 @@ function buildDoc(draft) {
     problem: (draft.problem || '').trim(),
     seeds: [], boundaries: [], extents: [],
     notes: (draft.notes || []).map(String),
+    preview: draft.preview || null,
     snapshot: draft.snapshot || null,
     source: SRC.pipeline ? null : {
       commit: S.boot.commit || '', site: location.origin + BASE,
@@ -1053,6 +1067,7 @@ async function click(at, ev) {
       page_px: [round2(at[0]), round2(at[1])], mm: [round3(mm[0]), round3(mm[1])], note: ''};
     if (S.tool === 'seed' && S.opts.replaces !== null) s.label_index = S.opts.replaces;
     S.draft.seeds.push(s);
+    marked();
     renderMarks(); draw();
     await probe(at);
     return;
@@ -1063,6 +1078,9 @@ async function click(at, ev) {
 
 const round2 = (v) => Math.round(v * 100) / 100;
 const round3 = (v) => Math.round(v * 1000) / 1000;
+
+// A mark was added or taken away: whatever Recut showed no longer describes the draft.
+function marked() { S.draft.preview = null; }
 
 async function probe(at) {
   try {
@@ -1097,6 +1115,7 @@ function finish() {
       mm: p.pts.map((q) => toMm(q[0], q[1]).map(round3)), note: ''});
   }
   S.pending = null;
+  marked();
   renderMarks(); draw(); hintFor();
 }
 
@@ -1269,16 +1288,16 @@ function renderMarks() {
   D.seeds.forEach((s, i) => add(s.kind === 'negative' ? css('--unseed') : css('--seed'),
     s.abbr + ' ' + s.kind + (s.label_index !== undefined ? ' (for box ' + s.label_index + ')' : ''),
     'ML ' + fmt(s.mm[0], 3) + '  DV ' + fmt(s.mm[1], 3) + (s.note ? ' — ' + s.note : ''),
-    () => { D.seeds.splice(i, 1); renderMarks(); draw(); },
+    () => { D.seeds.splice(i, 1); marked(); renderMarks(); draw(); },
     () => zoomTo([s.page_px], 200)));
   D.boundaries.forEach((b, i) => add(css('--bound'),
     b.style + ' boundary' + (b.closed ? ', a ring' : ''),
     b.page_px.length + ' points' + (b.note ? ' — ' + b.note : ''),
-    () => { D.boundaries.splice(i, 1); renderMarks(); draw(); },
+    () => { D.boundaries.splice(i, 1); marked(); renderMarks(); draw(); },
     () => zoomTo(b.page_px)));
   D.extents.forEach((e, i) => add(css('--ext'),
     e.abbr + ' extent', e.page_px.length + ' vertices' + (e.note ? ' — ' + e.note : ''),
-    () => { D.extents.splice(i, 1); renderMarks(); draw(); },
+    () => { D.extents.splice(i, 1); marked(); renderMarks(); draw(); },
     () => zoomTo(e.page_px)));
   D.notes.forEach((n, i) => add(css('--muted'), 'note', n,
     () => { D.notes.splice(i, 1); renderMarks(); }));
@@ -1331,6 +1350,11 @@ async function recut() {
     report('cutting the plate again with the correction applied — about ten seconds…');
     const r = await SRC.recut(draftNow());
     S.cut = r;
+    // what the reader saw and accepted travels with the correction, so the session can
+    // check its own re-cut against it; a mark added after this drops it (see marked())
+    const me = r.regions.find((q) => q.abbr === S.draft.abbr);
+    S.draft.preview = {area_mm2_before: me ? me.before : 0, area_mm2: me ? me.after : 0,
+      changed: r.changed.slice()};
     $('v-cut').disabled = false; $('v-cut').checked = true; S.show.cut = true;
     report(r.lines.join('\n'));
     draw();
@@ -1505,7 +1529,7 @@ function wire() {
   $('commitb').onclick = () => commit();
   $('undob').onclick = undo;
   $('clearb').onclick = () => {
-    S.draft.seeds = []; S.draft.boundaries = []; S.draft.extents = [];
+    S.draft.seeds = []; S.draft.boundaries = []; S.draft.extents = []; marked();
     S.pending = null; renderMarks(); draw();
   };
   $('noteb').onclick = () => sheet('A note on this correction',

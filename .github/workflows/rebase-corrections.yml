@@ -1,0 +1,129 @@
+# When main moves, every open correction pull request is brought up to it -- by the rule
+# every hand merge of one followed, as `tools/corrections.py rebase` has it: the inputs
+# are merged, the derived files are main's, the pipeline is run again, and the re-cut is
+# checked to do what the branch did before the merge is committed. No model is in this.
+#
+# The branches are taken one at a time, each on the main the last one left, so two
+# corrections in flight never conflict with each other at the merge: whichever lands
+# first, the other is re-cut on top of it here. Where the script stops -- both sides
+# changed the same plate's input, or the re-cut on the new base is not the branch's fix --
+# the pull request gets a comment saying so and the branch is left as it was.
+#
+# The push is made with the workflow's own GITHUB_TOKEN, which starts no workflow, so CI
+# is dispatched onto the branch by hand; the check runs land on the head commit and the
+# pull request shows them.
+name: Rebase open corrections
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'one correction/<id> branch to rebase; blank takes every open correction pull request'
+        required: false
+        type: string
+
+concurrency:
+  group: correction-rebase
+  cancel-in-progress: false
+
+jobs:
+  which:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      branches: ${{ steps.list.outputs.branches }}
+    steps:
+      - id: list
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ONE: ${{ inputs.branch }}
+        run: |
+          if [ -n "$ONE" ]; then
+            list=$(jq -cn --arg b "$ONE" '[$b]')
+          else
+            list=$(gh pr list --repo "$GITHUB_REPOSITORY" --base main --state open --limit 100 \
+                     --json headRefName --jq '[.[].headRefName | select(startswith("correction/"))]')
+          fi
+          echo "branches=$list" >> "$GITHUB_OUTPUT"
+          echo "open correction branches: $list"
+
+  rebase:
+    needs: which
+    if: needs.which.outputs.branches != '[]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      max-parallel: 1
+      fail-fast: false
+      matrix:
+        branch: ${{ fromJSON(needs.which.outputs.branches) }}
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.branch }}
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: tools/requirements.txt
+      - run: pip install -r tools/requirements.txt
+      - name: Rebase, re-cut, check
+        id: rebase
+        run: |
+          git fetch origin main
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          before=$(git rev-parse HEAD)
+          mkdir -p build
+          set +e
+          python3 tools/corrections.py rebase --onto origin/main 2>&1 | tee build/rebase.log
+          code=${PIPESTATUS[0]}
+          set -e
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+          if [ "$code" -ne 0 ]; then exit "$code"; fi
+          if [ "$(git rev-parse HEAD)" != "$before" ]; then
+            echo "pushed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "pushed=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Push, and put CI on the new head
+        if: steps.rebase.outputs.pushed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git push origin "HEAD:${{ matrix.branch }}"
+          gh workflow run ci.yml --repo "$GITHUB_REPOSITORY" --ref "${{ matrix.branch }}"
+          {
+            echo "### \`${{ matrix.branch }}\` is current with main"
+            echo
+            echo '```'
+            tail -n 60 build/rebase.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Say so on the pull request
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          pr=$(gh pr list --repo "$GITHUB_REPOSITORY" --head "${{ matrix.branch }}" --state open --json number --jq '.[0].number')
+          {
+            echo "The rebase onto main stopped, so this branch is still on its old base. What \`tools/corrections.py rebase\` said:"
+            echo
+            echo '```'
+            tail -n 80 build/rebase.log 2>/dev/null || echo '(no log)'
+            echo '```'
+            echo
+            echo "Run it by hand on the branch, or dispatch \`apply-correction.yml\` with \`force\` for a session to take it up."
+            echo
+            echo '---'
+            echo '_Posted by rebase-corrections.yml_'
+          } > build/comment.md
+          if [ -n "$pr" ]; then gh pr comment "$pr" --repo "$GITHUB_REPOSITORY" --body-file build/comment.md; fi

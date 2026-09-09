@@ -137,3 +137,72 @@ def test_qc_draws_the_site_before_and_after(tmp_path, monkeypatch):
         assert im.width == C.SITE_PANEL_PX                   # the one panel
     assert any('not a ref' in ln for ln in rep['lines'])
     assert open(rep['qc'], 'rb').read() == plate
+
+
+# ---- report and rebase: the arithmetic, on databases made here
+
+def _db(entries, frame=None):
+    """A database with just enough in it for entries_diff, hemispheres and series:
+    entries is {(plate, abbr): (area, [ring lengths])}."""
+    R = {}
+    for (p, ab), (a, rings) in entries.items():
+        R.setdefault(str(p), {})[ab] = {'a': a, 'g': [[[0.1 * i, 0.1] for i in range(n)] for n in rings],
+                                        's': [1.0] * len(rings), 'n': 1}
+    return {'region_extents': {'data': R, 'summary': {}}, 'plate_frame': frame or A.load_db()['plate_frame'],
+            'seed_overrides': {'note': 'n', 'data': {}}, 'label_positions': {'note': 'n', 'data': {}},
+            'brain_outline': {'note': 'n', 'data': {}}, 'label_leaders': {'note': 'n', 'data': {}},
+            'label_blocks': {'note': 'n', 'data': {}}}
+
+
+def test_entries_diff_reads_area_and_rings_not_noise():
+    a = _db({(3, 'E'): (0.0669, [4, 4]), (3, 'GrA'): (1.1383, [5]), (28, 'RAPir'): (0.1432, [4, 4])})
+    b = _db({(3, 'E'): (0.1008, [4, 4, 4]), (3, 'GrA'): (1.1383, [5]), (28, 'RAPir'): (0.1432, [4, 4])})
+    d = C.entries_diff(a, b)
+    assert list(d) == [(3, 'E')]                            # GrA and RAPir did not move
+    before, after = d[(3, 'E')]
+    assert before['a'] == 0.0669 and after['a'] == 0.1008
+    b['region_extents']['data']['3']['GrA']['a'] = 1.1382    # the fourth decimal moved: it counts
+    assert (3, 'GrA') in C.entries_diff(a, b)
+    del b['region_extents']['data']['28']['RAPir']           # an entry that went counts
+    assert C.entries_diff(a, b)[(28, 'RAPir')][1] is None
+
+
+def test_hemispheres_split_by_the_side_of_the_midline():
+    fr = A.Frame(A.load_db()['plate_frame'])
+    xl = fr.x(-4.0) / fr.w                                    # a square on the left, ML -4
+    xr = fr.x(+4.0) / fr.w                                    # and one twice the size on the right
+    sq = lambda cx, h: [[cx - h, 0.5 - h], [cx + h, 0.5 - h], [cx + h, 0.5 + h], [cx - h, 0.5 + h]]
+    e = {'a': 0.3, 'g': [sq(xl, 0.01), sq(xr, 0.01 * 2 ** 0.5)], 's': [1, 1], 'n': 2}
+    left, right = C.hemispheres(e, fr)
+    assert abs(left - 0.1) < 1e-3 and abs(right - 0.2) < 1e-3
+    assert C.hemispheres(None, fr) == (0.0, 0.0)
+
+
+def test_input_delta_is_per_plate_and_tells_a_note_apart():
+    a = _db({})
+    b = _db({})
+    b['seed_overrides']['data'] = {'3': {'E': [[-1, 0.5, 0.5, 'x', 'why']]}}
+    b['label_positions']['data'] = {'17': {'1': [[0.5, 0.5, 0.01, 0.01]]}}
+    keys, notes = C.input_delta(a, b)
+    assert keys == {'seed_overrides': {'3'}, 'label_positions': {'17'}} and notes == set()
+    b['seed_overrides']['note'] = 'a paragraph per correction'
+    keys, notes = C.input_delta(a, b)
+    assert notes == {'seed_overrides'}
+    assert C.input_delta(b, b) == ({}, set())
+
+
+def test_report_against_a_ref_this_checkout_has(tmp_path):
+    """The committed correction, against HEAD: nothing moves, and the report says so
+    in the shape the write-up pastes."""
+    DB = A.load_db()
+    c = C.load(C.resolve('20260908T142315Z-p28-RAPir'))
+    md, rep = C.report(c, DB, A.vec_matrices(), against='HEAD')
+    assert rep['moved'] == [] and rep['volumes_moved'] == []
+    assert '| `RAPir`, plate 28 |' in md and 'No other (plate, region) entry moves' in md
+    assert rep['region']['after']['a'] == DB['region_extents']['data']['28']['RAPir']['a']
+    assert rep['summary']['boundary_edges_shared_exactly'] == (1.0, 1.0)
+    c2 = dict(c, preview={'area_mm2_before': 0.1432, 'area_mm2': rep['region']['after']['a'], 'changed': ['RAPir']})
+    md2, rep2 = C.report(c2, DB, A.vec_matrices(), against='HEAD')
+    assert rep2['preview_agrees'] and 'the re-cut here agrees' in md2
+    md3, _rep3 = C.report(c, DB, A.vec_matrices(), against='no-such-ref')
+    assert 'not a ref this checkout can read' in md3
