@@ -243,11 +243,13 @@ carries a `version` block naming the release its derived fields were built for.
   Three (plate, region) entries move in the whole-atlas re-cut, all on plate 3.
   `boundary_edges_shared_exactly` stays 1.0, `structure_plate_entries` stays 3,118, the
   coloring is unchanged at 691 regions, polygons go 6,012 to 6,013, points 168,740 to
-  168,751 and `seeds_moved_by_hand` 26 to 29. Three more olfactory-bulb structures move in
-  the volume with their areas untouched — `IPl` +0.0052, `aci` +0.0017, `EPl` +0.0005 mm³,
-  and `GrA` +0.0021 though its area falls — the label volume being interpolated between
-  plates, so a boundary that moves on 3 redistributes voxels in the slabs either side.
-  METHODS takes the polygon and point counts.
+  168,751 and `seeds_moved_by_hand` 29 to 32 — counted from the base the `RAPir` entry
+  below leaves, the two corrections riding one branch and that one landing first. Three
+  more olfactory-bulb structures move in the volume with their areas untouched — `IPl`
+  +0.0052, `aci` +0.0017, `EPl` +0.0005 mm³, and `GrA` +0.0021 though its area falls — the
+  label volume being interpolated between plates, so a boundary that moves on 3
+  redistributes voxels in the slabs either side. METHODS takes the polygon and point
+  counts, 6,013 over 168,751, which are the two corrections' together.
 
   The correction says the region "should better mirror the left hemisphere", and there is a
   second reading of that this does not take. The ventral spindle is drawn with a hairline
@@ -298,10 +300,10 @@ carries a `version` block naming the release its derived fields were built for.
   dimensions `unnamed_fraction` goes 0.0348 to **0.0346**, and thirteen structures' volumes
   move, `1` coming out in six mesh components rather than seven and the other eleven in the
   fourth decimal. `structure_plate_entries` stays 3,118, polygons 6,012 and the coloring 691
-  regions in 631 patches; points go 168,740 to 168,751, faces named by one abbreviation
-  3,515 to 3,517, seeds moved by hand 26 to 29, `section_covered_mean` 0.9483 to 0.9484,
+  regions in 631 patches; points go 168,729 to 168,740, faces named by one abbreviation
+  3,516 to 3,518, seeds moved by hand 26 to 29, `section_covered_mean` 0.9483 to 0.9484,
   `label_inside_its_own_region` 0.9776 either way, and **`boundary_edges_shared_exactly`
-  stays 1.0**. 63 Python tests and 109 browser tests pass, and `--check` on the tables,
+  stays 1.0**. 64 Python tests and 109 browser tests pass, and `--check` on the tables,
   groups, colors, face maps and pages is clean.
 - **A correction's run ends green when its pull request does.** The last step of
   `.github/workflows/apply-correction.yml` waited on CI with `gh pr checks --watch
