@@ -70,3 +70,9 @@ That is the whole core loop. Everything below is optional.
 A structure's coordinate is **the median position of where its abbreviation is printed on
 the plates** — close to, but not the same as, the structure's centre. It is a targeting
 aid, not a segmentation. See [Accuracy and Caveats](Accuracy-and-Caveats).
+
+---
+
+## Funding
+
+Development of the Gerbil Brain Explorer was supported by NIH R01DC020742.
