@@ -278,6 +278,32 @@ carries a `version` block naming the release its derived fields were built for.
   are what carry the other two and a plain mesh link carries none.
 
 ### Fixed
+- **The right `RAPir` on plate 28 gets its column too.** #109 gave the rostral
+  amygdalopiriform area the whole column the atlas draws it as, on the left of plate 28,
+  where the correction was drawn -- and said the right was drawn the same way and untouched:
+  the word `RAPir` on the band between two laminar lines, the **7,982 px** face deep to it
+  and the **4,561 px** face between it and the pia lettered by nothing, `RAPir` 0.5641 mm²
+  on the left against 0.0910 on the right. Reported against the published site as still not
+  fixed, which on the right it was not. Two rows of `seed_overrides`, one in each unlettered
+  face at the points #109 named for them, written from `corrections/report-p28-RAPir-right.json`
+  -- a file written by hand from the report, not by the plate view, which is what its
+  `source` says. **`RAPir` on plate 28 goes 0.6551 to 1.2916 mm²**, the right hemisphere
+  0.0910 to 0.7275, the left as #109 left it; over the series 1.718 to 2.355 mm² and 0.5711
+  to 0.7763 mm³, in two mesh components rather than three, the right no longer a band and a
+  scrap. The new ring is drawn ink for 98.5% of its length. A third polygon arrives with it:
+  a three-pixel island on the lower laminar line beside the letter R, 0.0001 mm², where the
+  ink loops and the watershed leaves a hole -- not a boundary anyone can see, and noted
+  rather than culled, since the floor is on faces and this is not one.
+
+  Eight other entries on plate 28 move, none by more than 0.0045 mm² -- `3`, `BMP`, `1`,
+  `VEn`, `Pir`, `2`, `LHb`, `sm` -- the ink those faces now divide with a named neighbour;
+  nothing off the plate does. `unnamed_fraction` goes 0.0346 to 0.0344, sixteen volumes move
+  and `region_triangles` with them. `structure_plate_entries` stays 3,118, polygons go 6,013
+  to 6,014, points 168,751 to 168,760, `seeds_moved_by_hand` 32 to 34, and
+  **`boundary_edges_shared_exactly` stays 1.0**. Every `--check` is clean, 64 Python tests
+  and 109 browser tests pass; the pictures are `qc/chk_corr_report-p28-RAPir-right_site.png`
+  and the whole plate beside it.
+
 - **`E` on plate 3 gets the run of ventricle above the pinch.** The atlas draws the
   ependyma of the olfactory ventricle on the right of plate 3 as one contour, from below the
   `aci` circle down to its ventral bulb, and pinches it to a single stroke halfway along, at
