@@ -6,6 +6,37 @@ carries a `version` block naming the release its derived fields were built for.
 ## [Unreleased]
 
 ### Added
+- **The site can count how many people open it, with no cookie and nothing on the page.**
+  GitHub Pages keeps no logs and offers no analytics -- the repository's own Insights ->
+  Traffic counts visits to github.com, not to the site -- so a count has to come from the
+  page itself. [GoatCounter](https://www.goatcounter.com) is what the head of `src/app.html`
+  now loads: cookieless, nothing stored in the reader's browser, nothing kept that names a
+  reader, and nothing visible, because the numbers live on its dashboard rather than in a
+  badge here. What it sees is the path, the referrer and the headers a browser sends anyway;
+  the plate, the structure and the view this page keeps in the URL are a hash, and a hash
+  never leaves the browser, so the dashboard reads one path rather than one per plate.
+
+  The counts go to `gerbilatlasexplorer.goatcounter.com`. `CODE` in that block is the site
+  code that names it, and emptying it is how counting is turned off: nothing is then fetched
+  and nothing is sent, and the page is the page it was before the block.
+
+  Whether to count is settled in the browser rather than at build time, because one of the
+  two built pages is both at once. `gerbil_atlas_explorer.html` is what Pages serves *and*
+  the offline bundle -- attached to every release, opened from disk on a rig computer that
+  may have no network at all -- so a build-time switch would put the same phone-home line in
+  a file somebody downloaded. Only a page actually being served from `dstolz.github.io` is
+  counted, which is false on `file://`, on the local server the browser specs run against,
+  and on a fork's own Pages site, where the counts would not be this one's anyway.
+
+  `tests/js/count.spec.js` pins that. It lifts the block verbatim out of the built page,
+  swaps a code of its own into it and serves it from two hosts -- the site's and another --
+  so what is asserted is the host test rather than whatever code happens to be committed,
+  with GoatCounter itself intercepted, so no run of the suite reaches the network. Beside
+  that it checks the two built pages as a reader gets them anywhere but the site: opened
+  from disk and off a local server, neither fetches anything and neither puts the counter on
+  the page. The code the pages do ship with is checked once, on its own, so a rebuild cannot
+  quietly lose it.
+
 - **A note on the first visit, saying whose atlas this is and that some of it is drawn
   wrong.** The page opened straight onto a plate with outlines over it, and an outline here
   is drawn in the atlas's own frame, on the atlas's own plate: without being told otherwise a
