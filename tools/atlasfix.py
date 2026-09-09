@@ -32,7 +32,8 @@ draft against it, **Recut** builds the plate again with the draft applied, and
 `.github/workflows/apply-correction.yml`.
 
 Reads:  data/gerbil_atlas.json, data/vec.json, svg/*.svg, data/plates/*/NN.jpg
-Writes: qc/chk_corr_<id>.png, and only when asked for it. Marking, `Inspect` and
+Writes: qc/chk_corr_<id>.png and qc/chk_corr_<id>_site.png, and only when asked for
+        them. Marking, `Inspect` and
         `Recut` change nothing: `Recut` applies the draft to a scratch copy of the
         plate's SVG and a copy of the database in memory. `Commit` builds the file in
         a temporary git worktree cut from origin/main and pushes the branch; its
