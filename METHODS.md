@@ -824,7 +824,11 @@ Two of the four edits have a home in the data rather than in a script's table.
 `seed_overrides` is a seed placed by hand: keyed by plate and abbreviation, a row
 `[i, x, y, id, why]` stands in for printed box `i` exactly as a leader tip does -- the box
 is still where the word is, this is where it points -- or, with `i = -1`, seeds a face
-beside the printed labels, uncounted in `n` and unmirrored, as a mirror is. It is read after
+beside the printed labels, uncounted in `n` and unmirrored, as a mirror is. That second
+form is for the region the drawing cuts into more faces than the atlas letters it times:
+the zonal layer on plate 39, cut into three by the tracing, and the left `RAPir` on plate
+28, where two laminar lines cross the one column the plate prints the name in and neither
+of the faces they cut off carries a word or a digit of its own. It is read after
 `label_leaders`, so it wins over a marched tip, and it survives a re-run of every pass. A
 run of boundary goes into the plate's SVG as a path of cubics with collinear control
 points -- the one grammar the extraction's reader accepts -- carrying `data-correction`
