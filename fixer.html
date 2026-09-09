@@ -170,6 +170,10 @@ main{flex:1 1 auto;display:grid;grid-template-columns:352px minmax(0,1fr);min-he
   max-height:88vh;overflow:auto;display:flex;flex-direction:column;gap:8px}
 .sheet h3{margin:0;font-size:15px}
 .sheet p{margin:0;font-size:12.5px;color:var(--muted)}
+.sheet ul.files{margin:0;padding:0 0 0 18px;font-size:12px}
+.sheet ul.files li{margin:2px 0}
+.sheet label.prob{display:block;font-size:11.5px;color:var(--muted)}
+.sheet label.prob textarea{display:block;width:100%;margin-top:2px;box-sizing:border-box}
 .sheet pre{margin:0;max-height:44vh;overflow:auto;background:var(--panel2);
   border:1px solid var(--line);border-radius:8px;padding:8px;
   font:11.5px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
@@ -250,7 +254,7 @@ main{flex:1 1 auto;display:grid;grid-template-columns:352px minmax(0,1fr);min-he
     <a class="b" id="guide" href="https://github.com/dstolz/GerbilAtlasExplorer/wiki/Correcting-a-Region" target="_blank" rel="noreferrer"
        title="How to use this: what a correction corrects, what each tool is for, and what happens after you send it"
        aria-label="How to use this"><span class="glong">Guide</span><span class="gshort" aria-hidden="true">?</span></a>
-    <button class="b go" id="commitb" type="button" title="Write the correction on a branch and push it">Commit</button>
+    <button class="b go" id="commitb" type="button" title="Write every plate's corrections on a branch and push them (C)">Commit</button>
   </div>
 </header>
 
@@ -373,6 +377,9 @@ The <a href="https://github.com/dstolz/GerbilAtlasExplorer/wiki/Correcting-a-Reg
    A draft belongs to the plate it was made on -- its marks are that page's pixels and
    the millimetres beside them are read through that plate's registration -- so the
    plate that is put down keeps its marks and hands them back when it comes up again.
+   Commit sends all of them: every plate that holds marks, and on each plate one file
+   for each region marked on it, as one commit on one branch, so a reader who walks
+   the atlas marking what is wrong presses the button once.
 
    The marks are the MATLAB class's marks and no others: a seed for the name a face
    should carry, a run of boundary the tracing missed, the outline a region should
@@ -539,7 +546,7 @@ const Local = {
   recut: (draft) => api('/api/recut', {draft}),
   save: (draft, path) => api('/api/save', {draft, path}),
   open: (path) => api('/api/open', {path}),
-  commit: (draft, png, dry) => api('/api/commit', {draft, png, dry}),
+  commit: (items, dry) => api('/api/commit', {items, dry}),
   pipeline: true,
 };
 
@@ -753,13 +760,9 @@ const Static = {
 
   async save(draft, name) {
     const doc = buildDoc(draft);
-    const blob = new Blob([renderDoc(doc)], {type: 'application/json'});
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = (name || doc.id).replace(/^.*[\\/]/, '').replace(/\.json$/, '') + '.json';
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
-    return {path: a.download};
+    const file = (name || doc.id).replace(/^.*[\\/]/, '').replace(/\.json$/, '') + '.json';
+    download(file, renderDoc(doc));
+    return {path: file};
   },
 
   open() {
@@ -777,16 +780,32 @@ const Static = {
     });
   },
 
-  async commit(draft, png, dry) {
-    const doc = buildDoc(draft);
-    if (!doc.abbr) throw new Error('name the region first');
-    if (!doc.problem) throw new Error('say what is wrong first');
-    if (!doc.seeds.length && !doc.boundaries.length && !doc.extents.length) {
-      throw new Error('mark something first: a seed, a boundary or an extent');
+  // items: [{draft, png}], every file of one send; one picture a plate, carried by the
+  // first file written for it
+  async commit(items, dry) {
+    const now = new Date(), stamp = stampOf(now);
+    const docs = [], pngs = new Map();
+    for (const it of items) {
+      const doc = buildDoc(it.draft, now);
+      if (!doc.abbr) throw new Error('name the region first');
+      if (!doc.problem) throw new Error('say what is wrong first');
+      if (!doc.seeds.length && !doc.boundaries.length && !doc.extents.length) {
+        throw new Error('mark something first: a seed, a boundary or an extent');
+      }
+      if (it.png && !pngs.has(doc.plate)) pngs.set(doc.plate, {id: doc.id, png: it.png});
+      if (pngs.has(doc.plate)) doc.snapshot = 'corrections/' + pngs.get(doc.plate).id + '.png';
+      docs.push(doc);
     }
-    if (png) doc.snapshot = 'corrections/' + doc.id + '.png';
-    const text = renderDoc(doc);
-    if (dry) { await Static.save(draft, doc.id); return {id: doc.id, dry: true, path: doc.id + '.json', json: text}; }
+    if (new Set(docs.map((d) => d.id)).size !== docs.length) {
+      throw new Error('two corrections for the same region on the same plate: mark them as one');
+    }
+    const texts = docs.map(renderDoc);
+    const json = texts.join('\n');
+    if (dry) {
+      docs.forEach((d, i) => download(d.id + '.json', texts[i]));
+      return {id: docs[0].id, ids: docs.map((d) => d.id), dry: true,
+        path: docs[0].id + '.json', paths: docs.map((d) => d.id + '.json'), json};
+    }
 
     const tok = await token();
     const api_ = async (path, opts) => {
@@ -806,30 +825,39 @@ const Static = {
     // One commit through the Git Data API -- blob, tree, commit, then the branch pointed
     // at it. Two `contents` PUTs were two commits and two pushes, and every push of a
     // correction file dispatches apply-correction.yml, so the workflow ran twice.
-    const branch = 'correction/' + doc.id;
+    const branch = branchFor(docs, stamp);
     const head = await api_('/git/ref/heads/' + REPO.base);
     const parent = await api_('/git/commits/' + head.object.sha);
     const blob = async (content) => (await api_('/git/blobs', {method: 'POST',
       body: JSON.stringify({content, encoding: 'base64'})})).sha;
-    const tree = [{path: 'corrections/' + doc.id + '.json', mode: '100644', type: 'blob',
-      sha: await blob(b64(text))}];
-    if (png) {
-      tree.push({path: 'corrections/' + doc.id + '.png', mode: '100644', type: 'blob',
+    const tree = [];
+    for (let i = 0; i < docs.length; i++) {
+      tree.push({path: 'corrections/' + docs[i].id + '.json', mode: '100644', type: 'blob',
+        sha: await blob(b64(texts[i]))});
+    }
+    for (const {id, png} of pngs.values()) {
+      tree.push({path: 'corrections/' + id + '.png', mode: '100644', type: 'blob',
         sha: await blob(png.replace(/^data:[^,]*,/, ''))});
     }
     const made = await api_('/git/trees', {method: 'POST',
       body: JSON.stringify({base_tree: parent.tree.sha, tree})});
     const commit = await api_('/git/commits', {method: 'POST', body: JSON.stringify({
-      message: 'Correction: ' + doc.abbr + ' on plate ' + doc.plate
-        + '\n\n' + doc.problem + '\n\nCorrection-Id: ' + doc.id,
-      tree: made.sha, parents: [head.object.sha]})});
+      message: messageFor(docs), tree: made.sha, parents: [head.object.sha]})});
     await api_('/git/refs', {method: 'POST',
       body: JSON.stringify({ref: 'refs/heads/' + branch, sha: commit.sha})});
     const url = 'https://github.com/' + REPO.owner + '/' + REPO.repo;
-    return {id: doc.id, dry: false, branch, json: text, url: url + '/tree/' + branch,
-      actions: url + '/actions/workflows/apply-correction.yml'};
+    return {id: docs[0].id, ids: docs.map((d) => d.id), dry: false, branch, json,
+      url: url + '/tree/' + branch, actions: url + '/actions/workflows/apply-correction.yml'};
   },
 };
+
+function download(name, text) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], {type: 'application/json'}));
+  a.download = name;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+}
 
 function b64(text) {
   const bytes = new TextEncoder().encode(text);
@@ -881,13 +909,16 @@ const trim = (v, n) => {
   return Object.is(r, -0) ? 0 : r;
 };
 
-function buildDoc(draft) {
+const p2 = (v) => String(v).padStart(2, '0');
+// the moment a correction was made, as its id carries it: 20260905T160102Z
+const stampOf = (now) => now.getUTCFullYear() + p2(now.getUTCMonth() + 1) + p2(now.getUTCDate())
+  + 'T' + p2(now.getUTCHours()) + p2(now.getUTCMinutes()) + p2(now.getUTCSeconds()) + 'Z';
+
+function buildDoc(draft, when) {
   const n = Number(draft.plate);
   const ab = (draft.abbr || '').trim();
-  const now = new Date();
-  const p2 = (v) => String(v).padStart(2, '0');
-  const stamp = now.getUTCFullYear() + p2(now.getUTCMonth() + 1) + p2(now.getUTCDate())
-    + 'T' + p2(now.getUTCHours()) + p2(now.getUTCMinutes()) + p2(now.getUTCSeconds()) + 'Z';
+  const now = when || new Date();           // a batch shares one, so its ids share a prefix
+  const stamp = stampOf(now);
   const created = now.getUTCFullYear() + '-' + p2(now.getUTCMonth() + 1) + '-' + p2(now.getUTCDate())
     + 'T' + p2(now.getUTCHours()) + ':' + p2(now.getUTCMinutes()) + ':' + p2(now.getUTCSeconds()) + 'Z';
   const pt = (q) => {
@@ -975,6 +1006,64 @@ function draftOf(doc) {
   const out = {};
   for (const k of keep) if (doc[k] !== undefined && doc[k] !== null) out[k] = doc[k];
   return out;
+}
+
+/* Everything waiting to be sent: every plate that holds marks, and on each plate one
+   correction for each region marked on it. A seed and an extent carry the region they
+   were made for, a boundary the region that was chosen when it was drawn, or none, in
+   which case it goes with the region the plate was left on. The regions go in the order
+   their first mark was made, seeds before extents before boundaries. The plate's own text
+   goes with each of its files; its notes, and the recut preview where the plate is one
+   region's, with the first. */
+function batch() {
+  stashDraft();
+  const out = [];
+  for (const n of markedPlates()) {
+    const D = S.drafts.get(n);
+    if (!D) continue;
+    const groups = new Map();
+    const group = (ab) => {
+      const k = ab || D.abbr || '';
+      if (!groups.has(k)) {
+        groups.set(k, Object.assign(blankDraft(n), {abbr: k, problem: D.problem, author: D.author}));
+      }
+      return groups.get(k);
+    };
+    for (const s of D.seeds) group(s.abbr).seeds.push(s);
+    for (const e of D.extents) group(e.abbr).extents.push(e);
+    for (const b of D.boundaries) group(b.abbr).boundaries.push(b);
+    const gs = [...groups.values()].filter(marksIn);
+    gs.forEach((g, i) => {
+      if (i === 0) { g.notes = D.notes.slice(); if (gs.length === 1) g.preview = D.preview; }
+      out.push({plate: n, draft: g});
+    });
+  }
+  return out;
+}
+
+const esc = (v) => String(v).replace(/[&<>"]/g, (c) => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
+const counted = (n, one) => n + ' ' + one + (n === 1 ? '' : 's');
+function marksSaid(D) {
+  return [[D.seeds.length, 'seed'], [D.boundaries.length, 'boundary'], [D.extents.length, 'extent']]
+    .filter(([n]) => n).map(([n, w]) => counted(n, w)).join(', ');
+}
+
+/* The branch a send goes on, and the message on its commit: one correction is named
+   for its id, as it always was; several are named for the moment they were sent
+   together, and the message lists them. tools/atlasfix.py says the same. */
+const branchFor = (docs, stamp) => 'correction/' + (docs.length === 1 ? docs[0].id : stamp);
+function messageFor(docs) {
+  if (docs.length === 1) {
+    const d = docs[0];
+    return 'Correction: ' + d.abbr + ' on plate ' + d.plate + '\n\n' + d.problem + '\n\nCorrection-Id: ' + d.id;
+  }
+  const said = [];
+  for (const d of docs) {
+    const line = 'plate ' + d.plate + ': ' + d.problem;
+    if (!said.includes(line)) said.push(line);
+  }
+  return 'Corrections: ' + docs.map((d) => d.abbr + ' on plate ' + d.plate).join(', ')
+    + '\n\n' + said.join('\n') + '\n\n' + docs.map((d) => 'Correction-Id: ' + d.id).join('\n');
 }
 
 /* ------------------------------------------------------------------- plate */
@@ -1433,8 +1522,8 @@ async function click(at, ev) {
     await probe(at);
     return;
   }
-  if (S.tool === 'boundary') { S.pending = {kind: 'boundary', pts: [at]}; draw(); hintFor(); return; }
-  if (S.tool === 'extent') { S.pending = {kind: 'extent', pts: [at]}; draw(); hintFor(); }
+  if (S.tool === 'boundary') { S.pending = {kind: 'boundary', pts: [at], abbr: S.abbr}; draw(); hintFor(); return; }
+  if (S.tool === 'extent') { S.pending = {kind: 'extent', pts: [at], abbr: S.abbr}; draw(); hintFor(); }
 }
 
 const round2 = (v) => Math.round(v * 100) / 100;
@@ -1466,7 +1555,9 @@ function finish() {
   if (!p) return;
   if (p.kind === 'boundary') {
     if (p.pts.length < 2) { S.pending = null; draw(); return; }
-    S.draft.boundaries.push({style: S.opts.style, closed: S.opts.closed,
+    // a boundary is a run of the tracing and names no region, but it is sent with the
+    // region that was chosen when it was drawn, so a plate marked for two goes as two
+    S.draft.boundaries.push({abbr: p.abbr || S.abbr, style: S.opts.style, closed: S.opts.closed,
       page_px: p.pts.map((q) => [round2(q[0]), round2(q[1])]),
       mm: p.pts.map((q) => toMm(q[0], q[1]).map(round3)), note: ''});
   } else {
@@ -1676,7 +1767,7 @@ function renderMarks() {
     d.textContent = 'Marks are waiting on plate ' + away.join(', ') + '.';
     el.appendChild(d);
   }
-  $('commitb').disabled = !marksIn(D);
+  $('commitb').disabled = !markedPlates().length;
   renderPips();
   sheetLabel();
 }
@@ -1740,49 +1831,90 @@ function sheet(title, bodyHTML, buttons) {
 }
 const closeSheet = () => { $('modal').hidden = true; };
 
+/* A picture of each plate as it stands with its marks, for its file to carry. The plate
+   in front of you is the canvas as it is; another has to come up to be drawn, so the
+   page walks there and back, which is what you would do to look at it. */
+async function snapshots(plates) {
+  const out = new Map(), home = S.plate;
+  for (const n of plates) {
+    if (n !== S.plate) { toast('a picture of plate ' + n); await loadPlate(n); }
+    draw();
+    out.set(n, cv.toDataURL('image/png'));
+  }
+  if (S.plate !== home) await loadPlate(home);
+  return out;
+}
+
 async function commit() {
-  const D = draftNow();
-  if (!D.abbr) { toast('Choose the region first', true); return; }
-  if (!D.problem.trim()) { toast('Say what is wrong first', true); return; }
+  const B = batch();
+  if (!B.length) { toast('Mark something first', true); return; }
+  const plates = [...new Set(B.map((it) => it.plate))];
   let pre;
-  try { pre = await SRC.document(D); }
+  try { pre = await Promise.all(B.map((it) => SRC.document(it.draft))); }
   catch (e) { report(String(e.message), true); toast(e.message, true); return; }
 
   const send = async () => {
-    const dry = $('m-dry').checked;
-    const snap = $('m-snap').checked ? cv.toDataURL('image/png') : null;
+    const dry = $('m-dry').checked, snap = $('m-snap').checked;
+    // what is wrong on each plate, as it reads on the sheet, back into the drafts
+    const missing = [];
+    for (const n of plates) {
+      const t = $('m-prob-' + n).value.trim();
+      if (!t) missing.push(n);
+      const D = S.drafts.get(n);
+      if (D) D.problem = t;
+      if (n === S.plate) { S.draft.problem = t; $('problem').value = t; }
+      for (const it of B) if (it.plate === n) it.draft.problem = t;
+    }
+    if (missing.length) { toast('Say what is wrong on plate ' + missing.join(', ') + ' first', true); return; }
     closeSheet();
     try {
-      const r = await SRC.commit(D, snap, dry);
+      const pngs = snap ? await snapshots(plates) : new Map();
+      const r = await SRC.commit(B.map((it) => ({draft: it.draft, png: pngs.get(it.plate) || null})), dry);
       report(r.json);
-      if (r.dry) { toast('wrote ' + r.path); return; }
-      sheet('Pushed ' + r.id,
-        '<p>The branch is <code>' + r.branch + '</code>.</p>'
+      const ids = r.ids || [r.id];
+      if (r.dry) { toast('wrote ' + (r.paths || [r.path]).join(', ')); return; }
+      // sent: nothing waits on those plates now
+      for (const n of plates) S.drafts.delete(n);
+      if (plates.includes(S.plate)) { S.draft = blankDraft(S.plate); S.draft.abbr = S.abbr; $('problem').value = ''; }
+      renderMarks(); draw();
+      sheet('Pushed ' + counted(ids.length, 'correction'),
+        '<p>The branch is <code>' + esc(r.branch) + '</code>: <code>'
+        + ids.map(esc).join('</code>, <code>') + '</code>.</p>'
         + (r.url ? '<p><a href="' + r.url + '" target="_blank" rel="noreferrer">the branch</a>'
           + ' · <a href="' + r.actions + '" target="_blank" rel="noreferrer">the workflow</a></p>' : '')
-        + '<p>A session now reads it with <code>tools/corrections.py inspect</code>, fixes the '
-        + 'input at fault, rebuilds, and opens a pull request.</p>', [['Close', closeSheet]]);
+        + '<p>A session now reads ' + (ids.length === 1 ? 'it' : 'each') + ' with '
+        + '<code>tools/corrections.py inspect</code>, fixes the input at fault, rebuilds, and '
+        + 'a pull request is opened.</p>', [['Close', closeSheet]]);
     } catch (e) { report(String(e.message), true); toast(e.message, true); }
   };
 
-  sheet('Send this correction',
-    '<p id="m-what"></p><pre id="mjson"></pre>'
+  const said = (n) => (S.drafts.get(n) || {}).problem || '';
+  const list = B.map((it) => '<li>plate ' + it.plate + ', <b>' + esc(it.draft.abbr || '(no region)')
+    + '</b>: ' + esc(marksSaid(it.draft)) + '</li>').join('');
+  const probs = plates.map((n) => '<label class="prob">what is wrong on plate ' + n
+    + '<textarea id="m-prob-' + n + '" rows="2">' + esc(said(n)) + '</textarea></label>').join('');
+  sheet('Send ' + counted(B.length, 'correction') + (plates.length > 1 ? ' on ' + plates.length + ' plates' : ''),
+    '<p id="m-what"></p><ul class="files" id="m-list">' + list + '</ul>' + probs
+    + '<pre id="mjson"></pre>'
     + '<label class="chk"><input type="checkbox" id="m-snap" checked>'
-    + ' commit a picture of the plate as it stands beside it</label>'
+    + ' commit a picture of each plate as it stands beside its file' + (plates.length > 1
+      ? ' (the page walks to each plate for it)' : '') + '</label>'
     + '<label class="chk"><input type="checkbox" id="m-dry">'
-    + ' dry run — write it under build/corrections/ and stop</label>',
+    + ' dry run — write ' + (B.length === 1 ? 'it' : 'them') + ' under build/corrections/ and stop</label>',
     [['Cancel', closeSheet], ['Commit and push', send, 'go']]);
-  $('mjson').textContent = pre.text;
+  $('mjson').textContent = pre.map((p) => p.text).join('\n');
   const btn = $('mbtns').lastChild;
   const mode = () => {
     const dry = $('m-dry').checked;
-    btn.textContent = dry ? 'Write it' : 'Commit and push';
+    btn.textContent = dry ? (B.length === 1 ? 'Write it' : 'Write them') : 'Commit and push';
     $('m-what').innerHTML = dry
-      ? 'A dry run writes the file under <code>build/corrections/</code> and stops, '
+      ? 'A dry run writes the file' + (B.length === 1 ? '' : 's') + ' under <code>build/corrections/</code> and stops, '
         + 'which is the way to look at what would be sent.'
-      : 'The file goes on a branch <code>correction/&lt;id&gt;</code> cut from '
-        + '<code>origin/main</code> in a temporary worktree, and the push starts '
-        + '<code>apply-correction.yml</code>. Your own checkout is not touched.';
+      : 'The file' + (B.length === 1 ? ' goes' : 's go') + ' on a branch <code>'
+        + (B.length === 1 ? 'correction/&lt;id&gt;' : 'correction/&lt;stamp&gt;')
+        + '</code> cut from <code>origin/main</code>, as one commit, and the push starts '
+        + '<code>apply-correction.yml</code>, which applies ' + (B.length === 1 ? 'it' : 'each of them')
+        + ' and opens one pull request. Your own checkout is not touched.';
   };
   $('m-dry').onchange = mode;
   mode();
@@ -1966,6 +2098,7 @@ function key(ev) {
   else if (k === 'i') inspect(false);
   else if (k === 'r') recut();
   else if (k === 's') save();
+  else if (k === 'c') { if (!$('commitb').disabled) commit(); }
   else if (k === ',') goPlate(S.want - 1);
   else if (k === '.') goPlate(S.want + 1);
   else if (k === 'l') {

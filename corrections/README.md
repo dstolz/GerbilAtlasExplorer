@@ -1,7 +1,11 @@
 # corrections
 
-One file per correction to how a region is drawn, as written by `tools/atlasfix.py` (in a
-browser) or `matlab/AtlasRegionFix.m` (in MATLAB) and read by `tools/corrections.py`. A file is what a reader said on the plate -- a point
+One file per correction to how a region is drawn -- one plate, one region -- as written by
+`fixer.html` or `tools/atlasfix.py` (in a browser) or `matlab/AtlasRegionFix.m` (in MATLAB)
+and read by `tools/corrections.py`. One press of **Commit** in the browser sends every plate
+that holds marks, a file for each region marked on each, as one commit on one branch:
+`correction/<id>` for one file, `correction/<stamp>` for several, the stamp being the moment
+they were sent and the prefix of every id on the branch. A file is what a reader said on the plate -- a point
 inside a region, a run of boundary the tracing missed, the outline a region should have --
 and not a change to the data: the change is one edit to a pipeline input (`svg/`,
 `seed_overrides`, `brain_outline`, `label_positions`), made from it, and the extents are

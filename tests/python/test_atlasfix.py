@@ -168,6 +168,49 @@ def test_a_dry_run_writes_a_file_that_validates(tmp_path, monkeypatch):
     assert c['abbr'] == 'S1DZ' and len(c['seeds']) == 1
 
 
+def test_one_send_writes_a_file_for_each_plate_and_region(tmp_path, monkeypatch):
+    """What the page sends when Commit is pressed with marks on two plates and two
+    regions: three files, ids sharing the stamp they were sent at, each validating,
+    one picture a plate carried by the first file written for it."""
+    S = session()
+    monkeypatch.setattr(A, 'ROOT', str(tmp_path))
+    first = fixture_draft()
+    second = {'plate': PLATE, 'abbr': 'S1J', 'problem': first['problem'],
+              'seeds': [{'abbr': 'S1J', 'kind': 'positive', 'page_px': [1200, 1000]}]}
+    third = {'plate': 5, 'abbr': 'Pir', 'problem': 'the other plate',
+             'seeds': [{'abbr': 'Pir', 'kind': 'negative', 'page_px': [1600, 1200]}]}
+    png = b'\x89PNG\r\n\x1a\n'
+    r = F.commit(S, items=[{'draft': first, 'png': png}, {'draft': second, 'png': png},
+                           {'draft': third, 'png': None}], dry=True)
+    assert len(r['ids']) == 3 and len(r['paths']) == 3 and r['id'] == r['ids'][0]
+    stamp = r['ids'][0].split('-')[0]
+    assert all(i.startswith(stamp + '-') for i in r['ids'])
+    assert [i.split('-', 1)[1] for i in r['ids']] == ['p%02d-S1DZ' % PLATE, 'p%02d-S1J' % PLATE, 'p05-Pir']
+    docs = []
+    for path in r['paths']:
+        c = C.load(os.path.join(str(tmp_path), path))
+        C.validate(c, S.DB, S.VECM)
+        docs.append(c)
+    assert docs[0]['snapshot'] == docs[1]['snapshot'] == 'corrections/%s.png' % r['ids'][0]
+    assert docs[2]['snapshot'] is None
+    assert os.path.isfile(os.path.join(str(tmp_path), 'build', docs[0]['snapshot']))
+    assert F.branch_name(r['ids'], F.datetime.datetime.strptime(stamp, '%Y%m%dT%H%M%SZ')) == 'correction/' + stamp
+    assert F.branch_name(r['ids'][:1], None) == 'correction/' + r['ids'][0]
+    msg = F.commit_message(docs)
+    assert msg.startswith('Corrections: S1DZ on plate %d, S1J on plate %d, Pir on plate 5' % (PLATE, PLATE))
+    assert msg.count('Correction-Id: ') == 3 and msg.count('plate 5: the other plate') == 1
+
+
+def test_two_files_for_one_region_on_one_plate_are_refused():
+    S = session()
+    d = fixture_draft()
+    try:
+        F.commit(S, items=[{'draft': d, 'png': None}, {'draft': dict(d), 'png': None}], dry=True)
+        raise AssertionError('committed the same correction twice')
+    except F.Failed as e:
+        assert 'same region on the same plate' in str(e)
+
+
 # ------------------------------------------------------------------- the recut
 
 def test_recut_builds_the_plate_the_correction_would_leave(tmp_path):
