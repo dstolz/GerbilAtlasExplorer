@@ -66,9 +66,49 @@ for (const [name, url] of [['bundle', BUNDLE], ['lean', LEAN]]) {
 test('the build stamp is consistent', async ({ page }) => {
   await page.goto(LEAN);
   const meta = await page.getAttribute('meta[name="gae-build"]', 'content');
-  expect(meta).toMatch(/^\S+ \S+$/);
+  const hash = meta.split(' ')[0];
+  expect(hash).toMatch(/^[0-9a-zA-Z-]{4,40}$/);          // a commit, not a token nothing filled
+  expect(meta).not.toContain('{{');
+  await expect(page.locator('footer .fbuild code')).toHaveText(hash);
   await page.click('#aboutb');
-  await expect(page.locator('#about')).toContainText(meta.split(' ')[0]);
+  await expect(page.locator('#about')).toContainText(hash);
+});
+
+/* The pages committed to the repository keep their tokens -- a stamp in them was three
+   files that conflicted between any two branches, whatever they changed -- and Pages
+   serves main's root until its source is switched to this workflow, so a page can reach a
+   reader with nothing filled in. What it must not do then is print the token at them, or
+   link a commit that does not exist, or write either into a file they take away. The
+   substitutions here are tools/build_app.py's `unstamp`, which is what the committed page
+   carries. */
+test('a page nothing stamped names no build at all', async ({ page }) => {
+  await page.route(LEAN, async route => {
+    const r = await route.fetch();
+    const body = (await r.text())
+      .replace(/(<meta name="gae-build" content=")[^"]*(")/, '$1{{BUILD_HASH}} {{BUILD_DATE}}$2')
+      .replace(/(\/commit\/)[0-9a-zA-Z-]+(")/g, '$1{{BUILD_HASH}}$2')
+      .replace(/(\/commit\/\{\{BUILD_HASH\}\}"[^>]*><code>)[0-9a-zA-Z-]+(<\/code>)/g, '$1{{BUILD_HASH}}$2')
+      .replace(/(<time class="bwhen"[^>]*datetime=")[^"]*(")/g, '$1{{BUILD_ISO}}$2')
+      .replace(/(class="fstamp">Updated <time[^>]*>)[^<]*(<\/time>)/, '$1{{BUILD_DATE}} {{BUILD_TIME}}$2')
+      .replace(/(<\/code><\/a>, <time[^>]*>)[^<]*(<\/time>)/, '$1{{BUILD_DATE}}$2');
+    await route.fulfill({ response: r, body });
+  });
+  const errors = [];
+  page.on('pageerror', e => errors.push(String(e)));
+  await page.goto(LEAN);
+  expect(await page.getAttribute('meta[name="gae-build"]', 'content'))
+    .toBe('{{BUILD_HASH}} {{BUILD_DATE}}');                 // the page as the repository carries it
+  expect(await page.evaluate(() => window.__gae.BUILD)).toBe('');
+  for (const where of ['footer', '#about']) {
+    if (where === '#about') await page.click('#aboutb');
+    await expect(page.locator(where + ' .fbuild')).toHaveCount(0);
+    await expect(page.locator(where)).not.toContainText('{{');
+    await expect(page.locator(where)).not.toContainText('Build ');
+  }
+  // nor does the file a reader takes away from the page claim one
+  expect(await page.evaluate(() => window.__gae.repRows().find(r => r[0] === 'Build')[1]))
+    .toBe('unstamped');
+  expect(errors).toEqual([]);
 });
 
 /* The build stamps UTC, because it cannot know where the page will be opened; every
