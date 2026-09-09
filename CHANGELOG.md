@@ -348,6 +348,79 @@ carries a `version` block naming the release its derived fields were built for.
   are what carry the other two and a plain mesh link carries none.
 
 ### Fixed
+- **`E` gets both ependymal slits on plate 16, and gives back the wedge of accumbens it was
+  standing in.** The atlas letters the olfactory ventricle on this plate as the compound
+  `E/OV`, once on each hemisphere, and sets it *across* the slit it names rather than in it:
+  `E` on the lateral side of the lens, `OV` on the medial, and the lens itself is 0.20 mm
+  wide. So neither `E` box centre falls inside the thing the word points at. The left one
+  lands 0.19 mm away, at ML −1.03 DV −6.14, inside the **16,354 px** block that `3`, `AcbSh`
+  and `IEn` are each printed in, and the watershed cut `E` a **914 px** wedge out of the
+  accumbens shell. The right one lands on the ink of the slit's own lateral wall, 0.08 mm
+  out; `locate()` snapped it to the **12,114 px** face `AcbSh`, `Tu` and `VP` share, but the
+  5 × 5 mark a seed on a wall is placed with sits on the wall, which is in no face at all, so
+  it was masked out of the watershed and **`E` had no area whatever on the right of plate
+  16** — on a hemisphere the plate letters. The two slits themselves, **843 px** on the left
+  and **664 px** on the right, were faces of their own, sealed end to end by ink the atlas
+  drew, and lettered by nothing.
+
+  That is the seed in the wrong face in its first form — **the box is wrong** — and
+  `20260909T164235Z-p16-E` says so twice over: a positive seed in each slit, and two negative
+  seeds inside the wedge, the reader crossing out ground `E` holds today. So the fix is two
+  rows of `seed_overrides` with `i` set, `i = 0` for the right box and `i = 1` for the left,
+  which withdraw the printed boxes' own seeds and put each where the reader put it. The
+  correction file carries no `label_index`, so `corrections.py apply` would have written the
+  rows as `i = −1` — seeds of their own, beside the boxes — and `E` would have kept the wedge
+  as well; they are written through `atlaslib.save_db` instead, in the layout `apply` writes,
+  and `corrections/` is untouched. These are the first rows here to stand in for a printed
+  box on the word of a correction rather than a report.
+
+  **`E` on plate 16 goes 0.0447 to 0.0828 mm², one polygon to two**, one per hemisphere where
+  it had none on the right, and **its traced share goes 0.665 to 1.00 and 1.00** — the
+  boundary it stops at is now ink the atlas printed, every pixel of it, where two thirds of
+  the old wedge's border was a watershed drawn through the accumbens. Of the **1,676 px** `E`
+  now holds, **1,511 were unassigned ground**, the two faces nothing lettered; 39 were already
+  `E` where the old wedge touched the slit, and the remaining 126 are the walls themselves,
+  ink the neighbours now divide with a region that has a name. **`AcbSh` goes 0.8757 to
+  0.9168 mm²**, which is 874 of the wedge's 914 px coming back to the shell they were cut
+  from. Nine other entries on the plate move and **none by more than 0.0017 mm²** — `OV`
+  −0.0017, `fmi` −0.0011, `AcbC` −0.0010, `DP` +0.0004, `3` +0.0003, `LO` +0.0002, `VO`
+  +0.0001, `AI` −0.0001, `aca` ±0.0000 — those 126 px of wall between them. Unassigned space
+  on plate 16 goes 1.0956 to 1.0189 mm² in 18 polygons rather than 20, and the two that go
+  are the slits.
+
+  Eleven (plate, region) entries move in the whole-atlas re-cut and every one is on plate 16.
+  `structure_plate_entries` stays 3,118 and the coloring 691 regions in 631 patches; polygons
+  go 6,013 to 6,014, points 168,751 to 168,781, `seeds_moved_by_hand` 32 to 34, faces named
+  by one abbreviation 3,519 to 3,521, labels relocated 188 to 187 — the right box no longer
+  needs snapping — `traced_fraction_ge_90` 0.804 to 0.805, and
+  **`boundary_edges_shared_exactly` stays 1.0**. `label_inside_its_own_region` goes 0.9776 to
+  0.9775, which is the fix and not a cost: both `E` boxes are printed outside the region they
+  name, which is the whole of what was wrong here. Over the series `E` goes 1.542 to 1.580
+  mm² and 0.4141 to 0.4268 mm³ in 18 mesh components rather than 17. Twenty-one structures'
+  volumes move, `AcbSh` 2.1476 to 2.1594 and `AcbC` 3.0183 to 3.0120 mm³ the largest of them;
+  `unnamed_fraction` stays 0.0346 and the brain volume 1046.607 mm³. `E`'s *mesh* volume
+  falls, 0.3871 to 0.3162 mm³ with `coarsening_rel_error` 0.0 to 0.2068 and the atlas's
+  triangles 1,591,116 to 1,582,008: the published mesh is a coarsening at 0.15 mm, and what
+  `E` gained is a sheet 0.20 mm across, which that sampling cannot hold. The voxel volume,
+  which the tables and the 3-D readout quote, is the one that rises.
+
+  The reading not taken is the tracing. Two faces the atlas separates being cut as one would
+  put the slit and the wedge in a single face, and adding the missing run would divide them —
+  but the slits are already faces, sealed by drawn ink on all sides, which is what the traced
+  share of 1.00 either side says, and the correction draws no boundary and no extent. Nor is
+  it an island culled from `brain_outline`, which would leave the region with no area at all
+  on either hemisphere, or a label never read: the plate's `label_positions` carries both `E`
+  boxes. Within the seed reading, the alternative to withdrawing the boxes is `i = −1` beside
+  them, which is what plate 3 and plate 28 took; `E` would then come out 0.127 mm² here, the
+  two slits **and** the wedge. The two negative seeds are what rule it out, and what would
+  settle it without them is whether the atlas means `E` to name any part of the accumbens
+  block — it does not: that block is lettered `3`, `AcbSh` and `IEn`, all three printed
+  inside it, and `E` is printed on the slit's wall. `OV`'s own box, medial of the same slit,
+  is left alone: it seeds the face it is printed in and comes out 0.0401 to 0.0384 mm²,
+  losing 28 px of the shared wall. Whether the compound `E/OV` means the slit is `E`'s lining
+  around `OV`'s lumen, and so should be split rather than given whole to `E`, is a question
+  the drawing does not answer — the atlas draws one lens and prints two names beside it —
+  and it is the same reading plate 3 took in #110.
 - **The right `RAPir` on plate 28 gets its column too.** #109 gave the rostral
   amygdalopiriform area the whole column the atlas draws it as, on the left of plate 28,
   where the correction was drawn -- and said the right was drawn the same way and untouched:

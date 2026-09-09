@@ -1,0 +1,52 @@
+{
+ "schema": "gerbil-atlas-correction/1",
+ "id": "20260909T164235Z-p16-E",
+ "created": "2026-09-09T16:42:35Z",
+ "author": "",
+ "plate": 16,
+ "ap_bregma_mm": 2.55,
+ "abbr": "E",
+ "hemisphere": "both",
+ "problem": "corrections for most of E across several plates",
+ "seeds": [
+  {
+   "abbr": "E",
+   "kind": "negative",
+   "page_px": [1529.69,1424.78],
+   "mm": [-0.971,-6.181],
+   "note": ""
+  },
+  {
+   "abbr": "E",
+   "kind": "negative",
+   "page_px": [1519.1,1402.28],
+   "mm": [-1.045,-6.022],
+   "note": ""
+  },
+  {
+   "abbr": "E",
+   "kind": "positive",
+   "page_px": [1533.66,1395.66],
+   "mm": [-0.943,-5.976],
+   "note": ""
+  },
+  {
+   "abbr": "E",
+   "kind": "positive",
+   "page_px": [1779.8,1404.93],
+   "mm": [0.782,-6.041],
+   "note": ""
+  }
+ ],
+ "boundaries": [],
+ "extents": [],
+ "notes": [],
+ "snapshot": "corrections/20260909T164235Z-p16-E.png",
+ "source": {
+  "commit": "",
+  "site": "https://dstolz.github.io/GerbilAtlasExplorer/",
+  "repo": "dstolz/GerbilAtlasExplorer",
+  "tool": "atlasfix (the published page) 1.0",
+  "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+ }
+}
