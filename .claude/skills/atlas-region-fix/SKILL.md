@@ -49,8 +49,11 @@ hand and say which and why in the commit.
    inputs they will be committed with.
 2. **Read the correction.** `python3 tools/corrections.py inspect corrections/<id>.json --qc`
    and look at `qc/chk_corr_<id>.png` (red tracing, green the region today, yellow its
-   boxes, blue seeds, cyan boundaries, magenta extents). Read the plate drawing
-   (`data/plates/drawing/NN.jpg`) around the site. Decide the cause from the table above.
+   boxes, blue seeds, cyan boundaries, magenta extents) and `qc/chk_corr_<id>_site.png`,
+   the site cropped, the region as it stands on `origin/main` beside the region as it
+   stands here -- the same picture at this step, and the picture of what the fix did once
+   there is one. Read the plate drawing (`data/plates/drawing/NN.jpg`) around the site.
+   Decide the cause from the table above.
 3. **Fix the input.** `python3 tools/corrections.py apply corrections/<id>.json` for
    boundaries and seeds (`--dry-run` first shows what it would write); islands and boxes by
    hand, through `atlaslib.load_db` / `save_db` so the file keeps its byte-exact layout.
@@ -91,11 +94,22 @@ hand and say which and why in the commit.
    (`brain_outline.note`, `seed_overrides.note`) where they enumerate cases.
 8. **Commit and push** to the same `correction/<id>` branch. The title is a sentence about
    the region (`The optic chiasm gets its plate back`); the body says the cause and the
-   numbers; end with `Co-authored-by: Daniel <dstolz@umd.edu>`. Then open the pull request
-   against `main` with `gh pr create`, the write-up as its body. Commit
-   `qc/chk_corr_<id>.png` with the fix: the correction file is what the reader drew, and
-   that picture is what it did. Do not merge, and do not wait to be told to: the workflow
-   waits on CI and stops at the pull request, which a person reads before it lands.
+   numbers; end with `Co-authored-by: Daniel <dstolz@umd.edu>`. Commit
+   `qc/chk_corr_<id>.png` and `qc/chk_corr_<id>_site.png` with the fix, both from an
+   `inspect --qc` run after the rebuild: the correction file is what the reader drew, and
+   those pictures are what it did. Then open the pull request against `main` with `gh pr
+   create`, the write-up as its body, and **the body opens with the site picture**, so
+   the region before and after is the first thing a reader sees:
+
+   ```
+   ![<abbr> on plate NN, before and after](https://raw.githubusercontent.com/<owner>/<repo>/<sha>/qc/chk_corr_<id>_site.png)
+   ```
+
+   `<sha>` is the pushed commit, `git rev-parse HEAD` after the push, and `<owner>/<repo>`
+   is `gh repo view --json nameWithOwner -q .nameWithOwner`. The commit is what the link
+   is pinned to, so the picture stays with the pull request after the branch is gone. Do
+   not merge, and do not wait to be told to: the workflow waits on CI and stops at the
+   pull request, which a person reads before it lands.
 
 ## Never
 

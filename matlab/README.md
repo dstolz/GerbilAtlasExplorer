@@ -44,9 +44,10 @@ runs*. This class lets you say it on the plate, in millimetres, and sends it.
    `tools/corrections.py inspect`, decides which input is at fault, fixes that input
    (`apply` writes boundaries into the SVG and seeds into `seed_overrides`), rebuilds the
    extents, meshes, tables and pages, runs every check, writes the CHANGELOG and METHODS
-   entries, and opens a pull request. The workflow merges it once CI is green, and GitHub
-   Pages serves `main`, so the site updates on the merge. The pull request and
-   `qc/chk_corr_<id>.png` are the record.
+   entries, and opens a pull request, which opens with a picture of the region before and
+   after. The workflow waits on CI and stops there: a person reads the pull request and
+   merges it, and GitHub Pages serves `main`, so the site updates on the merge. The pull
+   request, `qc/chk_corr_<id>_site.png` and `qc/chk_corr_<id>.png` are the record.
 
 ## Setup
 

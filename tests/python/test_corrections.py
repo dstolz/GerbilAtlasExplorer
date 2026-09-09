@@ -118,3 +118,22 @@ def test_inspect_reads_the_seed_against_the_extraction():
     assert b['style'] == 'outlines-dashed' and all(b['ends_bridge'])
     assert b['on_ink'] > 0.9                    # the run is traced now (#77)
     assert any('already traced' in ln for ln in rep['lines'])
+
+
+def test_qc_draws_the_site_before_and_after(tmp_path, monkeypatch):
+    """--qc writes the plate and the site: two panels when the ref reads, one when it
+    does not, and the plate picture the same either way."""
+    from PIL import Image
+    monkeypatch.setattr(A, 'QCDIR', str(tmp_path))
+    DB, VECM, c = A.load_db(), A.vec_matrices(), C.load(FIX)
+    rep = C.inspect(c, DB, VECM, want_qc=True, quiet=True, before='HEAD')
+    assert os.path.basename(rep['qc']) == 'chk_corr_%s.png' % c['id']
+    assert os.path.basename(rep['site']) == 'chk_corr_%s_site.png' % c['id']
+    with Image.open(rep['site']) as im:
+        assert im.width == 2 * C.SITE_PANEL_PX + 12          # before HEAD, and after
+    plate = open(rep['qc'], 'rb').read()
+    rep = C.inspect(c, DB, VECM, want_qc=True, quiet=True, before='no-such-ref')
+    with Image.open(rep['site']) as im:
+        assert im.width == C.SITE_PANEL_PX                   # the one panel
+    assert any('not a ref' in ln for ln in rep['lines'])
+    assert open(rep['qc'], 'rb').read() == plate

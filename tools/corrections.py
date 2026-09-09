@@ -9,11 +9,16 @@ region is -- a point inside it -- and where its boundary runs. matlab/
 AtlasRegionFix.m writes that down as corrections/<id>.json, in the page frame
 the tracings are in, and this reads it back against the extraction.
 
-  inspect FILE [--qc]   Where each seed lands today and in whose face; how far
+  inspect FILE [--qc] [--before REF]
+                        Where each seed lands today and in whose face; how far
                         each drawn boundary's ends sit from traced ink, and
                         whether BRIDGE_PX closes the gap; which runs of a
                         corrected extent lie off the ink already traced. --qc
-                        draws all of it over the plate: qc/chk_corr_<id>.png.
+                        draws all of it over the plate, qc/chk_corr_<id>.png,
+                        and draws the site cropped and side by side as
+                        qc/chk_corr_<id>_site.png: the region as it stands on
+                        REF (origin/main) beside the region as it stands here,
+                        which after a fix is the picture of what the fix did.
   apply FILE [--dry-run]
                         Boundaries, and the off-ink runs of an extent, go into
                         the plate's SVG as paths a reader can diff, in the group
@@ -34,7 +39,7 @@ id it came from, so the SVG says what a reader added and what the tracer drew.
 
 Reads:  corrections/<id>.json, svg/*.svg, data/gerbil_atlas.json, data/vec.json
 Writes: svg/GerbilAtlas_Plate_NN.svg, data/gerbil_atlas.json (`seed_overrides`),
-        qc/chk_corr_<id>.png
+        qc/chk_corr_<id>.png, qc/chk_corr_<id>_site.png
 
 Usage:  python3 tools/corrections.py validate corrections/*.json
         python3 tools/corrections.py inspect corrections/<id>.json --qc
@@ -353,7 +358,7 @@ def group_of(style):
 
 # ------------------------------------------------------------------ inspect
 
-def inspect(c, DB, VECM, want_qc=False, quiet=False):
+def inspect(c, DB, VECM, want_qc=False, quiet=False, before='origin/main'):
     """Read the correction against the extraction as it stands. Returns what it
     found, structured, and prints it unless `quiet`."""
     p, ab = c['plate'], c['abbr']
@@ -509,6 +514,12 @@ def inspect(c, DB, VECM, want_qc=False, quiet=False):
         path = write_qc(c, P, DB, out, printed)
         lines.append('  wrote %s' % path)
         rep['qc'] = path
+        was = region_on(before, p, VECM) if before else None
+        site = write_site(c, P, DB, out, was, before)
+        if site:
+            lines.append('  wrote %s%s' % (site, '' if was else
+                         ' -- the one panel: %s is not a ref this checkout can read' % before))
+            rep['site'] = site
     if not quiet:
         print('\n'.join(lines))
     rep['lines'] = lines
@@ -520,25 +531,48 @@ def _inside(mask, pt, W, H):
     return 0 <= xi < W and 0 <= yi < H and bool(mask[yi, xi])
 
 
-def write_qc(c, P, DB, out, printed):
-    """The correction over the plate: tracings red, the region as it stands green,
-    the printed boxes of its name yellow, seeds blue (a negative one crossed),
-    boundaries cyan, extents magenta. Twice the plate's size, for the eye."""
-    from PIL import Image, ImageDraw
-    S = 2
+def region_on(ref, plate, VECM):
+    """The plate cut from the inputs as they stand on git ref `ref` -- the database and
+    this plate's tracing, read out of the object store into a directory of their own --
+    for a picture of what a fix changed. None where the ref cannot be read: no git, no
+    such ref, a checkout that is not a repository."""
+    import io
+    import subprocess
+    import tarfile
+    import tempfile
+    rel_db = os.path.relpath(A.JSON, A.ROOT)
+    rel_svg = os.path.relpath(os.path.join(A.SVGDIR, 'GerbilAtlas_Plate_%02d.svg' % plate), A.ROOT)
+    try:
+        blob = subprocess.run(['git', 'archive', ref, '--', rel_db, rel_svg], cwd=A.ROOT,
+                              capture_output=True, check=True).stdout
+    except (OSError, subprocess.CalledProcessError):
+        return None
+    tmp = tempfile.mkdtemp(prefix='corr_before_')
+    with tarfile.open(fileobj=io.BytesIO(blob)) as tar:
+        try:
+            tar.extractall(tmp, filter='data')
+        except TypeError:                             # a Python without the filter
+            tar.extractall(tmp)
+    svgdir = A.SVGDIR
+    A.SVGDIR = os.path.join(tmp, os.path.relpath(A.SVGDIR, A.ROOT))   # what build_plate reads
+    try:
+        DB0 = A.load_db(os.path.join(tmp, rel_db))
+        r = B.build_plate(plate, DB0, VECM, want_qc=True)
+    finally:
+        A.SVGDIR = svgdir
+    return (r[0], DB0) if r else None
+
+
+def _draw_marks(dr, c, P, DB, out, S, at):
+    """The correction over one plate image: tracings red, the region as `out` has it
+    green, the printed boxes of its name yellow, seeds blue (a negative one crossed),
+    boundaries cyan, extents magenta. `at` maps a page point onto the image."""
     p, ab = c['plate'], c['abbr']
     NW, NH = P.NW, P.NH
-    img = A.plate_image('drawing', p).convert('RGB').resize((NW * S, NH * S), Image.LANCZOS)
-    dr = ImageDraw.Draw(img, 'RGBA')
-
-    def at(pt):
-        px, py = xf(P.m, pt[0], pt[1])
-        return (px * S, py * S)
-
     for pts, _c in P.polys:
         if len(pts) >= 2:
             dr.line([at(q) for q in pts], fill=(226, 0, 26, 110), width=1)
-    if ab in out:
+    if out and ab in out:
         for g in out[ab]['g']:
             poly = [(x * NW * S, y * NH * S) for x, y in g]
             dr.polygon(poly, fill=(0, 160, 0, 45), outline=(0, 140, 0, 255), width=2)
@@ -566,12 +600,113 @@ def write_qc(c, P, DB, out, printed):
         else:
             dr.ellipse([x - 6, y - 6, x + 6, y + 6], fill=(30, 60, 230, 255),
                        outline=(255, 255, 255, 255), width=2)
+
+
+def write_qc(c, P, DB, out, printed):
+    """The correction over the plate: tracings red, the region as it stands green,
+    the printed boxes of its name yellow, seeds blue (a negative one crossed),
+    boundaries cyan, extents magenta. Twice the plate's size, for the eye."""
+    from PIL import Image, ImageDraw
+    S = 2
+    p, ab = c['plate'], c['abbr']
+    NW, NH = P.NW, P.NH
+    img = A.plate_image('drawing', p).convert('RGB').resize((NW * S, NH * S), Image.LANCZOS)
+    dr = ImageDraw.Draw(img, 'RGBA')
+
+    def at(pt):
+        px, py = xf(P.m, pt[0], pt[1])
+        return (px * S, py * S)
+
+    _draw_marks(dr, c, P, DB, out, S, at)
     dr.rectangle([0, NH * S - 22, NW * S, NH * S], fill=(255, 255, 255, 200))
     dr.text((8, NH * S - 18), '%s  plate %d  %s: red tracing, green %s today, yellow its boxes, '
             'blue seeds, cyan boundaries, magenta extents' % (c['id'], p, ab, ab), fill=(0, 0, 0))
     os.makedirs(A.QCDIR, exist_ok=True)
     path = os.path.join(A.QCDIR, 'chk_corr_%s.png' % c['id'])
     img.save(path)
+    return path
+
+
+SITE_PANEL_PX = 720          # each panel of the site picture, wide
+SITE_MIN_PX = 260            # the window is at least this many page px across
+
+
+def write_site(c, P, DB, out, before, ref):
+    """The site of the correction, cropped, and side by side: the region as it stood on
+    `ref` and as it stands now, the reader's marks over both. `before` is what
+    region_on returned, or None, in which case the picture is the one panel. The
+    window is drawn round everything the picture is about -- the region either side,
+    the seeds, boundaries, extents and the boxes of its name -- with a quarter of its
+    own size around it and never under SITE_MIN_PX across, so the neighbours read."""
+    from PIL import Image, ImageDraw, ImageFont
+    S = 2
+    p, ab = c['plate'], c['abbr']
+    NW, NH = P.NW, P.NH
+    base = A.plate_image('drawing', p).convert('RGB').resize((NW * S, NH * S), Image.LANCZOS)
+
+    def at(pt):
+        px, py = xf(P.m, pt[0], pt[1])
+        return (px * S, py * S)
+
+    pts = []
+    for o in ((before[0] if before else None), out):
+        if o and ab in o:
+            for g in o[ab]['g']:
+                pts += [(x * NW * S, y * NH * S) for x, y in g]
+    for cx, cy, bw, bh in DB['label_positions']['data'].get(str(p), {}).get(ab, []):
+        pts += [((cx - bw / 2) * NW * S, (cy - bh / 2) * NH * S),
+                ((cx + bw / 2) * NW * S, (cy + bh / 2) * NH * S)]
+    pts += [at(seed_point(s, P)) for s in c['seeds']]
+    for b in c['boundaries']:
+        pts += [at(q) for q in entry_points(b, P)]
+    for e in c['extents']:
+        pts += [at(q) for q in ring_of(e, P)]
+    if not pts:
+        return None
+    xs, ys = zip(*pts)
+    x0, x1, y0, y1 = min(xs), max(xs), min(ys), max(ys)
+    side = max(x1 - x0, y1 - y0, SITE_MIN_PX * S)
+    cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
+    half = side / 2 * 1.25
+    # a 4:3 window, clamped to the plate
+    wx, wy = max(half, half * 4 / 3), max(half, half * 3 / 4)
+    win = (int(max(0, cx - wx)), int(max(0, cy - wy)),
+           int(min(NW * S, cx + wx)), int(min(NH * S, cy + wy)))
+
+    panels = []
+    for o, DBo, title in ((before[0], before[1], 'before -- %s' % ref) if before else (None, None, None),
+                          (out, DB, 'after -- the branch')):
+        if title is None:
+            continue
+        img = base.copy()
+        dr = ImageDraw.Draw(img, 'RGBA')
+        _draw_marks(dr, c, P, DBo, o, S, at)
+        crop = img.crop(win)
+        scale = SITE_PANEL_PX / crop.width
+        crop = crop.resize((SITE_PANEL_PX, max(1, int(round(crop.height * scale)))), Image.LANCZOS)
+        a = o[ab]['a'] if o and ab in o else 0.0
+        panels.append((crop, '%s: %s %.4f mm2' % (title, ab, a)))
+
+    try:
+        font = ImageFont.load_default(size=16)
+    except TypeError:                                 # an older Pillow: the bitmap font
+        font = ImageFont.load_default()
+    gap, cap, foot = 12, 26, 22
+    W = sum(im.width for im, _ in panels) + gap * (len(panels) - 1)
+    H = cap + max(im.height for im, _ in panels) + foot
+    sheet = Image.new('RGB', (W, H), (255, 255, 255))
+    dr = ImageDraw.Draw(sheet)
+    x = 0
+    for im, title in panels:
+        dr.text((x + 6, 5), title, fill=(0, 0, 0), font=font)
+        sheet.paste(im, (x, cap))
+        x += im.width + gap
+    dr.text((6, H - foot + 3), '%s  plate %d: red tracing, green %s, yellow its boxes, blue seeds '
+            '(a negative one crossed), cyan boundaries, magenta extents' % (c['id'], p, ab),
+            fill=(0, 0, 0), font=font)
+    os.makedirs(A.QCDIR, exist_ok=True)
+    path = os.path.join(A.QCDIR, 'chk_corr_%s_site.png' % c['id'])
+    sheet.save(path)
     return path
 
 
@@ -681,7 +816,10 @@ def main():
     sub = ap.add_subparsers(dest='cmd', required=True)
     i = sub.add_parser('inspect', help='read a correction against the extraction')
     i.add_argument('file', help='corrections/<id>.json, or the id')
-    i.add_argument('--qc', action='store_true', help='write qc/chk_corr_<id>.png')
+    i.add_argument('--qc', action='store_true',
+                   help='write qc/chk_corr_<id>.png and qc/chk_corr_<id>_site.png')
+    i.add_argument('--before', default='origin/main', metavar='REF',
+                   help='the git ref the left panel of the site picture is cut on (origin/main)')
     v = sub.add_parser('validate', help='check one or more corrections without cutting a plate')
     v.add_argument('files', nargs='+', help='corrections/<id>.json, or ids')
     a = sub.add_parser('apply', help='write its boundaries into svg/ and its seeds into seed_overrides')
@@ -701,7 +839,7 @@ def main():
         return
     c = load(resolve(args.file))
     if args.cmd == 'inspect':
-        inspect(c, DB, VECM, want_qc=args.qc)
+        inspect(c, DB, VECM, want_qc=args.qc, before=args.before)
     else:
         apply(c, DB, VECM, dry=args.dry_run)
 

@@ -188,9 +188,12 @@ jobs:
             is a plate that supports none of the four causes: say that in your last message,
             which is what the job summary shows.
 
-            Leave the pull request reviewable. Commit `qc/chk_corr_<id>.png` from `inspect
-            --qc` beside the fix -- the correction file is what the reader drew and that
-            picture is what it did -- and give the body the region's area before and after,
+            Leave the pull request reviewable. Commit `qc/chk_corr_<id>.png` and
+            `qc/chk_corr_<id>_site.png` from an `inspect --qc` run after the rebuild, beside
+            the fix -- the correction file is what the reader drew and those pictures are
+            what it did -- and open the body with the site picture, embedded from the pushed
+            commit as step 8 of the skill shows, so the region before and after is the first
+            thing the reader sees. Then give the body the region's area before and after,
             what else on the plate moved and why, and `boundary_edges_shared_exactly`.
           # The model is named rather than left to the action's default. This is a long job
           # -- eight steps, a ten-minute rebuild, then every check -- and it turns on a
@@ -265,7 +268,8 @@ jobs:
       # and the four causes are told apart by reading a plate, which is a judgment worth a
       # second pair of eyes before it is published. So the merge is the reader's: this waits
       # on ci.yml, writes the pull request into the job summary, and stops. What it leaves
-      # to read is the write-up, the numbers in it, and `qc/chk_corr_<id>.png` in the diff.
+      # to read is the write-up, the numbers in it, the site picture at the top of it and
+      # `qc/chk_corr_<id>.png` in the diff.
       - name: Wait on CI, and leave the pull request to be read
         env:
           GH_TOKEN: ${{ github.token }}
@@ -282,7 +286,13 @@ jobs:
           url=$(gh pr view "$pr" --json url --jq .url)
           echo "pull request #$pr -- $url"
           sleep 90                                     # let ci.yml register on the head
-          if gh pr checks "$pr" --watch --fail-level error; then
+          # `--watch` holds until every check on the head has finished, and `--fail-fast`
+          # lets go at the first one that fails; the exit code is 0 for all green and 1
+          # otherwise. Those are the two flags `gh pr checks` has for this, per the usage
+          # it printed on the runner -- the `--fail-level error` this first read was a flag
+          # of nothing, and the runs that opened #109 and #110 ended red on it with CI
+          # green on both.
+          if gh pr checks "$pr" --watch --fail-fast; then
             state='CI is green. Read it and merge it -- the run stops here.'
             failed=0
           else
@@ -294,6 +304,6 @@ jobs:
             echo
             echo "[Pull request #$pr]($url) -- $state"
             echo
-            echo 'The picture of what the correction did is `qc/chk_corr_<id>.png`, in the diff.'
+            echo 'The picture of what the correction did opens the pull request; `qc/chk_corr_<id>.png` is the whole plate, in the diff.'
           } >> "$GITHUB_STEP_SUMMARY"
           exit "$failed"

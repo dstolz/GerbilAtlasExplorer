@@ -6,6 +6,26 @@ carries a `version` block naming the release its derived fields were built for.
 ## [Unreleased]
 
 ### Changed
+- **A correction's pull request opens with a picture of the region before and after.**
+  What a reader had was `qc/chk_corr_<id>.png` in the diff: the whole plate at twice its
+  size, most of it white, the region a green sliver in the middle, and one state of it --
+  the plate as it stood when `inspect --qc` last ran. `inspect --qc` now writes a second
+  file beside it, `qc/chk_corr_<id>_site.png`: the site of the correction cropped to
+  everything the correction is about (the region either side, the seeds, the boundaries,
+  the extents, the boxes of its name, a quarter of that around it), and side by side --
+  the region as it stands on `origin/main`, cut from that ref's database and tracing read
+  out of the object store, beside the region as it stands in the checkout, each panel
+  captioned with the area. Run after a rebuild, that is the picture of what the fix did;
+  run before one, both panels are the same and say so. `--before REF` names another ref,
+  and a ref the checkout cannot read gives the one panel and says why.
+
+  The session commits both files and **opens the pull request body with the site
+  picture**, embedded from the pushed commit's own URL so it stays with the pull request
+  after the branch is gone (step 8 of `.claude/skills/atlas-region-fix/SKILL.md`, and the
+  workflow's prompt). The whole-plate picture is drawn by the same code as before and
+  comes out byte for byte the same; the test checks that, and that the site picture has
+  two panels against `HEAD` and one against a ref that does not exist.
+
 - **A correction stops at its pull request, to be read before it lands.** The workflow
   squash-merged the fix onto main itself the moment CI went green, so what the atlas says a
   structure is -- its area, its boundary, its mesh, its share of the label volume -- would
@@ -232,6 +252,43 @@ carries a `version` block naming the release its derived fields were built for.
   `label_inside_its_own_region` 0.9776 either way, and **`boundary_edges_shared_exactly`
   stays 1.0**. 63 Python tests and 109 browser tests pass, and `--check` on the tables,
   groups, colors, face maps and pages is clean.
+- **A correction's run ends green when its pull request does.** The last step of
+  `.github/workflows/apply-correction.yml` waited on CI with `gh pr checks --watch
+  --fail-level error`, and `--fail-level` is a flag of nothing: `gh` printed its usage and
+  exited 1, so **the first two runs to carry a correction the whole way -- `RAPir` on plate
+  28 (#109) and `E` on plate 3 (#110), fixes pushed, pull requests opened, CI green on
+  both -- were reported as failures** ninety seconds after the pull request was named.
+  The flag is `--fail-fast` now, which with `--watch` holds until every check on the head
+  has finished or the first has failed, exiting 0 for green and 1 otherwise; those are the
+  two flags the runner's own usage lists for this. Checked: the file parses, the block
+  passes `bash -n`, and the flag list is read off what `gh` printed in both runs.
+
+- **The `1` printed on plate 16 was the `LO` beside it, read twice.** Layer 1 of cortex had
+  a located label on plate 16 at ML +1.96, DV −5.66 and no region anywhere on the plate — the
+  only plate between 11 and 33 where it carries a box and gets no ring, and every plate from
+  17 on gives it one ring per box. The box was not a `1`. It sits on the printed word `LO`,
+  0.0020 of the frame from `LO`'s own box in x and 0.0008 in y, which is inside a single
+  glyph: the label pass read the right-hemisphere `LO` a second time as a `1`. Plate 16 is
+  the only plate in the atlas where the `1` box overlaps another structure's box at all, so
+  this is one misread word rather than a rule that needs changing. The layer-1 digits the
+  plate really does print — beside `Pir`, `DTT` and `Tu` — were never located, and still are
+  not; that is the ordinary shortfall the label pass has on the small digits, not this.
+
+  What the phantom cost was a seed. It claimed a face between `LO` and `VO`, the face came
+  out under the publication floor and was culled, and the ground it had taken stayed
+  unassigned — a white notch beside `LO` in the QC render, with a `1` printed on `LO`'s own
+  word and nothing to hover. Removing the box gives that ground back to the regions the atlas
+  draws around it: on plate 16 **`LO` goes 0.8558 to 0.8590 mm², `VO` 1.3842 to 1.3866,
+  `AcbSh` 0.8746 to 0.8757 and `aca` 0.3052 to 0.3041** — four entries on one plate, and the
+  whole-atlas re-cut changes no others. Seeds on the plate go 68 to 67 and the region count
+  stays 34.
+
+  Over the atlas the located-label count goes **6346 to 6345** and the count of (plate, name)
+  pairs **3350 to 3349** — `1` no longer has a box on plate 16, and plate 16 joins 11 through
+  15 as a plate where the index lists layer 1 and no copy of the word was read. Three test
+  literals move with them, in `test_label_positions` and in `test_atlaslib`'s label-table
+  row count. `faces_named_by_one_abbreviation` rises 3515 to 3516, since the face by `LO` is
+  now claimed by one name instead of contested, and `boundary_edges_shared_exactly` stays 1.0.
 
 - **A correction reaches its session on an installer that left no binary behind.**
   `anthropics/claude-code-action` installs Claude Code itself -- `curl -fsSL
@@ -260,6 +317,7 @@ carries a `version` block naming the release its derived fields were built for.
   the installer's own exit code. The first draft of the block lost the third case to
   `pipefail`: `find` over a directory that is not there failed the assignment before the
   message was reached, and the step exited 1 with nothing said.
+
 
 - **A correction is merged with a credential that is still alive, and only once a fix has
   arrived on the branch.** `.github/workflows/apply-correction.yml` merged as
