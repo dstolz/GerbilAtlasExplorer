@@ -83,6 +83,24 @@ def test_build_renders_every_blob():
     assert 'register("sw.js?v=abc1234")' in stamped and B.unstamp(stamped) == lean
 
 
+def test_the_build_claim_is_one_removable_span():
+    """The footer and About each name the build inside one span, and that is what src/app.js
+    removes when the stamp is a token and not a commit. It has to: the committed pages keep
+    their tokens, and Pages serves main's root until its source is the workflow that stamps
+    the copy it deploys, so an unstamped page does reach readers. Every token but the meta's
+    and the worker's cache key is inside one of the two spans, which is to say every one a
+    reader would otherwise read."""
+    db = A.load_db()
+    page = B.render(db)
+    assert page.count('<span class="fbuild">') == 2 and page.count('/commit/{{BUILD_HASH}}') == 2
+    # the meta, and twice a link and the code that shows it; a date in the meta and each
+    # stamp; the time only in the footer's; an instant behind both stamps
+    assert page.count('{{BUILD_HASH}}') == 5 and page.count('{{BUILD_DATE}}') == 3
+    assert page.count('{{BUILD_TIME}}') == 1 and page.count('{{BUILD_ISO}}') == 2
+    # the lean page adds one the reader never sees: the worker is registered under the build
+    assert B.render(db, lean=True).count('{{BUILD_HASH}}') == 6
+
+
 def test_build_stamp_carries_the_moment():
     """The page ships the stamp as UTC text plus the instant behind it, which is what
     lets the browser show it on the reader's own clock."""

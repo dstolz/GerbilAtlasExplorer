@@ -1,16 +1,23 @@
 # Deploys the built site to GitHub Pages from a workflow, and attaches the offline
 # bundle to a release on a version tag.
 #
-# Today the site is served from the main branch's root, so this workflow runs only
-# when started by hand (workflow_dispatch) or on a v* tag. To switch the deployment
-# over: Settings -> Pages -> Source: "GitHub Actions", then add `push: branches:
-# [main]` to `on:` below. The URL does not change. Until then the committed pages
-# are what Pages serves, and CI checks that they are a fresh build.
+# The pages committed to the repository keep their build tokens -- a stamp in them was
+# three files that conflicted between any two branches, whatever they changed -- so the
+# copy a reader opens has to be stamped somewhere, and this is where: every push to main
+# builds the site from the commit it deploys and stamps it with that commit.
+#
+# That only reaches readers once Settings -> Pages -> Source is "GitHub Actions". Until
+# it is, Pages serves main's root, which is the committed pages, and a reader is told no
+# build rather than a token (src/app.js drops the claim when the stamp is not one). The
+# deploy job reads the setting and waits for it rather than failing every push; the build
+# job runs either way, so the switch is one setting and no further change here. The URL
+# does not change.
 name: Pages
 
 on:
   workflow_dispatch:
   push:
+    branches: [main]
     tags: ['v*']
 
 permissions:
@@ -25,6 +32,8 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      source: ${{ steps.source.outputs.kind }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -35,6 +44,18 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: build/site
+      # "workflow" once the Pages source is "GitHub Actions", "legacy" while it is a
+      # branch, "none" if Pages is off. Deploying under the other two fails, and a red
+      # main on every push is a worse signal than a skipped job.
+      - name: Which source is Pages serving?
+        id: source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          kind=$(gh api "repos/$GITHUB_REPOSITORY/pages" --jq .build_type 2>/dev/null || echo none)
+          echo "kind=$kind" >> "$GITHUB_OUTPUT"
+          echo "Pages source: $kind"
+          [ "$kind" = workflow ] || echo "::notice::Pages is serving $kind, so this build was not deployed. Settings -> Pages -> Source: \"GitHub Actions\" hands it to this workflow."
       - name: Attach the offline bundle to the release
         if: startsWith(github.ref, 'refs/tags/v')
         env:
@@ -44,9 +65,8 @@ jobs:
           gh release upload "${GITHUB_REF_NAME}" build/site/gerbil_atlas_explorer.html --clobber
 
   deploy:
-    # only meaningful once the Pages source is "GitHub Actions"; see the note above
-    if: github.event_name == 'workflow_dispatch'
     needs: build
+    if: needs.build.outputs.source == 'workflow'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
