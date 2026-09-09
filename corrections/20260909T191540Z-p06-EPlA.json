@@ -1,0 +1,132 @@
+{
+ "schema": "gerbil-atlas-correction/1",
+ "id": "20260909T191540Z-p06-EPlA",
+ "created": "2026-09-09T19:15:40Z",
+ "author": "",
+ "plate": 6,
+ "ap_bregma_mm": 6.05,
+ "abbr": "EPlA",
+ "hemisphere": "both",
+ "problem": "corrected extents of EPIA.",
+ "seeds": [
+  {
+   "abbr": "EPlA",
+   "kind": "negative",
+   "page_px": [1887,1189.71],
+   "mm": [1.536,-4.528],
+   "note": ""
+  },
+  {
+   "abbr": "EPlA",
+   "kind": "negative",
+   "page_px": [1885.59,1181.95],
+   "mm": [1.526,-4.473],
+   "note": ""
+  },
+  {
+   "abbr": "EPlA",
+   "kind": "negative",
+   "page_px": [1876.43,1186.89],
+   "mm": [1.461,-4.508],
+   "note": ""
+  },
+  {
+   "abbr": "EPlA",
+   "kind": "positive",
+   "page_px": [1860.21,1245.39],
+   "mm": [1.348,-4.919],
+   "note": ""
+  },
+  {
+   "abbr": "EPlA",
+   "kind": "positive",
+   "page_px": [1833.43,1265.83],
+   "mm": [1.16,-5.063],
+   "note": ""
+  },
+  {
+   "abbr": "EPlA",
+   "kind": "positive",
+   "page_px": [1836.25,1222.13],
+   "mm": [1.18,-4.756],
+   "note": ""
+  },
+  {
+   "abbr": "EPlA",
+   "kind": "negative",
+   "page_px": [1452.78,1193.93],
+   "mm": [-1.509,-4.557],
+   "note": ""
+  },
+  {
+   "abbr": "EPlA",
+   "kind": "negative",
+   "page_px": [1514.11,1189],
+   "mm": [-1.079,-4.523],
+   "note": ""
+  },
+  {
+   "abbr": "EPlA",
+   "kind": "negative",
+   "page_px": [1538.07,1251.74],
+   "mm": [-0.911,-4.964],
+   "note": ""
+  },
+  {
+   "abbr": "EPlA",
+   "kind": "negative",
+   "page_px": [1527.5,1287.69],
+   "mm": [-0.985,-5.217],
+   "note": ""
+  },
+  {
+   "abbr": "EPlA",
+   "kind": "positive",
+   "page_px": [1474.63,1248.21],
+   "mm": [-1.356,-4.939],
+   "note": ""
+  },
+  {
+   "abbr": "EPlA",
+   "kind": "positive",
+   "page_px": [1488.73,1208.03],
+   "mm": [-1.257,-4.657],
+   "note": ""
+  },
+  {
+   "abbr": "EPlA",
+   "kind": "positive",
+   "page_px": [1512.7,1224.95],
+   "mm": [-1.089,-4.776],
+   "note": ""
+  },
+  {
+   "abbr": "EPlA",
+   "kind": "positive",
+   "page_px": [1495.07,1293.33],
+   "mm": [-1.212,-5.257],
+   "note": ""
+  },
+  {
+   "abbr": "EPlA",
+   "kind": "positive",
+   "page_px": [1514.81,1254.56],
+   "mm": [-1.074,-4.984],
+   "note": ""
+  }
+ ],
+ "boundaries": [],
+ "extents": [],
+ "notes": [
+  "GIA seems to be erroneously pointing to EPIA in left hemisphere of plate 6"
+ ],
+ "preview": null,
+ "snapshot": "corrections/20260909T191540Z-p06-EPlA.png",
+ "source": {
+  "commit": "",
+  "site": "https://dstolz.github.io/GerbilAtlasExplorer/",
+  "repo": "dstolz/GerbilAtlasExplorer",
+  "tool": "atlasfix (the published page) 1.0",
+  "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+ }
+}
