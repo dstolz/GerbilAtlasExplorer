@@ -2,7 +2,7 @@
 // rather than the atlas's. What is checked here is that the turn is opt-in, that it is
 // the rotation and nothing else, that the two views share the one setting, and that the
 // overlays which cannot be re-flattened at another angle say so instead of being wrong.
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./gae');
 /* the controls these specs drive live in the view's panel, which opens closed */
 const panel = p => p.evaluate(() => window.__gae.vpan(true));
 

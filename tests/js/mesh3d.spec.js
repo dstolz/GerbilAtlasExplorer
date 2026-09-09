@@ -3,7 +3,7 @@
 // the link. The coloring claim -- that a mesh wears the color the plate paints that region --
 // is exact rather than a matter of pixels, so it is checked against the very table the
 // section is painted from.
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./gae');
 const path = require('path');
 
 /* the controls these specs drive live in the view's panel, and the two new ones in the

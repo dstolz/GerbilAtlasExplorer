@@ -1,5 +1,5 @@
 // Two 3-D panes on one canvas: what each pane holds of its own, and what the lock shares.
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./gae');
 /* the controls these specs drive live in the view's panel, which opens closed */
 const panel = p => p.evaluate(() => window.__gae.vpan(true));
 
