@@ -522,7 +522,7 @@ fractions of the frame-cropped image — the same frame and the same convention
 `brain_outline` uses, so the app's existing point-in-polygon test reads them unchanged.
 **<!-- n:region_extents.summary.structure_plate_entries -->3,118<!-- /n --> structure-plate entries carry an area**, 97% of the 3,215 the label pass located
 and 93% of the 3,365 the published index lists — both counted over the structures that are
-regions — as <!-- n:region_extents.summary.polygons -->6,013<!-- /n --> polygons over <!-- n:region_extents.summary.points -->168,751<!-- /n --> points. Where
+regions — as <!-- n:region_extents.summary.polygons -->6,014<!-- /n --> polygons over <!-- n:region_extents.summary.points -->168,760<!-- /n --> points. Where
 the atlas prints two names as one label the two share an entry, so a name having no entry of
 its own does not mean it has no area — see step 8. Twenty of the 724 names have no entry
 anywhere, and never could: they name no region — see step 7.
@@ -639,7 +639,7 @@ to **0.7% of polygons** and the repeated vertices to none.
 the difference between a polygon that reads as the line the atlas drew and one that visibly
 cuts its corners. The floor is the page lattice: at 0.35 px the tolerance drops below the
 raster step and the polygon starts recording the staircase rather than the line, at seven
-times the points. At 0.5 it does not — <!-- n:region_extents.summary.points -->168,751<!-- /n --> points against the 77,453 the 2 px pass
+times the points. At 0.5 it does not — <!-- n:region_extents.summary.points -->168,760<!-- /n --> points against the 77,453 the 2 px pass
 wrote, for a median traced share of **1.00** where it was 0.98, and it takes the last of the
 crossings with it: **0.03% of polygons**, two of 7,048, against 9% before either change.
 A thin structure is what a coarse tolerance cannot draw without folding its two sides
