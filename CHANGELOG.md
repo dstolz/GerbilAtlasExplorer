@@ -365,6 +365,38 @@ carries a `version` block naming the release its derived fields were built for.
   are what carry the other two and a plain mesh link carries none.
 
 ### Fixed
+- **The footer told every reader the build was `{{BUILD_HASH}}`.** The site's footer read
+  *Build `{{BUILD_HASH}}` · Updated {{BUILD_DATE}} {{BUILD_TIME}}*, About said the same, and
+  the commit beside both linked `/commit/{{BUILD_HASH}}`, which is not a commit. The tokens
+  themselves are deliberate and stay: since #114 the committed pages keep them, because a
+  stamp in them was three files that conflicted between any two branches whatever else they
+  changed, and `.github/workflows/pages.yml` stamps the copy it deploys instead. What that
+  arrangement rests on is the deploy, and there has never been one -- `pages.yml` fired only
+  on `workflow_dispatch` and on a `v*` tag, and it has run **zero** times. Pages is still
+  serving main's root, which is the committed pages, so what every reader has been handed
+  since is the page with nothing filled in.
+
+  Two things now stand between a reader and a token. `pages.yml` runs on each push to `main`
+  and builds the site stamped with the commit it deploys, so once **Settings -> Pages ->
+  Source** is *GitHub Actions* the served page names its own commit; until then the deploy
+  job reads that setting (`build_type`) and skips rather than turning main red on every push,
+  and the build job leaves a notice saying which source Pages is on. And the page no longer
+  takes its own stamp on faith: `BUILD` is empty unless the `gae-build` meta holds something
+  commit-shaped -- the test `src/fixer.js` already made of the same meta -- and a page nothing
+  stamped drops the claim from the footer and from About rather than printing it. Both claims
+  are wrapped in one `.fbuild` span for that, which `unstamp` in `tools/build_app.py` reads
+  through unchanged.
+
+  The token was not only on screen: `BUILD` was the meta's text, which is truthy, so the
+  `BUILD || 'unstamped'` and `BUILD || null` the four take-aways were written with never fired.
+  **Every drawing-error and feature report filed from the site named `{{BUILD_HASH}}
+  {{BUILD_DATE}}` as its build**, as did every exported `gerbil_atlas_notes.json` and every
+  targeting plan saved as text or JSON. They now say `unstamped`, or carry `null`, on a page
+  that has no build to name. `tests/js/smoke.spec.js` serves a browser the committed page's
+  tokens back and asserts no build is named anywhere in it; `tests/python/test_atlaslib.py`
+  holds the two spans and counts every token in a render, which is also what keeps a token
+  from being written literally into `src/app.js`, where the build would fill it in.
+
 - **`E` gets both ependymal slits on plate 16, and gives back the wedge of accumbens it was
   standing in.** The atlas letters the olfactory ventricle on this plate as the compound
   `E/OV`, once on each hemisphere, and sets it *across* the slit it names rather than in it:

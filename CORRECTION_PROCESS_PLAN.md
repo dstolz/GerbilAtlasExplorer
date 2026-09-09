@@ -252,6 +252,15 @@ always-conflicts column. Do them in this order.
   pull request that touches no data stops conflicting on three files. The
   `window.__REGION__` line still conflicts between two re-cuts; the rebase script handles
   that, since the page is derived.
+
+  *One word above was wrong and cost a reader something: the stamps were not **cosmetic**.
+  `pages.yml` had never run -- it fired on `workflow_dispatch` and on a `v*` tag and there
+  had been neither -- so Pages went on serving main's root, which is the committed
+  `index.html`, and its footer read `Build {{BUILD_HASH}}` to everyone who opened the site.
+  The pages still keep their placeholders, which is the part that was right; what changed is
+  that `pages.yml` deploys on every push to `main`, and `src/app.js` now drops the build
+  claim rather than print a placeholder at a reader. A derived file being unstamped is
+  cheap only where nothing serves it.*
 - **One line per structure in `gerbil_atlas_volumes.json`.** Twenty megabytes on one line
   conflicts on every pair and makes every pull request diff unreadable. A newline after
   each structure's mesh changes no byte a reader parses and makes the diff the list of

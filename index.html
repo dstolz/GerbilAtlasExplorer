@@ -1448,7 +1448,7 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
 
 <footer>
   <p>Radtke-Schuller et al. (2016), <em>Brain Struct Funct</em> 221(Suppl 1):1&ndash;272
-    <a href="https://doi.org/10.1007/s00429-016-1259-0" target="_blank" rel="noopener">doi:10.1007/s00429-016-1259-0</a><span class="fsep">&middot;</span><button type="button" class="flink" id="aboutb2">About the data</button><span class="fsep">&middot;</span><a href="https://github.com/dstolz/GerbilAtlasExplorer/blob/main/METHODS.md" target="_blank" rel="noopener">Methods</a><span class="fsep">&middot;</span><a href="https://github.com/dstolz/GerbilAtlasExplorer" target="_blank" rel="noopener">Source</a><span class="fsep">&middot;</span><a href="https://github.com/dstolz/GerbilAtlasExplorer/issues" target="_blank" rel="noopener">Report an issue</a><span class="fsep">&middot;</span><button type="button" class="flink" id="repdb">Report a drawing error</button><span class="fsep">&middot;</span><button type="button" class="flink" id="repfb">Request a feature</button><span class="fsep">&middot;</span>Build <a href="https://github.com/dstolz/GerbilAtlasExplorer/commit/{{BUILD_HASH}}" target="_blank" rel="noopener"><code>{{BUILD_HASH}}</code></a><span class="fsep">&middot;</span><span class="fstamp">Updated <time class="bwhen" datetime="{{BUILD_ISO}}">{{BUILD_DATE}} {{BUILD_TIME}}</time></span></p>
+    <a href="https://doi.org/10.1007/s00429-016-1259-0" target="_blank" rel="noopener">doi:10.1007/s00429-016-1259-0</a><span class="fsep">&middot;</span><button type="button" class="flink" id="aboutb2">About the data</button><span class="fsep">&middot;</span><a href="https://github.com/dstolz/GerbilAtlasExplorer/blob/main/METHODS.md" target="_blank" rel="noopener">Methods</a><span class="fsep">&middot;</span><a href="https://github.com/dstolz/GerbilAtlasExplorer" target="_blank" rel="noopener">Source</a><span class="fsep">&middot;</span><a href="https://github.com/dstolz/GerbilAtlasExplorer/issues" target="_blank" rel="noopener">Report an issue</a><span class="fsep">&middot;</span><button type="button" class="flink" id="repdb">Report a drawing error</button><span class="fsep">&middot;</span><button type="button" class="flink" id="repfb">Request a feature</button><span class="fbuild"><span class="fsep">&middot;</span>Build <a href="https://github.com/dstolz/GerbilAtlasExplorer/commit/{{BUILD_HASH}}" target="_blank" rel="noopener"><code>{{BUILD_HASH}}</code></a><span class="fsep">&middot;</span><span class="fstamp">Updated <time class="bwhen" datetime="{{BUILD_ISO}}">{{BUILD_DATE}} {{BUILD_TIME}}</time></span></span></p>
   <p class="fattr">Developed and maintained by Daniel Stolzberg and the
     <a href="https://www.caraslab.org" target="_blank" rel="noopener">Caras Lab</a>,
     <a href="https://biology.umd.edu" target="_blank" rel="noopener">Department of Biology</a>,
@@ -1830,7 +1830,7 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
     <h3>This build</h3>
     <p>Spotted an error in the atlas data, hit a bug, or want a new feature?
       <a href="https://github.com/dstolz/GerbilAtlasExplorer/issues" target="_blank" rel="noopener">Raise an issue on GitHub</a>.
-      Build <a href="https://github.com/dstolz/GerbilAtlasExplorer/commit/{{BUILD_HASH}}" target="_blank" rel="noopener"><code>{{BUILD_HASH}}</code></a>, <time class="bwhen" data-date datetime="{{BUILD_ISO}}">{{BUILD_DATE}}</time>.</p>
+      <span class="fbuild">Build <a href="https://github.com/dstolz/GerbilAtlasExplorer/commit/{{BUILD_HASH}}" target="_blank" rel="noopener"><code>{{BUILD_HASH}}</code></a>, <time class="bwhen" data-date datetime="{{BUILD_ISO}}">{{BUILD_DATE}}</time>.</span></p>
   </div>
 </dialog>
 
@@ -2387,8 +2387,15 @@ for(const p in LB){ const ap=plateOf[+p].bregma;
     PTS.push({ab,p:+p,i,ap,ml:toML(x*NW),dv:toDV(y*NH),ld:!!ldAt(p,ab,i)});
   });
 }
-/* the build this page came from, for the files it writes */
-const BUILD=((document.querySelector('meta[name="gae-build"]')||{}).content||'').trim();
+/* The build this page came from, for the files it writes and for what the page says it is.
+   Empty unless the stamp is a stamp: a plain build leaves the tokens in place, and the pages
+   committed to the repository keep them, so a page that was never stamped must not name a
+   commit -- not in the footer, and not in a file a reader takes away from it. The test is
+   the one src/fixer.js makes of the same meta. */
+const BUILD=(()=>{
+  const c=((document.querySelector('meta[name="gae-build"]')||{}).content||'').trim();
+  return /^[0-9a-zA-Z-]{4,40}(\s|$)/.test(c) ? c : '';
+})();
 const ptsOf={};
 PTS.forEach(q=>(ptsOf[q.ab]||(ptsOf[q.ab]=[])).push(q));
 /* A superstructure's labels are its members', pooled -- and only on the plates the group
@@ -8597,6 +8604,13 @@ $('repcp').onclick=function(){
    no instant to read -- an undated build, a template nothing stamped -- keeps the UTC
    text it was built with. */
 function stampLocal(){
+  /* A page nothing stamped has no build to name, and an unfilled token is not one: rather
+     than print the token at a reader, and link a commit that does not exist, the footer and
+     About drop the claim. This is what a page opened straight from the repository does, and
+     what a local build does; the copy pages.yml deploys is stamped and keeps both.
+     (No token may be written literally in this file: the build fills them wherever they
+     appear, and tests/python/test_atlaslib.py holds it to that.) */
+  if(!BUILD){ for(const el of document.querySelectorAll('.fbuild')) el.remove(); return; }
   const p=n=>String(n).padStart(2,'0');
   /* EDT, JST, GMT+5:30 -- whatever this browser calls the zone, and a plain offset if it
      will not say. Without it the reader cannot tell which clock the stamp is on. */

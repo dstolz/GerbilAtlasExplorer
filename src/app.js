@@ -347,8 +347,15 @@ for(const p in LB){ const ap=plateOf[+p].bregma;
     PTS.push({ab,p:+p,i,ap,ml:toML(x*NW),dv:toDV(y*NH),ld:!!ldAt(p,ab,i)});
   });
 }
-/* the build this page came from, for the files it writes */
-const BUILD=((document.querySelector('meta[name="gae-build"]')||{}).content||'').trim();
+/* The build this page came from, for the files it writes and for what the page says it is.
+   Empty unless the stamp is a stamp: a plain build leaves the tokens in place, and the pages
+   committed to the repository keep them, so a page that was never stamped must not name a
+   commit -- not in the footer, and not in a file a reader takes away from it. The test is
+   the one src/fixer.js makes of the same meta. */
+const BUILD=(()=>{
+  const c=((document.querySelector('meta[name="gae-build"]')||{}).content||'').trim();
+  return /^[0-9a-zA-Z-]{4,40}(\s|$)/.test(c) ? c : '';
+})();
 const ptsOf={};
 PTS.forEach(q=>(ptsOf[q.ab]||(ptsOf[q.ab]=[])).push(q));
 /* A superstructure's labels are its members', pooled -- and only on the plates the group
@@ -6557,6 +6564,13 @@ $('repcp').onclick=function(){
    no instant to read -- an undated build, a template nothing stamped -- keeps the UTC
    text it was built with. */
 function stampLocal(){
+  /* A page nothing stamped has no build to name, and an unfilled token is not one: rather
+     than print the token at a reader, and link a commit that does not exist, the footer and
+     About drop the claim. This is what a page opened straight from the repository does, and
+     what a local build does; the copy pages.yml deploys is stamped and keeps both.
+     (No token may be written literally in this file: the build fills them wherever they
+     appear, and tests/python/test_atlaslib.py holds it to that.) */
+  if(!BUILD){ for(const el of document.querySelectorAll('.fbuild')) el.remove(); return; }
   const p=n=>String(n).padStart(2,'0');
   /* EDT, JST, GMT+5:30 -- whatever this browser calls the zone, and a plain offset if it
      will not say. Without it the reader cannot tell which clock the stamp is on. */
