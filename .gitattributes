@@ -15,3 +15,13 @@ src/app.js          -text
 src/app.css         -text
 src/fixer.js        -text
 src/fixer.css       -text
+
+# CHANGELOG.md is added to at the same place by every change, so two branches conflict
+# there for no reason. `union` keeps both sides. A local merge honors it -- which is where
+# tools/corrections.py rebase merges -- and the web merge of a branch already current
+# with main has nothing to resolve.
+CHANGELOG.md        merge=union
+# Derived and large: the numbers a change moves are in `corrections.py report`, and a
+# textual diff of a 20 MB line or a gzip shows nothing.
+data/gerbil_atlas_volumes.json -diff
+data/gerbil_atlas_labels.nii.gz -diff

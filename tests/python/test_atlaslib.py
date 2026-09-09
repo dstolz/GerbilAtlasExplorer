@@ -110,3 +110,31 @@ def test_labels_table_rows():
     assert len([r for r in rows[1:] if r]) == 6345
     mso = [r for r in rows if r.startswith('MSO,')]
     assert len(mso) == 7
+
+
+def test_methods_numbers_come_from_the_database():
+    """The totals METHODS.md states between <!-- n:... --> markers are the database's,
+    formatted as the prose formats them, and export_tables rewrites them."""
+    import export_tables as E
+    db = A.load_db()
+    txt = E.methods_text(db)
+    with open(E.METHODS, encoding='utf8', newline='') as f:
+        assert f.read() == txt                         # the committed file is current
+    keys = [m.group(2) for m in E.MARK.finditer(txt)]
+    assert 'region_extents.summary.points' in keys and 'region_colors.summary.patches' in keys
+    for k in keys:
+        assert E.number_at(db, k) is not None
+    assert E.format_number(168740) == '168,740' and E.format_number(0.9484) == '0.9484'
+    assert E.format_number(True) == 'yes'
+    db2 = json.loads(json.dumps(db))
+    db2['region_extents']['summary']['points'] += 11
+    assert '168,751' in E.methods_text(db2) or format(db2['region_extents']['summary']['points'], ',') in E.methods_text(db2)
+
+
+def test_save_json_rows_is_one_line_per_entry(tmp_path):
+    p = str(tmp_path / 'v.json')
+    A.save_json_rows({'note': 'n', 'data': {'a': [1, 2], 'b': {'x': 1}}}, p)
+    with open(p, encoding='utf8') as f:
+        txt = f.read()
+    assert txt == '{\n"note":"n",\n"data":{\n"a":[1,2],\n"b":{"x":1}\n}\n}\n'
+    assert json.loads(txt) == {'note': 'n', 'data': {'a': [1, 2], 'b': {'x': 1}}}

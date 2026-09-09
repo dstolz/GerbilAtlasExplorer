@@ -718,7 +718,7 @@ def main():
         'surface': {'note': SURFACE_NOTE, 'mesh': encode(bv, bf)},
         'data': meshes,
     }
-    A.save_json(payload, A.VOLUMES)
+    A.save_json_rows(payload, A.VOLUMES)          # one line per structure
     print('\nwrote %s (%.1f MB)' % (A.VOLUMES, os.path.getsize(A.VOLUMES) / 1e6))
 
 

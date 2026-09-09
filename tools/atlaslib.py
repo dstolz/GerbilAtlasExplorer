@@ -31,6 +31,24 @@ HTML = os.path.join(ROOT, 'gerbil_atlas_explorer.html')
 N_PLATES = 62
 KINDS = ('drawing', 'nissl', 'myelin')     # the three plates of a level, as data/plates/<kind>
 
+# ---------- what is an input and what is cut from it ----------
+#
+# A correction changes one input on one plate; everything else it commits is derived from
+# the inputs by the pipeline (tools/pipeline.py rebuild). The split is what
+# `corrections.py rebase` rests on -- a derived file is never merged, it is main's and
+# then rebuilt -- so it is written down once, here, and read from here.
+INPUT_BLOCKS = ('seed_overrides', 'label_positions', 'brain_outline', 'label_leaders',
+                'label_blocks')            # blocks of gerbil_atlas.json a correction may edit
+DERIVED_BLOCKS = ('region_extents', 'region_colors', 'features', 'verification',
+                  'plate_registration', 'version')     # blocks the pipeline writes
+DERIVED_PATHS = (                          # repository paths the pipeline writes, as git globs
+    'data/gerbil_atlas_volumes.json', 'data/gerbil_atlas_labels.nii.gz',
+    'data/gerbil_atlas_labels_lut.csv', 'data/gerbil_atlas_structures.csv',
+    'data/gerbil_atlas_plates.csv', 'data/gerbil_atlas_labels.csv',
+    'data/gerbil_atlas_structure_table.csv', 'data/gerbil_atlas_groups.csv',
+    'data/index_published.csv', 'data/geojson/*', 'data/facemaps/*',
+    'index.html', 'gerbil_atlas_explorer.html', 'fixer.html')
+
 # ---------- the frame the app's plate images are in ----------
 NW, NH = 1100, 703                          # the frame-cropped plate image, px
 # the page the label passes read, and where the app's frame sits on it (label_blocks.py)
@@ -227,6 +245,29 @@ def save_db(db, path=JSON):
 def save_json(obj, path, compact=True):
     """Any other JSON file (the volumes, the exports): compact by default."""
     text = dumps(obj) if compact else json.dumps(obj, indent=1, ensure_ascii=False) + '\n'
+    tmp = path + '.tmp'
+    with open(tmp, 'w', encoding='utf8', newline='') as f:
+        f.write(text)
+    os.replace(tmp, path)
+
+
+def save_json_rows(obj, path, key='data'):
+    """Compact JSON with one line per entry of obj[key], so a re-run diffs by entry -- the
+    volumes, where one 20 MB line conflicted between any two re-cuts and showed nothing in
+    a pull request. Every other key is one compact line, as save_json writes it."""
+    items = list(obj.items())
+    out = ['{']
+    for i, (k, v) in enumerate(items):
+        comma = ',' if i < len(items) - 1 else ''
+        if k == key and isinstance(v, dict):
+            rows = list(v.items())
+            body = ',\n'.join('%s:%s' % (json.dumps(rk, ensure_ascii=False), dumps(rv)) for rk, rv in rows)
+            out.append('%s:{\n%s\n}%s' % (json.dumps(k), body, comma))
+        else:
+            out.append('%s:%s%s' % (json.dumps(k), dumps(v), comma))
+    out.append('}')
+    text = '\n'.join(out) + '\n'
+    json.loads(text)
     tmp = path + '.tmp'
     with open(tmp, 'w', encoding='utf8', newline='') as f:
         f.write(text)

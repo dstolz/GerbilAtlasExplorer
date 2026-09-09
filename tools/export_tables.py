@@ -27,6 +27,7 @@ import io
 import math
 import json
 import os
+import re
 import statistics
 import sys
 
@@ -239,6 +240,56 @@ def geojson_text(db, plate):
     return A.dumps(geojson(db, plate)) + '\n'
 
 
+# ---------- the numbers METHODS.md states ----------
+#
+# A total a re-cut moves -- entries, polygons, points, the rows placed by hand, the
+# coloring's patches -- is written in METHODS.md between markers naming where in the
+# database it comes from, `<!-- n:region_extents.summary.points -->168,740<!-- /n -->`,
+# and rewritten from the database here. Nobody restates a total by hand, and a branch
+# rebased onto a main that re-cut carries the right one after the rebuild. A `vol:` key
+# reads data/gerbil_atlas_volumes.json instead.
+METHODS = os.path.join(A.ROOT, 'METHODS.md')
+MARK = re.compile(r'(<!-- n:([\w.:]+) -->)(.*?)(<!-- /n -->)')
+
+
+def number_at(db, key, vol=None):
+    src, _, path = key.rpartition(':') if ':' in key else ('db', '', key)
+    obj = db
+    if src == 'vol':
+        if vol is None:
+            with open(A.VOLUMES, encoding='utf8') as f:
+                vol = json.load(f)
+        obj = vol
+    for part in path.split('.'):
+        obj = obj[part]
+    return obj
+
+
+def format_number(v):
+    if isinstance(v, bool):
+        return 'yes' if v else 'no'
+    if isinstance(v, int):
+        return '{:,}'.format(v)
+    if isinstance(v, float):
+        return '{:,}'.format(v) if v == int(v) and abs(v) >= 1000 else str(v)
+    return str(v)
+
+
+def methods_text(db):
+    """METHODS.md with every marked number rewritten from the database."""
+    with open(METHODS, encoding='utf8', newline='') as f:
+        txt = f.read()
+    vol = {}
+
+    def sub(m):
+        key = m.group(2)
+        if key.startswith('vol:') and not vol:
+            with open(A.VOLUMES, encoding='utf8') as f:
+                vol.update(json.load(f))
+        return m.group(1) + format_number(number_at(db, key, vol or None)) + m.group(4)
+    return MARK.sub(sub, txt)
+
+
 # ---------- what the database derives from itself ----------
 def refresh_db(db, today=None):
     """Recompute the per-plate counts, the registration block and the version stamp.
@@ -321,6 +372,9 @@ def main():
                 have = None
             if have != text:
                 stale.append(os.path.relpath(path, A.ROOT))
+        with open(METHODS, encoding='utf8', newline='') as f:
+            if f.read() != methods_text(db):
+                stale.append('METHODS.md (a marked number)')
         if stale:
             print('STALE: ' + ', '.join(stale[:8]) + (' ...' if len(stale) > 8 else ''))
             print('run: python3 tools/export_tables.py --refresh-db')
@@ -338,6 +392,13 @@ def main():
         with open(path + '.tmp', 'w', encoding='utf8', newline='') as f:
             f.write(text)
         os.replace(path + '.tmp', path)
+    md = methods_text(db)
+    with open(METHODS, encoding='utf8', newline='') as f:
+        if f.read() != md:
+            with open(METHODS + '.tmp', 'w', encoding='utf8', newline='') as g:
+                g.write(md)
+            os.replace(METHODS + '.tmp', METHODS)
+            print('METHODS.md: marked numbers refreshed')
     print('wrote %d files under data/' % len(outputs(db)))
     return 0
 
