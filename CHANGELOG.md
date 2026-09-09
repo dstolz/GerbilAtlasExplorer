@@ -6,6 +6,26 @@ carries a `version` block naming the release its derived fields were built for.
 ## [Unreleased]
 
 ### Changed
+- **A correction's pull request opens with a picture of the region before and after.**
+  What a reader had was `qc/chk_corr_<id>.png` in the diff: the whole plate at twice its
+  size, most of it white, the region a green sliver in the middle, and one state of it --
+  the plate as it stood when `inspect --qc` last ran. `inspect --qc` now writes a second
+  file beside it, `qc/chk_corr_<id>_site.png`: the site of the correction cropped to
+  everything the correction is about (the region either side, the seeds, the boundaries,
+  the extents, the boxes of its name, a quarter of that around it), and side by side --
+  the region as it stands on `origin/main`, cut from that ref's database and tracing read
+  out of the object store, beside the region as it stands in the checkout, each panel
+  captioned with the area. Run after a rebuild, that is the picture of what the fix did;
+  run before one, both panels are the same and say so. `--before REF` names another ref,
+  and a ref the checkout cannot read gives the one panel and says why.
+
+  The session commits both files and **opens the pull request body with the site
+  picture**, embedded from the pushed commit's own URL so it stays with the pull request
+  after the branch is gone (step 8 of `.claude/skills/atlas-region-fix/SKILL.md`, and the
+  workflow's prompt). The whole-plate picture is drawn by the same code as before and
+  comes out byte for byte the same; the test checks that, and that the site picture has
+  two panels against `HEAD` and one against a ref that does not exist.
+
 - **A correction stops at its pull request, to be read before it lands.** The workflow
   squash-merged the fix onto main itself the moment CI went green, so what the atlas says a
   structure is -- its area, its boundary, its mesh, its share of the label volume -- would

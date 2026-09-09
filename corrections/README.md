@@ -6,7 +6,8 @@ inside a region, a run of boundary the tracing missed, the outline a region shou
 and not a change to the data: the change is one edit to a pipeline input (`svg/`,
 `seed_overrides`, `brain_outline`, `label_positions`), made from it, and the extents are
 re-cut. Files here are never edited after they are pushed; the pull request that applied
-one is its record, and `qc/chk_corr_<id>.png` the picture.
+one is its record, `qc/chk_corr_<id>_site.png` -- the region before and after, which opens
+the pull request -- the picture, and `qc/chk_corr_<id>.png` the whole plate.
 
 Schema `gerbil-atlas-correction/1`:
 
@@ -43,6 +44,6 @@ Schema `gerbil-atlas-correction/1`:
 
 ```
 python3 tools/corrections.py validate corrections/<id>.json     # reads, frames agree
-python3 tools/corrections.py inspect  corrections/<id>.json --qc   # against the extraction; qc/chk_corr_<id>.png
+python3 tools/corrections.py inspect  corrections/<id>.json --qc   # against the extraction; qc/chk_corr_<id>.png and _site.png
 python3 tools/corrections.py apply    corrections/<id>.json [--dry-run]
 ```
