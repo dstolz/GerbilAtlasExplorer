@@ -411,7 +411,7 @@ same march, run against the plate-5 line a reader had already written into `TIP_
 hand, lands 0.0001 of the frame from it, which is what says these readings are the page's
 and not the reader's.
 
-**Eight more lines are read off the plate and kept in `seed_overrides` rather than here.**
+**Eleven more lines are read off the plate and kept in `seed_overrides` rather than here.**
 `label_leaders` is what `tools/label_leaders.py` reproduces from the page, so a tip a reader
 took off the plate does not belong in it; a row of `seed_overrides` stands in for the printed
 box exactly as a tip does, is read after this pass, and wins over a marched tip because it was
@@ -438,6 +438,20 @@ Every one of the seven words is printed in a neighbour's ground: all six `CeCv` 
 inside `MdV`, and `9/11N` is in `vsc`. That is what a seed on the word buys — `9N` was a blob
 around its own word rather than the ventral horn the atlas closes round it, and `CeCv` would
 have taken a slab out of `MdV` on three plates had the boxes been added and left there.
+
+The other four are two labels the pass read on one hemisphere and not the other, which is
+the same miss with the answer printed beside it. `PN/PIF` on plate 36 draws a short line
+from each word down into the collar around `IF`, and both are under what the march will
+follow. The right-hand `E/OV` on plate 1 draws one up into the ependymal slit of its
+olfactory bulb; the left-hand one on the same plate draws the mirror of it, and that one
+*is* here, recorded against both names of its label. With no tip the right-hand pair kept
+the printed word and seeded the strip of `ON` the words are set on, out on the ventral rim,
+which was the whole of `E` on that hemisphere. Two rows put both names at the end of the
+line. They gain the slit nothing: the tracing cuts it into six faces of 99 to 173 px, every
+one under `MIN_FACE_PX`, so the seed is snapped to the granule face the slit runs through
+and what it wins there is under `MIN_AREA_PX` and published to nobody. What the rows are for
+is the withdrawal — a region with no area is a smaller error than a region drawn somewhere
+it is not.
 
 The box stays what it was. It is where the word is printed, so it is still what the app hit
 tests when you hover, and `window.__BOX__` is unchanged. What moves is the *position*: the
@@ -522,7 +536,7 @@ fractions of the frame-cropped image — the same frame and the same convention
 `brain_outline` uses, so the app's existing point-in-polygon test reads them unchanged.
 **3,118 structure-plate entries carry an area**, 97% of the 3,215 the label pass located
 and 93% of the 3,365 the published index lists — both counted over the structures that are
-regions — as 6,013 polygons over 168,751 points. Where
+regions — as 6,010 polygons over 168,691 points. Where
 the atlas prints two names as one label the two share an entry, so a name having no entry of
 its own does not mean it has no area — see step 8. Twenty of the 724 names have no entry
 anywhere, and never could: they name no region — see step 7.
@@ -639,7 +653,7 @@ to **0.7% of polygons** and the repeated vertices to none.
 the difference between a polygon that reads as the line the atlas drew and one that visibly
 cuts its corners. The floor is the page lattice: at 0.35 px the tolerance drops below the
 raster step and the polygon starts recording the staircase rather than the line, at seven
-times the points. At 0.5 it does not — 168,751 points against the 77,453 the 2 px pass
+times the points. At 0.5 it does not — 168,691 points against the 77,453 the 2 px pass
 wrote, for a median traced share of **1.00** where it was 0.98, and it takes the last of the
 crossings with it: **0.03% of polygons**, two of 7,048, against 9% before either change.
 A thin structure is what a coarse tolerance cannot draw without folding its two sides
@@ -861,8 +875,8 @@ single corner would read as one patch if they were painted alike.
 The vertex test answers for boundaries the two regions hold in common and for nothing else,
 and a boundary can be missed by a hair without being shared. **Two regions that come within
 0.05 mm of each other — 2.9 px of the 1100 × 703 frame, about a pixel and a half on screen
-at the zoom the plate opens at — are counted as touching too.** Over the atlas 4,506 pairs
-of names touch on at least one plate; 4,247 of them share a vertex somewhere and 259 never
+at the zoom the plate opens at — are counted as touching too.** Over the atlas 4,505 pairs
+of names touch on at least one plate; 4,246 of them share a vertex somewhere and 259 never
 do, meeting only across a gap under the tolerance — 540 plate-by-plate occurrences, on all
 62 plates. Those are laminae one or two pixels wide (`Py` between `Or` and `Rad` on plate
 30), near-corners where two boundaries pass within a fifth of a pixel without meeting, and

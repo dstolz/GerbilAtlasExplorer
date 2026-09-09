@@ -278,6 +278,70 @@ carries a `version` block naming the release its derived fields were built for.
   are what carry the other two and a plain mesh link carries none.
 
 ### Fixed
+- **`E` gives back the strip of olfactory nerve layer it held on the right of plate 1.**
+  The atlas letters the ependyma of the olfactory ventricle `E/OV`, once per hemisphere on
+  plate 1, and sets both words down on the ventral rim of the bulb, well outside the slit
+  they name, with a line drawn from each up into it. `label_leaders` has the left line,
+  recorded against both names of that label as a joined label's line is — `E` box 1 and `OV`
+  box 0, one tip at (0.4343, 0.5942) — and has no line at all for the right. So both
+  right-hand boxes kept the printed word and seeded where the word is set: `E`'s in the
+  **1,417 px** face between the pia and the next contour, ML +1.2 to +1.7 and DV −5.2 to
+  −6.8, which is olfactory nerve layer and not ependyma; `OV`'s in the face `ON` itself is
+  printed in. That band was the whole of `E` on the right hemisphere, and it is what all
+  nine negative seeds of correction `20260909T163557Z-p01-E` cross out. This is the
+  seed-in-the-wrong-face reading in its first form: **the box is wrong and withdraws**.
+
+  Two rows of `seed_overrides`, one for each name of the one line, both standing in for
+  their box at the point the line ends — (0.5068, 0.5931), 0.6 px from the reader's second
+  positive mark. **`E` on plate 1 goes 0.1323 to 0.0386 mm², three polygons to one**: the
+  right hemisphere 0.0937 to none, the left slit unchanged at 0.0386 and its traced share
+  1.00 before and after. The 1,417 px the band held is unassigned now and no region gains
+  it — `E` and `ON` were the one pair of names touching on plate 1 that no longer do. Over
+  the series `E` goes 1.5422 to 1.4485 mm² and 0.4116 to 0.4068 mm³, in 16 mesh components
+  where it was 17: the one that goes is the 0.005 mm³ piece at ML +1.39, DV −6.74, which was
+  that band and nothing else.
+
+  **The slit itself gains nothing, and no seed can give it any.** The line ends in it, but
+  the tracing cuts the right slit into six faces of 99 to 173 px and every one is under
+  `MIN_FACE_PX` = 400, so `locate` finds no face to seed there and snaps to the granule face
+  the slit runs through — which is what takes `labels_relocated` 188 to 189. `E` wins
+  **296 px** of that face, under `MIN_AREA_PX` and so published to nobody, and those 296 px
+  come off `IPl`: **0.8171 to 0.8025 mm²**, its ground going unassigned rather than to a
+  neighbour. That is what withdrawing the two boxes costs, against the 1,417 px of band it
+  takes back. The reader's other three marks are in three more faces of the same slit and
+  snap the same way; written, they would cost `IPl` 0.0420 mm² for no gain anywhere, so they
+  are not written. The left slit is one face of 653 px, over the floor, which is why that
+  hemisphere was right all along.
+
+  `ON` on plate 1 goes 2.2334 to 2.2337 mm², three polygons to two — the ink the right-hand
+  `OV` word held in `ON`'s own face, given back. Those three entries, `E`, `IPl` and `ON`,
+  are the only ones that move in the whole-atlas re-cut, and all three are on plate 1.
+  `boundary_edges_shared_exactly` stays 1.0, `structure_plate_entries` stays 3,118, the
+  coloring is unchanged at 691 regions in 631 patches, polygons go 6,013 to 6,010, points
+  168,751 to 168,691, `seeds_moved_by_hand` 32 to 34 and the touching pairs 4,506 to 4,505.
+  `unnamed_fraction` goes 0.0346 to 0.0347 and `label_inside_its_own_region` 0.9776 to
+  0.9775. Four bulb structures move in the volume with their areas untouched — `ON` −0.0118,
+  `Gl` −0.0077, `EPl` −0.0072 and `GrO` −0.0023 mm³ — the label volume being interpolated
+  between plates, so a boundary that moves on 1 redistributes voxels in the slab beside it.
+  The face map for plate 1 is re-cut with the rest, so the fixer page's **Pick** answers
+  face 30 for both right-hand `E/OV` boxes where it answered 45 and 7, which is where the
+  pipeline now puts them.
+
+  METHODS takes the polygon and point counts and the touching-pair figures, and one count
+  it takes is not this correction's: **the lines read off the plate and kept in
+  `seed_overrides` go eight to eleven**, one of the three being this line and the other two
+  the plate-36 `PN/PIF` pair, which were added in #95 and never counted into that sentence.
+
+  The reading not taken is that the fault is the tracing rather than the seed — that the six
+  faces of the right slit are one region the ink cuts up, and the fix belongs in the SVG. It
+  is not taken because no run can be added or taken out that makes them one: the runs that
+  separate them cross the slit at DV −5.44, −5.54, −5.62 and −5.74, and dropped one at a
+  time or all together they leave the largest piece at 157 px and leak the slit into the
+  granule face. What would settle it is the printed page at the bulb — whether the right
+  slit really is beaded where the left runs clear, in which case the tracing is faithful and
+  400 px is more than the atlas draws there, or whether its two walls are one contour the
+  tracer broke into arcs, in which case the arcs are the thing to mend and `E` should come
+  out near 0.04 mm² a side.
 - **`E` on plate 3 gets the run of ventricle above the pinch.** The atlas draws the
   ependyma of the olfactory ventricle on the right of plate 3 as one contour, from below the
   `aci` circle down to its ventral bulb, and pinches it to a single stroke halfway along, at
