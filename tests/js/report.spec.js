@@ -3,7 +3,7 @@
 // the plate in front of the reader, every row the reader was shown is a row of the issue and
 // cannot drift from it, and the local path of a page opened from a file never leaves the
 // browser for a public tracker.
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./gae');
 const path = require('path');
 
 const BUNDLE = 'file://' + path.join(__dirname, '..', '..', 'gerbil_atlas_explorer.html');

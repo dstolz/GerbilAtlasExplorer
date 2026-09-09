@@ -7,7 +7,7 @@
 // whatever the form was covering. Nothing could be saved, so nothing was ever listed.
 // The second half of it is geometry: the box clips what overhangs it, and a form placed
 // against its right edge lost the very buttons you were trying to press.
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./gae');
 /* the controls these specs drive live in the view's panel, which opens closed */
 const panel = p => p.evaluate(() => window.__gae.vpan(true));
 

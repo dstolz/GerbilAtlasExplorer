@@ -1,6 +1,6 @@
 // The section colored as a map: the invariant the coloring exists for, on all 62 plates,
 // and the control, the link and the exports that carry it.
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./gae');
 const path = require('path');
 /* the plate's overlays live in the view's panel now, and it opens closed */
 const panel = p => p.evaluate(() => window.__gae.vpan(true));

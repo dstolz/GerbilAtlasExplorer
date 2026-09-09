@@ -6361,6 +6361,36 @@ function skullNote(){
 [...document.querySelectorAll('.ast')].forEach(b=>b.onclick=skullNote);
 ABOUT.addEventListener('click',e=>{ if(e.target===ABOUT) ABOUT.close(); });
 
+/* ---------- the note a reader gets once, before they read anything off a plate ----------
+   About answers the questions of someone already looking. This answers the one nobody knows
+   to ask: an outline here is drawn in the atlas's own frame, on the atlas's own plate, and
+   without being told otherwise a reader takes it for the atlas's own line. It is not -- it
+   was cut from the drawing by this repository -- and every other honest thing this page says
+   about its own accuracy is downstream of that one.
+
+   gae-welcome holds the version of the note that was acknowledged rather than a bare flag,
+   so raising WELC brings it back for everyone if what it says materially changes. A browser
+   that refuses storage -- a file:// page in Safari, a locked-down private window -- throws
+   rather than answering, and there the note is shown every visit: the right way round for a
+   note whose whole job is to be seen at least once. */
+const WELC='1';
+const WDLG=$('welc');
+const welcSeen=()=>{ try{ return localStorage.getItem('gae-welcome')===WELC; }catch(_){ return false; } };
+const welcDone=()=>{ try{ localStorage.setItem('gae-welcome',WELC); }catch(_){} };
+/* every way out counts as having read it, Escape included: a note that comes back because
+   the reader reached for a key rather than the button would be a bug, not a second chance.
+   The button stores before it closes rather than waiting to be told: close() fires its event
+   in a queued task, so between the note going and the note being remembered there is a gap a
+   reload can land in. The listener is what catches every other way out, and writing the same
+   string twice writes the same string twice. */
+WDLG.addEventListener('close',welcDone);
+$('welcok').onclick=()=>{ welcDone(); WDLG.close(); };
+function welcOpen(){
+  if(welcSeen()) return false;
+  if(WDLG.showModal) WDLG.showModal(); else WDLG.setAttribute('open','');
+  return true;
+}
+
 /* ---------- reporting a region drawn wrong, and asking for a feature ----------
    The tracker link beside these two has always been the tracker's front page, which is the
    right place for "the page will not load" and the wrong one for "this boundary is drawn in
@@ -6567,6 +6597,7 @@ pjAxes(); run();
 if(!readHash()) go(30);
 frameApply();
 fit(); applyView(); revRun();
+welcOpen();                  /* last, so the page it is about is painted behind it */
 
 /* a handle for the tests and for the console: the pure functions and the state they
    read. Nothing in the app goes through it. */
@@ -6579,5 +6610,6 @@ window.__gae={toFrame,fromFrame,writeHash,readHash,tgSolve,tgPath,tgFootprint,pl
   v3build,v3niiBuf,meshSTL,
   GRP,isGrp,regIn,grpsOf,mcBuild,mcSet,MCPAL,meshColor,meshKey,
   setMax,
+  welcOpen,welcSeen,
   vpan:on=>vpanOpen(on), adv:on=>advOpen(on), inf:on=>infOpen(on),
   state:()=>({cur,sel,zoom,tab,smode,psrc,tgProbe,tgFoot,cmpOn,anShow,maxed,targSide,tgTilt,tgRoll,tgYaw,tgPlate,tgOff,fview,fvOn:fvOn(),v3two,v3ed,v3lock,mcOn,mcWash,vpanOn,advOn,infOn})};

@@ -490,6 +490,50 @@
     <a href="https://umd.edu" target="_blank" rel="noopener">University of Maryland</a>.</p>
 </footer>
 
+<!-- The first-visit note, shown once per browser before anything has been read off a plate.
+     Three things a reader cannot get from the picture in front of them: whose atlas this is
+     drawing, that the outlines laid over it were cut here rather than published by the
+     authors and can be wrong, and that saying so is a link in the footer. The middle one is
+     why it is modal: an outline is drawn in the atlas's own frame, on the atlas's own plate,
+     and a reader who has not been told otherwise reads it as the atlas's own line.
+     No Close in the header and the backdrop does not dismiss it -- unlike every other dialog
+     here, this is the one nobody asked for, so it should not go away on a stray click beside
+     it. Escape still closes it, because a modal the keyboard cannot leave is a trap, and it
+     counts as read like any other way out. About is the long form of all four paragraphs. -->
+<dialog id="welc" aria-labelledby="welch">
+  <div class="dh">
+    <h2 id="welch">Before you start</h2>
+  </div>
+  <div class="db">
+    <p><b>The atlas is not ours.</b> Every structure, abbreviation, coordinate and plate here
+      comes from Radtke-Schuller S, Schuller G, Angenstein F, Grosser OS, Goldschmidt J,
+      Budinger E (2016). Brain atlas of the Mongolian gerbil (<em>Meriones unguiculatus</em>)
+      in CT/MRI-aided stereotaxic coordinates. <em>Brain Struct Funct</em>
+      221(Suppl&nbsp;1):1&ndash;272,
+      <a href="https://doi.org/10.1007/s00429-016-1259-0" target="_blank" rel="noopener">doi:10.1007/s00429-016-1259-0</a>
+      &middot; open access. That is the work to read, and the work to cite.</p>
+
+    <p><b>Some regions are drawn wrong.</b> The outlines you can select, measure, color and
+      export were cut from those published drawings by this repository&rsquo;s own code rather
+      than taken from the authors, so a boundary can sit in the wrong place, a region can take
+      in ground that is its neighbor&rsquo;s, and a structure the atlas prints on a plate can
+      come out with no area on it at all. The printed plate underneath every overlay is the
+      authority; an outline is this site&rsquo;s reading of it.</p>
+
+    <p><b>And it is still being built.</b> What is experimental says so where it is; the rest
+      is still moving. Check anything you are about to act on against anatomy you already
+      know.</p>
+
+    <p><b>Report what looks wrong.</b> The footer of this page carries <em>Report a drawing
+      error</em>, which opens a report with the region, the plate and what the page already
+      knows about how that boundary got there filled in &mdash; and beside it <em>Request a
+      feature</em>, <em>Report an issue</em>, and <em>About the data</em>, which is the long
+      form of this note.</p>
+
+    <p class="wok"><button class="b" id="welcok" type="button" autofocus>I understand</button></p>
+  </div>
+</dialog>
+
 <dialog id="about">
   <div class="dh">
     <h2>About the data</h2>

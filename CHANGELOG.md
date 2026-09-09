@@ -5,6 +5,41 @@ carries a `version` block naming the release its derived fields were built for.
 
 ## [Unreleased]
 
+### Added
+- **A note on the first visit, saying whose atlas this is and that some of it is drawn
+  wrong.** The page opened straight onto a plate with outlines over it, and an outline here
+  is drawn in the atlas's own frame, on the atlas's own plate: without being told otherwise a
+  reader takes it for a line the authors published. It is not -- it was cut from their
+  drawing by this repository's own code -- and every honest thing the page has to say about
+  its own accuracy is downstream of that one fact. So a modal note now opens **once per
+  browser**, before anything has been read off a plate, and says four things. The atlas is
+  Radtke-Schuller et al. (2016), and that is the work to read and to cite. The outlines were
+  cut here rather than taken from the authors, so a boundary can sit in the wrong place, a
+  region can take in ground that is its neighbor's, and a structure the atlas prints on a
+  plate can come out with no area on it at all -- the printed plate underneath every overlay
+  is the authority. The site is still being built. And the footer carries **Report a drawing
+  error**, which opens a report with the region, the plate and what the page already knows
+  about how that boundary got there filled in, with **Request a feature**, **Report an
+  issue** and **About the data** beside it. **I understand** dismisses the note, and
+  `gae-welcome` in the browser's own storage keeps it dismissed.
+
+  There is no Close in its header and the backdrop does not dismiss it: it is the one dialog
+  nobody asked for, so it should not go away on a stray click beside it. Escape does, because
+  a modal the keyboard cannot leave is a trap, and it counts as read like any other way out
+  -- a note that came back because the reader reached for a key would be a bug rather than a
+  second chance. What is stored is the version of the note that was acknowledged rather than
+  a bare flag, so raising `WELC` brings it back for everyone if what it says materially
+  changes; a browser that refuses storage throws instead of answering and is shown the note
+  every visit, which is the right way round for a note whose whole job is to be seen at least
+  once.
+
+  Every other browser spec now opens the page as a reader who has been here before, seeded
+  through `tests/js/gae.js` before the page's own script runs. A modal over the page is a
+  backdrop that swallows every click a spec makes, and without that this note would have
+  turned nine green spec files red for a reason none of them is about;
+  `tests/js/welcome.spec.js` is the one spec that does not use it, and checks what a browser
+  that has never been here sees.
+
 ### Changed
 - **A correction's pull request opens with a picture of the region before and after.**
   What a reader had was `qc/chk_corr_<id>.png` in the diff: the whole plate at twice its

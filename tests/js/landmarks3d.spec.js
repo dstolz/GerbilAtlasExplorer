@@ -1,7 +1,7 @@
 // Landmarks in the 3-D view: the marks are geometry in the scene and the names ride over
 // the canvas as text, so what is checked here is that both appear together, that the
 // setting belongs to a pane rather than to the view, and that it rides in the link.
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./gae');
 /* the controls these specs drive live in the view's panel, which opens closed */
 const panel = p => p.evaluate(() => window.__gae.vpan(true));
 
