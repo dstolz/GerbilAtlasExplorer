@@ -1,0 +1,50 @@
+{
+ "schema": "gerbil-atlas-correction/1",
+ "id": "report-p28-RAPir-right",
+ "created": "2026-09-09T02:50:00Z",
+ "author": "dstolz, by report; the seeds placed at the points #109 named",
+ "plate": 28,
+ "ap_bregma_mm": -1.65,
+ "abbr": "RAPir",
+ "hemisphere": "right",
+ "problem": "\"RAPir on plate 28 is still not fixed\": after #109 the left is the whole column and the right is the band alone",
+ "seeds": [
+  {
+   "abbr": "RAPir",
+   "kind": "positive",
+   "page_px": [
+    2285,
+    1692
+   ],
+   "mm": [
+    4.328,
+    -8.061
+   ],
+   "note": "the face deep to the band"
+  },
+  {
+   "abbr": "RAPir",
+   "kind": "positive",
+   "page_px": [
+    2310,
+    1760
+   ],
+   "mm": [
+    4.503,
+    -8.539
+   ],
+   "note": "the face between the band and the pia"
+  }
+ ],
+ "boundaries": [],
+ "extents": [],
+ "notes": [
+  "Written by hand from a report against the published site, not by atlasfix or AtlasRegionFix: the correction that fixed the left hemisphere (#109) named the left and marked its faces, and said the right wanted two seeds, one in each unlettered face, near ML +4.33 DV -8.06 and ML +4.50 DV -8.54. These are those two."
+ ],
+ "snapshot": "",
+ "source": {
+  "commit": "471110b",
+  "repo": "dstolz/GerbilAtlasExplorer",
+  "tool": "by hand, from a report"
+ }
+}

@@ -72,6 +72,76 @@ carries a `version` block naming the release its derived fields were built for.
   that has never been here sees.
 
 ### Changed
+- **A correction reaches its pull request with fewer runs, and two corrections in flight
+  no longer conflict with each other.** The first two corrections to go the whole way,
+  `RAPir` on plate 28 (#109) and `E` on plate 3 (#110), took fifteen runs of the workflow
+  between them for two applied fixes, and every merge of main after a fix conflicted in
+  every derived file -- the volumes, the label volume, the pages, the summaries, the
+  `seed_overrides` note, the changelog -- each resolved the same way by hand: main's derived
+  files, the branch's input laid on them, the pipeline run again. `CORRECTION_PROCESS_PLAN.md`
+  is the account; this is what it asked for.
+
+  *The merge is a script.* `tools/corrections.py rebase` merges main taking main's copy of
+  every derived file (`atlaslib.DERIVED_PATHS`, `DERIVED_BLOCKS`), lays the branch's input
+  rows (`INPUT_BLOCKS`, per plate) on main's database, refuses the one case a person has
+  to decide -- both sides changed the same plate's input -- runs the pipeline again, and
+  commits the merge only when the re-cut does what the branch did: the same (plate, region)
+  entries move against the new base as moved against the old, less any main moved itself,
+  and the corrected region's rings are identical. `rebase-corrections.yml` runs it on every
+  open correction pull request each time main moves, one branch at a time, and puts CI on
+  the new head; where it stops it says so on the pull request. `apply-correction.yml` runs
+  it before the session, in place of the session's own merge.
+
+  *The session does what only it can.* The workflow runs `inspect --qc` and hands the
+  session its output; `tools/pipeline.py rebuild` and `check` are the six build steps and
+  every check as two commands, in the order and with the completeness the skill used to
+  spell out over fifteen lines; `tools/corrections.py report` gives the write-up its
+  numbers -- the region before and after, per hemisphere and over the series, every entry
+  and volume that moved, the summaries side by side -- as Markdown against `origin/main`,
+  so they are the same numbers a rebase prints and a reviewer can regenerate. The session
+  writes `build/pr.md` and the workflow opens the pull request from it, with the picture
+  pinned to the pushed head; the session needs no `gh` and no Node, and Playwright runs in
+  CI on the push. A correction run may not edit `tools/`, `src/`, `tests/` or the
+  workflows (the skill's Never list): run 13 of the workflow fixed the site-picture window
+  in `tools/corrections.py` while #112 fixed it on main.
+
+  *Fewer runs.* `fixer.html` pushes the file and its snapshot as one commit through the
+  Git Data API, where two `contents` PUTs were two pushes and two dispatched sessions
+  queued on one branch. The dispatch fires only when the pushed commit has one parent and
+  adds a correction file on it (`tools/ci/correction.sh pushed`), so a merge of main into a
+  branch that already carries its fix no longer starts a forty-minute session that finds
+  nothing to apply; and a dispatched run that finds the fix already on the branch stops
+  before it installs anything, unless `force` is set. The workflow's shell lives in
+  `tools/ci/correction.sh`, tested by `tests/python/test_ci_scripts.py` against a
+  repository the test makes, and `dry_run` runs every step but the session -- four
+  plumbing pull requests in one day (#105, #106, #107, #111) were each a step that could
+  only be tried on a runner.
+
+  *Less to conflict on.* `CHANGELOG.md` merges with git's `union` driver (`.gitattributes`),
+  which a local merge -- the rebase -- honors, so two entries added at the top of
+  `### Fixed` keep each other. The totals `METHODS.md` states that a re-cut moves --
+  entries, polygons, points, the coloring's regions and patches -- sit between
+  `<!-- n:... -->` markers naming the database field they come from, and
+  `export_tables.py` rewrites them on every run and holds them with `--check`; nobody
+  restates a total by hand, and a rebase carries the right one. The `seed_overrides` note
+  is static: it had grown a paragraph per correction and a count, and was a line every
+  correction conflicted on; a row's reason is in the row, and the changelog carries the
+  entry. The committed pages carry their build tokens unstamped -- nothing serves them,
+  `pages.yml` stamps the copy it deploys, and `--check` already compared unstamped -- so
+  three files stop conflicting between any two branches whatever they change.
+  `data/gerbil_atlas_volumes.json` is written one structure per line, so a re-cut diffs by
+  structure instead of as one 20 MB line, and it and the NIfTI are `-diff`. The NIfTI's
+  gzip header carries no time and no name now: the same label volume was a different file
+  on every rebuild, which made a binary that conflicted between any two branches out of one
+  that had not changed. What a reader saw in **Recut** travels with the correction as its
+  `preview`, and `report` says whether the applied fix agrees with it.
+
+  Checked: `tests/python`, the eight new shell tests and the report and marker tests among
+  them; every `--check` on the rebuilt tree, the volumes coming out equal as JSON and the
+  label volume equal decompressed; and the rebase replayed on the real case -- the `E` fix
+  as it stood on its old base (1f2206f), onto a main carrying #108 and #109 -- which is
+  reported in the pull request.
+
 - **A correction's pull request opens with a picture of the region before and after.**
   What a reader had was `qc/chk_corr_<id>.png` in the diff: the whole plate at twice its
   size, most of it white, the region a green sliver in the middle, and one state of it --
@@ -351,6 +421,33 @@ carries a `version` block naming the release its derived fields were built for.
   around `OV`'s lumen, and so should be split rather than given whole to `E`, is a question
   the drawing does not answer — the atlas draws one lens and prints two names beside it —
   and it is the same reading plate 3 took in #110.
+- **The right `RAPir` on plate 28 gets its column too.** #109 gave the rostral
+  amygdalopiriform area the whole column the atlas draws it as, on the left of plate 28,
+  where the correction was drawn -- and said the right was drawn the same way and untouched:
+  the word `RAPir` on the band between two laminar lines, the **7,982 px** face deep to it
+  and the **4,561 px** face between it and the pia lettered by nothing, `RAPir` 0.5641 mm²
+  on the left against 0.0910 on the right. Reported against the published site as still not
+  fixed, which on the right it was not. Two rows of `seed_overrides`, one in each unlettered
+  face at the points #109 named for them, written from `corrections/report-p28-RAPir-right.json`
+  -- a file written by hand from the report, not by the plate view, which is what its
+  `source` says. **`RAPir` on plate 28 goes 0.6551 to 1.2916 mm²**, the right hemisphere
+  0.0910 to 0.7275, the left as #109 left it; over the series 1.718 to 2.355 mm² and 0.5711
+  to 0.7763 mm³, in two mesh components rather than three, the right no longer a band and a
+  scrap. The new ring is drawn ink for 98.5% of its length. A third polygon arrives with it:
+  a three-pixel island on the lower laminar line beside the letter R, 0.0001 mm², where the
+  ink loops and the watershed leaves a hole -- not a boundary anyone can see, and noted
+  rather than culled, since the floor is on faces and this is not one.
+
+  Eight other entries on plate 28 move, none by more than 0.0045 mm² -- `3`, `BMP`, `1`,
+  `VEn`, `Pir`, `2`, `LHb`, `sm` -- the ink those faces now divide with a named neighbour;
+  nothing off the plate does. `unnamed_fraction` goes 0.0346 to 0.0344, sixteen volumes move
+  and `region_triangles` with them. `structure_plate_entries` stays 3,118, polygons go 6,013
+  to 6,014, points 168,751 to 168,760, `seeds_moved_by_hand` 32 to 34, and
+  **`boundary_edges_shared_exactly` stays 1.0**. Every `--check` is clean, 64 Python tests
+  and 109 browser tests pass; the pictures are `qc/chk_corr_report-p28-RAPir-right_site.png`
+  and the whole plate beside it. The rows say where they came from; the block note is
+  static now and enumerates nothing.
+
 - **`E` on plate 3 gets the run of ventricle above the pinch.** The atlas draws the
   ependyma of the olfactory ventricle on the right of plate 3 as one contour, from below the
   `aci` circle down to its ventral bulb, and pinches it to a single stroke halfway along, at

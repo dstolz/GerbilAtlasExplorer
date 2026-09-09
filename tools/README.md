@@ -27,7 +27,9 @@ anyone check any of them, so they are here as code, in the order they run.
 | `volume.py` | The voxel geometry: the even-odd fill, the distance fields, marching cubes, hulls. Kept apart for the same reason `regiongeom.py` is — it holds the part that decides whether the regions still partition the volume. |
 | `atlasfix.py` | The interactive fixer: serves `src/fixer.html` on `127.0.0.1` and answers for it, so a wrong region is marked on the plate in a browser -- a seed where the region is, the run of boundary the tracing missed, the outline it should have -- and committed as `corrections/<id>.json` on a branch of its own. It says what a mark would do with the extraction's own code rather than a copy of it: the face map is cut with `build_region_extents`'s rasterizer over `BRIDGE_PX`, and **Recut** applies the draft with `corrections.apply` and builds the plate again with `build_region_extents.build_plate` against a scratch tree, so what a reader sees before committing is what the workflow builds after. The alternative to `matlab/AtlasRegionFix.m`, with no MATLAB in it. |
 | `build_facemaps.py` | The page cut into faces -- ink, bridged ends, section interior -- published per plate under `data/facemaps/` so the fixer's page can answer **Pick** where there is no Python to cut with. A JavaScript copy of the cut would drift from the pipeline the first time a constant moved; this is the cut itself, and `--check` is what holds the committed maps to the tracing they came from. 23 to 100 KB a plate, 3.4 MB for all 62, half a minute to rebuild. |
-| `corrections.py` | A correction to how a region is drawn, read in from the plate view (`corrections/<id>.json`, written by `tools/atlasfix.py` or `matlab/AtlasRegionFix.m`), against the extraction: `inspect` says where each seed lands today and in whose face, how far a drawn boundary's ends sit from traced ink, and which runs of a corrected extent lie off it, and draws all of it over the plate; `apply` writes boundaries into the plate's SVG as cubics the pipeline reads and seeds into `seed_overrides`. Then the pipeline, in the order below. |
+| `corrections.py` | A correction to how a region is drawn, read in from the plate view (`corrections/<id>.json`, written by `fixer.html`, `tools/atlasfix.py` or `matlab/AtlasRegionFix.m`), against the extraction: `inspect` says where each seed lands today and in whose face, how far a drawn boundary's ends sit from traced ink, and which runs of a corrected extent lie off it, and draws all of it over the plate; `apply` writes boundaries into the plate's SVG as cubics the pipeline reads and seeds into `seed_overrides`; `report` gives the write-up its numbers against a git ref (the region before and after, every entry and volume that moved, the summaries side by side) as Markdown; `rebase` brings a correction branch up to main without merging a derived file -- the inputs are merged, the derived files are main's, the pipeline is run again, and the re-cut is checked to do what the branch did before the merge is committed. |
+| `pipeline.py` | The derivation as two commands: `rebuild` runs the six build steps in the order each reads what the one before wrote (`--plates NN` is the one-plate preview, `--from STEP` resumes), `check` runs every `--check` and then the tests, `steps` lists them. What it holds is the order and the completeness; each step is still its own script. |
+| `ci/correction.sh` | The shell of `.github/workflows/apply-correction.yml` and `rebase-corrections.yml` -- was a correction pushed and not a merge, which files the branch adds, whether it already carries a fix, whether the session left the correction untouched, opening the pull request from `build/pr.md` -- kept here so `tests/python/test_ci_scripts.py` can run it against a repository it makes. |
 | `inline_region_extents.py` | Retired; a shim that runs `build_app.py` (or its `--check`), so an old command still does the right thing. |
 
 ```
@@ -48,6 +50,10 @@ python3 tools/build_facemaps.py                        # the face maps the publi
 python3 tools/build_facemaps.py --check                # are the committed face maps a fresh cut
 python3 tools/corrections.py inspect corrections/ID.json --qc   # a correction against the extraction
 python3 tools/corrections.py apply corrections/ID.json          # into svg/ and seed_overrides; then the pipeline
+python3 tools/corrections.py report corrections/ID.json         # the write-up's numbers, against origin/main
+python3 tools/corrections.py rebase --onto origin/main          # a correction branch up to main, re-cut, checked
+python3 tools/pipeline.py rebuild                      # the six build steps below, in order, ~10 min
+python3 tools/pipeline.py check                        # every --check below, then the tests
 python3 tools/build_region_extents.py                  # all 62 plates, ~5 min, rewrites the JSON
 python3 tools/build_region_extents.py --plates 30 --dry-run --qc
 python3 tools/build_volumes.py                         # all 62 plates, ~3 min, 21 MB of meshes
@@ -58,8 +64,8 @@ python3 tools/build_groups.py --report                 # the divisions and their
 python3 tools/build_groups.py                          # writes the `groups` block
 python3 tools/build_region_colors.py                   # writes the `region_colors` block
 python3 tools/build_region_colors.py --report          # the patches, the refusals, the plates
-python3 tools/export_tables.py --refresh-db            # the CSVs, the tables, the GeoJSON
-python3 tools/build_app.py --lean                      # then rebuild both pages
+python3 tools/export_tables.py --refresh-db            # the CSVs, the GeoJSON, the numbers METHODS.md states
+python3 tools/build_app.py --lean                      # then the pages (unstamped; pages.yml stamps the deployed copy)
 python3 tools/build_app.py --check                     # are the committed pages a fresh build
 python3 tools/export_tables.py --check                 # are the committed tables current
 python3 tools/build_groups.py --check                  # are the committed divisions current
@@ -121,7 +127,10 @@ millimetres. **1**-**5** choose the tool:
 it stands, in the same sentences the workflow will read. **Recut** goes further — it runs
 `corrections.apply` and `build_region_extents.build_plate` against a scratch copy of the
 plate's SVG and a copy of the database in memory, and draws the outlines that come back,
-which are the ones the pipeline would write. It takes about ten seconds and touches
+which are the ones the pipeline would write. What it showed travels with the correction as
+its `preview` — the region's area before and after, and which regions moved — so the
+session that applies it can check its own re-cut against what the reader accepted; a mark
+added after the recut drops the preview. It takes about ten seconds and touches
 nothing in the working tree. **QC image** writes `qc/chk_corr_<id>.png`.
 
 **Commit** validates the draft, then builds the file in a temporary git worktree cut from
