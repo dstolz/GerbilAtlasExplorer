@@ -247,11 +247,23 @@ carries a `version` block naming the release its derived fields were built for.
   dimensions `unnamed_fraction` goes 0.0348 to **0.0346**, and thirteen structures' volumes
   move, `1` coming out in six mesh components rather than seven and the other eleven in the
   fourth decimal. `structure_plate_entries` stays 3,118, polygons 6,012 and the coloring 691
-  regions in 631 patches; points go 168,740 to 168,751, faces named by one abbreviation
-  3,515 to 3,517, seeds moved by hand 26 to 29, `section_covered_mean` 0.9483 to 0.9484,
+  regions in 631 patches; points go 168,729 to 168,740, faces named by one abbreviation
+  3,516 to 3,518, seeds moved by hand 26 to 29, `section_covered_mean` 0.9483 to 0.9484,
   `label_inside_its_own_region` 0.9776 either way, and **`boundary_edges_shared_exactly`
-  stays 1.0**. 63 Python tests and 109 browser tests pass, and `--check` on the tables,
+  stays 1.0**. 64 Python tests and 109 browser tests pass, and `--check` on the tables,
   groups, colors, face maps and pages is clean.
+- **The site picture of a correction stays on the hemisphere the correction marks.**
+  `inspect --qc` draws its window round everything the picture is about, and for a region
+  the atlas draws on both sides of ML 0 that took in the ring and the printed box on the
+  other hemisphere as well -- so the window opened to the width of the section and the
+  picture came out the whole plate, which is the picture the site view was written to
+  replace. `RAPir` on plate 28 is such a region: the correction marks three seeds on the
+  left at ML −4.6, and the ring nine millimetres away at ML +4.4 widened the window from
+  866 to 1,850 pixels across, the region a green sliver in it. The window is drawn round
+  the correction's own marks now, and round the rings and boxes on their side of ML 0;
+  where a correction marks nothing, or nothing of the region is on its side, it is round
+  all of it as before. Nothing else about the picture changes -- the panels, the overlay
+  and the whole-plate file are what they were.
 - **A correction's run ends green when its pull request does.** The last step of
   `.github/workflows/apply-correction.yml` waited on CI with `gh pr checks --watch
   --fail-level error`, and `--fail-level` is a flag of nothing: `gh` printed its usage and
