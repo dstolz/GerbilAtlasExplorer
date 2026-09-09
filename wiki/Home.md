@@ -75,4 +75,4 @@ aid, not a segmentation. See [Accuracy and Caveats](Accuracy-and-Caveats).
 
 ## Funding
 
-Development of the Gerbil Brain Explorer was supported by NIH R01DC020742.
+Development of the Gerbil Atlas Explorer was supported by NIH R01DC020742.
