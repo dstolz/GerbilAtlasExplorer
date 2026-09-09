@@ -1,0 +1,117 @@
+{
+ "schema": "gerbil-atlas-correction/1",
+ "id": "20260908T012002Z-p03-E",
+ "created": "2026-09-08T01:20:02Z",
+ "author": "",
+ "plate": 3,
+ "ap_bregma_mm": 7.1,
+ "abbr": "E",
+ "hemisphere": "right",
+ "problem": "Region was incorrectly drawn around the label and surface. The correct region should better mirror the left hemisphere",
+ "seeds": [
+  {
+   "abbr": "E",
+   "kind": "positive",
+   "page_px": [1794.84,1293.79],
+   "mm": [0.888,-5.26],
+   "note": ""
+  },
+  {
+   "abbr": "E",
+   "kind": "positive",
+   "page_px": [1789.84,1331.67],
+   "mm": [0.853,-5.526],
+   "note": ""
+  },
+  {
+   "abbr": "E",
+   "kind": "positive",
+   "page_px": [1785.49,1375.03],
+   "mm": [0.822,-5.831],
+   "note": ""
+  },
+  {
+   "abbr": "E",
+   "kind": "positive",
+   "page_px": [1785.49,1417.97],
+   "mm": [0.822,-6.133],
+   "note": ""
+  },
+  {
+   "abbr": "E",
+   "kind": "negative",
+   "page_px": [1871.88,1542.42],
+   "mm": [1.428,-7.008],
+   "note": ""
+  },
+  {
+   "abbr": "E",
+   "kind": "negative",
+   "page_px": [1880.56,1492.66],
+   "mm": [1.489,-6.658],
+   "note": ""
+  },
+  {
+   "abbr": "E",
+   "kind": "negative",
+   "page_px": [1891.44,1467.89],
+   "mm": [1.565,-6.484],
+   "note": ""
+  },
+  {
+   "abbr": "E",
+   "kind": "negative",
+   "page_px": [1913.53,1451.7],
+   "mm": [1.72,-6.37],
+   "note": ""
+  },
+  {
+   "abbr": "E",
+   "kind": "negative",
+   "page_px": [1922.32,1435.99],
+   "mm": [1.782,-6.26],
+   "note": ""
+  },
+  {
+   "abbr": "E",
+   "kind": "negative",
+   "page_px": [1926.72,1421.94],
+   "mm": [1.813,-6.161],
+   "note": ""
+  },
+  {
+   "abbr": "E",
+   "kind": "negative",
+   "page_px": [1940.45,1373.13],
+   "mm": [1.909,-5.818],
+   "note": ""
+  },
+  {
+   "abbr": "E",
+   "kind": "negative",
+   "page_px": [1951.99,1300.27],
+   "mm": [1.99,-5.305],
+   "note": ""
+  },
+  {
+   "abbr": "E",
+   "kind": "negative",
+   "page_px": [1944.41,1349.79],
+   "mm": [1.937,-5.654],
+   "note": ""
+  }
+ ],
+ "boundaries": [],
+ "extents": [],
+ "notes": [
+  "Incorrect"
+ ],
+ "snapshot": "corrections/20260908T012002Z-p03-E.png",
+ "source": {
+  "commit": "",
+  "site": "https://dstolz.github.io/GerbilAtlasExplorer/",
+  "repo": "dstolz/GerbilAtlasExplorer",
+  "tool": "atlasfix (the published page) 1.0",
+  "browser": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Mobile Safari/537.36"
+ }
+}

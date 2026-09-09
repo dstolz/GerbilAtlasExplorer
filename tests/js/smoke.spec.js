@@ -1,5 +1,5 @@
 // The built pages in a browser: the bundle from disk, the lean page over http.
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./gae');
 /* Most of what a view is set by lives in a panel now, and it is closed when the page opens,
    so a spec that drives one of those controls says so first. */
 const panel = p => p.evaluate(() => window.__gae.vpan(true));

@@ -1,6 +1,6 @@
 // The pure parts of the app, through the window.__gae handle: the frame transform
 // inverts, the deep link round-trips, and every structure solves to a bounded plan.
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./gae');
 /* the controls these specs drive live in the view's panel, which opens closed */
 const panel = p => p.evaluate(() => window.__gae.vpan(true));
 const path = require('path');
