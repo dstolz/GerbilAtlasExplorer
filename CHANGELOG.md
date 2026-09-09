@@ -6,6 +6,23 @@ carries a `version` block naming the release its derived fields were built for.
 ## [Unreleased]
 
 ### Added
+- **One press of Commit sends every plate and every region a reader marked.** The fixer
+  kept a draft per plate and sent the plate on screen, so a reader who walked the atlas
+  marking `E` on plate 1, then plate 16, then plate 3, pushed one and left the rest parked
+  in the page -- which is what happened to "corrections for most of E across several
+  plates" (#119), a file for plate 16 alone. **Commit now takes every plate that holds marks,
+  and on each plate one file for each region marked on it** -- a seed and an extent carry
+  the region they were made for, and a boundary now carries the region that was chosen when
+  it was drawn -- and sends them as one commit on one branch: `correction/<id>` for one file
+  as before, `correction/<stamp>` for several, the stamp being the moment they were sent and
+  the prefix of every id on it. The sheet lists the files with a line for what is wrong on
+  each plate, editable there, so a plate marked and left without a word can be given one
+  before it goes. One picture a plate goes beside its files, and the page walks to each
+  plate to take it, which is what a reader would do to look. After a push the plates sent
+  are cleared; a dry run leaves them. Both backends take the same list, and `apply-correction.yml`
+  already applies every file a branch adds. `tests/python` and `tests/js/fixer.spec.js` each
+  send three corrections on two plates and read the three files back.
+
 - **The site can count how many people open it, with no cookie and nothing on the page.**
   GitHub Pages keeps no logs and offers no analytics -- the repository's own Insights ->
   Traffic counts visits to github.com, not to the site -- so a count has to come from the

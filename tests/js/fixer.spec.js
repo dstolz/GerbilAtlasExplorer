@@ -135,6 +135,48 @@ test('commit shows the file it would write before it writes anything', async ({ 
   await expect(page.locator('#modal')).toBeHidden();
 });
 
+test('one Commit sends every marked plate, one file for each region marked on it',
+  async ({ page }) => {
+    await open(page);
+    await page.fill('#problem', 'S1DZ on the left is a scrap, and S1J is wrong beside it.');
+    await page.click('[data-t="seed"]');
+    await clickAt(page, SEED);                          // S1DZ, the region chosen
+    await page.evaluate(() => select('S1J'));
+    await clickAt(page, [1200, 1000]);                  // a second region on the same plate
+    await page.fill('#plate', '5');
+    await page.locator('#plate').press('Enter');
+    await expect(page.locator('#where')).toContainText('plate 5, bregma');
+    await expect(page.locator('#marks')).toContainText('Marks are waiting on plate 19');
+    await expect(page.locator('#commitb')).toBeEnabled();   // marks elsewhere are enough
+    await page.evaluate(() => select('Pir'));
+    await page.click('[data-t="unseed"]');
+    await clickAt(page, [1600, 1200]);
+    await page.click('#commitb');
+    await expect(page.locator('#mtitle')).toHaveText('Send 3 corrections on 2 plates');
+    const list = page.locator('#m-list li');
+    await expect(list).toHaveCount(3);
+    await expect(list.nth(0)).toContainText('plate 5, Pir: 1 seed');   // plates in order
+    await expect(list.nth(1)).toContainText('plate 19, S1DZ: 1 seed');
+    await expect(list.nth(2)).toContainText('plate 19, S1J: 1 seed');
+    await page.fill('#m-prob-5', 'Pir is not this on plate 5.');   // the text for the plate left blank
+    await expect(page.locator('#mjson')).toContainText('"page_px": [1079,955]');
+    await page.check('#m-dry');
+    await expect(page.locator('#mbtns button:last-child')).toHaveText('Write them');
+    await page.click('#mbtns button:last-child');
+    await expect(page.locator('#report')).toContainText('"abbr": "Pir"');
+    const fs = require('fs'), path = require('path');
+    const dir = path.join(__dirname, '..', '..', 'build', 'corrections');
+    const said = await page.locator('#report').textContent();      // the files, as written
+    const ids = [...said.matchAll(/"id": "([^"]+)"/g)].map((m) => m[1]);
+    expect(ids).toHaveLength(3);
+    const docs = ids.map((id) => JSON.parse(fs.readFileSync(path.join(dir, id + '.json'), 'utf8')));
+    expect(docs.map((d) => [d.plate, d.abbr])).toEqual([[5, 'Pir'], [19, 'S1DZ'], [19, 'S1J']]);
+    expect(new Set(ids.map((id) => id.split('-')[0])).size).toBe(1);   // one stamp: one send
+    expect(docs[0].problem).toBe('Pir is not this on plate 5.');
+    expect(docs[1].snapshot).toBe(docs[2].snapshot);                 // one picture a plate
+    expect(page.errors).toEqual([]);
+  });
+
 test('a plate with no correction on it still draws, and the plate can be changed',
   async ({ page }) => {
     await open(page);

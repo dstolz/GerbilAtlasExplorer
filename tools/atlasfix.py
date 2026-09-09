@@ -28,16 +28,18 @@ In the page: choose the region, say what is wrong, then drop a **Seed** where th
 region is, draw the **Boundary** the tracing missed, or pull its **Extent** into shape.
 **Pick** reads what the extraction has under the pointer, **Inspect** reads the whole
 draft against it, **Recut** builds the plate again with the draft applied, and
-**Commit** writes the file on a branch and pushes it, which starts
+**Commit** writes every plate's marks -- a file for each region marked on each plate
+that holds them -- on one branch and pushes it, which starts
 `.github/workflows/apply-correction.yml`.
 
 Reads:  data/gerbil_atlas.json, data/vec.json, svg/*.svg, data/plates/*/NN.jpg
 Writes: qc/chk_corr_<id>.png and qc/chk_corr_<id>_site.png, and only when asked for
-        them. Marking, `Inspect` and
+        them; `Commit` writes corrections/<id>.json, one for each region marked on each
+        plate that holds marks, all in one commit on one branch. Marking, `Inspect` and
         `Recut` change nothing: `Recut` applies the draft to a scratch copy of the
-        plate's SVG and a copy of the database in memory. `Commit` builds the file in
+        plate's SVG and a copy of the database in memory. `Commit` builds the files in
         a temporary git worktree cut from origin/main and pushes the branch; its
-        *dry run* writes the file under build/corrections/ instead and stops.
+        *dry run* writes them under build/corrections/ instead and stops.
 
 Needs `pip install -r tools/requirements.txt`; the page needs no network and no
 JavaScript beyond what the browser ships.
@@ -507,50 +509,86 @@ def git(*args, cwd=None, check=True):
     return r.stdout
 
 
-def commit(S, draft, png=None, dry=False, remote='origin', base='main'):
-    """The correction on a branch of its own, pushed.
+def branch_name(ids, stamp):
+    """One correction is named for its id, as it always was; several sent together are
+    named for the moment they were sent. src/fixer.js says the same."""
+    return 'correction/%s' % (ids[0] if len(ids) == 1 else stamp.strftime('%Y%m%dT%H%M%SZ'))
 
-    Through a temporary worktree cut from `origin/main`, so the checkout you are
-    reading the plate from is untouched and the branch carries one commit. The push
-    starts `.github/workflows/apply-correction.yml`.
+
+def commit_message(docs):
+    if len(docs) == 1:
+        d = docs[0]
+        return 'Correction: %s on plate %d\n\n%s\n\nCorrection-Id: %s\n' % (d['abbr'], d['plate'], d['problem'], d['id'])
+    said = []
+    for d in docs:
+        line = 'plate %d: %s' % (d['plate'], d['problem'])
+        if line not in said:
+            said.append(line)
+    return ('Corrections: %s\n\n%s\n\n%s\n'
+            % (', '.join('%s on plate %d' % (d['abbr'], d['plate']) for d in docs),
+               '\n'.join(said), '\n'.join('Correction-Id: %s' % d['id'] for d in docs)))
+
+
+def commit(S, draft=None, png=None, dry=False, remote='origin', base='main', items=None):
+    """The corrections on a branch of their own, pushed.
+
+    `items` is what the page sends: [{'draft', 'png'}, ...], one file for each region
+    marked on each plate that holds marks; one draft and one png is the same thing said
+    once. Every file goes in one commit, through a temporary worktree cut from
+    `origin/main`, so the checkout you are reading the plate from is untouched and the
+    branch carries one commit. One picture a plate, carried by the first file written for
+    it. The push starts `.github/workflows/apply-correction.yml`, which applies each.
     """
-    doc = document(draft, S)
-    if not doc['abbr']:
-        raise Failed('name the region first')
-    if not doc['problem']:
-        raise Failed('say what is wrong first')
-    if not (doc['seeds'] or doc['boundaries'] or doc['extents']):
+    if items is None:
+        items = [{'draft': draft, 'png': png}]
+    if not items:
         raise Failed('mark something first: a seed, a boundary or an extent')
-    with as_failure():
-        C.validate(doc, S.DB, S.VECM)
-    cid = doc['id']
-    if png:
-        doc['snapshot'] = 'corrections/%s.png' % cid
-    text = render(doc)
+    stamp = datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0)
+    docs, pngs = [], {}                      # plate -> (id of the file that carries it, bytes)
+    for it in items:
+        doc = document(it['draft'], S, when=stamp)
+        if not doc['abbr']:
+            raise Failed('name the region first')
+        if not doc['problem']:
+            raise Failed('say what is wrong first')
+        if not (doc['seeds'] or doc['boundaries'] or doc['extents']):
+            raise Failed('mark something first: a seed, a boundary or an extent')
+        with as_failure():
+            C.validate(doc, S.DB, S.VECM)
+        p = doc['plate']
+        if it.get('png') and p not in pngs:
+            pngs[p] = (doc['id'], it['png'])
+        if p in pngs:
+            doc['snapshot'] = 'corrections/%s.png' % pngs[p][0]
+        docs.append(doc)
+    ids = [d['id'] for d in docs]
+    if len(set(ids)) != len(ids):
+        raise Failed('two corrections for the same region on the same plate: mark them as one')
+    texts = [render(d) for d in docs]
+    files = [('corrections/%s.json' % d['id'], t.encode('utf8')) for d, t in zip(docs, texts)]
+    files += [('corrections/%s.png' % cid, data) for cid, data in pngs.values()]
     if dry:
-        out = os.path.join(A.ROOT, 'build', 'corrections')
-        os.makedirs(out, exist_ok=True)
-        write(os.path.join(out, cid + '.json'), text)
-        if png:
-            open(os.path.join(out, cid + '.png'), 'wb').write(png)
-        return {'id': cid, 'dry': True, 'path': os.path.relpath(
-            os.path.join(out, cid + '.json'), A.ROOT), 'json': text}
+        out = os.path.join(A.ROOT, 'build')
+        os.makedirs(os.path.join(out, 'corrections'), exist_ok=True)
+        for rel, data in files:
+            with open(os.path.join(out, rel), 'wb') as f:
+                f.write(data)
+        paths = ['build/%s' % rel for rel, _d in files if rel.endswith('.json')]
+        return {'id': ids[0], 'ids': ids, 'dry': True, 'path': paths[0], 'paths': paths,
+                'json': '\n'.join(texts)}
 
-    branch = 'correction/%s' % cid
+    branch = branch_name(ids, stamp)
     git('fetch', remote, base)
-    wt = os.path.join(tempfile.gettempdir(), 'atlasfix-' + cid)
+    wt = os.path.join(tempfile.gettempdir(), 'atlasfix-' + branch.split('/', 1)[1])
     git('worktree', 'add', '-b', branch, wt, '%s/%s' % (remote, base))
     try:
         os.makedirs(os.path.join(wt, 'corrections'), exist_ok=True)
-        files = ['corrections/%s.json' % cid]
-        write(os.path.join(wt, files[0]), text)
-        if png:
-            files.append('corrections/%s.png' % cid)
-            open(os.path.join(wt, files[1]), 'wb').write(png)
-        git('add', *files, cwd=wt)
+        for rel, data in files:
+            with open(os.path.join(wt, rel), 'wb') as f:
+                f.write(data)
+        git('add', *[rel for rel, _d in files], cwd=wt)
         msg = os.path.join(wt, '.correction-message')
-        write(msg, 'Correction: %s on plate %d\n\n%s\n\nCorrection-Id: %s\n'
-              % (doc['abbr'], doc['plate'], doc['problem'], cid))
+        write(msg, commit_message(docs))
         git('commit', '-q', '-F', msg, cwd=wt)
         os.remove(msg)
         git('push', '-u', remote, branch, cwd=wt)
@@ -559,7 +597,7 @@ def commit(S, draft, png=None, dry=False, remote='origin', base='main'):
         git('worktree', 'prune', check=False)
         git('branch', '-D', branch, check=False)
     url = remote_url(remote)
-    return {'id': cid, 'dry': False, 'branch': branch, 'json': text,
+    return {'id': ids[0], 'ids': ids, 'dry': False, 'branch': branch, 'json': '\n'.join(texts),
             'url': '%s/tree/%s' % (url, branch) if url else None,
             'actions': '%s/actions/workflows/apply-correction.yml' % url if url else None}
 
@@ -722,10 +760,12 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 with open(p, encoding='utf8') as f:
                     return self.json({'draft': draft_of(json.load(f)), 'path': p})
             if path == '/api/commit':
-                png = base64_png(b.get('png'))
+                items = b.get('items')            # the page sends a list; one draft still reads
+                if items is not None:
+                    items = [{'draft': it['draft'], 'png': base64_png(it.get('png'))} for it in items]
                 with as_failure():
-                    return self.json(commit(self.session, b['draft'], png=png,
-                                            dry=bool(b.get('dry'))))
+                    return self.json(commit(self.session, b.get('draft'), png=base64_png(b.get('png')),
+                                            dry=bool(b.get('dry')), items=items))
             self.fail('no such thing here', 404)
         except Failed as e:
             self.fail(e)

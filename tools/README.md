@@ -133,11 +133,15 @@ session that applies it can check its own re-cut against what the reader accepte
 added after the recut drops the preview. It takes about ten seconds and touches
 nothing in the working tree. **QC image** writes `qc/chk_corr_<id>.png`.
 
-**Commit** validates the draft, then builds the file in a temporary git worktree cut from
-`origin/main` and pushes the branch, so the checkout you are reading the plate from is
-untouched and the branch carries one commit. It shows the file first, and *dry run* there
-writes it under `build/corrections/` and stops, which is the way to look at what would be
-sent.
+**Commit** takes every plate that holds marks -- the one in front of you and the ones put
+down with marks on them -- and on each plate one file for each region marked on it, then
+builds the files in a temporary git worktree cut from `origin/main` and pushes the branch,
+so the checkout you are reading the plate from is untouched and the branch carries one
+commit. One file goes on `correction/<id>`; several go on `correction/<stamp>`, their ids
+sharing the stamp. It shows the files first, with a line for what is wrong on each plate,
+and *dry run* there writes them under `build/corrections/` and stops, which is the way to
+look at what would be sent. A picture of each plate as it stands goes beside its files, and
+the page walks to each plate to take it.
 
 ### From a phone
 
