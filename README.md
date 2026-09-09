@@ -482,6 +482,30 @@ license. See [LICENSE](LICENSE), [LICENSE-DATA.md](LICENSE-DATA.md) and
 ## Website development
 This website is developed and maintained by Daniel Stolzberg and the [Caras Lab](https://www.caraslab.org) in the department of Biology at the University of Maryland.
 
+## Counting visitors
+
+GitHub Pages keeps no logs and offers no analytics — the repository's own Insights → Traffic
+counts visits to github.com, not to the site — so a count has to come from the page itself.
+The head of `src/app.html` loads [GoatCounter](https://www.goatcounter.com), free for
+non-commercial use and cookieless: nothing is stored in the reader's browser, nothing that
+names a reader is kept, and there is no counter anywhere on the page, since the numbers live
+on GoatCounter's dashboard rather than in a badge here. What it records is the path, the
+referrer and the headers a browser sends anyway; the plate, the structure and the view this
+page keeps in the URL's hash never leave the browser, so the dashboard reads one path and
+not one per plate.
+
+The counts go to `gerbilatlasexplorer.goatcounter.com`. `CODE` in that block is the site
+code that names it, and emptying it is how counting is turned off: nothing is then fetched
+and nothing is sent. Either way the change is one line in `src/app.html` followed by
+`python3 tools/build_app.py --lean`, because the built pages are what Pages serves.
+
+Counting is settled in the browser rather than at build time, because one of the two built
+pages is both at once: `gerbil_atlas_explorer.html` is what Pages serves *and* the offline
+bundle attached to every release, and a copy somebody downloaded — opened from disk, or off
+a rig computer with no network — has no business phoning anywhere. So only a page actually
+being served from `dstolz.github.io` counts. A fork's own Pages site counts nothing either:
+those visits are not this site's.
+
 ## Under the hood
 
 How the coordinates were calibrated, how the plate images were cropped and the labels
