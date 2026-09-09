@@ -1,0 +1,115 @@
+{
+ "schema": "gerbil-atlas-correction/1",
+ "id": "20260909T163557Z-p01-E",
+ "created": "2026-09-09T16:35:57Z",
+ "author": "",
+ "plate": 1,
+ "ap_bregma_mm": 7.8,
+ "abbr": "E",
+ "hemisphere": "right",
+ "problem": "Fix R-hemisphere E",
+ "seeds": [
+  {
+   "abbr": "E",
+   "kind": "negative",
+   "page_px": [1843.25,1496.1],
+   "mm": [1.222,-6.672],
+   "note": ""
+  },
+  {
+   "abbr": "E",
+   "kind": "negative",
+   "page_px": [1854.91,1511.03],
+   "mm": [1.304,-6.777],
+   "note": ""
+  },
+  {
+   "abbr": "E",
+   "kind": "negative",
+   "page_px": [1876.04,1511.4],
+   "mm": [1.452,-6.779],
+   "note": ""
+  },
+  {
+   "abbr": "E",
+   "kind": "negative",
+   "page_px": [1866.93,1462.58],
+   "mm": [1.388,-6.436],
+   "note": ""
+  },
+  {
+   "abbr": "E",
+   "kind": "negative",
+   "page_px": [1889.88,1435.25],
+   "mm": [1.549,-6.244],
+   "note": ""
+  },
+  {
+   "abbr": "E",
+   "kind": "negative",
+   "page_px": [1901.54,1415.22],
+   "mm": [1.631,-6.103],
+   "note": ""
+  },
+  {
+   "abbr": "E",
+   "kind": "negative",
+   "page_px": [1910.65,1344.17],
+   "mm": [1.695,-5.603],
+   "note": ""
+  },
+  {
+   "abbr": "E",
+   "kind": "negative",
+   "page_px": [1913.56,1294.99],
+   "mm": [1.715,-5.257],
+   "note": ""
+  },
+  {
+   "abbr": "E",
+   "kind": "negative",
+   "page_px": [1916.48,1308.11],
+   "mm": [1.736,-5.349],
+   "note": ""
+  },
+  {
+   "abbr": "E",
+   "kind": "positive",
+   "page_px": [1763.1,1376.96],
+   "mm": [0.66,-5.834],
+   "note": ""
+  },
+  {
+   "abbr": "E",
+   "kind": "positive",
+   "page_px": [1762.73,1351.46],
+   "mm": [0.658,-5.654],
+   "note": ""
+  },
+  {
+   "abbr": "E",
+   "kind": "positive",
+   "page_px": [1762.37,1332.88],
+   "mm": [0.655,-5.524],
+   "note": ""
+  },
+  {
+   "abbr": "E",
+   "kind": "positive",
+   "page_px": [1762,1309.56],
+   "mm": [0.652,-5.36],
+   "note": ""
+  }
+ ],
+ "boundaries": [],
+ "extents": [],
+ "notes": [],
+ "snapshot": "corrections/20260909T163557Z-p01-E.png",
+ "source": {
+  "commit": "",
+  "site": "https://dstolz.github.io/GerbilAtlasExplorer/",
+  "repo": "dstolz/GerbilAtlasExplorer",
+  "tool": "atlasfix (the published page) 1.0",
+  "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+ }
+}
