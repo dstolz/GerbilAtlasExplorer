@@ -114,13 +114,17 @@ in the prompt, and its pictures are under `qc/`. By hand, do them.
    `Co-authored-by: Daniel <dstolz@umd.edu>`. Commit `qc/chk_corr_<id>.png` and
    `qc/chk_corr_<id>_site.png` with the fix, both from an `inspect --qc` run after the
    rebuild: the correction file is what the reader drew, and those pictures are what it
-   did. Under the workflow, stop there: it opens the pull request from `build/pr.md`,
-   waits on CI and leaves it to be read. By hand, open it yourself:
+   did. Then open the pull request from `build/pr.md`, under the workflow and by hand
+   alike:
    ```
    gh pr create --base main --title "$(head -n 1 build/pr.md)" \
      --body "$(tail -n +2 build/pr.md | sed "s/{{SHA}}/$(git rev-parse HEAD)/g")"
    ```
-   Do not merge, and do not wait to be told to: a person reads it before it lands. If main
+   Under the workflow the token you hold is the App's, which may open one where the
+   workflow's own may not; leave `build/pr.md` in place, since the workflow finds the
+   pull request you opened and waits on its checks, and opens one from the file itself
+   where you could not. Do not merge, and do not wait to be told to: a person reads it
+   before it lands. If main
    moves while it waits, `rebase-corrections.yml` brings the branch up and re-cuts it
    without a session; the pull request's numbers stay right because they came from
    `report` on the same inputs.

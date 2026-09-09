@@ -365,6 +365,17 @@ carries a `version` block naming the release its derived fields were built for.
   are what carry the other two and a plain mesh link carries none.
 
 ### Fixed
+- **A correction's session opens its own pull request again.** #114 moved that from the
+  session to the workflow, which opens it from `build/pr.md` with the workflow's own
+  token -- and that token may open a pull request only where the repository allows
+  GitHub Actions to create and approve them, which this one does not. So the first three
+  corrections sent together (`EPlA` on plates 5, 6 and 8, run #27) were applied, pushed
+  and left with no pull request to read them in, an hour's run ending red one step from
+  the end; #126 is that pull request, opened by hand. The session opens it itself now,
+  with the App token the action hands it, as it did for #109 and #110; the workflow's
+  step finds the one it opened and waits on the checks, and still opens one from the file
+  where the session could not, saying which setting it wants when it cannot either.
+
 - **`E` gets both ependymal slits on plate 16, and gives back the wedge of accumbens it was
   standing in.** The atlas letters the olfactory ventricle on this plate as the compound
   `E/OV`, once on each hemisphere, and sets it *across* the slit it names rather than in it:
