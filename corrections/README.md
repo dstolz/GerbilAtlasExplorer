@@ -41,9 +41,23 @@ Schema `gerbil-atlas-correction/1`:
   with `data-correction="<id>"`.
 - An **extent** is a ring of where a region's outline should run. Only the parts of it off
   the traced ink are traced; the region is then re-cut, never copied.
+- A **preview** (`null` unless the reader ran **Recut**) is what the recut showed before they
+  sent it: `{"area_mm2_before": 0.0669, "area_mm2": 0.1008, "changed": ["E", "GrA", "GrO"]}`.
+  `corrections.py report` compares the applied fix with it. The published page cannot recut
+  and writes none.
+
+The published page pushes the file and its snapshot as one commit, so the branch's first
+push is the one that starts `apply-correction.yml`. What happens then: the workflow brings
+the branch up to main, runs `inspect --qc`, hands both to a session that applies the fix and
+pushes, and opens the pull request from the write-up the session left. If main moves while
+the pull request waits, `rebase-corrections.yml` re-cuts the branch on the new main without
+a session (`corrections.py rebase`), so two corrections in flight never conflict with each
+other at the merge.
 
 ```
 python3 tools/corrections.py validate corrections/<id>.json     # reads, frames agree
 python3 tools/corrections.py inspect  corrections/<id>.json --qc   # against the extraction; qc/chk_corr_<id>.png and _site.png
 python3 tools/corrections.py apply    corrections/<id>.json [--dry-run]
+python3 tools/corrections.py report   corrections/<id>.json [--against origin/main]   # the numbers, as Markdown
+python3 tools/corrections.py rebase   [--onto origin/main] [--dry-run]                # the branch up to main, re-cut
 ```

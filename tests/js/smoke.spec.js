@@ -8,6 +8,9 @@ const fs = require('fs');
 
 const ROOT = path.join(__dirname, '..', '..');
 const BUNDLE = 'file://' + path.join(ROOT, 'gerbil_atlas_explorer.html');
+// The committed bundle keeps its build tokens (nothing serves it; pages.yml stamps the copy
+// it deploys), so a test that reads the stamp reads the site build, which is stamped.
+const STAMPED = 'file://' + path.join(ROOT, 'build', 'site', 'gerbil_atlas_explorer.html');
 const LEAN = 'http://127.0.0.1:8765/index.html';
 
 for (const [name, url] of [['bundle', BUNDLE], ['lean', LEAN]]) {
@@ -74,7 +77,7 @@ test("the Updated stamp is rewritten onto the reader's own clock", async ({ brow
   const read = async timezoneId => {
     const ctx = await browser.newContext({ timezoneId, locale: 'en-US' });
     const page = await ctx.newPage();
-    await page.goto(BUNDLE);
+    await page.goto(STAMPED);
     const out = await page.locator('footer time.bwhen').evaluate(el =>
       ({ text: el.textContent, at: el.getAttribute('datetime'), tip: el.title }));
     out.about = await page.locator('#about time.bwhen').textContent();

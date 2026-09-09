@@ -6,6 +6,7 @@ on:
   push:
     branches: ['**']
   pull_request:
+  workflow_dispatch:      # rebase-corrections.yml pushes with a token that starts nothing, and dispatches this
 
 jobs:
   python-checks:

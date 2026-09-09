@@ -9,6 +9,15 @@ Written after the first two corrections to go the whole way, `RAPir` on plate 28
 and `E` on plate 3 (#110), on 2026-09-08/09. The aim is two things: fewer merge conflicts,
 and a session that spends its turns on the judgment only it can make.
 
+**Built.** Parts 1 to 3 and 3b are in the repository; part 4 is not, as planned. Three
+things moved between plan and build, each noted in place below: `CHANGELOG.md` merges
+with git's `union` driver rather than being assembled from fragments; the `rebase` runs
+the branch's own copy of the tools, so a correction branch cut before this landed is
+brought up by hand once; and the reader's **Recut** result travels in the correction file
+as `preview`, which the plan had under part 2 and the schema now has. What each part
+became is in `CHANGELOG.md` under Unreleased; how to use it is in
+`tools/README.md`, `corrections/README.md` and the skill.
+
 ## What the first two corrections cost
 
 Both corrections were pushed from the published fixer, one on the evening of the 7th, one
@@ -161,7 +170,8 @@ reproducible by a job with no model in it.
   what the pipeline will build before the reader commits. Write what it showed into the
   file -- `"preview": {"area_mm2": ..., "changed": [...]}` -- so the session can check its
   result against what the reader accepted, and the report can say whether they agree. The
-  published page cannot recut and leaves the field out.
+  published page cannot recut and leaves the field out. *Built:* a mark added or removed
+  after the recut drops the preview, so it never describes a draft other than the one sent.
 
 ### 3. Make the rebase mechanical
 
@@ -193,7 +203,12 @@ times on the night of the 8th, as a script and a job.
 
 **The job.** A workflow on `push: branches: [main]` lists the open pull requests whose
 head is `correction/*` and dispatches the rebase for each, under one concurrency group so
-they run one at a time, each on the main the last one left. No model in it. When the
+they run one at a time, each on the main the last one left. No model in it.
+*As built:* `rebase-corrections.yml`, a matrix over the open branches with
+`max-parallel: 1`. It runs the branch's own `tools/corrections.py`, so a branch cut
+before this landed has no `rebase` and is brought up by hand once; every branch cut from
+main after it has it. The push is made with the workflow's token, which starts nothing,
+so `ci.yml` took a `workflow_dispatch` and the job dispatches it onto the branch. When the
 assertion holds, the pull request is current with main and CI runs on the new head; when
 it does not, the job comments on the pull request with the report and stops, and the
 apply workflow can be dispatched by hand with a prompt that says what to look at.
@@ -216,6 +231,10 @@ always-conflicts column. Do them in this order.
   `CHANGELOG.md` under `## [Unreleased]` by a script at release, or by a job on merge to
   main. The one file every pull request edits at the same line stops being edited by any
   of them. The repository's voice is unaffected: a fragment is the entry.
+  *Built differently:* `CHANGELOG.md merge=union` in `.gitattributes`. The rebase script
+  is where the merge happens, a local merge honors the driver, and a branch that is current
+  with main has nothing left to conflict on at the web merge. Fragments would have added a
+  release step for the same result; the union keeps both entries where both were added.
 - **`seed_overrides.note` stops enumerating.** The note counts the rows and carries a
   paragraph per correction; the row's fifth field already holds the reason, and the
   correction file and its pull request are the record. Make the note one static sentence

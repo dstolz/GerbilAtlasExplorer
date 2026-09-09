@@ -828,6 +828,477 @@ def apply(c, DB, VECM, dry=False, quiet=False):
     return dict(paths=paths, rows=rows, added=added, changed=changed, lines=lines)
 
 
+# --------------------------------------------------------------------- report
+
+def git_out(*args, check=True, binary=False):
+    """stdout of a git command run at the repository root; '' (or b'') on failure
+    unless `check`."""
+    import subprocess
+    r = subprocess.run(['git'] + list(args), cwd=A.ROOT, capture_output=True,
+                       text=not binary)
+    if r.returncode and check:
+        raise SystemExit('git %s: %s' % (' '.join(args), (r.stderr or b'').strip()
+                                          if binary else r.stderr.strip()))
+    return r.stdout if not r.returncode else (b'' if binary else '')
+
+
+def json_at(ref, rel):
+    """A JSON file as it stands on git ref `ref`; None where the ref or the file cannot
+    be read."""
+    txt = git_out('show', '%s:%s' % (ref, rel), check=False)
+    return json.loads(txt) if txt else None
+
+
+def db_at(ref):
+    return json_at(ref, os.path.relpath(A.JSON, A.ROOT).replace(os.sep, '/'))
+
+
+def volumes_at(ref):
+    return json_at(ref, os.path.relpath(A.VOLUMES, A.ROOT).replace(os.sep, '/'))
+
+
+MOVED_MM2 = 5e-5        # areas are kept to four decimals, so any change of the number counts
+
+
+def moved(e0, e1):
+    """Whether a region_extents entry changed: it arrived or went, the area the atlas
+    reports for it changed, or its rings did."""
+    if (e0 is None) != (e1 is None):
+        return True
+    if e0 is None:
+        return False
+    return abs(e0['a'] - e1['a']) > MOVED_MM2 or [len(g) for g in e0['g']] != [len(g) for g in e1['g']]
+
+
+def entries_diff(DB0, DB1):
+    """Every (plate, abbr) whose entry moved between two databases, as
+    {(plate, abbr): (before, after)}, either side None where the entry is absent."""
+    R0 = DB0['region_extents']['data'] if DB0 else {}
+    R1 = DB1['region_extents']['data'] if DB1 else {}
+    out = {}
+    for p in sorted(set(R0) | set(R1), key=int):
+        a, b = R0.get(p, {}), R1.get(p, {})
+        for ab in sorted(set(a) | set(b)):
+            if moved(a.get(ab), b.get(ab)):
+                out[(int(p), ab)] = (a.get(ab), b.get(ab))
+    return out
+
+
+def hemispheres(entry, fr):
+    """(left mm2, right mm2) of an entry: each polygon's share of the area, by the side
+    of ML 0 its centroid falls on."""
+    if not entry:
+        return 0.0, 0.0
+    shares = []
+    for g in entry['g']:
+        a = abs(A.poly_area(g))
+        cx = sum(x for x, _y in g) / len(g)
+        shares.append((a, fr.ml_f(cx)))
+    tot = sum(a for a, _m in shares) or 1.0
+    left = entry['a'] * sum(a for a, m in shares if m < 0) / tot
+    return round(left, 4), round(entry['a'] - left, 4)
+
+
+def series(DB, ab):
+    """(plates with an entry, area summed over them) for one abbreviation."""
+    R = DB['region_extents']['data']
+    ps = [int(p) for p in R if ab in R[p]]
+    return sorted(ps), round(sum(R[str(p)][ab]['a'] for p in ps), 3)
+
+
+def input_delta(DB0, DB1):
+    """Per-plate keys of each input block that differ between two databases, and the
+    notes that differ: {block: set(plate keys)}, {block} for notes."""
+    keys, notes = {}, set()
+    for blk in A.INPUT_BLOCKS:
+        b0 = (DB0 or {}).get(blk, {}) or {}
+        b1 = (DB1 or {}).get(blk, {}) or {}
+        d0, d1 = b0.get('data', {}) or {}, b1.get('data', {}) or {}
+        ks = {k for k in set(d0) | set(d1) if d0.get(k) != d1.get(k)}
+        if ks:
+            keys[blk] = ks
+        if {k: v for k, v in b0.items() if k != 'data'} != {k: v for k, v in b1.items() if k != 'data'}:
+            notes.add(blk)
+    return keys, notes
+
+
+def fmt(v, nd=4):
+    if isinstance(v, bool):
+        return 'yes' if v else 'no'
+    if isinstance(v, float):
+        return ('%%.%df' % nd) % v
+    if isinstance(v, int):
+        return '{:,}'.format(v)
+    return str(v)
+
+
+def report(c, DB, VECM, against='origin/main', VOL=None, DB0=None, VOL0=None):
+    """The numbers a correction's write-up needs, against the atlas on `against`:
+    the region before and after, what else moved and where, the volumes that moved,
+    and the summaries side by side. Returns (markdown, dict)."""
+    p, ab = c['plate'], c['abbr']
+    if DB0 is None:
+        DB0 = db_at(against)
+    if VOL is None:
+        with open(A.VOLUMES, encoding='utf8') as f:
+            VOL = json.load(f)
+    if VOL0 is None:
+        VOL0 = volumes_at(against)
+    S = {s['abbr']: s['name'] for s in DB['structures']}
+    fr = A.Frame(DB['plate_frame'])
+    md = ['## `%s` on plate %d, against `%s`' % (ab, p, against), '']
+    rep = {'id': c['id'], 'plate': p, 'abbr': ab, 'against': against}
+    if DB0 is None:
+        md.append('`%s` is not a ref this checkout can read; nothing to compare with.' % against)
+        return '\n'.join(md) + '\n', rep
+
+    R0, R1 = DB0['region_extents']['data'], DB['region_extents']['data']
+    e0, e1 = R0.get(str(p), {}).get(ab), R1.get(str(p), {}).get(ab)
+    l0, r0 = hemispheres(e0, fr)
+    l1, r1 = hemispheres(e1, fr)
+    ps0, s0 = series(DB0, ab)
+    ps1, s1 = series(DB, ab)
+    v0 = (VOL0 or {}).get('data', {}).get(ab, {}) if VOL0 else {}
+    v1 = (VOL or {}).get('data', {}).get(ab, {}) if VOL else {}
+    row = lambda name, a, b: '| %s | %s | %s |' % (name, a, b if a == b else '**%s**' % b)
+    md += ['| | `%s` | this branch |' % against, '| --- | --- | --- |',
+           row('`%s`, plate %d' % (ab, p),
+               '%s mm², %d polygon%s' % (fmt(e0['a']), len(e0['g']), 's'[:len(e0['g']) != 1]) if e0 else 'no area',
+               '%s mm², %d polygon%s' % (fmt(e1['a']), len(e1['g']), 's'[:len(e1['g']) != 1]) if e1 else 'no area'),
+           row('— left hemisphere', '%s mm²' % fmt(l0), '%s mm²' % fmt(l1)),
+           row('— right hemisphere', '%s mm²' % fmt(r0), '%s mm²' % fmt(r1)),
+           row('traced share, per polygon',
+               ', '.join('%.2f' % s for s in e0['s']) if e0 else '—',
+               ', '.join('%.2f' % s for s in e1['s']) if e1 else '—'),
+           row('`%s` over the series' % ab,
+               '%s mm² on %d plate%s' % (fmt(s0, 3), len(ps0), 's'[:len(ps0) != 1]),
+               '%s mm² on %d plate%s' % (fmt(s1, 3), len(ps1), 's'[:len(ps1) != 1])),
+           row('volume', '%s mm³, %d component%s' % (fmt(v0.get('volume_mm3', 0.0)), len(v0.get('components', [])), 's'[:len(v0.get('components', [])) != 1]) if v0 else '—',
+               '%s mm³, %d component%s' % (fmt(v1.get('volume_mm3', 0.0)), len(v1.get('components', [])), 's'[:len(v1.get('components', [])) != 1]) if v1 else '—'),
+           '']
+    pv = c.get('preview')
+    if pv and e1:
+        agree = abs(float(pv.get('area_mm2', -1)) - e1['a']) <= MOVED_MM2
+        md.append('The reader\'s **Recut** showed `%s` at %s mm² before sending; the re-cut here %s.'
+                  % (ab, fmt(float(pv['area_mm2'])), 'agrees' if agree else
+                     '**gives %s mm² instead**, so an input other than the marks changed under it, '
+                     'or the fix applied is not the one the reader previewed' % fmt(e1['a'])))
+        md.append('')
+        rep['preview_agrees'] = agree
+    rep['region'] = {'before': e0 and {'a': e0['a'], 'n': len(e0['g']), 'left': l0, 'right': r0},
+                     'after': e1 and {'a': e1['a'], 'n': len(e1['g']), 'left': l1, 'right': r1},
+                     'series': [s0, s1], 'plates': [ps0, ps1],
+                     'volume': [v0.get('volume_mm3'), v1.get('volume_mm3')],
+                     'components': [len(v0.get('components', [])), len(v1.get('components', []))]}
+
+    # what else moved
+    diff = entries_diff(DB0, DB)
+    rep['moved'] = sorted(diff)
+    here = [(k, v) for k, v in diff.items() if k[0] == p and k[1] != ab]
+    elsewhere = [(k, v) for k, v in diff.items() if k[0] != p]
+    md.append('### What else moved')
+    md.append('')
+    if not here and not elsewhere:
+        md.append('No other (plate, region) entry moves against `%s`.' % against)
+    if here:
+        md.append('%d other entr%s on plate %d, none by more than %s mm²:'
+                  % (len(here), 'y' if len(here) == 1 else 'ies', p,
+                     fmt(max(abs((v[1]['a'] if v[1] else 0) - (v[0]['a'] if v[0] else 0)) for _k, v in here))))
+        md.append('')
+        md.append('| entry | `%s` | this branch | Δ mm² |' % against)
+        md.append('| --- | --- | --- | --- |')
+        for (pp, a), (x, y) in sorted(here, key=lambda kv: -abs((kv[1][1]['a'] if kv[1][1] else 0) - (kv[1][0]['a'] if kv[1][0] else 0))):
+            xa, ya = (x['a'] if x else 0.0), (y['a'] if y else 0.0)
+            md.append('| `%s` | %s | %s | %+.4f |' % (a, fmt(xa) if x else 'no area', fmt(ya) if y else 'no area', ya - xa))
+        md.append('')
+    if elsewhere:
+        md.append('**%d entr%s on other plates move%s** -- a correction is plate-local, so each of these '
+                  'wants a reason (main re-cut under the branch, or an input the branch changed there):'
+                  % (len(elsewhere), 'y' if len(elsewhere) == 1 else 'ies', 's' if len(elsewhere) == 1 else ''))
+        md.append('')
+        md.append('| plate | entry | `%s` | this branch |' % against)
+        md.append('| --- | --- | --- | --- |')
+        for (pp, a), (x, y) in elsewhere:
+            md.append('| %d | `%s` | %s | %s |' % (pp, a, fmt(x['a']) if x else 'no area', fmt(y['a']) if y else 'no area'))
+        md.append('')
+
+    # volumes
+    vm = []
+    if VOL0 and VOL:
+        d0, d1 = VOL0['data'], VOL['data']
+        for a in sorted(set(d0) | set(d1)):
+            x, y = d0.get(a), d1.get(a)
+            if (x is None) != (y is None) or (x and (abs(x['volume_mm3'] - y['volume_mm3']) > MOVED_MM2
+                                                 or len(x['components']) != len(y['components']))):
+                vm.append((a, x, y))
+    rep['volumes_moved'] = [a for a, _x, _y in vm]
+    md.append('### Volumes')
+    md.append('')
+    if not VOL0 or not VOL:
+        md.append('The volumes on one side could not be read.')
+    elif not vm:
+        md.append('No volume moves.')
+    else:
+        md.append('%d volume%s move%s (the label volume interpolates between plates, so a boundary '
+                  'that moves on one redistributes voxels in the slabs either side):'
+                  % (len(vm), 's'[:len(vm) != 1], 's' if len(vm) == 1 else ''))
+        md.append('')
+        md.append('| structure | `%s` | this branch | components |' % against)
+        md.append('| --- | --- | --- | --- |')
+        for a, x, y in sorted(vm, key=lambda t: -abs((t[2]['volume_mm3'] if t[2] else 0) - (t[1]['volume_mm3'] if t[1] else 0))):
+            md.append('| `%s` | %s | %s | %s |' % (
+                a, fmt(x['volume_mm3']) if x else 'none', fmt(y['volume_mm3']) if y else 'none',
+                '%d' % len(y['components']) if x and y and len(x['components']) == len(y['components'])
+                else '%s → %s' % (len(x['components']) if x else 0, len(y['components']) if y else 0)))
+        md.append('')
+
+    # the atlas as a whole
+    md.append('### The atlas as a whole')
+    md.append('')
+    md.append('| | `%s` | this branch |' % against)
+    md.append('| --- | --- | --- |')
+    sums = {}
+    sm0, sm1 = DB0['region_extents']['summary'], DB['region_extents']['summary']
+    for k in ('boundary_edges_shared_exactly', 'structure_plate_entries', 'polygons', 'points',
+              'faces_named_by_one_abbreviation', 'seeds_moved_by_hand',
+              'entries_without_a_drawn_outline', 'section_covered_mean',
+              'label_inside_its_own_region', 'section_area_residual_worst_plate'):
+        if k in sm0 or k in sm1:
+            sums[k] = (sm0.get(k), sm1.get(k))
+            md.append(row('`%s`' % k, fmt(sm0.get(k)), fmt(sm1.get(k))))
+    c0, c1 = DB0.get('region_colors', {}).get('summary', {}), DB.get('region_colors', {}).get('summary', {})
+    for k in ('regions', 'patches', 'colors'):
+        if k in c0 or k in c1:
+            sums['colors.' + k] = (c0.get(k), c1.get(k))
+            md.append(row('coloring: %s' % k, fmt(c0.get(k)), fmt(c1.get(k))))
+    if VOL0 and VOL:
+        for k in ('structures',):
+            sums['volumes.' + k] = (VOL0['summary'].get(k), VOL['summary'].get(k))
+            md.append(row('meshes: %s' % k, fmt(VOL0['summary'].get(k)), fmt(VOL['summary'].get(k))))
+        for k in ('unnamed_fraction', 'regions_partition_the_volume'):
+            sums['volumes.' + k] = (VOL0['checks'].get(k), VOL['checks'].get(k))
+            md.append(row('label volume: `%s`' % k, fmt(VOL0['checks'].get(k)), fmt(VOL['checks'].get(k))))
+    rep['summary'] = sums
+    md.append('')
+    bese = sm1.get('boundary_edges_shared_exactly')
+    if bese != 1.0:
+        md.append('**`boundary_edges_shared_exactly` is %s, not 1.0: the regions do not tile.**' % bese)
+        md.append('')
+    # inputs
+    keys, notes = input_delta(DB0, DB)
+    rep['inputs'] = {k: sorted(v, key=int) for k, v in keys.items()}
+    svgs = git_out('diff', '--name-only', against, '--', 'svg/', check=False).split()
+    rep['svg'] = svgs
+    md.append('### Inputs this branch changes')
+    md.append('')
+    for blk, ks in sorted(keys.items()):
+        md.append('- `%s` on plate%s %s' % (blk, 's'[:len(ks) != 1], ', '.join(sorted(ks, key=int))))
+    for s in svgs:
+        md.append('- `%s`' % s)
+    for blk in sorted(notes):
+        md.append('- the `%s` note' % blk)
+    if not keys and not svgs and not notes:
+        md.append('None: no input block or tracing differs from `%s`.' % against)
+    md.append('')
+    return '\n'.join(md), rep
+
+
+# --------------------------------------------------------------------- rebase
+
+def corrections_since(base):
+    """The correction files this branch added since `base`, loaded."""
+    names = git_out('diff', '--name-only', '--diff-filter=A', base, 'HEAD', '--',
+                    'corrections/*.json', check=False).split()
+    return [load(os.path.join(A.ROOT, n)) for n in names]
+
+
+def derived_paths():
+    """Every committed path the pipeline writes, as git pathspecs."""
+    return list(A.DERIVED_PATHS)
+
+
+def rebase(against='origin/main', dry=False, no_build=False, quiet=False):
+    """Bring a correction branch up to `against` without merging a derived file.
+
+    The rule is the one every hand merge so far followed: the inputs are merged, the
+    derived files are `against`'s, and the pipeline is run again on the result. Then it
+    checks the re-cut did what the branch did -- the same (plate, region) entries move
+    against the new base as moved against the old one, less any the base moved itself,
+    and the corrected region's rings come out identical -- and commits the merge with
+    the report as its body. Exit 0 with the branch current; 1 where it stopped, with the
+    tree left as it stands so a person or a session can take it from there.
+    """
+    say = (lambda *a: None) if quiet else print
+    if git_out('status', '--porcelain', '--untracked-files=no', check=False).strip():
+        raise SystemExit('the working tree is not clean; commit or stash first')
+    head = git_out('rev-parse', 'HEAD').strip()
+    tip = git_out('rev-parse', against).strip()
+    base = git_out('merge-base', 'HEAD', against).strip()
+    if base == tip:
+        say('already current with %s (%s)' % (against, tip[:7]))
+        return 0
+    DBh, DBb, DBm = db_at('HEAD'), db_at(base), db_at(against)
+    ours, our_notes = input_delta(DBb, DBh)
+    theirs, _their_notes = input_delta(DBb, DBm)
+    our_svg = set(git_out('diff', '--name-only', base, 'HEAD', '--', 'svg/', check=False).split())
+    their_svg = set(git_out('diff', '--name-only', base, against, '--', 'svg/', check=False).split())
+    corrs = corrections_since(base)
+    say('branch %s, base %s, %s %s' % (head[:7], base[:7], against, tip[:7]))
+    say('  corrections on the branch: %s' % (', '.join(c['id'] for c in corrs) or 'none'))
+    say('  inputs the branch changed: %s' % (', '.join('%s[%s]' % (k, ','.join(sorted(v, key=int)))
+                                                     for k, v in sorted(ours.items())) or 'none'))
+    if our_svg:
+        say('  tracings the branch changed: %s' % ', '.join(sorted(our_svg)))
+    clash = [(k, sorted(ours[k] & theirs.get(k, set()), key=int)) for k in ours if ours[k] & theirs.get(k, set())]
+    clash = [(k, v) for k, v in clash if v]
+    if clash or (our_svg & their_svg):
+        say('STOP: both sides changed the same input -- %s%s. That is the one merge a person makes.'
+            % ('; '.join('%s on plate%s %s' % (k, 's'[:len(v) != 1], ', '.join(v)) for k, v in clash),
+               ('; tracings ' + ', '.join(sorted(our_svg & their_svg))) if our_svg & their_svg else ''))
+        return 1
+    if our_notes:
+        say('  note: the branch edited the %s note%s; %s\'s is kept (notes are static now; the '
+            'reason goes in the row and the changelog)' % (', '.join(sorted(our_notes)), 's'[:len(our_notes) != 1], against))
+    old_moved = entries_diff(DBb, DBh)
+    main_moved = entries_diff(DBb, DBm)
+    say('  entries the branch moved against its base: %d; entries %s moved since: %d'
+        % (len(old_moved), against, len(main_moved)))
+    if dry:
+        say('--dry-run: nothing merged')
+        return 0
+
+    # the merge, and the derived files resolved to `against`
+    git_out('merge', '--no-commit', '--no-ff', against, check=False)
+    conflicted = set(git_out('diff', '--name-only', '--diff-filter=U', check=False).split())
+    rel_db = os.path.relpath(A.JSON, A.ROOT).replace(os.sep, '/')
+    git_out('checkout', tip, '--', *derived_paths(), check=False)
+    # the database: theirs, with our input rows laid on it
+    for blk, ks in ours.items():
+        DBm.setdefault(blk, {'note': '', 'data': {}})
+        for k in ks:
+            if k in DBh[blk]['data']:
+                DBm[blk]['data'][k] = DBh[blk]['data'][k]
+            else:
+                DBm[blk]['data'].pop(k, None)
+        if blk == 'seed_overrides':
+            DBm[blk]['data'] = {k: {a: DBm[blk]['data'][k][a] for a in sorted(DBm[blk]['data'][k])}
+                                for k in sorted(DBm[blk]['data'], key=int)}
+    A.save_db(DBm)
+    git_out('add', '--', rel_db)
+    conflicted.discard(rel_db)
+    for path in list(conflicted):
+        if any(_glob_match(path, g) for g in derived_paths()):
+            conflicted.discard(path)                 # checked out above
+        elif path == 'CHANGELOG.md':
+            _union_merge(path)
+            conflicted.discard(path)
+    if conflicted:
+        say('STOP: conflicts outside the derived files, which this does not resolve: %s'
+            % ', '.join(sorted(conflicted)))
+        say('  resolve them, `git add`, then: python3 tools/pipeline.py rebuild && '
+            'python3 tools/pipeline.py check, and commit the merge')
+        return 1
+    git_out('add', '-u')
+
+    # the re-cut
+    if not (ours or our_svg):
+        say('the branch changes no input: nothing to re-cut')
+    elif no_build:
+        say('--no-build: the merge is staged and the pipeline has not run; run it before committing')
+        return 1
+    else:
+        import subprocess
+        for cmd in (['rebuild'], ['check', '--quiet']):
+            r = subprocess.run([sys.executable, os.path.join(A.ROOT, 'tools', 'pipeline.py')] + cmd,
+                               cwd=A.ROOT)
+            if r.returncode:
+                say('STOP: pipeline.py %s failed; the merge is staged and unbuilt' % cmd[0])
+                return 1
+        git_out('add', '-u')
+
+    # the pictures of what the correction did are drawn against the new base
+    if corrs and (ours or our_svg) and not no_build:
+        DBq = A.load_db()
+        VECMq = A.vec_matrices()
+        for c in corrs:
+            inspect(c, DBq, VECMq, want_qc=True, quiet=True, before=against)
+            git_out('add', '--', 'qc/chk_corr_%s.png' % c['id'], 'qc/chk_corr_%s_site.png' % c['id'])
+
+    # did the re-cut do what the branch did?
+    DBn = A.load_db()
+    DBm = db_at(against)
+    new_moved = entries_diff(DBm, DBn)
+    want = set(old_moved) - set(main_moved)
+    extra = set(new_moved) - set(old_moved) - set(main_moved)
+    missing = want - set(new_moved)
+    same_rings = []
+    for c in corrs:
+        p, ab = str(c['plate']), c['abbr']
+        g_old = (DBh['region_extents']['data'].get(p, {}).get(ab) or {}).get('g')
+        g_new = (DBn['region_extents']['data'].get(p, {}).get(ab) or {}).get('g')
+        same_rings.append((c['id'], g_old == g_new, (int(p), ab) in main_moved))
+    ok = not extra and not missing and all(s or m for _i, s, m in same_rings)
+    lines = ['Merge %s into %s: %s' % (against, git_out('rev-parse', '--abbrev-ref', 'HEAD').strip(),
+                                       'the re-cut does what the branch did' if ok else 'the re-cut differs from the branch'),
+             '',
+             'The inputs are merged, the derived files are %s\'s, and the pipeline was run again '
+             'on the result (tools/corrections.py rebase). %s' % (against, 'Nothing derived is resolved by hand.'),
+             '',
+             'Entries moved against the old base: %d; against %s now: %d; %s moved %d itself.'
+             % (len(old_moved), against, len(new_moved), against, len(main_moved))]
+    if extra:
+        lines.append('Entries that move now and did not before: %s' % ', '.join('%d/%s' % k for k in sorted(extra)))
+    if missing:
+        lines.append('Entries the branch moved that no longer move: %s' % ', '.join('%d/%s' % k for k in sorted(missing)))
+    for cid, same, m in same_rings:
+        lines.append('%s: the region\'s rings are %s' % (cid, 'identical to the branch\'s' if same
+                                                       else 'different (%s moved that plate)' % against if m
+                                                       else 'DIFFERENT from the branch\'s'))
+    lines.append('')
+    for c in corrs:
+        md, _rep = report(c, DBn, A.vec_matrices(), against=against, DB0=DBm, VOL0=volumes_at(against))
+        lines.append(md)
+    body = '\n'.join(lines)
+    say(body)
+    if not ok:
+        say('STOP: the re-cut on the new base is not the branch\'s fix; the merge is staged, uncommitted')
+        return 1
+    msg = os.path.join(A.ROOT, 'build', 'rebase-message.txt')
+    os.makedirs(os.path.dirname(msg), exist_ok=True)
+    with open(msg, 'w', encoding='utf8') as f:
+        f.write(body)
+    git_out('commit', '-q', '-F', msg)
+    say('committed %s' % git_out('rev-parse', '--short', 'HEAD').strip())
+    return 0
+
+
+def _glob_match(path, pattern):
+    import fnmatch
+    return fnmatch.fnmatch(path, pattern) or path == pattern
+
+
+def _union_merge(path):
+    """Resolve a conflicted text file by keeping both sides' lines (git's `union`
+    driver), for a file every change appends to at the same place."""
+    import subprocess
+    import tempfile
+    stages = []
+    for n in (1, 2, 3):
+        txt = git_out('show', ':%d:%s' % (n, path), check=False)
+        fd, tmp = tempfile.mkstemp(prefix='stage%d_' % n)
+        with os.fdopen(fd, 'w', encoding='utf8', newline='') as f:
+            f.write(txt)
+        stages.append(tmp)
+    base, ours, theirs = stages
+    r = subprocess.run(['git', 'merge-file', '-p', '--union', ours, base, theirs], cwd=A.ROOT,
+                       capture_output=True, text=True)
+    with open(os.path.join(A.ROOT, path), 'w', encoding='utf8', newline='') as f:
+        f.write(r.stdout)
+    for t in stages:
+        os.remove(t)
+    git_out('add', '--', path)
+
+
 # --------------------------------------------------------------------- main
 
 def main():
@@ -844,8 +1315,21 @@ def main():
     a = sub.add_parser('apply', help='write its boundaries into svg/ and its seeds into seed_overrides')
     a.add_argument('file', help='corrections/<id>.json, or the id')
     a.add_argument('--dry-run', action='store_true', help='report what would change, write nothing')
+    r = sub.add_parser('report', help='the numbers a write-up needs, as Markdown, against a git ref')
+    r.add_argument('file', help='corrections/<id>.json, or the id')
+    r.add_argument('--against', default='origin/main', metavar='REF',
+                   help='the atlas to compare with (origin/main)')
+    r.add_argument('--out', metavar='PATH', help='also write the Markdown here')
+    b = sub.add_parser('rebase', help='bring this correction branch up to a ref: inputs merged, '
+                                      'derived files theirs, pipeline run again, merge committed')
+    b.add_argument('--onto', default='origin/main', metavar='REF', help='what to merge in (origin/main)')
+    b.add_argument('--dry-run', action='store_true', help='say what would be merged and stop')
+    b.add_argument('--no-build', action='store_true',
+                   help='merge and resolve, but leave the pipeline to be run by hand')
     args = ap.parse_args()
 
+    if args.cmd == 'rebase':
+        sys.exit(rebase(against=args.onto, dry=args.dry_run, no_build=args.no_build))
     DB = A.load_db()
     VECM = A.vec_matrices()
     if args.cmd == 'validate':
@@ -859,6 +1343,13 @@ def main():
     c = load(resolve(args.file))
     if args.cmd == 'inspect':
         inspect(c, DB, VECM, want_qc=args.qc, before=args.before)
+    elif args.cmd == 'report':
+        md, _rep = report(c, DB, VECM, against=args.against)
+        print(md)
+        if args.out:
+            os.makedirs(os.path.dirname(os.path.abspath(args.out)), exist_ok=True)
+            with open(args.out, 'w', encoding='utf8') as f:
+                f.write(md)
     else:
         apply(c, DB, VECM, dry=args.dry_run)
 
