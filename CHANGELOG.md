@@ -16,10 +16,9 @@ carries a `version` block naming the release its derived fields were built for.
   the plate, the structure and the view this page keeps in the URL are a hash, and a hash
   never leaves the browser, so the dashboard reads one path rather than one per plate.
 
-  It ships off. `CODE` in that block is the site code of a GoatCounter site, and while it is
-  empty nothing is fetched and nothing is sent: a page carrying the block with no site to
-  count for behaves exactly as it did before the block. Filling it in and rebuilding is the
-  whole of turning it on.
+  The counts go to `gerbilatlasexplorer.goatcounter.com`. `CODE` in that block is the site
+  code that names it, and emptying it is how counting is turned off: nothing is then fetched
+  and nothing is sent, and the page is the page it was before the block.
 
   Whether to count is settled in the browser rather than at build time, because one of the
   two built pages is both at once. `gerbil_atlas_explorer.html` is what Pages serves *and*
@@ -29,12 +28,14 @@ carries a `version` block naming the release its derived fields were built for.
   counted, which is false on `file://`, on the local server the browser specs run against,
   and on a fork's own Pages site, where the counts would not be this one's anyway.
 
-  `tests/js/count.spec.js` pins that. A spec that only opened the built pages would pass
-  because the code is empty rather than because the guard holds, so it lifts the block
-  verbatim out of the built page, fills a code into it, and serves it twice -- once from the
-  site's host and once from another -- with GoatCounter itself intercepted, so no run of the
-  suite reaches the network. The two pages as they ship are checked beside them: neither
-  fetches anything and neither puts the counter on the page.
+  `tests/js/count.spec.js` pins that. It lifts the block verbatim out of the built page,
+  swaps a code of its own into it and serves it from two hosts -- the site's and another --
+  so what is asserted is the host test rather than whatever code happens to be committed,
+  with GoatCounter itself intercepted, so no run of the suite reaches the network. Beside
+  that it checks the two built pages as a reader gets them anywhere but the site: opened
+  from disk and off a local server, neither fetches anything and neither puts the counter on
+  the page. The code the pages do ship with is checked once, on its own, so a rebuild cannot
+  quietly lose it.
 
 - **A note on the first visit, saying whose atlas this is and that some of it is drawn
   wrong.** The page opened straight onto a plate with outlines over it, and an outline here

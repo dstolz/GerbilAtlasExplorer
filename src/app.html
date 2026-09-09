@@ -16,10 +16,9 @@
      headers the browser sends anyway, and the numbers live on the dashboard rather than in
      a counter here.
 
-     CODE is the site code of a GoatCounter site (https://CODE.goatcounter.com) and is the
-     only line to edit. While it is empty nothing is fetched and nothing is sent, which is
-     how this ships: a page carrying the block with no site to count for behaves exactly as
-     it did before the block.
+     CODE is the site code the counts go to (https://CODE.goatcounter.com), and emptying it
+     is how counting is turned off everywhere: nothing is fetched, nothing is sent, and the
+     page is the page it was before this block.
 
      Whether to count is settled in the browser rather than at build time, because one of
      the two built pages is both at once. gerbil_atlas_explorer.html is what Pages serves
@@ -27,9 +26,10 @@
      computer that may have no network at all -- and a file somebody downloaded has no
      business phoning anywhere. So only a page actually being served from HOST is counted,
      which is false on file://, on a local server -- the browser specs' included -- and on
-     a fork's own Pages site, where the counts would not be this one's anyway. What the page keeps in the hash
-     never leaves the browser, so the dashboard sees one path and not one per plate. -->
-<script>(function(){var CODE='',HOST='dstolz.github.io';
+     a fork's own Pages site, where the counts would not be this one's anyway. What the page
+     keeps in the hash never leaves the browser, so the dashboard sees one path and not one
+     per plate. -->
+<script>(function(){var CODE='gerbilatlasexplorer',HOST='dstolz.github.io';
 if(!CODE||location.hostname!==HOST)return;
 var s=document.createElement('script');s.async=true;s.src='https://gc.zgo.at/count.js';
 s.setAttribute('data-goatcounter','https://'+CODE+'.goatcounter.com/count');

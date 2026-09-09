@@ -1,14 +1,14 @@
 // Where the visitor count phones home from, and where it does not.
 //
 // The block in `src/app.html`'s head loads GoatCounter, and two things gate it: a site
-// code, which is empty as it ships, and the host the page is being served from. The empty
-// code is why the built pages count nothing -- and why a spec that only opened them would
-// pass for the wrong reason. So the block is lifted verbatim out of the built page and
-// served here with a code filled in, once from a host that is not the site and once from
-// the site itself. What that pins is the guard beside the code, and the guard is the whole
-// reason this is settled in the browser: `gerbil_atlas_explorer.html` is the offline bundle
-// as much as it is the page Pages serves, and a copy on somebody's disk, on a rig computer
-// or on a fork's own site has no business counting.
+// code, and the host the page is being served from. The host is the one that matters, and
+// it is the whole reason this is settled in the browser rather than at build time:
+// `gerbil_atlas_explorer.html` is the offline bundle as much as it is the page Pages
+// serves, and a copy on somebody's disk, on a rig computer or on a fork's own site has no
+// business counting. So the block is lifted verbatim out of the built page and served from
+// two hosts -- the site's and another -- with a code of this spec's own swapped in, so what
+// is asserted is the host test and not whatever code happens to be committed. The code the
+// pages do ship with is checked once, on its own, so a rebuild cannot quietly lose it.
 //
 // Nothing here reaches the network. gc.zgo.at is intercepted and answered with an empty
 // script, and the two hosts serve the block itself rather than anything fetched.
@@ -36,11 +36,11 @@ async function stub(page) {
   return hits;
 }
 
-/* the block, with a site code filled in, served as a page of its own from `url` */
+/* the block, with this spec's own site code in it, served as a page of its own from `url` */
 const serve = (page, url, code) => page.route(url, r => r.fulfill({
   contentType: 'text/html',
   body: '<!doctype html><meta charset="utf-8"><title>count</title>'
-        + BLOCK.replace("var CODE=''", "var CODE='" + code + "'"),
+        + BLOCK.replace(/var CODE='[^']*'/, "var CODE='" + code + "'"),
 }));
 
 /* whether the block put the counter on the page: it decides while the head is parsed, so by
@@ -48,6 +48,10 @@ const serve = (page, url, code) => page.route(url, r => r.fulfill({
 const tag = page => page.evaluate(() => {
   const s = document.querySelector('script[data-goatcounter]');
   return s && s.dataset.goatcounter;
+});
+
+test('the built pages carry the site\'s own GoatCounter code', () => {
+  expect(BLOCK).toContain("var CODE='gerbilatlasexplorer'");
 });
 
 test('a code, on the site: the count is fetched, from the site\'s own endpoint', async ({ page }) => {
@@ -69,7 +73,7 @@ test('a code, anywhere else: nothing is fetched', async ({ page }) => {
 });
 
 for (const [name, url] of [['bundle', BUNDLE], ['lean', LEAN]]) {
-  test(`the ${name} as it ships counts nothing`, async ({ page }) => {
+  test(`the ${name}, opened from anywhere but the site, counts nothing`, async ({ page }) => {
     const hits = await stub(page);
     await page.goto(url);
     expect(await tag(page)).toBe(null);
