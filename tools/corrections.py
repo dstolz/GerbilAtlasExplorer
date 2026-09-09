@@ -648,19 +648,38 @@ def write_site(c, P, DB, out, before, ref):
         px, py = xf(P.m, pt[0], pt[1])
         return (px * S, py * S)
 
-    pts = []
+    # The window is drawn round the reader's marks, and round the polygons and boxes of
+    # the region that lie near them: a name the atlas prints on both hemispheres has a box
+    # and an area on the far side too, and a window that took those in would be the whole
+    # plate. A correction with no marks (extents only, say) takes everything of the name.
+    marks = [at(seed_point(s, P)) for s in c['seeds']]
+    for b in c['boundaries']:
+        marks += [at(q) for q in entry_points(b, P)]
+    for e in c['extents']:
+        marks += [at(q) for q in ring_of(e, P)]
+    groups = []
     for o in ((before[0] if before else None), out):
         if o and ab in o:
-            for g in o[ab]['g']:
-                pts += [(x * NW * S, y * NH * S) for x, y in g]
+            groups += [[(x * NW * S, y * NH * S) for x, y in g] for g in o[ab]['g']]
     for cx, cy, bw, bh in DB['label_positions']['data'].get(str(p), {}).get(ab, []):
-        pts += [((cx - bw / 2) * NW * S, (cy - bh / 2) * NH * S),
-                ((cx + bw / 2) * NW * S, (cy + bh / 2) * NH * S)]
-    pts += [at(seed_point(s, P)) for s in c['seeds']]
-    for b in c['boundaries']:
-        pts += [at(q) for q in entry_points(b, P)]
-    for e in c['extents']:
-        pts += [at(q) for q in ring_of(e, P)]
+        groups.append([((cx - bw / 2) * NW * S, (cy - bh / 2) * NH * S),
+                       ((cx + bw / 2) * NW * S, (cy + bh / 2) * NH * S)])
+
+    def bbox(q):
+        xs, ys = zip(*q)
+        return min(xs), min(ys), max(xs), max(ys)
+
+    pts = list(marks)
+    if marks:
+        x0, y0, x1, y1 = bbox(marks)
+        reach = max(0.25 * max(x1 - x0, y1 - y0), SITE_MIN_PX * S / 2)
+        for g in groups:
+            gx0, gy0, gx1, gy1 = bbox(g)
+            if gx1 >= x0 - reach and gx0 <= x1 + reach and gy1 >= y0 - reach and gy0 <= y1 + reach:
+                pts += g
+    else:
+        for g in groups:
+            pts += g
     if not pts:
         return None
     xs, ys = zip(*pts)

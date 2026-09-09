@@ -212,6 +212,18 @@ carries a `version` block naming the release its derived fields were built for.
   are what carry the other two and a plain mesh link carries none.
 
 ### Fixed
+- **The site picture is drawn round the reader's marks, not round every box of the name.**
+  `qc/chk_corr_<id>_site.png` took its window from everything of the region's name on the
+  plate -- its polygons either side and the boxes it is printed in -- and a name the atlas
+  prints on both hemispheres, as `RAPir` is on plate 28, has a box and an area on the far
+  side too, so the window was the whole plate and the region a green wedge in the corner of
+  it. The window is now the reader's marks (seeds, boundaries, extents) and only those
+  polygons and boxes that lie within a quarter of the marks' spread, or `SITE_MIN_PX` / 2,
+  of them; a correction with no marks takes everything of the name as before. On plate 28
+  the two panels now show the column and its neighbours at a third of the plate's width.
+  Checked: `tests/python/test_corrections.py` 8 passed, and the picture on the branches of
+  #109 and #110 is the one their pull requests open with.
+
 - **A correction's run ends green when its pull request does.** The last step of
   `.github/workflows/apply-correction.yml` waited on CI with `gh pr checks --watch
   --fail-level error`, and `--fail-level` is a flag of nothing: `gh` printed its usage and
