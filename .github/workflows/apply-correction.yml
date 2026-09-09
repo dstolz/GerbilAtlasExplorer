@@ -1,23 +1,22 @@
 # A correction to how a region is drawn, pushed as corrections/<id>.json on a branch
-# correction/<id> -- from the browser (tools/atlasfix.py) or from MATLAB
-# (matlab/AtlasRegionFix.m) -- is applied here: a Claude Code session
-# follows .claude/skills/atlas-region-fix/SKILL.md -- diagnoses the input at fault, fixes
-# it, rebuilds the extents and everything cut from them, runs every check, writes the
-# CHANGELOG and METHODS entries, pushes to the same branch and opens a pull request -- and
-# the last two steps ask the branch whether a fix arrived on it and wait on CI. The run
-# stops at the pull request: a correction is a change to what the atlas says a structure
-# is, and it is read by a person before it lands. GitHub Pages serves main, so the site
-# updates when that merge is made.
+# correction/<id> -- from the browser (fixer.html, tools/atlasfix.py) or from MATLAB
+# (matlab/AtlasRegionFix.m) -- is applied here: a Claude Code session follows
+# .claude/skills/atlas-region-fix/SKILL.md -- diagnoses the input at fault, fixes it,
+# rebuilds the extents and everything cut from them, runs every check, writes it up and
+# pushes to the same branch -- and the workflow opens the pull request from the write-up
+# the session left and waits on CI. The run stops at the pull request: a correction is a
+# change to what the atlas says a structure is, and it is read by a person before it
+# lands. GitHub Pages is deployed from main by hand, so the site updates when that is done.
 #
-# The push does not run the session. The action reads the event that started it, and `push`
-# is not one it knows: it parses issues, pull requests and their comments and reviews,
-# workflow_dispatch, repository_dispatch, schedule and workflow_run, and throws
-# `Unsupported event type: push` before it looks at the prompt at all. So the push does the
-# one thing it can -- it dispatches this same workflow on the same branch -- and the run
-# that comes back does the work. workflow_dispatch is one of the two events GITHUB_TOKEN is
-# allowed to raise, which is what lets the hop be made with no secret of its own, and a
-# dispatch runs the workflow file on the ref it names, so a correction is still applied by
-# its own checkout of the pipeline.
+# The push does not run the session. The action reads the event that started it, and
+# `push` is not one it knows, so the push dispatches this same workflow on the same branch
+# and the run that comes back does the work. workflow_dispatch is one of the two events
+# GITHUB_TOKEN may raise, which is what lets the hop be made with no secret of its own.
+#
+# The shell of this file is tools/ci/correction.sh, which tests/python/test_ci_scripts.py
+# runs against a repository it makes; what is left inline is the wiring. `dry_run` runs
+# every step but the session, so the wiring can be checked in two minutes rather than
+# after forty.
 #
 # Setup, once: `claude /install-github-app` from a local terminal, taking the subscription
 # option. That installs the Claude GitHub App on the repository and writes the one secret
@@ -31,22 +30,15 @@
 # GITHUB_TOKEN would not -- so the correction's own pull request would never get a check to
 # wait for.
 #
-# The action is not left to install Claude Code either. It does that with `curl -fsSL
-# https://claude.ai/install.sh | bash -s -- <version>`, the version a constant bumped with
-# each release of the action, and then hands the SDK `~/.local/bin/claude` on the strength of
-# the installer's exit code alone. The installer that 2.1.265 brought -- v1.0.218 of the
-# action, which `v1` moved to on the evening of 2026-09-08 -- printed "claude command at
-# ~/.local/bin/claude missing or broken (~/.local/bin does not exist)", then the success
-# banner, and exited 0, where 2.1.263 that morning had placed the launcher. Both runs after
-# the tag moved died at the SDK with "Claude Code native binary not found" before a prompt
-# was read. So the install is a step of this workflow, at a version that has carried a run,
-# checked for the binary it was meant to leave, and given to the action by path, which is
-# what `path_to_claude_code_executable` skips the action's own install for.
+# Claude Code is installed by a step of this workflow rather than by the action, at a
+# version that has carried a run, and checked for the binary it was meant to leave; the
+# action's own installer once exited 0 having placed nothing (#107).
 #
-# The session's own commits touch data/, svg/, tools/ and the docs, never corrections/, so
-# the paths filter is what keeps them from starting this again. The actor guard is the belt
-# to that brace and not the thing relied on: the actor string on an App-token push is read
-# off the App's slug rather than documented anywhere.
+# What keeps a run from starting itself again: the session's commits touch data/, svg/,
+# tools/ and the docs, never corrections/, so the paths filter does not see them; a merge
+# commit is refused by `correction.sh pushed`, which wants one parent and a correction
+# file added on it; and a dispatched run that finds the branch already carrying a fix
+# stops before it installs anything, unless `force` says otherwise.
 name: Apply correction
 
 on:
@@ -59,19 +51,35 @@ on:
         description: 'corrections/<id>.json to apply, on the branch this is run from; blank takes every correction the branch adds to main'
         required: false
         type: string
+      force:
+        description: 'run the session even if the branch already carries a fix'
+        required: false
+        type: boolean
+        default: false
+      dry_run:
+        description: 'every step but the session: check the wiring'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
-  # The hop. Nothing is checked out here: which corrections the branch carries is read on
-  # the other side, where a checkout is being made anyway, so this is a token and one API
-  # call.
+  # The hop. The checkout is two commits deep, which is what `pushed` needs to tell a
+  # correction from a merge.
   dispatch:
     if: github.event_name == 'push' && github.actor != 'claude[bot]'
     runs-on: ubuntu-latest
     permissions:
-      contents: read                    # to resolve the ref the dispatch names
+      contents: read
       actions: write
     steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Was a correction pushed, and not a merge
+        id: pushed
+        run: bash tools/ci/correction.sh pushed
       - name: Hand the branch to a run the action can read
+        if: steps.pushed.outputs.go == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh workflow run apply-correction.yml --repo "$GITHUB_REPOSITORY" --ref "$GITHUB_REF_NAME"
@@ -93,47 +101,88 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.ref_name }}
-          fetch-depth: 0                # build_app.py stamps the page from git, and the diff below needs main
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-          cache: pip
-          cache-dependency-path: tools/requirements.txt
-      - run: pip install -r tools/requirements.txt
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: npm
-      - run: npm ci
-      - run: npx playwright install --with-deps chromium
+          fetch-depth: 0                # the rebase and the diffs below need main
 
       - name: Which corrections this branch carries
         id: files
         env:
           CORRECTION: ${{ inputs.correction }}
         run: |
-          list="$CORRECTION"
-          if [ -z "$list" ]; then
-            git fetch origin main
-            list=$(git diff --name-only origin/main...HEAD -- 'corrections/*.json' | tr '\n' ' ')
+          git fetch origin main
+          if [ -n "$CORRECTION" ]; then
+            echo "list=$CORRECTION" >> "$GITHUB_OUTPUT"
+            echo "corrections: $CORRECTION"
+          else
+            bash tools/ci/correction.sh list
           fi
-          echo "list=$list" >> "$GITHUB_OUTPUT"
-          echo "corrections: $list"
-          [ -n "$list" ] || { echo "no correction file on this branch"; exit 1; }
+
+      # A dispatch raised by a merge that slipped past `pushed`, or by hand on a branch
+      # whose session already ran, stops here: the fix is on the branch, and the pull
+      # request is where it is read.
+      - name: Is the fix already on the branch
+        id: state
+        run: bash tools/ci/correction.sh fix
+      - name: Already applied
+        if: steps.state.outputs.fixed == 'true' && !inputs.force
+        run: |
+          {
+            echo "### Already applied"
+            echo
+            echo "\`$GITHUB_REF_NAME\` already carries a fix beside ${{ steps.files.outputs.list }}; the session is not run again."
+            echo "Dispatch with \`force\` to run it anyway."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/setup-python@v5
+        if: steps.state.outputs.fixed != 'true' || inputs.force
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: tools/requirements.txt
+      - if: steps.state.outputs.fixed != 'true' || inputs.force
+        run: pip install -r tools/requirements.txt
+
       - name: Read them
+        if: steps.state.outputs.fixed != 'true' || inputs.force
         run: python3 tools/corrections.py validate ${{ steps.files.outputs.list }}
 
-      # The version is the one the action itself pinned when a run last went the distance
-      # (v1.0.217, 2.1.263) and is moved by hand, once the action's own pin has moved and a
-      # run on it has reached the session. The directory is made first because the 2.1.265
-      # installer no longer makes it; the fallback is for an installer that downloaded the
-      # binary to its versioned path and failed only to place the launcher over it, which
-      # is what the 2.1.265 notes describe; and a step that finds neither fails here, naming
-      # what it looked for, rather than at the SDK with a stack trace.
+      # The branch is brought up to main before anything is cut, so the derived files are
+      # rebuilt on the inputs they will be committed with. Before a fix exists the branch
+      # carries nothing but the correction, and the merge is trivial.
+      - name: Bring the branch up to main
+        if: steps.state.outputs.fixed != 'true' || inputs.force
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          python3 tools/corrections.py rebase --onto origin/main
+
+      # The reading the session would otherwise spend its first turns making: each
+      # correction against the extraction, and the two pictures.
+      - name: Inspect them
+        id: inspect
+        if: steps.state.outputs.fixed != 'true' || inputs.force
+        run: |
+          mkdir -p build
+          for f in ${{ steps.files.outputs.list }}; do
+            echo "### $f"
+            echo '```'
+            python3 tools/corrections.py inspect "$f" --qc
+            echo '```'
+          done > build/inspect.md
+          cat build/inspect.md
+          {
+            echo 'text<<INSPECT_EOF'
+            cat build/inspect.md
+            echo 'INSPECT_EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      # The version is one that has carried a run and is moved by hand. The directory is
+      # made first because one installer no longer makes it; the fallback is for an
+      # installer that downloaded the binary to its versioned path and failed only to
+      # place the launcher; and a step that finds neither fails here, naming what it
+      # looked for, rather than at the SDK with a stack trace.
       - name: Install Claude Code
         id: cli
+        if: (steps.state.outputs.fixed != 'true' || inputs.force) && !inputs.dry_run
         env:
           VERSION: '2.1.263'
         run: |
@@ -152,6 +201,7 @@ jobs:
 
       - name: Apply them
         id: claude
+        if: (steps.state.outputs.fixed != 'true' || inputs.force) && !inputs.dry_run
         uses: anthropics/claude-code-action@v1
         env:
           GH_TOKEN: ${{ github.token }}
@@ -163,9 +213,6 @@ jobs:
           # actor unless the bot is named here. Only a workflow of this repository is
           # handed a GITHUB_TOKEN, so naming it opens nothing to an account outside it.
           allowed_bots: github-actions
-          # `actions: read` above is the workflow's own grant; the token the action mints
-          # for itself is scoped by this, and without it the session cannot read the CI it
-          # is trying to get green.
           additional_permissions: |
             actions: read
           prompt: |
@@ -173,74 +220,55 @@ jobs:
             how a region of the atlas is drawn: ${{ steps.files.outputs.list }}
 
             Read .claude/skills/atlas-region-fix/SKILL.md and follow it end to end for each
-            file: diagnose the cause, fix the pipeline input at fault, rebuild, run every
-            check, write the CHANGELOG and METHODS entries, commit, push to this same branch,
-            and open a pull request against main with `gh pr create`. Do not merge it, and do
-            not edit the correction file. Python dependencies and Playwright are installed.
+            file: diagnose the cause, fix the pipeline input at fault, rebuild and check with
+            `tools/pipeline.py`, write the CHANGELOG entry and the write-up, commit, and push
+            to this same branch. Do not open the pull request: write `build/pr.md` as the
+            skill says and this workflow opens it from that file. Do not merge, and do not
+            edit the correction file. Python dependencies are installed, the branch is
+            already current with main, and `inspect --qc` has been run for you -- its
+            output is below and its pictures are under qc/.
 
             Nobody is at the other end of this run. Where the evidence allows more than one
             reading -- which of the four causes it is, or which of two fixes for the one it
-            is -- take the reading the drawing supports, apply it, and say in the pull
-            request which you took, what the alternative was, and what would tell them
-            apart. Do not end the run to ask: the correction is read by a person before it
-            is merged, and that is where a question belongs, whereas a session that stops
-            without a commit leaves the plate exactly as it was. The one case for stopping
-            is a plate that supports none of the four causes: say that in your last message,
-            which is what the job summary shows.
+            is -- take the reading the drawing supports, apply it, and say in the write-up
+            which you took, what the alternative was, and what would tell them apart. Do not
+            end the run to ask: the correction is read by a person before it is merged, and
+            that is where a question belongs, whereas a session that stops without a commit
+            leaves the plate exactly as it was. The one case for stopping is a plate that
+            supports none of the four causes: say that in your last message, which is what
+            the job summary shows.
 
-            Leave the pull request reviewable. Commit `qc/chk_corr_<id>.png` and
-            `qc/chk_corr_<id>_site.png` from an `inspect --qc` run after the rebuild, beside
-            the fix -- the correction file is what the reader drew and those pictures are
-            what it did -- and open the body with the site picture, embedded from the pushed
-            commit as step 8 of the skill shows, so the region before and after is the first
-            thing the reader sees. Then give the body the region's area before and after,
-            what else on the plate moved and why, and `boundary_edges_shared_exactly`.
-          # The model is named rather than left to the action's default. This is a long job
-          # -- eight steps, a ten-minute rebuild, then every check -- and it turns on a
-          # judgment the correction file does not make for it: which of the four causes the
-          # plate shows. The one correction of this kind carried the whole way, `och` on
-          # plate 22 (#79), was done on Opus; the two runs that stopped five minutes in with
-          # nothing pushed took the default. The action has no model input of its own, and
-          # claude_args goes straight to the CLI, where `--effort xhigh` is the step above
-          # the default should a run still come back thin.
+            A correction run changes pipeline inputs, the docs and qc/; it never edits
+            tools/, src/, tests/ or the workflows. If a tool is wrong, say so in the write-up.
+
+            ${{ steps.inspect.outputs.text }}
+          # The model is named rather than left to the action's default: this is a long
+          # job that turns on a judgment the correction file does not make for it. The
+          # one correction carried the whole way before the model was named was done on
+          # Opus; the two runs that stopped five minutes in took the default.
           claude_args: |
             --allowedTools "Bash,Read,Edit,Write,Glob,Grep"
             --model claude-opus-5
             --max-turns 300
 
-      # The action mints an installation token for itself, hands it out as
-      # `steps.claude.outputs.github_token`, and revokes it in the last step it runs -- so
-      # by the time any step of this job can read that output the credential behind it is
-      # gone. That is what both runs which got this far hit: the revoke, and four tenths of
-      # a second later a 401 from `gh pr list`. Everything below is the workflow's own
-      # GITHUB_TOKEN instead. What that token cannot do is start a workflow, and nothing
-      # here needs it to: ci.yml runs on `push: branches: ['**']`, so the session's own
-      # push -- made with the app token, which is the reason the action is handed no
-      # `github_token` -- has already put the checks these steps wait on onto the head
-      # commit, whoever opens the pull request over them.
-
+      # The action revokes the token it mints in its last step, so everything below is the
+      # workflow's own GITHUB_TOKEN. What that token cannot do is start a workflow, and
+      # nothing here needs it to: the session's push, made with the app token, has already
+      # put ci.yml onto the head commit.
       - name: The session left a fix on the branch
+        if: (steps.state.outputs.fixed != 'true' || inputs.force) && !inputs.dry_run
         env:
-          BRANCH: ${{ github.ref_name }}
           LIST: ${{ steps.files.outputs.list }}
           EXECUTION: ${{ steps.claude.outputs.execution_file }}
         run: |
-          git fetch origin main "$BRANCH"
-          fix=$(git diff --name-only origin/main...origin/"$BRANCH" | grep -v '^corrections/' || true)
-          # The action's own success is the session having stopped without erroring, which
-          # is also what it does when it reads the plate, says what it would change and
-          # ends the turn -- the run that reported it last did so in 38 turns and five
-          # minutes, against a rebuild that alone takes ten. Merging on that alone puts
-          # the correction file on main with nothing applied and
-          # closes the branch that was going to carry the fix, so what is asked is the
-          # branch and not the exit code. The transcript stays hidden as the action left
-          # it; what the session said last is the only account of why it stopped.
-          if [ -z "$fix" ]; then
+          git fetch origin main "$GITHUB_REF_NAME"
+          git checkout -q "origin/$GITHUB_REF_NAME"
+          if ! bash tools/ci/correction.sh fix | grep -q '^fixed=true'; then
             said=$(jq -r '[.[]? | select(.type == "result")] | last | .result // empty' "$EXECUTION" 2>/dev/null || true)
             {
               echo "### The correction was not applied"
               echo
-              echo "\`$BRANCH\` carries nothing but $LIST, so there is no fix to merge."
+              echo "\`$GITHUB_REF_NAME\` carries nothing but $LIST, so there is nothing to read."
               echo
               echo "What the session said before it stopped:"
               echo
@@ -248,51 +276,25 @@ jobs:
               echo "${said:-(the run left no final message)}"
               echo '```'
             } >> "$GITHUB_STEP_SUMMARY"
-            echo "::error::the session ended without a fix on $BRANCH; the correction is unapplied"
+            echo "::error::the session ended without a fix on $GITHUB_REF_NAME; the correction is unapplied"
             exit 1
           fi
-          printf 'the fix touches:\n%s\n' "$fix"
-          # A fix that edits the file it is applying breaks both the loop guard the paths
-          # filter above rests on and the record of what the reader drew. Each correction
-          # is asked about with its snapshot and by name: a branch that merged main in
-          # carries the corrections main has, and those were applied long ago.
-          for f in $LIST; do
-            if ! git diff --quiet "$GITHUB_SHA" origin/"$BRANCH" -- "${f%.json}.*"; then
-              echo "::error::the session edited $f or its snapshot, and both are the reader's own record"
-              exit 1
-            fi
-          done
+          # A fix that edits the file it is applying breaks the loop guard and the record
+          # of what the reader drew.
+          bash tools/ci/correction.sh untouched "$GITHUB_SHA" $LIST
 
-      # The run ends at a green pull request rather than on main. A correction changes what
-      # the atlas says a structure is -- an area, a boundary, a mesh, the label volume --
-      # and the four causes are told apart by reading a plate, which is a judgment worth a
-      # second pair of eyes before it is published. So the merge is the reader's: this waits
-      # on ci.yml, writes the pull request into the job summary, and stops. What it leaves
-      # to read is the write-up, the numbers in it, the site picture at the top of it and
-      # `qc/chk_corr_<id>.png` in the diff.
-      - name: Wait on CI, and leave the pull request to be read
+      # The run ends at a green pull request rather than on main. The pull request is
+      # opened from build/pr.md, which the session wrote beside its push: the first line
+      # is the title, the rest the body, and {{SHA}} in it is the head the picture is
+      # pinned to. Merging is the reader's.
+      - name: Open the pull request, wait on CI, and leave it to be read
+        if: (steps.state.outputs.fixed != 'true' || inputs.force) && !inputs.dry_run
         env:
           GH_TOKEN: ${{ github.token }}
-          BRANCH: ${{ github.ref_name }}
         run: |
-          pr=$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number')
-          if [ -z "$pr" ]; then
-            # The session opens its own pull request; this is for the run that pushed a fix
-            # and did not, and it wants Settings -> Actions -> "Allow GitHub Actions to
-            # create and approve pull requests".
-            gh pr create --base main --head "$BRANCH" --fill-first
-            pr=$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number')
-          fi
-          url=$(gh pr view "$pr" --json url --jq .url)
+          eval "$(bash tools/ci/correction.sh open-pr "$GITHUB_REF_NAME" | grep -E '^(pr|url)=')"
           echo "pull request #$pr -- $url"
-          sleep 90                                     # let ci.yml register on the head
-          # `--watch` holds until every check on the head has finished, and `--fail-fast`
-          # lets go at the first one that fails; the exit code is 0 for all green and 1
-          # otherwise. Those are the two flags `gh pr checks` has for this, per the usage
-          # it printed on the runner -- the `--fail-level error` this first read was a flag
-          # of nothing, and the runs that opened #109 and #110 ended red on it with CI
-          # green on both.
-          if gh pr checks "$pr" --watch --fail-fast; then
+          if bash tools/ci/correction.sh wait-ci "$pr"; then
             state='CI is green. Read it and merge it -- the run stops here.'
             failed=0
           else
@@ -307,3 +309,13 @@ jobs:
             echo 'The picture of what the correction did opens the pull request; `qc/chk_corr_<id>.png` is the whole plate, in the diff.'
           } >> "$GITHUB_STEP_SUMMARY"
           exit "$failed"
+
+      - name: Dry run
+        if: inputs.dry_run
+        run: |
+          {
+            echo "### Dry run"
+            echo
+            echo "Every step but the session ran on \`$GITHUB_REF_NAME\` for ${{ steps.files.outputs.list }}."
+            echo "The branch already carried a fix: ${{ steps.state.outputs.fixed }}."
+          } >> "$GITHUB_STEP_SUMMARY"

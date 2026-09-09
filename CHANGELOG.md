@@ -72,6 +72,76 @@ carries a `version` block naming the release its derived fields were built for.
   that has never been here sees.
 
 ### Changed
+- **A correction reaches its pull request with fewer runs, and two corrections in flight
+  no longer conflict with each other.** The first two corrections to go the whole way,
+  `RAPir` on plate 28 (#109) and `E` on plate 3 (#110), took fifteen runs of the workflow
+  between them for two applied fixes, and every merge of main after a fix conflicted in
+  every derived file -- the volumes, the label volume, the pages, the summaries, the
+  `seed_overrides` note, the changelog -- each resolved the same way by hand: main's derived
+  files, the branch's input laid on them, the pipeline run again. `CORRECTION_PROCESS_PLAN.md`
+  is the account; this is what it asked for.
+
+  *The merge is a script.* `tools/corrections.py rebase` merges main taking main's copy of
+  every derived file (`atlaslib.DERIVED_PATHS`, `DERIVED_BLOCKS`), lays the branch's input
+  rows (`INPUT_BLOCKS`, per plate) on main's database, refuses the one case a person has
+  to decide -- both sides changed the same plate's input -- runs the pipeline again, and
+  commits the merge only when the re-cut does what the branch did: the same (plate, region)
+  entries move against the new base as moved against the old, less any main moved itself,
+  and the corrected region's rings are identical. `rebase-corrections.yml` runs it on every
+  open correction pull request each time main moves, one branch at a time, and puts CI on
+  the new head; where it stops it says so on the pull request. `apply-correction.yml` runs
+  it before the session, in place of the session's own merge.
+
+  *The session does what only it can.* The workflow runs `inspect --qc` and hands the
+  session its output; `tools/pipeline.py rebuild` and `check` are the six build steps and
+  every check as two commands, in the order and with the completeness the skill used to
+  spell out over fifteen lines; `tools/corrections.py report` gives the write-up its
+  numbers -- the region before and after, per hemisphere and over the series, every entry
+  and volume that moved, the summaries side by side -- as Markdown against `origin/main`,
+  so they are the same numbers a rebase prints and a reviewer can regenerate. The session
+  writes `build/pr.md` and the workflow opens the pull request from it, with the picture
+  pinned to the pushed head; the session needs no `gh` and no Node, and Playwright runs in
+  CI on the push. A correction run may not edit `tools/`, `src/`, `tests/` or the
+  workflows (the skill's Never list): run 13 of the workflow fixed the site-picture window
+  in `tools/corrections.py` while #112 fixed it on main.
+
+  *Fewer runs.* `fixer.html` pushes the file and its snapshot as one commit through the
+  Git Data API, where two `contents` PUTs were two pushes and two dispatched sessions
+  queued on one branch. The dispatch fires only when the pushed commit has one parent and
+  adds a correction file on it (`tools/ci/correction.sh pushed`), so a merge of main into a
+  branch that already carries its fix no longer starts a forty-minute session that finds
+  nothing to apply; and a dispatched run that finds the fix already on the branch stops
+  before it installs anything, unless `force` is set. The workflow's shell lives in
+  `tools/ci/correction.sh`, tested by `tests/python/test_ci_scripts.py` against a
+  repository the test makes, and `dry_run` runs every step but the session -- four
+  plumbing pull requests in one day (#105, #106, #107, #111) were each a step that could
+  only be tried on a runner.
+
+  *Less to conflict on.* `CHANGELOG.md` merges with git's `union` driver (`.gitattributes`),
+  which a local merge -- the rebase -- honors, so two entries added at the top of
+  `### Fixed` keep each other. The totals `METHODS.md` states that a re-cut moves --
+  entries, polygons, points, the coloring's regions and patches -- sit between
+  `<!-- n:... -->` markers naming the database field they come from, and
+  `export_tables.py` rewrites them on every run and holds them with `--check`; nobody
+  restates a total by hand, and a rebase carries the right one. The `seed_overrides` note
+  is static: it had grown a paragraph per correction and a count, and was a line every
+  correction conflicted on; a row's reason is in the row, and the changelog carries the
+  entry. The committed pages carry their build tokens unstamped -- nothing serves them,
+  `pages.yml` stamps the copy it deploys, and `--check` already compared unstamped -- so
+  three files stop conflicting between any two branches whatever they change.
+  `data/gerbil_atlas_volumes.json` is written one structure per line, so a re-cut diffs by
+  structure instead of as one 20 MB line, and it and the NIfTI are `-diff`. The NIfTI's
+  gzip header carries no time and no name now: the same label volume was a different file
+  on every rebuild, which made a binary that conflicted between any two branches out of one
+  that had not changed. What a reader saw in **Recut** travels with the correction as its
+  `preview`, and `report` says whether the applied fix agrees with it.
+
+  Checked: `tests/python`, the eight new shell tests and the report and marker tests among
+  them; every `--check` on the rebuilt tree, the volumes coming out equal as JSON and the
+  label volume equal decompressed; and the rebase replayed on the real case -- the `E` fix
+  as it stood on its old base (1f2206f), onto a main carrying #108 and #109 -- which is
+  reported in the pull request.
+
 - **A correction's pull request opens with a picture of the region before and after.**
   What a reader had was `qc/chk_corr_<id>.png` in the diff: the whole plate at twice its
   size, most of it white, the region a green sliver in the middle, and one state of it --

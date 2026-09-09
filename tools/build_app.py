@@ -325,20 +325,30 @@ def main():
         return check(db)
     if a.compare:
         return compare(a.compare, db)
-    commit, date, time = stamp(a.commit, a.date, a.time)
     if a.site:
+        commit, date, time = stamp(a.commit, a.date, a.time)
         site(a.site, db, commit, date, time)
         return 0
+    # The committed pages keep their tokens. Nothing serves them: pages.yml builds the
+    # site from the commit it deploys and stamps it then, and --check compares unstamped.
+    # A stamp in the committed copy was three files that conflicted between any two
+    # branches, whatever they changed. A stamp is still written where one is asked for.
+    if a.commit or a.date or a.time:
+        commit, date, time = stamp(a.commit, a.date, a.time)
+    else:
+        commit, date, time = '{{BUILD_HASH}}', '{{BUILD_DATE}}', '{{BUILD_TIME}}'
     write(a.out or BUNDLE, render(db, commit=commit, date=date, time=time))
-    print('wrote %s (build %s, %s %s)'
-          % (os.path.relpath(a.out or BUNDLE, A.ROOT), commit, date, time))
+    print('wrote %s%s' % (os.path.relpath(a.out or BUNDLE, A.ROOT),
+                          ' (build %s, %s %s)' % (commit, date, time) if a.commit or a.date or a.time
+                          else ' (unstamped: the site build stamps it)'))
     write(FIXER, fixer(commit, date))
     print('wrote fixer.html')
     if a.lean:
         write(LEAN, render(db, lean=True, commit=commit, date=date, time=time))
         print('wrote index.html')
     if a.dev:
-        write(DEV, render(db, dev=True, commit=commit, date=date, time=time))
+        c, d, tm = stamp(a.commit, a.date, a.time)
+        write(DEV, render(db, dev=True, commit=c, date=d, time=tm))
         print('wrote build/dev.html')
     return 0
 

@@ -330,6 +330,7 @@ def document(draft, S, when=None, commit=None):
            'problem': (draft.get('problem') or '').strip(),
            'seeds': seeds, 'boundaries': [], 'extents': [],
            'notes': [str(x) for x in (draft.get('notes') or [])],
+           'preview': draft.get('preview') or None,    # what Recut showed, if it was run
            'snapshot': draft.get('snapshot'),
            'source': {'commit': commit if commit is not None else head_commit(),
                       'site': 'https://dstolz.github.io/GerbilAtlasExplorer/',
@@ -749,7 +750,7 @@ def boundaries_of(draft):
 def draft_of(doc):
     """A correction file, or a draft saved from the page, back into a draft."""
     keep = ('plate', 'abbr', 'problem', 'hemisphere', 'seeds', 'boundaries', 'extents',
-            'notes', 'author')
+            'notes', 'author', 'preview')
     return {k: doc.get(k) for k in keep if doc.get(k) is not None}
 
 
