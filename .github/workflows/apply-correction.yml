@@ -223,8 +223,11 @@ jobs:
             Read .claude/skills/atlas-region-fix/SKILL.md and follow it end to end for each
             file: diagnose the cause, fix the pipeline input at fault, rebuild and check with
             `tools/pipeline.py`, write the CHANGELOG entry and the write-up, commit, and push
-            to this same branch. Do not open the pull request: write `build/pr.md` as the
-            skill says and this workflow opens it from that file. Do not merge, and do not
+            to this same branch, then open the pull request yourself from `build/pr.md` as
+            the skill says, with `gh pr create` -- the token this session holds may open one
+            where the workflow's own may not. Leave `build/pr.md` where it is either way:
+            this workflow finds the pull request you opened and waits on its checks, and
+            opens one from the file itself where you could not. Do not merge, and do not
             edit the correction file. Python dependencies are installed, the branch is
             already current with main, and `inspect --qc` has been run for you -- its
             output is below and its pictures are under qc/.
@@ -284,10 +287,16 @@ jobs:
           # of what the reader drew.
           bash tools/ci/correction.sh untouched "$GITHUB_SHA" $LIST
 
-      # The run ends at a green pull request rather than on main. The pull request is
-      # opened from build/pr.md, which the session wrote beside its push: the first line
-      # is the title, the rest the body, and {{SHA}} in it is the head the picture is
-      # pinned to. Merging is the reader's.
+      # The run ends at a green pull request rather than on main. The session opens the
+      # pull request itself, from build/pr.md, with the App token the action hands it --
+      # which is what opened #109 and #110 -- and this step finds it and waits on its
+      # checks. Where the session could not, this step opens it from the same file with
+      # the workflow's own token: the first line is the title, the rest the body, and
+      # {{SHA}} in it is the head the picture is pinned to. That token can open a pull
+      # request only where Settings -> Actions -> General -> Workflow permissions allows
+      # GitHub Actions to create and approve pull requests, which is what run #27 met:
+      # three corrections applied and pushed, and no pull request to read them in.
+      # Merging is the reader's.
       - name: Open the pull request, wait on CI, and leave it to be read
         if: (steps.state.outputs.fixed != 'true' || inputs.force) && !inputs.dry_run
         env:
