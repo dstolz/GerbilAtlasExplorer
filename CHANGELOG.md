@@ -252,18 +252,18 @@ carries a `version` block naming the release its derived fields were built for.
   `label_inside_its_own_region` 0.9776 either way, and **`boundary_edges_shared_exactly`
   stays 1.0**. 64 Python tests and 109 browser tests pass, and `--check` on the tables,
   groups, colors, face maps and pages is clean.
-- **The site picture of a correction stays on the hemisphere the correction marks.**
-  `inspect --qc` draws its window round everything the picture is about, and for a region
-  the atlas draws on both sides of ML 0 that took in the ring and the printed box on the
-  other hemisphere as well -- so the window opened to the width of the section and the
-  picture came out the whole plate, which is the picture the site view was written to
-  replace. `RAPir` on plate 28 is such a region: the correction marks three seeds on the
-  left at ML −4.6, and the ring nine millimetres away at ML +4.4 widened the window from
-  866 to 1,850 pixels across, the region a green sliver in it. The window is drawn round
-  the correction's own marks now, and round the rings and boxes on their side of ML 0;
-  where a correction marks nothing, or nothing of the region is on its side, it is round
-  all of it as before. Nothing else about the picture changes -- the panels, the overlay
-  and the whole-plate file are what they were.
+- **The site picture is drawn round the reader's marks, not round every box of the name.**
+  `qc/chk_corr_<id>_site.png` took its window from everything of the region's name on the
+  plate -- its polygons either side and the boxes it is printed in -- and a name the atlas
+  prints on both hemispheres, as `RAPir` is on plate 28, has a box and an area on the far
+  side too, so the window was the whole plate and the region a green wedge in the corner of
+  it. The window is now the reader's marks (seeds, boundaries, extents) and only those
+  polygons and boxes that lie within a quarter of the marks' spread, or `SITE_MIN_PX` / 2,
+  of them; a correction with no marks takes everything of the name as before. On plate 28
+  the two panels now show the column and its neighbours at a third of the plate's width.
+  Checked: `tests/python/test_corrections.py` 8 passed, and the picture on the branches of
+  #109 and #110 is the one their pull requests open with.
+
 - **A correction's run ends green when its pull request does.** The last step of
   `.github/workflows/apply-correction.yml` waited on CI with `gh pr checks --watch
   --fail-level error`, and `--fail-level` is a flag of nothing: `gh` printed its usage and

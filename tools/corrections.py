@@ -637,12 +637,7 @@ def write_site(c, P, DB, out, before, ref):
     region_on returned, or None, in which case the picture is the one panel. The
     window is drawn round everything the picture is about -- the region either side,
     the seeds, boundaries, extents and the boxes of its name -- with a quarter of its
-    own size around it and never under SITE_MIN_PX across, so the neighbours read --
-    and on the hemisphere the marks are on, because a region the atlas draws on both
-    sides of ML 0 has a ring and a printed box over on the other one too, and taking
-    those in opens the window to the width of the section, which is the whole-plate
-    picture this one was written to replace. Where the correction marks nothing, or
-    nothing of the region is on its side, the window is round all of it as before."""
+    own size around it and never under SITE_MIN_PX across, so the neighbours read."""
     from PIL import Image, ImageDraw, ImageFont
     S = 2
     p, ab = c['plate'], c['abbr']
@@ -653,34 +648,38 @@ def write_site(c, P, DB, out, before, ref):
         px, py = xf(P.m, pt[0], pt[1])
         return (px * S, py * S)
 
+    # The window is drawn round the reader's marks, and round the polygons and boxes of
+    # the region that lie near them: a name the atlas prints on both hemispheres has a box
+    # and an area on the far side too, and a window that took those in would be the whole
+    # plate. A correction with no marks (extents only, say) takes everything of the name.
     marks = [at(seed_point(s, P)) for s in c['seeds']]
     for b in c['boundaries']:
         marks += [at(q) for q in entry_points(b, P)]
     for e in c['extents']:
         marks += [at(q) for q in ring_of(e, P)]
-
-    def ml_of(q):                                     # ML of a point of this picture
-        return P.fr.ml(q[0] / S)
-
-    marked = (sum(ml_of(q) for q in marks) / len(marks)) >= 0 if marks else None
-
-    def here(q):
-        return marked is None or (ml_of(q) >= 0) == marked
-
-    def centre(qs):
-        return (sum(q[0] for q in qs) / len(qs), sum(q[1] for q in qs) / len(qs))
-
-    near, far = [], []
+    groups = []
     for o in ((before[0] if before else None), out):
         if o and ab in o:
-            for g in o[ab]['g']:
-                ring = [(x * NW * S, y * NH * S) for x, y in g]
-                (near if here(centre(ring)) else far).append(ring)
+            groups += [[(x * NW * S, y * NH * S) for x, y in g] for g in o[ab]['g']]
     for cx, cy, bw, bh in DB['label_positions']['data'].get(str(p), {}).get(ab, []):
-        box = [((cx - bw / 2) * NW * S, (cy - bh / 2) * NH * S),
-               ((cx + bw / 2) * NW * S, (cy + bh / 2) * NH * S)]
-        (near if here(centre(box)) else far).append(box)
-    pts = list(marks) + [q for ring in (near or far) for q in ring]
+        groups.append([((cx - bw / 2) * NW * S, (cy - bh / 2) * NH * S),
+                       ((cx + bw / 2) * NW * S, (cy + bh / 2) * NH * S)])
+
+    def bbox(q):
+        xs, ys = zip(*q)
+        return min(xs), min(ys), max(xs), max(ys)
+
+    pts = list(marks)
+    if marks:
+        x0, y0, x1, y1 = bbox(marks)
+        reach = max(0.25 * max(x1 - x0, y1 - y0), SITE_MIN_PX * S / 2)
+        for g in groups:
+            gx0, gy0, gx1, gy1 = bbox(g)
+            if gx1 >= x0 - reach and gx0 <= x1 + reach and gy1 >= y0 - reach and gy0 <= y1 + reach:
+                pts += g
+    else:
+        for g in groups:
+            pts += g
     if not pts:
         return None
     xs, ys = zip(*pts)
