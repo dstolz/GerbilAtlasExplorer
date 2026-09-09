@@ -79,11 +79,16 @@ case "$cmd" in
         # first line the title, the rest the body; {{SHA}} is the commit the picture is pinned to
         title=$(head -n 1 build/pr.md | sed 's/^# *//')
         tail -n +2 build/pr.md | sed "s/{{SHA}}/$sha/g" > build/pr_body.md
-        gh pr create --base "${BASE#origin/}" --head "$branch" --title "$title" --body-file build/pr_body.md
+        gh pr create --base "${BASE#origin/}" --head "$branch" --title "$title" --body-file build/pr_body.md || made=no
       else
-        gh pr create --base "${BASE#origin/}" --head "$branch" --fill-first
+        gh pr create --base "${BASE#origin/}" --head "$branch" --fill-first || made=no
       fi
       pr=$(gh pr list --head "$branch" --state open --json number --jq '.[0].number')
+      if [ "${made:-}" = no ] && [ -z "$pr" ]; then
+        # the workflow's own token may not: Settings -> Actions -> General -> Workflow
+        # permissions -> "Allow GitHub Actions to create and approve pull requests"
+        echo "::error::the pull request for $branch could not be opened with this token; the fix is on the branch. Open it by hand from build/pr.md, or allow GitHub Actions to create pull requests under Settings -> Actions -> General"
+      fi
     fi
     [ -n "$pr" ] || { echo "::error::no pull request for $branch"; exit 1; }
     out pr "$pr"

@@ -457,6 +457,16 @@ carries a `version` block naming the release its derived fields were built for.
   band the accessory glomerular layer is on plate 6, which neither the drawing nor these
   three files supplies — the atlas prints `GlA` once on the plate, on the left, and draws no
   other line for it — so it is left for a correction of its own, on `GlA`.
+- **A correction's session opens its own pull request again.** #114 moved that from the
+  session to the workflow, which opens it from `build/pr.md` with the workflow's own
+  token -- and that token may open a pull request only where the repository allows
+  GitHub Actions to create and approve them, which this one does not. So the first three
+  corrections sent together (`EPlA` on plates 5, 6 and 8, run #27) were applied, pushed
+  and left with no pull request to read them in, an hour's run ending red one step from
+  the end; #126 is that pull request, opened by hand. The session opens it itself now,
+  with the App token the action hands it, as it did for #109 and #110; the workflow's
+  step finds the one it opened and waits on the checks, and still opens one from the file
+  where the session could not, saying which setting it wants when it cannot either.
 - **The footer told every reader the build was `{{BUILD_HASH}}`.** The site's footer read
   *Build `{{BUILD_HASH}}` · Updated {{BUILD_DATE}} {{BUILD_TIME}}*, About said the same, and
   the commit beside both linked `/commit/{{BUILD_HASH}}`, which is not a commit. The tokens
