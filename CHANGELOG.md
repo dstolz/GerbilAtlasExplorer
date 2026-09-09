@@ -212,6 +212,59 @@ carries a `version` block naming the release its derived fields were built for.
   are what carry the other two and a plain mesh link carries none.
 
 ### Fixed
+- **`E` on plate 3 gets the run of ventricle above the pinch.** The atlas draws the
+  ependyma of the olfactory ventricle on the right of plate 3 as one contour, from below the
+  `aci` circle down to its ventral bulb, and pinches it to a single stroke halfway along, at
+  DV −5.44 to −5.66, where its two walls meet. So the extraction cuts the slit into two
+  faces, and the one line the `E/OV` label draws ends in the lower of them: 163 px of black
+  ink a reader followed by hand into `TIP_HAND`, no fragment of it surviving the
+  straightness test. The face above the pinch — 555 px of the same slit, running up to
+  DV −4.93 — was lettered by nothing, and it is where the first seed of correction
+  `20260908T012002Z-p03-E` lands. `inspect` put that seed in an unnamed face and the
+  region's own box in the face it already letters, which is the seed-in-the-wrong-face
+  reading in its second form: **the box is right and a face is simply unlettered**.
+
+  Three rows of `seed_overrides`, seeds of their own, from the correction: one in the face
+  above the pinch, two on the spindle the label's line already ends in. **`E` on plate 3
+  goes 0.0669 to 0.1008 mm², two polygons to three**, the right hemisphere 0.0356 to 0.0696
+  against the left's unchanged 0.0313, and every polygon's traced share is 1.00 before and
+  after — the outline it stops at is one the atlas printed, every pixel of it. Over the
+  series `E` goes 1.508 to 1.542 mm² and 0.4038 to 0.4141 mm³, in the same 17 mesh
+  components, and its centre moves DV −6.01 to −5.96.
+
+  The reader marked a fourth point, on the ink of the pinch itself, and that one is not
+  written. A seed there is snapped into the granule face `GrA` and `GrO` share: `E` comes
+  out 0.1226 mm² with **27% of the new polygon's border on no ink at all**, a watershed
+  drawn through the granule layer, which is not a boundary to show anyone. What the three
+  rows do cost the neighbours is their share of the ink along the walls of the run —
+  **`GrA` 1.1383 to 1.1356 mm² and `GrO` 0.4559 to 0.4543**, 66 and 20 page px of boundary
+  and no interior between them. Of the 698 px `E` gains, 555 were unassigned ground.
+
+  Three (plate, region) entries move in the whole-atlas re-cut, all on plate 3.
+  `boundary_edges_shared_exactly` stays 1.0, `structure_plate_entries` stays 3,118, the
+  coloring is unchanged at 691 regions, polygons go 6,012 to 6,013, points 168,740 to
+  168,751 and `seeds_moved_by_hand` 29 to 32 — counted from the base the `RAPir` entry
+  below leaves, the two corrections riding one branch and that one landing first. Three
+  more olfactory-bulb structures move in the volume with their areas untouched — `IPl`
+  +0.0052, `aci` +0.0017, `EPl` +0.0005 mm³, and `GrA` +0.0021 though its area falls — the
+  label volume being interpolated between plates, so a boundary that moves on 3
+  redistributes voxels in the slabs either side. METHODS takes the polygon and point
+  counts, 6,013 over 168,751, which are the two corrections' together.
+
+  The correction says the region "should better mirror the left hemisphere", and there is a
+  second reading of that this does not take. The ventral spindle is drawn with a hairline
+  down its length — the lumen, collapsed to a stroke — and the two hemispheres put their
+  label's tip on opposite sides of it. Mirrored about the section's own axis of symmetry
+  (page x 1665, IoU 0.913), the left `E` lands 71% inside the face that is unlettered on the
+  right, and the right `E` is the exact mirror of the strip that is unlettered on the left.
+  Read that way the fix would be a `label_index` row moving the right box off the medial
+  strip into the lateral one, and `E` would stay near 0.03 mm² a side. It is not taken: it
+  leaves all four of the reader's positive seeds outside `E` and withdraws ground two of
+  them stand on, and that tip is no misread — it is the end of the label's own black ink,
+  followed by hand and recorded in `TIP_HAND` with the account of the page. What would
+  settle it is the printed page at the bulb: whether that hairline is the ventricle's lumen,
+  in which case the ependyma is the whole spindle either side of it and both hemispheres are
+  short, or a wall between two compartments of which the label names one.
 - **The rostral amygdalopiriform area gets the whole column the atlas draws it as, on the
   left of plate 28.** `RAPir` is printed once on that hemisphere and the plate sets the word
   on the thin band between two laminar lines, so the extraction was as generous as the plate
