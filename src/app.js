@@ -6566,11 +6566,16 @@ $('repcp').onclick=function(){
 function stampLocal(){
   /* A page nothing stamped has no build to name, and an unfilled token is not one: rather
      than print the token at a reader, and link a commit that does not exist, the footer and
-     About drop the claim. This is what a page opened straight from the repository does, and
-     what a local build does; the copy pages.yml deploys is stamped and keeps both.
+     About drop the claim and date the data instead. This is what a page opened straight from
+     the repository does, and what a local build does; the copy pages.yml deploys is stamped
+     and keeps both.
      (No token may be written literally in this file: the build fills them wherever they
      appear, and tests/python/test_atlaslib.py holds it to that.) */
-  if(!BUILD){ for(const el of document.querySelectorAll('.fbuild')) el.remove(); return; }
+  if(!BUILD){
+    for(const el of document.querySelectorAll('.fbuild')) el.remove();
+    dataWhen();
+    return;
+  }
   const p=n=>String(n).padStart(2,'0');
   /* EDT, JST, GMT+5:30 -- whatever this browser calls the zone, and a plain offset if it
      will not say. Without it the reader cannot tell which clock the stamp is on. */
@@ -6588,6 +6593,23 @@ function stampLocal(){
     el.textContent=`${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`
       +(el.hasAttribute('data-date')?'':` ${p(d.getHours())}:${p(d.getMinutes())} ${zone(d)}`);
     el.title=`Built ${iso.slice(0,16).replace('T',' ')} UTC`;   /* the moment as it was stamped */
+  }
+}
+/* What a page with no build stamp can still say was last updated: not the build, which it has
+   no way to name, but the day the database it carries was last recomputed -- version.generated
+   in data/gerbil_atlas.json, which tools/export_tables.py moves only when the data moves. Said
+   to be the data's date and not the page's, because a change to the app alone does not move it.
+   Printed exactly as it is stamped rather than on the reader's clock, as the stamps above are:
+   behind this one is a calendar day and no hour, and a day read in another zone is the day
+   before. Nothing is said at all if the database gives no date. */
+function dataWhen(){
+  const d=((DB.version||{}).generated||'').trim();
+  if(!/^\d{4}-\d\d-\d\d$/.test(d)) return;
+  for(const el of document.querySelectorAll('.fdata')){
+    const t=el.querySelector('time.dwhen');
+    if(!t) continue;
+    t.setAttribute('datetime',d); t.textContent=d;
+    el.hidden=false;
   }
 }
 stampLocal();

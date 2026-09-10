@@ -1,5 +1,6 @@
 """The shared library: the renderer is byte-exact, the parsers agree, the payloads match."""
 import json
+import re
 
 import pytest
 
@@ -99,6 +100,21 @@ def test_the_build_claim_is_one_removable_span():
     assert page.count('{{BUILD_TIME}}') == 1 and page.count('{{BUILD_ISO}}') == 2
     # the lean page adds one the reader never sees: the worker is registered under the build
     assert B.render(db, lean=True).count('{{BUILD_HASH}}') == 6
+
+
+def test_an_unstamped_page_dates_the_data_instead():
+    """A page nothing stamped drops the build claim, and says instead when the data it carries
+    was last recomputed -- the one date every copy knows, stamped or not. One span apiece in the
+    footer and in About, hidden until src/app.js fills the date in from the database, and no
+    build token inside either: the claim they stand in for is the one that cannot be made."""
+    db = A.load_db()
+    page = B.render(db)
+    assert page.count('<span class="fdata" hidden') == 2
+    assert page.count('<time class="dwhen"></time>') == 2
+    # the date is the database's own, and it rides to the page in __ATLAS__ either way
+    assert re.fullmatch(r'\d{4}-\d\d-\d\d', db['version']['generated'])
+    assert A.atlas_payload(db)['version']['generated'] == db['version']['generated']
+    assert B.render(db, lean=True).count('<time class="dwhen"></time>') == 2
 
 
 def test_build_stamp_carries_the_moment():
