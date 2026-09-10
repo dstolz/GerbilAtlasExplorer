@@ -417,7 +417,7 @@ carries a `version` block naming the release its derived fields were built for.
     rather than handed to `aci`, because giving a fibre tract ground is a correction on
     `aci`, not on `E`.
 
-  **`E` goes 1.580 to 1.679 mm² over the series** and **0.4268 to 0.6986 mm³ in 10 mesh
+  **`E` goes 1.580 to 1.679 mm² over the series** and **0.4268 to 0.6999 mm³ in 10 mesh
   components rather than 18** — the region was in eighteen pieces because on most of its
   plates it was somewhere else. Per plate, gains first: **0.0295 → 0.1624 mm² on plate 6**
   (one polygon to two, one per hemisphere), **0.0929 → 0.1884 on 8**, **0.1330 → 0.1927 on
@@ -439,16 +439,16 @@ carries a `version` block naming the release its derived fields were built for.
   6, −0.0075 on 7 and −0.0021 on 4, `IPl` −0.0107 on 1 and +0.0066 on 6, and twenty-four
   entries under 0.003 mm². Nothing off these twelve plates moves.
 
-  Thirty-six volumes move with them: `E` 0.4268 → 0.6986 mm³,
-  `EPl` 6.8589 → 6.9696, `OV` 0.1131 → 0.0190 (3 → 1 components), `IPl` 0.7501 → 0.7279,
-  `Gl` 6.1859 → 6.1658, `aci` 1.2861 → 1.2665 and the rest by less; `unnamed_fraction` goes
-  0.0342 to **0.0339** and `regions_partition_the_volume` holds.
+  Thirty-seven volumes move with them: `E` 0.4268 → 0.6999 mm³,
+  `EPl` 6.8586 → 6.9768, `OV` 0.1131 → 0.0190 (3 → 1 components), `IPl` 0.7501 → 0.7279,
+  `Gl` 6.1859 → 6.1658, `aci` 1.2898 → 1.2703 and the rest by less; `unnamed_fraction` goes
+  0.0341 to **0.0339** and `regions_partition_the_volume` holds.
 
   `structure_plate_entries` goes 3,118 to **3,117** — `E` gains plate 11 and loses plate 14,
-  `OV` loses plate 8 — the coloring stays 691 regions in 631 patches, polygons go 6,017 to
-  **6,014**, points 168,801 to **168,809**, `faces_named_by_one_abbreviation` 3,526 to
-  **3,536**, `seeds_moved_by_hand` 39 to **64**, `section_covered_mean` 0.9490 to **0.9493**,
-  `entries_without_a_drawn_outline` stays 317, and **`boundary_edges_shared_exactly` stays
+  `OV` loses plate 8 — the coloring stays 691 regions in 631 patches, polygons go 6,020 to
+  **6,017**, points 168,847 to **168,855**, `faces_named_by_one_abbreviation` 3,529 to
+  **3,539**, `seeds_moved_by_hand` 41 to **66**, `section_covered_mean` 0.9492 to **0.9495**,
+  `entries_without_a_drawn_outline` stays 316, and **`boundary_edges_shared_exactly` stays
   1.0**. `label_inside_its_own_region` goes 0.9770 to **0.9746**, which is the fix rather
   than a cost: `E/OV` is printed outside the region it names on all fifteen plates, and four
   more of those labels exist now than did before.
@@ -499,6 +499,211 @@ carries a `version` block naming the release its derived fields were built for.
   them merges the chain into one face of about 1,000 px and the reader's two seeds would
   take it. At the resolution available here that cannot be shown either way, so no path was
   removed.
+- **`MiA` gets the lamina round the accessory bulb on plates 5, 6 and 7.** The mitral cell
+  layer of the accessory olfactory bulb is a band a tenth of a millimetre across, drawn on
+  every one of these three plates between the core of the bulb and the layer outside it, and
+  on each of them the extraction put `MiA` somewhere else — a different one of the four
+  causes each time. Three corrections say so:
+  `20260910T140024Z-p05-MiA`, `-p06-MiA` and `-p07-MiA`.
+
+  **Plate 5 is the tracing.** The lamina's outer wall is a single stroke that starts at page
+  (1555, 1192), runs the whole way round the accessory bulb and comes back past its own
+  start at (1557.8, 1190.2) before carrying on outward into the next lamina, so the loop
+  never closes; and because both ends of the **3.3 px (0.023 mm)** mouth belong to the same
+  path, `BRIDGE_PX` — which joins a dangling end to *another* path — never joins them.
+  Through that mouth the lamina and the layer outside it cut as one face, the
+  **37,681 px (1.858 mm²)** face `GrO`, `MiA`, `dlo` and `lo` are each seeded in. `MiA`'s own
+  printed leader ends inside the lamina, but its watershed share ran out through the mouth to
+  the next drawn wall: **0.3995 mm²**, an annulus two laminae wide, which is what the
+  correction's six negative seeds cross out. One run of tracing across the mouth — a `<path>`
+  of one cubic in `outlines-solid`, carrying `data-correction` — closes it. The lamina is a
+  sealed face of its own now, **2,833 px (0.140 mm²)** lettered by `MiA` alone, plate 5 going
+  42 faces to 43; **`MiA` goes 0.3995 to 0.2021 mm²**, its traced shares 0.99, 1.00, 1.00 to
+  **1.00, 1.00, 1.00**. No seed moves on plate 5: the printed leader tip was always in the
+  right band, and the four positive seeds, which `inspect` reports change nothing unless a
+  boundary moves, are not written.
+
+  **Plate 6 is the seed.** The atlas prints `EPlA` and `MiA` one under the other *inside* the
+  core of the left accessory bulb and draws neither of them a line, so the `MiA` box seeds
+  the **7,282 px** core `EPlA` is printed in and `GlA`'s leader ends in, while the
+  **5,391 px (0.266 mm²)** ring round it — which no printed word on the plate reaches — was
+  held by the mirrors of the right-hand `GrA` (4,342 px) and `dlo` (1,047 px). One row of
+  `seed_overrides` with `i = 0`, **0.51 mm** from the box, at the seed the reader put furthest
+  into the ring, withdraws the box from the core and puts it in the ring; `MiA` takes the
+  whole of a face the drawing seals and one name now letters, and plate 6 is left with no
+  mirrored seed at all (2 → 0). **`MiA` goes 0.0243 to 0.3071 mm²** there, 0.0000 to
+  **0.2828** on the left, and stops being an entry `w` marks as having no outline of its own.
+
+  **Plate 7 is the label.** The atlas prints `MiA` twice on plate 7 and `label_positions`
+  carries only the left-hand box, so the right-hand word — at the margin, **1.00 mm** from
+  where its line ends — seeds nothing, and the **4,488 px (0.221 mm²)** band that line ends
+  in was unassigned. One row with `i = −1`, a seed of its own beside the box that is right,
+  at the end of the printed line where the reader put a seed. **`MiA` goes 0.1790 to
+  0.4148 mm²**, the right hemisphere 0.0000 to **0.2358** at a traced share of **1.00**, the
+  left crescent unchanged to the point.
+
+  Over the series **`MiA` goes 1.144 to 1.465 mm² on the same five plates** (5 to 9) and
+  **0.3759 to 0.6581 mm³ in two mesh components rather than four** — it was in pieces because
+  on three of its five plates it was drawn on the wrong band or on no band at all. Twelve
+  other entries move with it, all on these three plates and none off them. On **plate 5**: `GrO`
+  +0.1963 — the layer between the lamina and the next drawn wall carries no printed name of
+  its own on that hemisphere and belongs to the face `GrO` is printed in, so `GrO` takes what
+  `MiA` gives up — `GrA` +0.0012 and `EPlA` −0.0002. On **plate 6**: `GrA` −0.2264 and `dlo`
+  −0.0541, their mirrors handing the ring back to a printed name; `EPlA` **+0.0115**, which is
+  the 223 px `MiA` used to hold inside the core and lose to `MIN_AREA_PX` — it was unassigned
+  ground, and it is `EPlA`'s now; `GlA` −0.0006. On **plate 7** five entries move and **none
+  by more than 0.0073 mm²** — `EPlA` −0.0073, `dlo` −0.0017, `GrA` −0.0005, `lo` −0.0004,
+  `GrO` +0.0000 — each of them a share of the ink round the newly named band, which used to
+  go whole to the neighbour because the band beside it had no name to split it with.
+
+  Eleven volumes move: `MiA` 0.3759 to 0.6581 mm³ (4 → 2 components), `GrA` 1.1926 to 0.9951
+  (3 → 4), `EPlA` 0.4894 to 0.4261, `GrO` 6.7788 to 6.8314, `dlo` 0.7658 to 0.7421, `GlA`
+  1.0766 to 1.0608, `lo` 2.1784 to 2.1845, `aci` 1.2861 to 1.2898, `AOL` 0.5184 to 0.5201,
+  and `EPl` and `FrA` by a ten-thousandth each; the label volume interpolates between plates,
+  so a lamina that changes hands on 5, 6 and 7 redistributes voxels in the slabs either side.
+  `unnamed_fraction` goes 0.0342 to **0.0341** and `regions_partition_the_volume` holds.
+  `structure_plate_entries` stays 3,118 and the coloring 691 regions in 631 patches; polygons
+  go 6,017 to **6,020**, points 168,801 to **168,847**, `faces_named_by_one_abbreviation`
+  3,526 to **3,529**, `seeds_moved_by_hand` 39 to **41**, `section_covered_mean` 0.9490 to
+  **0.9492**, `entries_without_a_drawn_outline` 317 to **316** — the rim `MiA` keeps on
+  plate 6 is no longer all it has there — `label_inside_its_own_region` stays 0.9770, and
+  **`boundary_edges_shared_exactly` stays 1.0**. `METHODS.md` takes the polygon and point
+  counts and the `entries_without_a_drawn_outline` figure through its markers; no rule in it
+  changed, and no test literal moves.
+
+  **The readings taken, and the ones not.** On plate 5 the seed reading is ruled out by the
+  seeds themselves: the reader's positives and negatives fall in the *same* face, so no
+  placement of `MiA`'s seed separates them and the boundary has to move — which is what
+  `inspect` says of every positive seed on that plate. On plate 6 the alternative is
+  `i = −1`, which is what `corrections.py apply` writes for a seed carrying no `label_index`:
+  the box would go on seeding the core and `MiA` would hold the ring *and* a rim of the core
+  both, so the rows are written through `atlaslib.save_db` instead, in the layout `apply`
+  writes, and `corrections/` is untouched. On plate 7 the alternative is the fuller form of
+  the same cause — add the right-hand box to `label_positions` and point it with `i = 1` —
+  and it is not taken because a *printed* box is mirrored: the mirror of that tip lands in the
+  3,715 px band inside the left-hand `MiA`, a sealed face no printed word names, and `MiA`
+  would gain **0.19 mm²** on a hemisphere this correction does not mark and which its own
+  left-hand leader, followed correctly, does not point at. What would tell the two apart is a
+  reading of that band — the left-hand `EPlA` on plate 7 is printed clear of the section with
+  no line drawn, so nothing reaches it today — and reading a second box into `label_positions`
+  wants the leader pass re-run against the PDF, which is a run of its own.
+
+  **What is left open**, and it is the reader's own mark: the two negative seeds on the right
+  of plate 6 are not satisfied, and `MiA` keeps the **0.0243 mm²** rim of the 4,602 px core it
+  shares with `EPlA` there. On that hemisphere the drawing seals only one band outside the
+  core, the 11,330 px face `GrA`'s own leader ends in with `aci`'s and `dlo`'s, and at the
+  height of the two negatives the atlas prints one contour at the core's rim and the next 26
+  page px out with nothing between them — the mirror of the left-hand ring *and* the band
+  beyond it, undivided. Putting `MiA`'s right-hand tip in that face gives `MiA` the band along
+  its medial axis and leaves `GrA` 0.0675 mm² of the 0.4843 it holds today, which is the same
+  trade #126 made against `MiA` on this plate and no more supportable in this direction; the
+  reader marked no positive seed there. So the right-hand tip is left where the atlas's own
+  line ends, and what would settle it is a seed on that hemisphere or an ink boundary the
+  drawing does not carry.
+
+  One reading note on the report `corrections.py report` prints: its `— left hemisphere` and
+  `— right hemisphere` rows prorate an entry's area over its polygons by |area|, so a region
+  with a hole has the hole counted as area on the side it sits, and the side carrying it is
+  overstated. `MiA` here is an annulus on plates 5 and 7, so the true split is left 0.3530 to
+  **0.1556** and right 0.0465 unmoved on plate 5, and left 0.1790 unmoved and right 0.0000 to
+  **0.2358** on plate 7, where the report's rows read 0.3774/0.0221 → 0.1875/0.0146 and
+  0.1790/0.0000 → 0.0837/0.3311. The totals and every other row are right. The `inspect --qc`
+  pictures fill a region one polygon at a time for the same reason, so a ring reads there as a
+  filled disc with its hole drawn on top — on plates 5 and 7 the core inside `MiA` is
+  `EPlA`'s. Nothing in `tools/` is touched here; a fix to `hemispheres()` and to that fill is
+  its own pull request.
+- **`EPlA` follows its own leader on plates 5, 6 and 8.** The atlas prints the external
+  plexiform layer of the accessory olfactory bulb clear of the section on plates 5 and 6 and
+  draws a line from the word down into the bulb; on plate 8 it prints the word *on* the band
+  it names and draws no line at all. `label_leaders` read all three wrongly, and the region
+  came out somewhere else on every one of them. On **plate 5** the march stopped **0.84 mm**
+  short of the end of the printed line, where the line crosses the outer laminae, so `EPlA`
+  seeded the **39,050 px (1.926 mm²)** face that `EPl`, `Gl`, `GlA` and `Mi` are each
+  printed in, and the **4,319 px (0.213 mm²)** core the line really ends in was lettered by
+  nothing. On **plate 6** it stopped **0.53 mm** short, at the wall of `GrO`, so `EPlA`
+  seeded the 31,143 px granule layer of the main bulb on the right — and, mirrored about
+  ML 0, took the 5,391 px ring round the accessory bulb on the left, a face no printed word
+  names. On **plate 8** the mark the pass followed is not `EPlA`'s line at all: the atlas
+  draws it none, and the march walked **0.50 mm** out along the `MiA` leader that runs past
+  the word, so `EPlA` seeded the deep **3,194 px** band `GrA` is printed in while the
+  **3,362 px** band the word sits on was left unnamed. Three corrections,
+  `20260909T191540Z-p05-EPlA`, `-p06-EPlA` and `-p08-EPlA`, say the same thing on all three
+  plates: positive seeds where the printed line ends, negative seeds crossing out the ground
+  `EPlA` holds today.
+
+  That is the seed in the wrong face, in the form where **the line was misread**, and the
+  fix is one row of `seed_overrides` per misread box with `i` set — `i = 0` on plate 5,
+  `i = 1` on 6 and on 8 — which withdraws the marched tip and puts the seed where the reader
+  put it. The correction files carry no `label_index`, so `corrections.py apply` would have
+  written them as `i = −1`, seeds of their own *beside* the tips, and `EPlA` would have kept
+  the ground the negative seeds cross out; the rows are written through `atlaslib.save_db`
+  instead, in the layout `apply` writes, and `corrections/` is untouched. Each row sits at
+  the centre of the positive seeds the reader put in the face it names, except on plate 8,
+  where the band is a U and the centre of the five falls outside it, so the row takes the
+  seed in the trough.
+
+  **`EPlA` goes 0.0648 to 0.2210 mm² on plate 5**, one polygon still but a whole sealed face
+  now, its traced share 0.94 to **1.00**; **0.1980 to 0.3327 mm² on plate 8**, the right
+  hemisphere 0.0417 to 0.1765 against the left's unmoved 0.1562, both shares **1.00**; and
+  **0.2613 to 0.2942 mm² on plate 6**, where the right goes 0.0231 to 0.2095 and the left
+  0.2382 to 0.0847, the ring the mirror had given it withdrawn. Over the series `EPlA` goes
+  **0.953 to 1.277 mm² on the same five plates** and **0.2440 to 0.4894 mm³ in three mesh
+  components rather than six** — the region was in pieces because on three of its five
+  plates it was somewhere else.
+
+  What it costs is on plate 6, and it is the one thing here worth a second reading.
+  **`MiA` goes 0.2335 to 0.0243 mm²** there, its traced share 1.00 to 0.51: `MiA` held the
+  whole of the 4,602 px inner face of the accessory bulb, `EPlA`'s corrected tip lands in
+  that same face nearer its medial axis, and with no ink between them the watershed gives
+  `EPlA` the core and `MiA` the rim. The atlas prints both words into one face the drawing
+  seals, and nothing in the drawing divides them. **`GrA` goes 0.3282 to 0.4843 mm²** on the
+  same plate: the left ring was `EPlA`'s only because the misread tip mirrored into it, and
+  with the tip corrected the mirror of the right-hand `GrA` — whose own face is that ring's
+  mirror — takes it, at traced shares 0.97 and 0.94. `GrO` goes 3.2149 to 3.2342 and `IPl`
+  +0.0002. On plate 5 three entries move, `EPl` +0.0680 (the slab `EPlA` was holding in its
+  face), `MiA` −0.0073 and `Mi` −0.0017; on plate 8 eight move and **none by more than
+  0.0426 mm²** — `GrA` +0.0426, `GlA` −0.0039, `MiA` −0.0029, `dlo` −0.0006, `GrO` +0.0004,
+  `EPl` −0.0002, `Gl` and `ON` +0.0001. Nothing off plates 5, 6 and 8 moves.
+
+  Fourteen volumes move with them: `EPlA` 0.2440 to 0.4894 mm³ (6 → 3 components), `GrA`
+  1.1304 to 1.1926 (4 → 3), `MiA` 0.4224 to 0.3759, `EPl` 6.8211 to 6.8589, `GrO` 6.8000 to
+  6.7788, `GlA` 1.0935 to 1.0766, and `dlo`, `aci`, `FrA`, `ON`, `lo`, `AOE`, `Mi` and `Gl`
+  by less; `unnamed_fraction` goes 0.0344 to **0.0342** and `regions_partition_the_volume`
+  holds. `structure_plate_entries` stays 3,118 and the coloring 691 regions in 631 patches;
+  polygons go 6,015 to 6,017, points 168,790 to 168,801, `faces_named_by_one_abbreviation`
+  3,523 to 3,526, `seeds_moved_by_hand` 36 to 39, `section_covered_mean` 0.9485 to 0.9490,
+  `entries_without_a_drawn_outline` 316 to 317 — the rim `MiA` keeps on plate 6 is half
+  watershed — and **`boundary_edges_shared_exactly` stays 1.0**.
+
+  Two literals move, both of them counts of *this* kind of fix and both in
+  `tests/python/test_leaders.py`. The tips it tallies come from `label_leaders`, which a
+  `seed_overrides` row supersedes without rewriting, so a corrected tip is left visibly
+  sitting in the neighbour it used to take ground from — which is what the test's own
+  docstring says to expect. `194/9/37` becomes **`191/12/37`**, the `--odd` filter's 46
+  becomes **49**, and the list of superseded tips gains `(5, 'EPlA')`, `(6, 'EPlA')` and
+  `(8, 'EPlA')` beside `VMHSh` on 30, `4N` and `4Sh` on 39 and `Sp5O` on 51.
+  `label_inside_its_own_region` goes 0.9775 to **0.9770** for the same reason and no other:
+  it reads the recorded tip where a label has one, and these three are exactly the three
+  labels that flip. `METHODS.md` takes the polygon and point counts and the
+  `entries_without_a_drawn_outline` figure through its markers; no rule in it changed.
+
+  The reading not taken, on all three plates, is the tracing. Two faces the atlas separates
+  cut as one would put the word and the region in a single face, and adding the missing run
+  would divide them — but every face at issue here is already sealed by drawn ink on all
+  sides, which is what the traced shares of 1.00 on plates 5 and 8 say, and none of the three
+  corrections draws a boundary or an extent. Nor is it an island culled from `brain_outline`,
+  which would leave `EPlA` with no area at all rather than area in the wrong place, or a
+  label never read: `label_positions` carries every `EPlA` box on all three plates. Within
+  the seed reading, the alternative is `i = −1` beside the tips; the negative seeds are what
+  rule it out. What would settle plate 6 the other way is the one open question here, and it
+  is the reader's own: the file's note says **"GlA seems to be erroneously pointing to EPlA
+  in left hemisphere of plate 6"**, and it is right — the printed `GlA` leader on that
+  hemisphere, followed correctly, ends inside the 7,282 px core that `EPlA` and `MiA` are
+  both printed in, and `GlA` holds 0.2724 mm² of it. Four of the reader's positive seeds are
+  in that share and are still `GlA` after this fix. Moving `GlA` needs a reading of which
+  band the accessory glomerular layer is on plate 6, which neither the drawing nor these
+  three files supplies — the atlas prints `GlA` once on the plate, on the left, and draws no
+  other line for it — so it is left for a correction of its own, on `GlA`.
 - **`EPlA` follows its own leader on plates 5, 6 and 8.** The atlas prints the external
   plexiform layer of the accessory olfactory bulb clear of the section on plates 5 and 6 and
   draws a line from the word down into the bulb; on plate 8 it prints the word *on* the band
