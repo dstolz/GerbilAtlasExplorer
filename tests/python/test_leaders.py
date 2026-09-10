@@ -86,33 +86,38 @@ def test_where_an_end_falls_is_the_apps_own_hit_test(db, rows):
 
 
 def test_the_tips_land_where_the_atlas_says_they_do(rows, db):
-    """191 of the 240 land in the region their label names.
+    """179 of the 240 land in the region their label names.
 
-    Of the rest, 37 land in no region at all -- an unassigned face, or an outline too
-    thin to hold the point that seeded it -- and twelve in a neighbor's ground. Five of
-    those twelve are names that name no region: a fissure is the line between two regions
+    Of the rest, 35 land in no region at all -- an unassigned face, or an outline too
+    thin to hold the point that seeded it -- and 26 in a neighbor's ground. Five of
+    those 26 are names that name no region: a fissure is the line between two regions
     (see `features`), so a line drawn to one lands in whichever of them holds the point.
 
     It was 177/9/54 while `MIN_AREA_PX` stood at 600: seventeen of those tips sat in the
     middle of a face too small to publish, and came back to their own region when the
     floor came down to `MIN_FACE_PX`.
 
-    The other seven are tips a row of `seed_overrides` supersedes, and they show here
+    The other 21 are tips a row of `seed_overrides` supersedes, and they show here
     precisely because they were fixed. Three are marks the pass misread -- 4Sh and 4N on
     plate 39, Sp5O on 51; three more are EPlA on plates 5, 6 and 8, where the march
     stopped a real line short of its end on 5 and 6 and followed the neighboring MiA
-    leader on 8; and the last is the right VMHSh on 30, a real line the march followed to
-    two pixels short of the shell it points into. In every case the extents no longer
-    follow the recorded tip, so the tip is left visibly sitting in the neighbor it used
-    to take ground from. A tip in a neighbor that is neither a feature nor superseded is
-    a new one of these.
+    leader on 8; one is the right VMHSh on 30, a real line the march followed to two
+    pixels short of the shell it points into; and fourteen are the joined E/OV label on
+    plates 7, 9, 14 and 15, where the march stopped each line short of the olfactory
+    ventricle it is drawn to and both names of the label carry the same stopped tip. In
+    every case the extents no longer follow the recorded tip, so the tip is left visibly
+    sitting in the neighbor it used to take ground from. A tip in a neighbor that is
+    neither a feature nor superseded is a new one of these.
     """
     where = {k: [r for r in rows if L.lands(r) == k] for k in ('own', 'other', 'none')}
-    assert (len(where['own']), len(where['other']), len(where['none'])) == (191, 12, 37)
+    assert (len(where['own']), len(where['other']), len(where['none'])) == (179, 26, 35)
     for r in where['other']:
         assert r['feature'] or r['superseded_by'], (r['plate'], r['abbr'], r['index'])
     assert sorted((r['plate'], r['abbr']) for r in where['other'] if r['superseded_by']) == \
-        [(5, 'EPlA'), (6, 'EPlA'), (8, 'EPlA'),
+        [(5, 'EPlA'), (6, 'EPlA'),
+         (7, 'E'), (7, 'E'), (7, 'OV'), (7, 'OV'), (8, 'EPlA'), (9, 'E'), (9, 'OV'),
+         (14, 'E'), (14, 'E'), (14, 'OV'), (14, 'OV'),
+         (15, 'E'), (15, 'E'), (15, 'OV'), (15, 'OV'),
          (30, 'VMHSh'), (39, '4N'), (39, '4Sh'), (51, 'Sp5O')]
 
 
@@ -141,7 +146,7 @@ def test_filters(db, rows):
     a.shared = True
     assert len(L.select(rows, a, db)) == 42            # 21 lines, two names each
     a.shared, a.odd = False, True
-    assert len(L.select(rows, a, db)) == 49            # 12 in a neighbor, 37 in none
+    assert len(L.select(rows, a, db)) == 61            # 26 in a neighbor, 35 in none
     a.odd, a.abbr = False, 'VMHSh'
     assert {r['abbr'] for r in L.select(rows, a, db)} == {'VMHSh'}
     a.abbr = 'auditory cortex'                         # an alias resolves to its members
