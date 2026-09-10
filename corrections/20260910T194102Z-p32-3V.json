@@ -1,0 +1,60 @@
+{
+ "schema": "gerbil-atlas-correction/1",
+ "id": "20260910T194102Z-p32-3V",
+ "created": "2026-09-10T19:41:02Z",
+ "author": "",
+ "plate": 32,
+ "ap_bregma_mm": -3.05,
+ "abbr": "3V",
+ "hemisphere": "both",
+ "problem": "fix",
+ "seeds": [
+  {
+   "abbr": "3V",
+   "kind": "positive",
+   "page_px": [1624.95,1035.85],
+   "mm": [-0.3,-3.445],
+   "note": ""
+  },
+  {
+   "abbr": "3V",
+   "kind": "positive",
+   "page_px": [1702.85,1051.05],
+   "mm": [0.246,-3.552],
+   "note": ""
+  },
+  {
+   "abbr": "3V",
+   "kind": "positive",
+   "page_px": [1697.15,984.55],
+   "mm": [0.206,-3.085],
+   "note": ""
+  },
+  {
+   "abbr": "3V",
+   "kind": "positive",
+   "page_px": [1613.55,975.05],
+   "mm": [-0.38,-3.018],
+   "note": ""
+  },
+  {
+   "abbr": "3V",
+   "kind": "positive",
+   "page_px": [1666.75,1353.15],
+   "mm": [-0.007,-5.677],
+   "note": ""
+  }
+ ],
+ "boundaries": [],
+ "extents": [],
+ "notes": [],
+ "preview": null,
+ "snapshot": "corrections/20260910T194102Z-p32-3V.png",
+ "source": {
+  "commit": "",
+  "site": "https://dstolz.github.io/GerbilAtlasExplorer/",
+  "repo": "dstolz/GerbilAtlasExplorer",
+  "tool": "atlasfix (the published page) 1.0",
+  "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+ }
+}
