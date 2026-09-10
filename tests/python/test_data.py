@@ -63,8 +63,8 @@ def test_label_positions(db):
             for b in boxes:
                 assert len(b) == 4 and all(0 <= v <= 1 for v in b)
                 n += 1
-    assert n == db['verification']['label_positions_located'] == 6345
-    assert sum(len(d) for d in LP.values()) == db['verification']['ocr_confirmed'] == 3349
+    assert n == db['verification']['label_positions_located'] == 6349
+    assert sum(len(d) for d in LP.values()) == db['verification']['ocr_confirmed'] == 3351
 
 
 def test_every_label_is_inside_the_printed_coordinate_box(db):
@@ -314,7 +314,7 @@ def test_brain_outline(db):
 
 
 def test_labels_inside_outline(db):
-    """97.0% of printed labels fall inside their plate's outline (METHODS): the outline
+    """96.9% of printed labels fall inside their plate's outline (METHODS): the outline
     follows the drawn line now, so a word printed on the edge or in a fissure's cleft
     falls outside it where the photograph's edge used to take it in."""
     fr = A.Frame(db['plate_frame'])

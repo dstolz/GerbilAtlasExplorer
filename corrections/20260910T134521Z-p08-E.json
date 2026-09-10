@@ -1,0 +1,39 @@
+{
+ "schema": "gerbil-atlas-correction/1",
+ "id": "20260910T134521Z-p08-E",
+ "created": "2026-09-10T13:45:21Z",
+ "author": "",
+ "plate": 8,
+ "ap_bregma_mm": 5.35,
+ "abbr": "E",
+ "hemisphere": "left",
+ "problem": "misdrawn",
+ "seeds": [
+  {
+   "abbr": "E",
+   "kind": "positive",
+   "page_px": [1515.2,1424.23],
+   "mm": [-1.072,-6.178],
+   "note": ""
+  },
+  {
+   "abbr": "E",
+   "kind": "positive",
+   "page_px": [1508.64,1440.63],
+   "mm": [-1.118,-6.294],
+   "note": ""
+  }
+ ],
+ "boundaries": [],
+ "extents": [],
+ "notes": [],
+ "preview": null,
+ "snapshot": "corrections/20260910T134521Z-p08-E.png",
+ "source": {
+  "commit": "",
+  "site": "https://dstolz.github.io/GerbilAtlasExplorer/",
+  "repo": "dstolz/GerbilAtlasExplorer",
+  "tool": "atlasfix (the published page) 1.0",
+  "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+ }
+}

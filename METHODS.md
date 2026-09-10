@@ -523,15 +523,15 @@ Three checks, none of which the extraction was tuned to pass:
 | --- | --- | --- |
 | Highest point of any outline | DV 0 is the plane through the most dorsal points of cerebrum and cerebellum | **DV −0.06 mm** — reaches it, never crosses it |
 | Lowest point of any outline | the deepest printed label sits at DV −9.02 | **DV −9.04 mm** — just below it |
-| Printed labels inside their own plate's outline, seeded where the atlas seeds them (the end of a leader line where it draws one, else the word) | — | **97.0%** (6,154 of 6,345) |
+| Printed labels inside their own plate's outline, seeded where the atlas seeds them (the end of a leader line where it draws one, else the word) | — | **96.9%** (6,154 of 6,349) |
 
-Of the 191 that fall outside, 115 were inside the photograph's edge and are not inside the
+Of the 195 that fall outside, 115 were inside the photograph's edge and are not inside the
 drawing's: 54 of those are the names of fissures and sulci, which the atlas prints in the
 cleft at the section edge and which name no region, and the rest are words printed
 straddling the outer line, a median 0.16 mm out — `region_extents` seeds those from the
 nearest face within `SNAP_PX`, as it always did for a word printed beside the section.
 
-What that did to the regions: 26 structure–plate entries lost the only area they had,
+What that did to the regions: 25 structure–plate entries lost the only area they had,
 each a word printed beside the section — `Mi` on the bulb plates, `LNTB` on 45, `LRtPC` on
 57 and 58, `dsc` on 53 and 58 — whose region had been the word's own ink on the
 photograph's edge, 11–61% of it in stained tissue and none of it inside the drawn line; and
@@ -539,8 +539,8 @@ photograph's edge, 11–61% of it in stained tissue and none of it inside the dr
 round half the brainstem, which its label on the edge had seeded. The rest of the change is
 the ring: the cerebellar lobules on 53 and 55 and the bulb layers on 7 and 8 lose the one to
 four pixels of stain outside their outer line, 0.1–0.2 mm² each. `structure_plate_entries`
-goes 3,118 to 3,092, `polygons` 6,017 to 5,819, and the unnamed faces on the outline from
-369 to 7.
+goes 3,117 to 3,092, `polygons` 6,017 to 5,823, and the unnamed faces on the outline from
+371 to 7.
 
 ## Region extents
 
@@ -550,7 +550,7 @@ fractions of the frame-cropped image — the same frame and the same convention
 `brain_outline` uses, so the app's existing point-in-polygon test reads them unchanged.
 **<!-- n:region_extents.summary.structure_plate_entries -->3,092<!-- /n --> structure-plate entries carry an area**, 97% of the 3,215 the label pass located
 and 93% of the 3,365 the published index lists — both counted over the structures that are
-regions — as <!-- n:region_extents.summary.polygons -->5,819<!-- /n --> polygons over <!-- n:region_extents.summary.points -->154,816<!-- /n --> points. Where
+regions — as <!-- n:region_extents.summary.polygons -->5,823<!-- /n --> polygons over <!-- n:region_extents.summary.points -->154,923<!-- /n --> points. Where
 the atlas prints two names as one label the two share an entry, so a name having no entry of
 its own does not mean it has no area — see step 8. Twenty of the 724 names have no entry
 anywhere, and never could: they name no region — see step 7.
@@ -667,7 +667,7 @@ to **0.7% of polygons** and the repeated vertices to none.
 the difference between a polygon that reads as the line the atlas drew and one that visibly
 cuts its corners. The floor is the page lattice: at 0.35 px the tolerance drops below the
 raster step and the polygon starts recording the staircase rather than the line, at seven
-times the points. At 0.5 it does not — <!-- n:region_extents.summary.points -->154,816<!-- /n --> points against the 77,453 the 2 px pass
+times the points. At 0.5 it does not — <!-- n:region_extents.summary.points -->154,923<!-- /n --> points against the 77,453 the 2 px pass
 wrote, for a median traced share of **1.00** where it was 0.98, and it takes the last of the
 crossings with it: **0.03% of polygons**, two of 7,048, against 9% before either change.
 A thin structure is what a coarse tolerance cannot draw without folding its two sides
@@ -705,7 +705,7 @@ structure can have a drawn rim and an invented inner wall. So the split itself i
 the share of the wall the watershed put *inside* a face that lands on traced ink. Below
 half, nobody drew it — and an entry that sits only in faces like that, and whose own border
 is under three-quarters drawn, carries `w`. That is the cerebellar lobules against each
-other, the mediodorsal thalamus, the lateral hypothalamic zones, and little else: **<!-- n:region_extents.summary.entries_without_a_drawn_outline -->316<!-- /n --> of
+other, the mediodorsal thalamus, the lateral hypothalamic zones, and little else: **<!-- n:region_extents.summary.entries_without_a_drawn_outline -->315<!-- /n --> of
 <!-- n:region_extents.summary.structure_plate_entries -->3,092<!-- /n --> entries**, against the 1,529 whose seed lands in a face some other name seeds too. It used to be 372: 63 left, 3
 arrived, 18 more left when step 10 was tightened — a polygon that tracks the ink to half
 a pixel has more of its border *on* the ink, so an entry whose own border was just under
@@ -1176,8 +1176,8 @@ why this is not a segmentation either.
 
 | Grade | What it is | Count |
 | --- | --- | --- |
-| `surface` | At least three consecutive plates. The mesh follows the drawn boundaries, interpolated between them. | 428 |
-| `slab` | One or two plates. The series does not sample the structure along AP at all, so the mesh is a **convex hull per connected component** — a claim about where the structure is, not about what shape it is — closed half a section step beyond the plates that name it. | 261 |
+| `surface` | At least three consecutive plates. The mesh follows the drawn boundaries, interpolated between them. | 427 |
+| `slab` | One or two plates. The series does not sample the structure along AP at all, so the mesh is a **convex hull per connected component** — a claim about where the structure is, not about what shape it is — closed half a section step beyond the plates that name it. | 262 |
 
 A `slab` is what "circumscribed" means here and is marked `bounding: true`. Unlike the
 `surface` meshes, two slabs may overlap: a bounding volume is not a partition. The hull is
@@ -1209,8 +1209,8 @@ In practice it does not separate them cleanly enough to be the default. It remov
 filaments the argument predicts — and it costs 45 printed labels their place inside the
 surface, taking containment from 98.8% to 98.1% (measured when the outline was still the
 photograph's edge). Some of those 45 sat on a spur and belong outside; which ones cannot be
-told from here. Left off, the surface contains **97.0%** of the printed labels, which is
-the **97.0%** the 2-D outline reports. So the geometry is left honest, as the 2-D extraction
+told from here. Left off, the surface contains **96.9%** of the printed labels, which is
+the **96.9%** the 2-D outline reports. So the geometry is left honest, as the 2-D extraction
 left it, and the opening is a flag.
 
 ### Checks
@@ -1225,8 +1225,8 @@ extraction's own guarantees survived into three dimensions.
 | Regions partition the volume | a point is inside one region or none | **holds**: every voxel inside the surface carries exactly one label, or is an unnamed sealed face — 1.9% of the brain (4.2% before the outline moved onto the drawn line, when the strip between the two was unnamed) |
 | Highest point of the surface | DV −0.06 | **DV −0.10** (one voxel) |
 | Lowest point of the surface | DV −9.04 | **DV −9.00** |
-| Printed labels inside the surface | 97.0% | **97.0%** |
-| Printed labels inside the region they name | 97.6% | **95.2%** — the 2-D figure is after labels were pulled to the nearest face; this one is not |
+| Printed labels inside the surface | 96.9% | **96.9%** |
+| Printed labels inside the region they name | 97.3% | **94.9%** — the 2-D figure is after labels were pulled to the nearest face; this one is not |
 | Brain volume | not published | **1,028 mm³** |
 
 Two costs are worth stating because they are larger than the interpolation is likely to be.
