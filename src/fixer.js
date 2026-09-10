@@ -423,7 +423,6 @@ const Static = {
     for (const it of items) {
       const doc = buildDoc(it.draft, now);
       if (!doc.abbr) throw new Error('name the region first');
-      if (!doc.problem) throw new Error('say what is wrong first');
       if (!doc.seeds.length && !doc.boundaries.length && !doc.extents.length) {
         throw new Error('mark something first: a seed, a boundary or an extent');
       }
@@ -685,20 +684,25 @@ function marksSaid(D) {
 
 /* The branch a send goes on, and the message on its commit: one correction is named
    for its id, as it always was; several are named for the moment they were sent
-   together, and the message lists them. tools/atlasfix.py says the same. */
+   together, and the message lists them. What is wrong is a plate's own words and
+   optional, so a plate left without them writes no line rather than an empty one, and
+   a send with none written writes no body. tools/atlasfix.py says the same. */
 const branchFor = (docs, stamp) => 'correction/' + (docs.length === 1 ? docs[0].id : stamp);
 function messageFor(docs) {
   if (docs.length === 1) {
     const d = docs[0];
-    return 'Correction: ' + d.abbr + ' on plate ' + d.plate + '\n\n' + d.problem + '\n\nCorrection-Id: ' + d.id;
+    return 'Correction: ' + d.abbr + ' on plate ' + d.plate
+      + (d.problem ? '\n\n' + d.problem : '') + '\n\nCorrection-Id: ' + d.id;
   }
   const said = [];
   for (const d of docs) {
+    if (!d.problem) continue;
     const line = 'plate ' + d.plate + ': ' + d.problem;
     if (!said.includes(line)) said.push(line);
   }
   return 'Corrections: ' + docs.map((d) => d.abbr + ' on plate ' + d.plate).join(', ')
-    + '\n\n' + said.join('\n') + '\n\n' + docs.map((d) => 'Correction-Id: ' + d.id).join('\n');
+    + (said.length ? '\n\n' + said.join('\n') : '')
+    + '\n\n' + docs.map((d) => 'Correction-Id: ' + d.id).join('\n');
 }
 
 /* ------------------------------------------------------------------- plate */
@@ -1490,17 +1494,16 @@ async function commit() {
 
   const send = async () => {
     const dry = $('m-dry').checked, snap = $('m-snap').checked;
-    // what is wrong on each plate, as it reads on the sheet, back into the drafts
-    const missing = [];
+    // what is wrong on each plate, as it reads on the sheet, back into the drafts. A
+    // plate can go without a word: the marks are the correction, and the file carries
+    // an empty `problem` where none was written.
     for (const n of plates) {
       const t = $('m-prob-' + n).value.trim();
-      if (!t) missing.push(n);
       const D = S.drafts.get(n);
       if (D) D.problem = t;
       if (n === S.plate) { S.draft.problem = t; $('problem').value = t; }
       for (const it of B) if (it.plate === n) it.draft.problem = t;
     }
-    if (missing.length) { toast('Say what is wrong on plate ' + missing.join(', ') + ' first', true); return; }
     closeSheet();
     try {
       const pngs = snap ? await snapshots(plates) : new Map();
@@ -1526,8 +1529,9 @@ async function commit() {
   const said = (n) => (S.drafts.get(n) || {}).problem || '';
   const list = B.map((it) => '<li>plate ' + it.plate + ', <b>' + esc(it.draft.abbr || '(no region)')
     + '</b>: ' + esc(marksSaid(it.draft)) + '</li>').join('');
-  const probs = plates.map((n) => '<label class="prob">what is wrong on plate ' + n
-    + '<textarea id="m-prob-' + n + '" rows="2">' + esc(said(n)) + '</textarea></label>').join('');
+  const probs = plates.map((n) => '<label class="prob">what is wrong on plate ' + n + ' (optional)'
+    + '<textarea id="m-prob-' + n + '" rows="2" placeholder="a sentence or two, for the session '
+    + 'that applies it">' + esc(said(n)) + '</textarea></label>').join('');
   sheet('Send ' + counted(B.length, 'correction') + (plates.length > 1 ? ' on ' + plates.length + ' plates' : ''),
     '<p id="m-what"></p><ul class="files" id="m-list">' + list + '</ul>' + probs
     + '<pre id="mjson"></pre>'

@@ -24,8 +24,10 @@ millimetres, and sends it.
     python3 tools/atlasfix.py --draft FILE          # back to a draft, or any correction
     python3 tools/atlasfix.py 19 --no-browser       # just serve; open the URL yourself
 
-In the page: choose the region, say what is wrong, then drop a **Seed** where the
-region is, draw the **Boundary** the tracing missed, or pull its **Extent** into shape.
+In the page: choose the region, then drop a **Seed** where the region is, draw the
+**Boundary** the tracing missed, or pull its **Extent** into shape. A word on what is
+wrong goes with the plate and is what the session that applies it reads first; it is
+optional, and the marks are the correction either way.
 **Pick** reads what the extraction has under the pointer, **Inspect** reads the whole
 draft against it, **Recut** builds the plate again with the draft applied, and
 **Commit** writes every plate's marks -- a file for each region marked on each plate
@@ -516,17 +518,24 @@ def branch_name(ids, stamp):
 
 
 def commit_message(docs):
+    """What is wrong is a plate's own words and optional, so a plate left without them
+    writes no line rather than an empty one, and a send with none written writes no
+    body. src/fixer.js says the same."""
     if len(docs) == 1:
         d = docs[0]
-        return 'Correction: %s on plate %d\n\n%s\n\nCorrection-Id: %s\n' % (d['abbr'], d['plate'], d['problem'], d['id'])
+        body = '\n%s\n' % d['problem'] if d['problem'] else ''
+        return 'Correction: %s on plate %d\n%s\nCorrection-Id: %s\n' % (d['abbr'], d['plate'], body, d['id'])
     said = []
     for d in docs:
+        if not d['problem']:
+            continue
         line = 'plate %d: %s' % (d['plate'], d['problem'])
         if line not in said:
             said.append(line)
-    return ('Corrections: %s\n\n%s\n\n%s\n'
+    return ('Corrections: %s\n%s\n%s\n'
             % (', '.join('%s on plate %d' % (d['abbr'], d['plate']) for d in docs),
-               '\n'.join(said), '\n'.join('Correction-Id: %s' % d['id'] for d in docs)))
+               ('\n%s\n' % '\n'.join(said)) if said else '',
+               '\n'.join('Correction-Id: %s' % d['id'] for d in docs)))
 
 
 def commit(S, draft=None, png=None, dry=False, remote='origin', base='main', items=None):
@@ -549,8 +558,6 @@ def commit(S, draft=None, png=None, dry=False, remote='origin', base='main', ite
         doc = document(it['draft'], S, when=stamp)
         if not doc['abbr']:
             raise Failed('name the region first')
-        if not doc['problem']:
-            raise Failed('say what is wrong first')
         if not (doc['seeds'] or doc['boundaries'] or doc['extents']):
             raise Failed('mark something first: a seed, a boundary or an extent')
         with as_failure():
