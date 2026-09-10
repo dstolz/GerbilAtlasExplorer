@@ -7,8 +7,10 @@
 # builds the site from the commit it deploys and stamps it with that commit.
 #
 # That only reaches readers once Settings -> Pages -> Source is "GitHub Actions". Until
-# it is, Pages serves main's root, which is the committed pages, and a reader is told no
-# build rather than a token (src/app.js drops the claim when the stamp is not one). The
+# it is, Pages serves main's root, which is the committed pages: a reader is told no build
+# rather than a token, and the footer dates the data instead of the build (src/app.js drops
+# the claim when the stamp is not one and falls back to version.generated, which is a day
+# with no hour behind it -- the build's own date and time come back with the stamp). The
 # deploy job reads the setting and waits for it rather than failing every push; the build
 # job runs either way, so the switch is one setting and no further change here. The URL
 # does not change.
