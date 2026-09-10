@@ -365,6 +365,140 @@ carries a `version` block naming the release its derived fields were built for.
   are what carry the other two and a plain mesh link carries none.
 
 ### Fixed
+- **The ependyma follows its own `E/OV` line into the olfactory ventricle, on twelve
+  plates.** The atlas letters the olfactory ventricle with one compound label, `E/OV`, once
+  per hemisphere on every plate from 1 to 15; it prints the label clear of the section, down
+  by the ventral rim or below it, and draws a line from the word up into the slit it names.
+  Almost none of those lines reaches the slit in `label_leaders`. Where the march stopped
+  short, `E` seeded whatever face the tip fell in and the watershed cut it a share of that
+  neighbour: **0.2246 mm² of the external plexiform layer on plate 7** out of the 21,312 px
+  face `EPl`, `EPlA` and it share, **0.0367 mm² out of the 11,761 px block the anterior
+  olfactory nucleus fills on plate 9** at a traced share of 0.63, and smaller wedges on 13,
+  14 and 15. Where no line was found at all, the *word* seeded itself, and `E` came out as a
+  strip of the nerve layer the word is printed on — a **1,417 px** strip on plate 1, **761 px**
+  on plate 6. Twelve corrections, `20260910T134521Z-p01-E` through `-p15-E`, say the same
+  thing on all twelve plates: positive seeds in the ventricle, negative seeds crossing out
+  the ground `E` holds today.
+
+  It is the seed in the wrong face on nine of the twelve, and the fix is a row of
+  `seed_overrides` per misread box with `i` set, which withdraws the marched tip and puts the
+  seed where the reader put it. **Both** names of the compound need one: `label_leaders`
+  records the same tip against `E` and against `OV`, and `label_blocks` seeds a joined label
+  under its first name, so a row for `E` alone leaves `OV`'s copy of the same tip seeding the
+  same wrong face — which is why plate 7 keeps its wedge until the `OV` row goes in beside
+  the `E` one. Twenty-six rows in all, on plates 1, 4, 6, 7, 9, 11, 13, 14 and 15. The
+  correction files carry no `label_index`, so `corrections.py apply` would have written them
+  as `i = −1`, seeds of their own *beside* the tips, and `E` would have kept the ground the
+  negative seeds cross out; the rows are written through `atlaslib.save_db` instead, in the
+  layout `apply` writes, and `corrections/` is untouched.
+
+  Three plates are not that, and each is its own reading:
+
+  - **Plate 8 — the join was never read.** The plate prints `E/OV` on both sides like its
+    neighbours, but `label_blocks` carries no group for it, so the two names seeded as two
+    regions and split the plate between them: the left line was recorded against `OV`, which
+    took the whole 1,790 px slit, and the right against `E`, which took the 1,699 px one.
+    `['E', 'OV']` on plate 8 is the fix, and it is the same row twelve other plates in this
+    range already carry.
+  - **Plate 11 — the label was never read.** The atlas prints `E/OV` on both sides of plate
+    11 and `label_positions` had neither word, so nothing seeded the ventricle and `E` had no
+    area on the plate at all. The four boxes are added by hand, read off the plate image
+    against plate 12's recorded boxes as a check, with `['E', 'OV']` beside them and a row of
+    `seed_overrides` per box carrying the end of each printed line. A `−1` row alone would
+    not do: `test_region_extents` requires every published entry to have a printed box on its
+    plate, and without one the plate-11 entry is a region the atlas never labelled here.
+  - **Plate 3 — the seed in the wrong face was one of ours.** Correction
+    `20260908T012002Z-p03-E` (#110) gave `E` the run of the slit above the pinch with a `−1`
+    row; this reader crosses that run out with four negative seeds, and the drawing is with
+    them. The printed `E/OV` line ends in the ventral spindle, 0.54 mm below the foot of the
+    run, and the line that ends *at* the run is `aci`'s: followed to its own end it reaches
+    page x 1803, four pixels off the run's lateral wall, where the leader pass stopped it
+    63 px short of that in the bulb core. The row comes out; the run is unassigned again
+    rather than handed to `aci`, because giving a fibre tract ground is a correction on
+    `aci`, not on `E`.
+
+  **`E` goes 1.580 to 1.679 mm² over the series** and **0.4268 to 0.6986 mm³ in 10 mesh
+  components rather than 18** — the region was in eighteen pieces because on most of its
+  plates it was somewhere else. Per plate, gains first: **0.0295 → 0.1624 mm² on plate 6**
+  (one polygon to two, one per hemisphere), **0.0929 → 0.1884 on 8**, **0.1330 → 0.1927 on
+  4**, **0.0367 → 0.1192 on 9**, **0.0237 → 0.0548 on 15**, and **no area → 0.0228 on 11**.
+  Losses are the ground the negative seeds cross out: **0.2450 → 0.1843 on plate 7**,
+  **0.1652 → 0.0953 on 13**, **0.1323 → 0.0386 on 1**, **0.1008 → 0.0677 on 3**, and
+  **0.0681 → no area on 14**. The traced shares say what kind of outline `E` now has: plate 9
+  goes 0.63 to 1.00 and 1.00, plate 15 0.81 to 1.00 and 1.00, plate 7 loses the 0.37 polygon
+  and keeps two at 1.00. All but two of `E`'s polygons on these plates are now faces the
+  drawing seals, bounded by the atlas's own ink.
+
+  Thirty-eight other (plate, region) entries move beside `E` itself, all of them on the
+  twelve plates and only four by more than 0.03 mm²: **`EPl` +0.2250** on plate 7 (the wedge
+  `E` was holding in its face), **`OV` −0.0955** on plate 8, which is not a loss but the join
+  — `OV` has no entry of its own there now and the app answers it with `E`'s outline, as it
+  does on twelve other plates — **`3` +0.0669** on plate 14 (the other name printed in the
+  face `E` withdraws from) and **`AOV` +0.0373** on 9. Then `IEn` +0.0248 on 15, `AOM`
+  −0.0220 on 11, `GrO` +0.0187 on 7, `aca` +0.0165 on 15 and +0.0157 on 14, `aci` −0.0118 on
+  6, −0.0075 on 7 and −0.0021 on 4, `IPl` −0.0107 on 1 and +0.0066 on 6, and twenty-four
+  entries under 0.003 mm². Nothing off these twelve plates moves.
+
+  Thirty-six volumes move with them: `E` 0.4268 → 0.6986 mm³,
+  `EPl` 6.8589 → 6.9696, `OV` 0.1131 → 0.0190 (3 → 1 components), `IPl` 0.7501 → 0.7279,
+  `Gl` 6.1859 → 6.1658, `aci` 1.2861 → 1.2665 and the rest by less; `unnamed_fraction` goes
+  0.0342 to **0.0339** and `regions_partition_the_volume` holds.
+
+  `structure_plate_entries` goes 3,118 to **3,117** — `E` gains plate 11 and loses plate 14,
+  `OV` loses plate 8 — the coloring stays 691 regions in 631 patches, polygons go 6,017 to
+  **6,014**, points 168,801 to **168,809**, `faces_named_by_one_abbreviation` 3,526 to
+  **3,536**, `seeds_moved_by_hand` 39 to **64**, `section_covered_mean` 0.9490 to **0.9493**,
+  `entries_without_a_drawn_outline` stays 317, and **`boundary_edges_shared_exactly` stays
+  1.0**. `label_inside_its_own_region` goes 0.9770 to **0.9746**, which is the fix rather
+  than a cost: `E/OV` is printed outside the region it names on all fifteen plates, and four
+  more of those labels exist now than did before.
+
+  Five test literals move, and all five are counts of inputs this correction adds. In
+  `tests/python/test_data.py` and `test_atlaslib.py` the located-label count goes 6,345 to
+  **6,349** and the (plate, name) pairs 3,349 to **3,351**: the four `E/OV` boxes added to
+  plate 11. In `tests/python/test_leaders.py` the tally of where the recorded tips land goes
+  `191/12/37` to **`179/26/35`** and the `--odd` filter's 49 to **61**, and the list of
+  superseded tips gains fourteen rows — `E` and `OV` on plates 7, 14 and 15 and both names
+  once on 9 — beside `EPlA` on 5, 6 and 8, `VMHSh` on 30, `4N` and `4Sh` on 39 and `Sp5O` on
+  51. That test's own docstring says to expect this: a `seed_overrides` row supersedes a tip
+  without rewriting `label_leaders`, so a corrected tip is left visibly sitting in the
+  neighbour it used to take ground from. `METHODS.md` takes `structure_plate_entries`,
+  polygons and points through its markers; no rule in it changed.
+
+  **Four of the twelve plates the reader marked are not fixed, and the reason is the same on
+  all four: `MIN_FACE_PX`.** A face under 400 page px — 0.0198 mm² — is tracer noise as far
+  as `build_region_extents` is concerned: `locate()` will not seed it, and `MIN_AREA_PX`
+  would not publish a territory that size anyway. The ventricle the atlas draws is smaller
+  than that from plate 12 back: **203 px on plate 12**, **211 and 259 px on 13**, **266 and
+  258 px on 14**, and on **plate 1** the slit is drawn so fine that the tracing renders it as
+  a chain of eight faces of 96 to 173 px apiece. So on plate 12 nothing at all is done — the
+  `E/OV` tip already lands *inside* the 203 px lens, which is the one plate here where every
+  input is already right and the floor is the whole of what is wrong. On 1, 13 and 14 the
+  rows still go in, because the negative seeds are unambiguous and withdrawing the box is
+  what honours them; what the positive seeds ask for cannot be given, so `E` ends plate 14
+  with no area and plate 1 with its left slit only, and the right half of plate 13 keeps the
+  0.0953 mm² the reader crosses out because the tip snaps back into the same 3,833 px face
+  it came from. Plate 11's left spindle, at **389 px**, misses by eleven. This is a fault in
+  the tool rather than in the atlas or in this branch's inputs, and it is not fixed here: the
+  floor came down from 600 to 400 once already, for exactly this reason — the note on
+  `MIN_AREA_PX` records the 51 sealed faces a single label seeded that were being dropped —
+  and moving it again is its own pull request, made once against the whole series rather
+  than once per correction in flight.
+
+  The reading not taken, on all twelve, is the tracing. Two faces the atlas separates cut as
+  one would put the word and the region in a single face, and adding the missing run would
+  divide them — but every face `E` is given here is already sealed on all sides by drawn ink,
+  which is what the traced shares of 1.00 say, and not one of the twelve files draws a
+  boundary or an extent. Nor is any of them an island culled from `brain_outline`, which
+  would leave `E` with no area rather than area in the wrong place, on eleven of the twelve.
+  On plate 11 it would look like one, and is not: the section outline holds both spindles,
+  and what was missing was the label. What would tell the two small-face plates apart from a
+  tracing fault is the drawing at page resolution rather than the 1,100 × 703 plate image
+  this session can read: on plate 1 the slit's chain is separated by four-point stubs 5 px
+  long, and if those are the tracer's own specks rather than ink the atlas prints, removing
+  them merges the chain into one face of about 1,000 px and the reader's two seeds would
+  take it. At the resolution available here that cannot be shown either way, so no path was
+  removed.
 - **`EPlA` follows its own leader on plates 5, 6 and 8.** The atlas prints the external
   plexiform layer of the accessory olfactory bulb clear of the section on plates 5 and 6 and
   draws a line from the word down into the bulb; on plate 8 it prints the word *on* the band
