@@ -1,0 +1,67 @@
+{
+ "schema": "gerbil-atlas-correction/1",
+ "id": "20260910T194102Z-p26-SChVM",
+ "created": "2026-09-10T19:41:02Z",
+ "author": "",
+ "plate": 26,
+ "ap_bregma_mm": -0.95,
+ "abbr": "SChVM",
+ "hemisphere": "both",
+ "problem": "fix",
+ "seeds": [
+  {
+   "abbr": "SChVM",
+   "kind": "positive",
+   "page_px": [1625.31,1681.33],
+   "mm": [-0.297,-7.985],
+   "note": ""
+  },
+  {
+   "abbr": "SChVM",
+   "kind": "positive",
+   "page_px": [1636.29,1709.56],
+   "mm": [-0.22,-8.184],
+   "note": ""
+  },
+  {
+   "abbr": "SChVM",
+   "kind": "positive",
+   "page_px": [1659.43,1709.56],
+   "mm": [-0.058,-8.184],
+   "note": ""
+  },
+  {
+   "abbr": "SChVM",
+   "kind": "positive",
+   "page_px": [1682.57,1710.74],
+   "mm": [0.104,-8.192],
+   "note": ""
+  },
+  {
+   "abbr": "SChVM",
+   "kind": "positive",
+   "page_px": [1702.57,1722.5],
+   "mm": [0.244,-8.275],
+   "note": ""
+  },
+  {
+   "abbr": "SChVM",
+   "kind": "positive",
+   "page_px": [1705.31,1696.62],
+   "mm": [0.264,-8.093],
+   "note": ""
+  }
+ ],
+ "boundaries": [],
+ "extents": [],
+ "notes": [],
+ "preview": null,
+ "snapshot": "corrections/20260910T194102Z-p26-SChVM.png",
+ "source": {
+  "commit": "",
+  "site": "https://dstolz.github.io/GerbilAtlasExplorer/",
+  "repo": "dstolz/GerbilAtlasExplorer",
+  "tool": "atlasfix (the published page) 1.0",
+  "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+ }
+}

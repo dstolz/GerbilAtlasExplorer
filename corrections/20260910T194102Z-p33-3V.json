@@ -1,0 +1,74 @@
+{
+ "schema": "gerbil-atlas-correction/1",
+ "id": "20260910T194102Z-p33-3V",
+ "created": "2026-09-10T19:41:02Z",
+ "author": "",
+ "plate": 33,
+ "ap_bregma_mm": -3.4,
+ "abbr": "3V",
+ "hemisphere": "both",
+ "problem": "fix",
+ "seeds": [
+  {
+   "abbr": "3V",
+   "kind": "positive",
+   "page_px": [1639.61,1037.42],
+   "mm": [-0.197,-3.456],
+   "note": ""
+  },
+  {
+   "abbr": "3V",
+   "kind": "positive",
+   "page_px": [1668.2,1069.82],
+   "mm": [0.004,-3.684],
+   "note": ""
+  },
+  {
+   "abbr": "3V",
+   "kind": "positive",
+   "page_px": [1675.83,1029.79],
+   "mm": [0.057,-3.403],
+   "note": ""
+  },
+  {
+   "abbr": "3V",
+   "kind": "positive",
+   "page_px": [1645.33,966.89],
+   "mm": [-0.157,-2.96],
+   "note": ""
+  },
+  {
+   "abbr": "3V",
+   "kind": "positive",
+   "page_px": [1656.77,1167.04],
+   "mm": [-0.077,-4.368],
+   "note": ""
+  },
+  {
+   "abbr": "3V",
+   "kind": "positive",
+   "page_px": [1662.94,1152.19],
+   "mm": [-0.033,-4.264],
+   "note": ""
+  },
+  {
+   "abbr": "3V",
+   "kind": "positive",
+   "page_px": [1661.68,1177.09],
+   "mm": [-0.042,-4.439],
+   "note": ""
+  }
+ ],
+ "boundaries": [],
+ "extents": [],
+ "notes": [],
+ "preview": null,
+ "snapshot": "corrections/20260910T194102Z-p33-3V.png",
+ "source": {
+  "commit": "",
+  "site": "https://dstolz.github.io/GerbilAtlasExplorer/",
+  "repo": "dstolz/GerbilAtlasExplorer",
+  "tool": "atlasfix (the published page) 1.0",
+  "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+ }
+}
