@@ -37,10 +37,10 @@ KINDS = ('drawing', 'nissl', 'myelin')     # the three plates of a level, as dat
 # the inputs by the pipeline (tools/pipeline.py rebuild). The split is what
 # `corrections.py rebase` rests on -- a derived file is never merged, it is main's and
 # then rebuilt -- so it is written down once, here, and read from here.
-INPUT_BLOCKS = ('seed_overrides', 'label_positions', 'brain_outline', 'label_leaders',
+INPUT_BLOCKS = ('seed_overrides', 'label_positions', 'label_leaders',
                 'label_blocks')            # blocks of gerbil_atlas.json a correction may edit
-DERIVED_BLOCKS = ('region_extents', 'region_colors', 'features', 'verification',
-                  'plate_registration', 'version')     # blocks the pipeline writes
+DERIVED_BLOCKS = ('brain_outline', 'region_extents', 'region_colors', 'features',
+                  'verification', 'plate_registration', 'version')   # blocks the pipeline writes
 DERIVED_PATHS = (                          # repository paths the pipeline writes, as git globs
     'data/gerbil_atlas_volumes.json', 'data/gerbil_atlas_labels.nii.gz',
     'data/gerbil_atlas_labels_lut.csv', 'data/gerbil_atlas_structures.csv',

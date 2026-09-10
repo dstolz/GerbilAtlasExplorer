@@ -365,6 +365,62 @@ carries a `version` block naming the release its derived fields were built for.
   are what carry the other two and a plain mesh link carries none.
 
 ### Fixed
+- **The section outline follows the drawn line, and the gray blobs leave the SVG export.**
+  The export drew, faint and gray, a scatter of small shapes hanging off the drawing on
+  nearly every plate -- letter-shaped where a label sat on the section's edge. They were
+  not Nissl and not the tracing: they were the "unnamed sealed faces" `region_extents`
+  publishes, cut between the atlas's own red outer line and `brain_outline`, which had been
+  taken from the page by a gray threshold alone and so was the photograph's edge rather than
+  the drawing's -- one to six pixels outside the red line all the way round, and carrying
+  every printed abbreviation and leader line that touched the section. 369 such faces over
+  the atlas, 68,835 plate px, and 82 named polygons that reached out past the red line to
+  the same edge.
+
+  `brain_outline` is derived now, by `tools/build_brain_outline.py`, first step of
+  `pipeline.py rebuild`, on one rule: **the drawn line wherever the atlas draws one along
+  the section edge, the tissue edge where it draws none.** The tissue is read off the page
+  with the black of the labels and leaders left out (a chroma test: stain is purple, the
+  line is red, a glyph is gray), the paper is flooded in from the border, and the boundary
+  of what it does not reach is snapped onto the traced ink wherever ink lies within 6 plate
+  px -- 99.8% of the boundary lands on it; the rest is the open flanks, the cerebellum on
+  53 and 57 and the optic nerve on 7, where the atlas draws no outer line and an outline
+  from the tracing alone was tried and lost a tenth of the section. The tracing is in the
+  flood's barrier as well as the stain, because the drawn line runs on under a printed word
+  where the page shows only black, and the pale trigeminal root on plate 42, sealed by such
+  a line, flooded with paper through its own label until it was. The two islands (och on
+  22, ML on 36) are kept because they carry a label, by rule rather than by exception.
+
+  What moved: the section is 1.8% smaller over the atlas, 1.0% to 6.0% on a plate, most on
+  the olfactory bulb and the brainstem plates where the labels crowd the edge; 84 outline
+  polygons where there were 83, the cortex now parting from the midbrain on plate 36 as the
+  drawing has it; the highest point stays DV -0.06 and the lowest goes -9.09 to -9.04;
+  printed labels inside their own outline 97.8% to 97.0%, the 115 that left being 54
+  fissure and sulcus names printed in the cleft at the edge, which seed nothing, and words
+  straddling the outer line, a median 0.16 mm out, which `region_extents` seeds from the
+  nearest face as it always did for a word printed beside the section. In the regions: the
+  unnamed faces on the outline go 369 to 7; 26 structure-plate entries lose the only area
+  they had, each a word printed beside the section (`Mi` on the bulb plates, `LNTB` on 45,
+  `LRtPC` on 57 and 58, `dsc` on 53 and 58) whose region had been the word's own ink on the
+  photograph's edge, none of it inside the drawn line; `dsc` on 54 goes 0.27 to 0.13 mm2,
+  the rest having been the offset ring round half the brainstem; and the lobules and bulb
+  layers on the edge lose the one to four pixels of stain outside their outer line, 0.1-0.2
+  mm2 each. `structure_plate_entries` 3,118 to 3,092, `polygons` 6,017 to 5,819,
+  `label_inside_its_own_region` 0.977 to 0.976, `section_area_residual_worst_plate` 0.0101
+  to 0.0084; `ALPO` and `MRe`, lettered on one plate each (44 and 34) and with no area
+  left there, leave the volumes, 691 structures to 689; and three leader tips land in no
+  region where they landed in their own -- IPl on 6 in the paper beside the bulb, cu on
+  54 on the outer line itself, LRt on 56 a pixel outside it -- so `tests/python/test_leaders.py`
+  reads 188/12/40 for 191/12/37 and 52 for 49. The extents, the volumes, the colors, the
+  face maps, the tables, the geojson and the pages are re-cut from it; the numbers are in
+  `tools/build_brain_outline.py`'s own output and in METHODS. `test_brain_outline` counts
+  84 rings, `test_volumes_consistent` 689 structures, and `test_labels_inside_outline`
+  holds 96.5%; `tests/js/colors.spec.js` counts 689 named regions, and `fixer.spec.js` reads
+  S1DZ on plate 19 as 0.6141 mm2 (its outer edge is the section edge) in face #15, the same
+  4,608 px face renumbered once the sliver faces went; `tests/python/test_outline.py`
+  draws a page and checks that a word on the edge leaves neither a bump nor, once snapped,
+  a bite. `brain_outline` moves from `atlaslib.INPUT_BLOCKS` to `DERIVED_BLOCKS`, so a
+  `corrections.py rebase` rebuilds it rather than merging it.
+
 - **`EPlA` follows its own leader on plates 5, 6 and 8.** The atlas prints the external
   plexiform layer of the accessory olfactory bulb clear of the section on plates 5 and 6 and
   draws a line from the word down into the bulb; on plate 8 it prints the word *on* the band
