@@ -1,0 +1,95 @@
+{
+ "schema": "gerbil-atlas-correction/1",
+ "id": "20260910T134521Z-p01-E",
+ "created": "2026-09-10T13:45:21Z",
+ "author": "",
+ "plate": 1,
+ "ap_bregma_mm": 7.8,
+ "abbr": "E",
+ "hemisphere": "right",
+ "problem": "misdrawn",
+ "seeds": [
+  {
+   "abbr": "E",
+   "kind": "negative",
+   "page_px": [1846.82,1493.58],
+   "mm": [1.253,-6.666],
+   "note": ""
+  },
+  {
+   "abbr": "E",
+   "kind": "negative",
+   "page_px": [1883.79,1510.12],
+   "mm": [1.512,-6.782],
+   "note": ""
+  },
+  {
+   "abbr": "E",
+   "kind": "negative",
+   "page_px": [1852.66,1509.63],
+   "mm": [1.294,-6.779],
+   "note": ""
+  },
+  {
+   "abbr": "E",
+   "kind": "negative",
+   "page_px": [1873.09,1459.52],
+   "mm": [1.437,-6.426],
+   "note": ""
+  },
+  {
+   "abbr": "E",
+   "kind": "negative",
+   "page_px": [1892.55,1434.22],
+   "mm": [1.573,-6.248],
+   "note": ""
+  },
+  {
+   "abbr": "E",
+   "kind": "negative",
+   "page_px": [1904.72,1407.95],
+   "mm": [1.659,-6.064],
+   "note": ""
+  },
+  {
+   "abbr": "E",
+   "kind": "negative",
+   "page_px": [1911.53,1338.37],
+   "mm": [1.707,-5.574],
+   "note": ""
+  },
+  {
+   "abbr": "E",
+   "kind": "negative",
+   "page_px": [1916.39,1304.32],
+   "mm": [1.741,-5.335],
+   "note": ""
+  },
+  {
+   "abbr": "E",
+   "kind": "positive",
+   "page_px": [1760.7,1376.32],
+   "mm": [0.649,-5.841],
+   "note": ""
+  },
+  {
+   "abbr": "E",
+   "kind": "positive",
+   "page_px": [1762.16,1347.62],
+   "mm": [0.659,-5.639],
+   "note": ""
+  }
+ ],
+ "boundaries": [],
+ "extents": [],
+ "notes": [],
+ "preview": null,
+ "snapshot": "corrections/20260910T134521Z-p01-E.png",
+ "source": {
+  "commit": "",
+  "site": "https://dstolz.github.io/GerbilAtlasExplorer/",
+  "repo": "dstolz/GerbilAtlasExplorer",
+  "tool": "atlasfix (the published page) 1.0",
+  "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+ }
+}
