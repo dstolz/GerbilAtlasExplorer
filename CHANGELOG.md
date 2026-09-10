@@ -89,6 +89,26 @@ carries a `version` block naming the release its derived fields were built for.
   that has never been here sees.
 
 ### Changed
+- **METHODS.md is brought up to the data and cut by a third.** Every figure in it was read
+  again off the current build, and the ones that had drifted are moved: 6,349 located labels
+  (6,345), 3,351 of 3,514 structure-plate entries with a label, region extents at 96% of the
+  located pairs and 92% of the index's, 3,435 faces named by one abbreviation (3,472), 112
+  mirrored seeds (123), 171.3 mm2 returned to the regions (184), 27 joined labels on 42
+  plates over 52 occurrences (22/31/37), 279 labels pulled to the nearest face and none
+  dropped (192 and one), unassigned faces a mean 4% of section area (6%), the worst plate's
+  section-area residual 0.7% (2.4%), the leader pass's 12 rejected and 2 dropped lines and
+  its 26/38 odd tips (8/54), the label-pointing snapshot recomputed from the data
+  (5,402 outlines, 552 names, 297 no region, 98 no extent), 4,473 touching pairs and
+  198/95/103/77 in the coloring (4,506 and 189/89/105/78), 4/6/52 plates at six, seven and
+  eight colors, 475 division-plate pairs (454), and in the volumes 689 structures (697), 40
+  bridged holes (44), 427/262 grades, area residual 1.2%/5.6% (1.4%/6.7%), 79% of
+  structures in one or two pieces with a 14% remainder (74% and 16%), and the 3-D
+  containment figures. Twenty-six more of those numbers are now markers that
+  `export_tables.py --refresh-db` rewrites from the database and the volumes, so they
+  cannot drift again; the figures no committed script reproduces are said to be measured
+  when they were. The prose is condensed throughout, from 23,900 words to 16,300, with the
+  sections, anchors, tables, code blocks and every technical claim kept.
+
 - **A correction reaches its pull request with fewer runs, and two corrections in flight
   no longer conflict with each other.** The first two corrections to go the whole way,
   `RAPir` on plate 28 (#109) and `E` on plate 3 (#110), took fifteen runs of the workflow
