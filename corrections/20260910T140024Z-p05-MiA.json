@@ -1,0 +1,116 @@
+{
+ "schema": "gerbil-atlas-correction/1",
+ "id": "20260910T140024Z-p05-MiA",
+ "created": "2026-09-10T14:00:24Z",
+ "author": "",
+ "plate": 5,
+ "ap_bregma_mm": 6.4,
+ "abbr": "MiA",
+ "hemisphere": "left",
+ "problem": "fix",
+ "seeds": [
+  {
+   "abbr": "MiA",
+   "kind": "negative",
+   "page_px": [1527.09,1189.99],
+   "mm": [-0.993,-4.515],
+   "note": ""
+  },
+  {
+   "abbr": "MiA",
+   "kind": "negative",
+   "page_px": [1520.56,1226.53],
+   "mm": [-1.039,-4.772],
+   "note": ""
+  },
+  {
+   "abbr": "MiA",
+   "kind": "negative",
+   "page_px": [1517.95,1260.47],
+   "mm": [-1.057,-5.011],
+   "note": ""
+  },
+  {
+   "abbr": "MiA",
+   "kind": "negative",
+   "page_px": [1474.88,1210.22],
+   "mm": [-1.359,-4.657],
+   "note": ""
+  },
+  {
+   "abbr": "MiA",
+   "kind": "negative",
+   "page_px": [1474.88,1242.19],
+   "mm": [-1.359,-4.882],
+   "note": ""
+  },
+  {
+   "abbr": "MiA",
+   "kind": "negative",
+   "page_px": [1489.24,1281.35],
+   "mm": [-1.259,-5.158],
+   "note": ""
+  },
+  {
+   "abbr": "MiA",
+   "kind": "negative",
+   "page_px": [1516.64,1304.19],
+   "mm": [-1.066,-5.318],
+   "note": ""
+  },
+  {
+   "abbr": "MiA",
+   "kind": "negative",
+   "page_px": [1556.45,1268.3],
+   "mm": [-0.787,-5.066],
+   "note": ""
+  },
+  {
+   "abbr": "MiA",
+   "kind": "negative",
+   "page_px": [1567.55,1213.48],
+   "mm": [-0.71,-4.68],
+   "note": ""
+  },
+  {
+   "abbr": "MiA",
+   "kind": "positive",
+   "page_px": [1517.3,1283.31],
+   "mm": [-1.062,-5.171],
+   "note": ""
+  },
+  {
+   "abbr": "MiA",
+   "kind": "positive",
+   "page_px": [1490.54,1219.35],
+   "mm": [-1.249,-4.722],
+   "note": ""
+  },
+  {
+   "abbr": "MiA",
+   "kind": "positive",
+   "page_px": [1525.13,1176.28],
+   "mm": [-1.007,-4.419],
+   "note": ""
+  },
+  {
+   "abbr": "MiA",
+   "kind": "positive",
+   "page_px": [1551.88,1237.62],
+   "mm": [-0.819,-4.85],
+   "note": ""
+  }
+ ],
+ "boundaries": [],
+ "extents": [],
+ "notes": [],
+ "preview": null,
+ "snapshot": "corrections/20260910T140024Z-p05-MiA.png",
+ "source": {
+  "commit": "",
+  "site": "https://dstolz.github.io/GerbilAtlasExplorer/",
+  "repo": "dstolz/GerbilAtlasExplorer",
+  "tool": "atlasfix (the published page) 1.0",
+  "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+ }
+}
