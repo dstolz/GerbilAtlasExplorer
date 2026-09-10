@@ -70,8 +70,12 @@ test('the build stamp is consistent', async ({ page }) => {
   expect(hash).toMatch(/^[0-9a-zA-Z-]{4,40}$/);          // a commit, not a token nothing filled
   expect(meta).not.toContain('{{');
   await expect(page.locator('footer .fbuild code')).toHaveText(hash);
+  // a stamped copy names the build and the moment it was built, so the data's own date --
+  // the fallback below -- stays hidden rather than standing beside it
+  await expect(page.locator('footer .fdata')).toBeHidden();
   await page.click('#aboutb');
   await expect(page.locator('#about')).toContainText(hash);
+  await expect(page.locator('#about .fdata')).toBeHidden();
 });
 
 /* The pages committed to the repository keep their tokens -- a stamp in them was three
@@ -99,11 +103,19 @@ test('a page nothing stamped names no build at all', async ({ page }) => {
   expect(await page.getAttribute('meta[name="gae-build"]', 'content'))
     .toBe('{{BUILD_HASH}} {{BUILD_DATE}}');                 // the page as the repository carries it
   expect(await page.evaluate(() => window.__gae.BUILD)).toBe('');
+  // what it says in place of the build: the day the database it carries was last recomputed,
+  // which is in every copy, stamped or not, and is printed as stamped -- a calendar day read
+  // on another clock is the day before
+  const day = await page.evaluate(() => window.__ATLAS__.version.generated);
+  expect(day).toMatch(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/);
   for (const where of ['footer', '#about']) {
     if (where === '#about') await page.click('#aboutb');
     await expect(page.locator(where + ' .fbuild')).toHaveCount(0);
     await expect(page.locator(where)).not.toContainText('{{');
     await expect(page.locator(where)).not.toContainText('Build ');
+    await expect(page.locator(where + ' .fdata')).toBeVisible();
+    await expect(page.locator(where + ' .fdata time.dwhen')).toHaveText(day);
+    expect(await page.getAttribute(where + ' .fdata time.dwhen', 'datetime')).toBe(day);
   }
   // nor does the file a reader takes away from the page claim one
   expect(await page.evaluate(() => window.__gae.repRows().find(r => r[0] === 'Build')[1]))
