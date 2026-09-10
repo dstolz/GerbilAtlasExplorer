@@ -27,6 +27,7 @@ PY = sys.executable
 
 # name, argv (relative to tools/), what it writes
 REBUILD = [
+    ('outline', ['build_brain_outline.py'], 'brain_outline'),
     ('extents', ['build_region_extents.py'], 'region_extents, features'),
     ('volumes', ['build_volumes.py', '--nifti', 'data/gerbil_atlas_labels.nii.gz'],
      'gerbil_atlas_volumes.json, the NIfTI label volume and its LUT'),

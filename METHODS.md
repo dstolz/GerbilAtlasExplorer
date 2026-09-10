@@ -460,59 +460,87 @@ is left sitting in the region it used to take ground from.
 ## The brain outline
 
 `brain_outline` in the JSON gives the outline of the section on each plate: what a track
-has to cross to reach a target, and the surface the track planner measures a depth from.
-The atlas publishes no segmentation and no brain surface, and the CT skull that ships
-here is bone from a different animal — the right surface for deciding where to drill and
-the wrong one for deciding how far to drive. So the outline was taken from the drawings
-themselves.
+has to cross to reach a target, the surface the track planner measures a depth from, and
+the wall `region_extents` is cut inside of. The atlas publishes no segmentation and no
+brain surface, and the CT skull that ships here is bone from a different animal — the
+right surface for deciding where to drill and the wrong one for deciding how far to drive.
+So the outline is taken from the drawings themselves, by `tools/build_brain_outline.py`.
 
-It uses the same steps the 3-D view already runs to build its volume, which is the reason
-to trust it rather than a second pipeline nobody has looked at: crop to the atlas's own
-printed coordinate box at `[14, 14, 1020, 681]` of the 1100 × 703 frame, call a pixel ink
-where its smallest channel is below 236, flood the paper in from the border, and keep the
-connected components of what the paper did not reach that are larger than
-`max(400 px scaled to full resolution, 2% of the largest)`. Holes are filled, so a
-ventricle counts as brain. Two components are kept that the rule drops, which across the
-62 plates is every one of them that carries a printed name. On plate 36 the atlas draws
-the mammillary body clear of the rest of the section, and at 1,628 px against a 2% floor
-of 5,131 it was culled — and with it `ML`, which is printed inside it, so the structure
-had no area on the one plate of its three that separates it. On plate 22 it draws the
-optic chiasm the same way, and at 3,515 px against a floor of 4,331 that was culled too,
-taking `och` — which came out with a hole at plate 22 in a run the published index gives
-as 21–25. Both islands are far over the 400 px floor and were dropped only for being
-small beside a whole section, and a face outside the outline can never be named, since
-`region_extents` fills the outline for the section interior. Both are traced by the same
-steps and kept as their plate's second polygon. The boundary of each surviving component
-is traced and simplified by Douglas-Peucker at 2 px — 35 µm, well inside the atlas's own
-error — giving 83 polygons over the 62 plates, 8,841 points in all.
+**The rule: the drawn line wherever the atlas draws one along the section edge, the
+tissue edge where it draws none.** The first outline was the photograph's edge rather
+than the drawing's — a gray threshold on the page, which ran one to six pixels outside
+the red line all the way round and took in every printed abbreviation and leader line
+that touched the section. `region_extents` closes the tracing against the outline, so
+each of those was a face sealed by no line the atlas draws: 369 of them over the atlas,
+letter-shaped where a word sat on the edge, published as "unnamed sealed faces" and drawn
+in the SVG export as gray blobs hanging off the drawing, and 82 named polygons that
+reached out past the red line to the same edge. An outline from the tracing alone does
+not work either: the atlas leaves the outer line undrawn in places — the cerebellar flanks
+on plates 53 and 57, the optic nerve on plate 7 — and a fill from the red ink either
+leaks or loses a tenth of a section there. So the tissue is read off the page and the
+boundary is put on the drawing wherever the drawing has one.
+
+Per plate: crop to the atlas's own printed coordinate box at `[14, 14, 1020, 681]` of the
+1100 × 703 frame; call a pixel stain or ink where its smallest channel is below 236, as
+before, and *not* tissue where it is neutral — the three channels within 12 of each other
+and below 200, which is the black of the labels, the leader lines and the frame, and which
+the purple of the stain and the red of the line never are. The tracing, carried onto the
+plate frame, is in the barrier too: the drawn line runs on under a printed word where the
+page shows only the word's black, and a pale fiber bundle sealed by that line — the
+trigeminal root on plate 42 — would otherwise flood with paper through the word. Flood the
+paper in from the border; what it does not reach is the section, holes filled, so a ventricle counts as
+brain and so does a word printed inside the tissue. The gray of a glyph's antialiased edge
+inside a printed label box is then taken off the solid section (stain under a word printed
+on the edge stays), and an opening of radius 1 takes off one-pixel hairs; no sheet the
+atlas draws is that thin, and the cortical sheet on plates 36 and 38 that a radius of 3
+would eat is untouched. Components larger than `max(400 px, 2% of the largest)` are kept,
+and so is any component over 400 px that carries a printed label — which is how the two
+islands the drawing leaves standing clear of the section, the optic chiasm on plate 22
+and the mammillary body on plate 36, are kept by rule rather than by exception. The
+boundary of each component is traced, carried into the page frame the tracings are in,
+and every point within 15 page px (6 plate px, 0.1 mm) of traced ink is moved onto the
+nearest ink pixel; the rest — the open flanks — stay on the tissue edge. Douglas-Peucker
+at 1.25 page px, which is the 0.5 plate px `region_extents` is cut at, then back to
+fractions of the plate frame: **84 polygons over the 62 plates, 9,264 points, 99.8% of
+them on traced ink.** The outline therefore coincides with the drawing wherever the
+drawing has an outer line, `region_extents` cuts no face between the two, and the section
+area is the drawing's: 1.8% less over the atlas than the photograph's edge gave, between
+1.0% and 6.0% on a plate, most on the olfactory bulb and the brainstem plates where the
+labels crowd the edge.
 
 **Most plates give one polygon, and the ones that give more do so anatomically.** The
 interhemispheric fissure separates the two hemispheres on plates 10–14, the cortex parts
-from the midbrain on 37–42, the cerebellum from the brainstem on 56–59, and two structures
+from the midbrain on 36–42, the cerebellum from the brainstem on 56–59, and two structures
 stand clear of the section altogether — the optic chiasm on plate 22 and the mammillary
 body on plate 36. A reader that kept only the largest blob would silently lose a
-hemisphere.
-
-**No morphological opening.** The drawing prints some abbreviations beside the section and
-points at them, and the flood runs a few pixels out along those leader lines. An opening
-large enough to take them off also eats the thin cortical sheet on plates 36 and 38, which
-is real anatomy: at a radius of 3 px the labels falling outside their own outline go from
-135 to 316, and 32 of the new ones are on plate 36 alone. The contour is therefore left
-honest, and the app's ray-caster takes **the first crossing that is followed by 0.2 mm of
-brain** rather than the first crossing outright, which rejects a leader line without
-touching the geometry.
+hemisphere. The count is what the drawing gives, not a target: it went from 83 to 84 when
+the outline moved onto the drawn line, the cortex parting from the midbrain on plate 36
+where the photograph's edge had bridged them.
 
 Three checks, none of which the extraction was tuned to pass:
 
 | Check | The atlas says | Extracted |
 | --- | --- | --- |
 | Highest point of any outline | DV 0 is the plane through the most dorsal points of cerebrum and cerebellum | **DV −0.06 mm** — reaches it, never crosses it |
-| Lowest point of any outline | the deepest printed label sits at DV −9.02 | **DV −9.09 mm** — just below it |
-| Printed labels inside their own plate's outline | — | **98.8%** (6,258 of 6,335) |
+| Lowest point of any outline | the deepest printed label sits at DV −9.02 | **DV −9.04 mm** — just below it |
+| Printed labels inside their own plate's outline, seeded where the atlas seeds them (the end of a leader line where it draws one, else the word) | — | **96.9%** (6,154 of 6,349) |
 
-Of the 77 labels that fall outside, the largest group is on the olfactory bulb plates 5–9,
-where the section is small and the drawing prints the labels beside it; the median one is
-0.10 mm out, and the 90th percentile 0.17 mm.
+Of the 195 that fall outside, 115 were inside the photograph's edge and are not inside the
+drawing's: 54 of those are the names of fissures and sulci, which the atlas prints in the
+cleft at the section edge and which name no region, and the rest are words printed
+straddling the outer line, a median 0.16 mm out — `region_extents` seeds those from the
+nearest face within `SNAP_PX`, as it always did for a word printed beside the section.
+
+What that did to the regions: 25 structure–plate entries lost the only area they had,
+each a word printed beside the section — `Mi` on the bulb plates, `LNTB` on 45, `LRtPC` on
+57 and 58, `dsc` on 53 and 58 — whose region had been the word's own ink on the
+photograph's edge, 11–61% of it in stained tissue and none of it inside the drawn line; and
+`dsc` on plate 54 fell from 0.27 to 0.13 mm², the 0.14 it lost having been the offset ring
+round half the brainstem, which its label on the edge had seeded. The rest of the change is
+the ring: the cerebellar lobules on 53 and 55 and the bulb layers on 7 and 8 lose the one to
+four pixels of stain outside their outer line, 0.1–0.2 mm² each. `structure_plate_entries`
+goes 3,117 to 3,092, `polygons` 6,017 to 5,823, and the unnamed faces on the outline from
+371 to 7.
 
 ## Region extents
 
@@ -520,9 +548,9 @@ where the section is small and the drawing prints the labels beside it; the medi
 *names*: the area of each structure on each plate, as a list of closed polygons of `[x, y]`
 fractions of the frame-cropped image — the same frame and the same convention
 `brain_outline` uses, so the app's existing point-in-polygon test reads them unchanged.
-**<!-- n:region_extents.summary.structure_plate_entries -->3,117<!-- /n --> structure-plate entries carry an area**, 97% of the 3,215 the label pass located
+**<!-- n:region_extents.summary.structure_plate_entries -->3,092<!-- /n --> structure-plate entries carry an area**, 97% of the 3,215 the label pass located
 and 93% of the 3,365 the published index lists — both counted over the structures that are
-regions — as <!-- n:region_extents.summary.polygons -->6,017<!-- /n --> polygons over <!-- n:region_extents.summary.points -->168,855<!-- /n --> points. Where
+regions — as <!-- n:region_extents.summary.polygons -->5,823<!-- /n --> polygons over <!-- n:region_extents.summary.points -->154,923<!-- /n --> points. Where
 the atlas prints two names as one label the two share an entry, so a name having no entry of
 its own does not mean it has no area — see step 8. Twenty of the 724 names have no entry
 anywhere, and never could: they name no region — see step 7.
@@ -639,7 +667,7 @@ to **0.7% of polygons** and the repeated vertices to none.
 the difference between a polygon that reads as the line the atlas drew and one that visibly
 cuts its corners. The floor is the page lattice: at 0.35 px the tolerance drops below the
 raster step and the polygon starts recording the staircase rather than the line, at seven
-times the points. At 0.5 it does not — <!-- n:region_extents.summary.points -->168,855<!-- /n --> points against the 77,453 the 2 px pass
+times the points. At 0.5 it does not — <!-- n:region_extents.summary.points -->154,923<!-- /n --> points against the 77,453 the 2 px pass
 wrote, for a median traced share of **1.00** where it was 0.98, and it takes the last of the
 crossings with it: **0.03% of polygons**, two of 7,048, against 9% before either change.
 A thin structure is what a coarse tolerance cannot draw without folding its two sides
@@ -677,8 +705,8 @@ structure can have a drawn rim and an invented inner wall. So the split itself i
 the share of the wall the watershed put *inside* a face that lands on traced ink. Below
 half, nobody drew it — and an entry that sits only in faces like that, and whose own border
 is under three-quarters drawn, carries `w`. That is the cerebellar lobules against each
-other, the mediodorsal thalamus, the lateral hypothalamic zones, and little else: **<!-- n:region_extents.summary.entries_without_a_drawn_outline -->316<!-- /n --> of
-<!-- n:region_extents.summary.structure_plate_entries -->3,117<!-- /n --> entries**, against the 1,529 whose seed lands in a face some other name seeds too. It used to be 372: 63 left, 3
+other, the mediodorsal thalamus, the lateral hypothalamic zones, and little else: **<!-- n:region_extents.summary.entries_without_a_drawn_outline -->315<!-- /n --> of
+<!-- n:region_extents.summary.structure_plate_entries -->3,092<!-- /n --> entries**, against the 1,529 whose seed lands in a face some other name seeds too. It used to be 372: 63 left, 3
 arrived, 18 more left when step 10 was tightened — a polygon that tracks the ink to half
 a pixel has more of its border *on* the ink, so an entry whose own border was just under
 three-quarters drawn crosses the line — and 2 more when `9/11N` was read off its own line.
@@ -881,8 +909,8 @@ the atlas draws; splitting it draws a color change where the atlas prints nothin
 the milder error and the honest one, since the color change is then telling the truth about
 the other plate. So the candidates are the 105 pairs with no printed boundary anywhere, and
 even those only as far as they can be taken without a printed boundary falling *inside* a
-patch along a chain of merges: **78 joins hold, <!-- n:region_colors.summary.merges_refused -->27<!-- /n --> are refused**, and the <!-- n:region_colors.summary.regions -->691<!-- /n --> regions of the
-atlas become <!-- n:region_colors.summary.patches -->631<!-- /n --> patches, the largest of them seven names.
+patch along a chain of merges: **78 joins hold, <!-- n:region_colors.summary.merges_refused -->26<!-- /n --> are refused**, and the <!-- n:region_colors.summary.regions -->689<!-- /n --> regions of the
+atlas become <!-- n:region_colors.summary.patches -->630<!-- /n --> patches, the largest of them seven names.
 
 **The patches are colored with eight colors, which is the fewest.** Eight regions of this
 atlas pairwise touch — cortical layers 1, 2 and 3 against `Pir`, `Tu`, `ICj`, `VP` and `AHA`
@@ -900,7 +928,7 @@ Only the tabu tenure was seeded at first, so every restart set out from the one 
 coloring; where that start sits in a bad basin the restarts all stall in it together, and
 what comes out is a ninth color the app's palette has not got. Adding `SHy` produced exactly
 that — 1,024 restarts, twenty million moves, two conflicts short — and it was not the atlas
-asking for a ninth: an exact maximum-clique search over the <!-- n:region_colors.summary.patches -->631<!-- /n --> patches returns eight, and
+asking for a ninth: an exact maximum-clique search over the <!-- n:region_colors.summary.patches -->630<!-- /n --> patches returns eight, and
 an eight-coloring is found in seconds once a restart may start from somewhere new. The kick
 has to be hard to be worth anything. Kicking a twentieth, a tenth, a seventh or a third of
 the start's patches to random slots found nothing in twenty tries at each; kicking half to
@@ -1148,8 +1176,8 @@ why this is not a segmentation either.
 
 | Grade | What it is | Count |
 | --- | --- | --- |
-| `surface` | At least three consecutive plates. The mesh follows the drawn boundaries, interpolated between them. | 433 |
-| `slab` | One or two plates. The series does not sample the structure along AP at all, so the mesh is a **convex hull per connected component** — a claim about where the structure is, not about what shape it is — closed half a section step beyond the plates that name it. | 264 |
+| `surface` | At least three consecutive plates. The mesh follows the drawn boundaries, interpolated between them. | 427 |
+| `slab` | One or two plates. The series does not sample the structure along AP at all, so the mesh is a **convex hull per connected component** — a claim about where the structure is, not about what shape it is — closed half a section step beyond the plates that name it. | 262 |
 
 A `slab` is what "circumscribed" means here and is marked `bounding: true`. Unlike the
 `surface` meshes, two slabs may overlap: a bounding volume is not a partition. The hull is
@@ -1179,10 +1207,11 @@ section.
 In practice it does not separate them cleanly enough to be the default. It removes 5.8 mm³,
 0.55% of the brain, in **760 pieces spread over 58 of the 62 plates** — not the handful of
 filaments the argument predicts — and it costs 45 printed labels their place inside the
-surface, taking containment from 98.8% to 98.1%. Some of those 45 sat on a spur and belong
-outside; which ones cannot be told from here. Left off, the surface contains **98.8%** of
-the printed labels against the **97.8%** the 2-D outline reports. So the geometry is left honest,
-as the 2-D extraction left it, and the opening is a flag.
+surface, taking containment from 98.8% to 98.1% (measured when the outline was still the
+photograph's edge). Some of those 45 sat on a spur and belong outside; which ones cannot be
+told from here. Left off, the surface contains **96.9%** of the printed labels, which is
+the **96.9%** the 2-D outline reports. So the geometry is left honest, as the 2-D extraction
+left it, and the opening is a flag.
 
 ### Checks
 
@@ -1193,12 +1222,12 @@ extraction's own guarantees survived into three dimensions.
 | Check | 2-D | Extracted in 3-D |
 | --- | --- | --- |
 | Cross-section area on a plate a structure was built from, against `region_extents` | — | **median 1.4% off**, 90th percentile 6.7% — the lattice's own quantisation |
-| Regions partition the volume | a point is inside one region or none | **holds**: every voxel inside the surface carries exactly one label, or is an unnamed sealed face — 4.2% of the brain |
+| Regions partition the volume | a point is inside one region or none | **holds**: every voxel inside the surface carries exactly one label, or is an unnamed sealed face — 1.9% of the brain (4.2% before the outline moved onto the drawn line, when the strip between the two was unnamed) |
 | Highest point of the surface | DV −0.06 | **DV −0.10** (one voxel) |
-| Lowest point of the surface | DV −9.09 | **DV −9.05** |
-| Printed labels inside the surface | 97.8% | **98.8%** |
-| Printed labels inside the region they name | 97% | **93.1%** — the 2-D figure is after 199 labels were pulled to the nearest face; this one is not |
-| Brain volume | not published | **1,046 mm³** |
+| Lowest point of the surface | DV −9.04 | **DV −9.00** |
+| Printed labels inside the surface | 96.9% | **96.9%** |
+| Printed labels inside the region they name | 97.3% | **94.9%** — the 2-D figure is after labels were pulled to the nearest face; this one is not |
+| Brain volume | not published | **1,028 mm³** |
 
 Two costs are worth stating because they are larger than the interpolation is likely to be.
 Reading the distance field coarsely costs a mesh a median **4.1%** of its volume; an

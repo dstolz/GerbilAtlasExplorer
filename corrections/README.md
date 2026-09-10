@@ -8,7 +8,7 @@ that holds marks, a file for each region marked on each, as one commit on one br
 they were sent and the prefix of every id on the branch. A file is what a reader said on the plate -- a point
 inside a region, a run of boundary the tracing missed, the outline a region should have --
 and not a change to the data: the change is one edit to a pipeline input (`svg/`,
-`seed_overrides`, `brain_outline`, `label_positions`), made from it, and the extents are
+`seed_overrides`, `label_positions`), made from it, and the extents are
 re-cut. Files here are never edited after they are pushed; the pull request that applied
 one is its record, `qc/chk_corr_<id>_site.png` -- the region before and after, which opens
 the pull request -- the picture, and `qc/chk_corr_<id>.png` the whole plate.

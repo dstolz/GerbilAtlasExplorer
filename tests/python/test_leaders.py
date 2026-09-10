@@ -108,9 +108,15 @@ def test_the_tips_land_where_the_atlas_says_they_do(rows, db):
     every case the extents no longer follow the recorded tip, so the tip is left visibly
     sitting in the neighbor it used to take ground from. A tip in a neighbor that is
     neither a feature nor superseded is a new one of these.
+
+    38 in none rather than 35 since the section outline moved onto the drawn line
+    (tools/build_brain_outline.py): three tips sit on the section's edge -- IPl on plate
+    6 in the paper beside the bulb, cu on 54 on the outer line itself, LRt on 56 a pixel
+    outside it -- where the photograph's edge used to reach out and take them in. Each
+    region keeps its area on that plate from its other seeds.
     """
     where = {k: [r for r in rows if L.lands(r) == k] for k in ('own', 'other', 'none')}
-    assert (len(where['own']), len(where['other']), len(where['none'])) == (179, 26, 35)
+    assert (len(where['own']), len(where['other']), len(where['none'])) == (176, 26, 38)
     for r in where['other']:
         assert r['feature'] or r['superseded_by'], (r['plate'], r['abbr'], r['index'])
     assert sorted((r['plate'], r['abbr']) for r in where['other'] if r['superseded_by']) == \
@@ -146,7 +152,7 @@ def test_filters(db, rows):
     a.shared = True
     assert len(L.select(rows, a, db)) == 42            # 21 lines, two names each
     a.shared, a.odd = False, True
-    assert len(L.select(rows, a, db)) == 61            # 26 in a neighbor, 35 in none
+    assert len(L.select(rows, a, db)) == 64            # 26 in a neighbor, 35 in none
     a.odd, a.abbr = False, 'VMHSh'
     assert {r['abbr'] for r in L.select(rows, a, db)} == {'VMHSh'}
     a.abbr = 'auditory cortex'                         # an alias resolves to its members

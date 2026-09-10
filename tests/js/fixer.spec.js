@@ -39,7 +39,7 @@ test('the plate comes up as it was asked for, with the region chosen', async ({ 
   await open(page);
   await expect(page.locator('#where')).toContainText('plate 19, bregma +1.50 mm');
   await expect(page.locator('#where')).toContainText('3296 × 2481');
-  await expect(page.locator('#regfact')).toContainText('0.6143 mm² in 2 rings');
+  await expect(page.locator('#regfact')).toContainText('0.6141 mm² in 2 rings');
   await expect(page.locator('#regfact')).toContainText('printed 2 times: S1DZ[0], S1DZ[1]');
   await expect(page.locator('#regions .row.on .ab')).toHaveText('S1DZ');
   expect(page.errors).toEqual([]);
@@ -98,7 +98,7 @@ test('inspect reads the draft against the extraction', async ({ page }) => {
   await page.click('#inspectb');
   const r = page.locator('#report');
   await expect(r).toContainText('plate 19 (bregma +1.50), S1DZ', {timeout: 30000});
-  await expect(r).toContainText('S1DZ today: 0.6143 mm2');
+  await expect(r).toContainText('S1DZ today: 0.6141 mm2');
   await expect(r).toContainText('seed 1 S1DZ positive');
 });
 
@@ -432,7 +432,7 @@ test('the published page draws the plate with no server behind it', async ({ pag
   await published(page);
   expect(await page.evaluate(() => SRC.pipeline)).toBe(false);
   await expect(page.locator('#where')).toContainText('plate 19, bregma +1.50 mm');
-  await expect(page.locator('#regfact')).toContainText('0.6143 mm² in 2 rings');
+  await expect(page.locator('#regfact')).toContainText('0.6141 mm² in 2 rings');
   await expect(page.locator('#regions .row.on .ab')).toHaveText('S1DZ');
   expect(page.errors).toEqual([]);            // and nothing 404s on the way
 });
@@ -454,7 +454,7 @@ test('Pick on the published page is the answer the pipeline gave', async ({ page
   await local.close();
 
   expect(there).toBe(here);                   // to the character, not merely close
-  expect(there).toContain('face #55 of 4608 px (0.227 mm²), seeded by S1DZ');
+  expect(there).toContain('face #15 of 4608 px (0.227 mm²), seeded by S1DZ');
 });
 
 test('the two backends write one correction', async ({ page }) => {
@@ -571,9 +571,9 @@ test('a worker from an older build cannot serve this page a stale database',
     await page.waitForFunction(() => document.title.includes('atlas region fixer'));
 
     // the page read past it -- this is what fails when the build is not in the query
-    await expect(page.locator('#regfact')).toContainText('0.6143 mm² in 2 rings');
+    await expect(page.locator('#regfact')).toContainText('0.6141 mm² in 2 rings');
     await clickAt(page, SEED);
-    await expect(page.locator('#report')).toContainText('face #55 of 4608 px');
+    await expect(page.locator('#report')).toContainText('face #15 of 4608 px');
 
     const build = await page.evaluate(() =>
       document.querySelector('meta[name="gae-build"]').content.trim().split(/\s+/)[0]);

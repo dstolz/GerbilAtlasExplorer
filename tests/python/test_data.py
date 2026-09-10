@@ -303,17 +303,20 @@ def test_brain_outline(db):
             for x, y in g:
                 dv = fr.dv_f(y)
                 top, bottom = max(top, dv), min(bottom, dv)
-    # 83: one polygon per plate, plus the hemispheres parted on 10-14, the cortex
-    # off the midbrain on 37-42, the cerebellum off the brainstem on 56-59, and the
+    # 84: one polygon per plate, plus the hemispheres parted on 10-14, the cortex
+    # off the midbrain on 36-42, the cerebellum off the brainstem on 56-59, and the
     # two islands the section leaves standing clear of it -- the optic chiasm on 22
-    # and the mammillary body on 36. See `brain_outline.note`.
-    assert rings == 83
+    # and the mammillary body on 36. See `brain_outline.note`. Cut by
+    # tools/build_brain_outline.py: the count is what the drawing gives, not a target.
+    assert rings == 84
     assert -0.1 <= top <= 0.0          # reaches the dorsal plane, never crosses it
     assert -9.2 <= bottom <= -9.0      # just below the deepest printed label
 
 
 def test_labels_inside_outline(db):
-    """98.8% of printed labels fall inside their plate's outline (METHODS)."""
+    """96.9% of printed labels fall inside their plate's outline (METHODS): the outline
+    follows the drawn line now, so a word printed on the edge or in a fissure's cleft
+    falls outside it where the photograph's edge used to take it in."""
     fr = A.Frame(db['plate_frame'])
     O = db['brain_outline']['data']
     inside = total = 0
@@ -328,7 +331,7 @@ def test_labels_inside_outline(db):
                 total += 1
                 if any(A.pip(g, *pt) for g in polys):
                     inside += 1
-    assert inside / total >= 0.975
+    assert inside / total >= 0.965
 
 
 def test_aliases_and_blocks(db):
@@ -391,7 +394,10 @@ def test_volumes_consistent(db):
     # on plate 57 that it, IB and sol seed between them. That share sat under
     # MIN_AREA_PX while the floor stood at 600, so it was cut every time; at 400 it is
     # published, and Obex has a mesh.
-    assert V['summary']['structures'] == len(V['data']) == 691
+    # 689 rather than 691: ALPO and MRe, each lettered on one plate (44 and 34), where
+    # the only area either had was its own printed word on the photograph's edge --
+    # gone with the outline that took the word in (build_brain_outline.py).
+    assert V['summary']['structures'] == len(V['data']) == 689
     assert not (have & set(db['features']['data']))
     assert 'little-endian' in V['note']
     for ab, e in V['data'].items():
