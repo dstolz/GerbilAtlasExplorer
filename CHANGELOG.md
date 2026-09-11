@@ -491,10 +491,10 @@ carries a `version` block naming the release its derived fields were built for.
   `label_inside_its_own_region` 0.9733 → 0.9728 — the words moved off their own faces are the
   five now read at the end of their lines instead. 47 volumes move, the label volume
   interpolating a moved boundary into the slabs either side; `unnamed_fraction` 0.0187 →
-  0.0185. Three test literals are reconciled and no test logic is: `test_label_positions` and
+  0.0185. Four test literals are reconciled and no test logic is: `test_label_positions` and
   `test_labels_table_rows` read 6,351 located labels for 6,349 and 3,353 (plate, name) pairs for
   3,351, the two boxes added on plate 29; `test_volumes_consistent` reads 688 structures for
-  689, which is `PaV`.
+  689, and `tests/js/colors.spec.js` 688 named regions for 689, which in both is `PaV`.
 - **A plate marked and left is written in its own millimetres, so a batch sent from the
   published fixer reaches its session again.** The page wrote every file of a Commit through
   the registration of whichever plate was on screen when Commit was pressed: `buildDoc` read
