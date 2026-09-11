@@ -1,0 +1,99 @@
+{
+ "schema": "gerbil-atlas-correction/1",
+ "id": "20260911T142043Z-p02-aci",
+ "created": "2026-09-11T14:20:43Z",
+ "author": "",
+ "plate": 2,
+ "ap_bregma_mm": 7.45,
+ "abbr": "aci",
+ "hemisphere": "left",
+ "problem": "",
+ "seeds": [
+  {
+   "abbr": "aci",
+   "kind": "negative",
+   "page_px": [1484.72,1228.27],
+   "mm": [-1.284,-4.797],
+   "note": ""
+  },
+  {
+   "abbr": "aci",
+   "kind": "negative",
+   "page_px": [1461.17,1252.52],
+   "mm": [-1.449,-4.968],
+   "note": ""
+  },
+  {
+   "abbr": "aci",
+   "kind": "negative",
+   "page_px": [1469.25,1300.68],
+   "mm": [-1.392,-5.306],
+   "note": ""
+  },
+  {
+   "abbr": "aci",
+   "kind": "negative",
+   "page_px": [1505.46,1362.9],
+   "mm": [-1.138,-5.744],
+   "note": ""
+  },
+  {
+   "abbr": "aci",
+   "kind": "negative",
+   "page_px": [1501.24,1422.65],
+   "mm": [-1.168,-6.164],
+   "note": ""
+  },
+  {
+   "abbr": "aci",
+   "kind": "negative",
+   "page_px": [1485.77,1456.4],
+   "mm": [-1.276,-6.402],
+   "note": ""
+  },
+  {
+   "abbr": "aci",
+   "kind": "positive",
+   "page_px": [1559.94,1248.31],
+   "mm": [-0.756,-4.938],
+   "note": "",
+   "label_index": 0
+  },
+  {
+   "abbr": "aci",
+   "kind": "positive",
+   "page_px": [1538.15,1267.64],
+   "mm": [-0.909,-5.074],
+   "note": "",
+   "label_index": 0
+  },
+  {
+   "abbr": "aci",
+   "kind": "positive",
+   "page_px": [1536.74,1307.01],
+   "mm": [-0.919,-5.351],
+   "note": "",
+   "label_index": 0
+  },
+  {
+   "abbr": "aci",
+   "kind": "positive",
+   "page_px": [1539.9,1361.49],
+   "mm": [-0.897,-5.734],
+   "note": "",
+   "label_index": 0
+  }
+ ],
+ "boundaries": [],
+ "extents": [],
+ "notes": [],
+ "preview": null,
+ "snapshot": "corrections/20260911T142043Z-p02-GrO.png",
+ "source": {
+  "commit": "",
+  "site": "https://dstolz.github.io/GerbilAtlasExplorer/",
+  "repo": "dstolz/GerbilAtlasExplorer",
+  "tool": "atlasfix (the published page) 1.0",
+  "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+ }
+}

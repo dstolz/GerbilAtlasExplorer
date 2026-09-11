@@ -1,0 +1,95 @@
+{
+ "schema": "gerbil-atlas-correction/1",
+ "id": "20260911T142043Z-p07-aci",
+ "created": "2026-09-11T14:20:43Z",
+ "author": "",
+ "plate": 7,
+ "ap_bregma_mm": 5.7,
+ "abbr": "aci",
+ "hemisphere": "both",
+ "problem": "aci[1] missing from left hemisphere. No label but region should be added where seeded",
+ "seeds": [
+  {
+   "abbr": "aci",
+   "kind": "negative",
+   "page_px": [1825.12,1382.01],
+   "mm": [1.102,-5.878],
+   "note": ""
+  },
+  {
+   "abbr": "aci",
+   "kind": "negative",
+   "page_px": [1822.65,1414.1],
+   "mm": [1.085,-6.104],
+   "note": ""
+  },
+  {
+   "abbr": "aci",
+   "kind": "negative",
+   "page_px": [1496.78,1421.09],
+   "mm": [-1.2,-6.153],
+   "note": ""
+  },
+  {
+   "abbr": "aci",
+   "kind": "negative",
+   "page_px": [1500.08,1451.13],
+   "mm": [-1.177,-6.364],
+   "note": ""
+  },
+  {
+   "abbr": "aci",
+   "kind": "negative",
+   "page_px": [1507.07,1355.67],
+   "mm": [-1.128,-5.693],
+   "note": ""
+  },
+  {
+   "abbr": "aci",
+   "kind": "negative",
+   "page_px": [1841.17,1336.75],
+   "mm": [1.215,-5.56],
+   "note": ""
+  },
+  {
+   "abbr": "aci",
+   "kind": "positive",
+   "page_px": [1458.11,1372.54],
+   "mm": [-1.471,-5.812],
+   "note": ""
+  },
+  {
+   "abbr": "aci",
+   "kind": "positive",
+   "page_px": [1473.74,1403.4],
+   "mm": [-1.362,-6.029],
+   "note": ""
+  },
+  {
+   "abbr": "aci",
+   "kind": "positive",
+   "page_px": [1520.24,1384.89],
+   "mm": [-1.035,-5.899],
+   "note": ""
+  },
+  {
+   "abbr": "aci",
+   "kind": "positive",
+   "page_px": [1485.68,1478.29],
+   "mm": [-1.278,-6.556],
+   "note": ""
+  }
+ ],
+ "boundaries": [],
+ "extents": [],
+ "notes": [],
+ "preview": null,
+ "snapshot": "corrections/20260911T142043Z-p07-aci.png",
+ "source": {
+  "commit": "",
+  "site": "https://dstolz.github.io/GerbilAtlasExplorer/",
+  "repo": "dstolz/GerbilAtlasExplorer",
+  "tool": "atlasfix (the published page) 1.0",
+  "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+ }
+}
