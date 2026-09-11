@@ -63,8 +63,8 @@ def test_label_positions(db):
             for b in boxes:
                 assert len(b) == 4 and all(0 <= v <= 1 for v in b)
                 n += 1
-    assert n == db['verification']['label_positions_located'] == 6349
-    assert sum(len(d) for d in LP.values()) == db['verification']['ocr_confirmed'] == 3351
+    assert n == db['verification']['label_positions_located'] == 6351
+    assert sum(len(d) for d in LP.values()) == db['verification']['ocr_confirmed'] == 3353
 
 
 def test_every_label_is_inside_the_printed_coordinate_box(db):
@@ -397,7 +397,12 @@ def test_volumes_consistent(db):
     # 689 rather than 691: ALPO and MRe, each lettered on one plate (44 and 34), where
     # the only area either had was its own printed word on the photograph's edge --
     # gone with the outline that took the word in (build_brain_outline.py).
-    assert V['summary']['structures'] == len(V['data']) == 689
+    # 688 rather than 689: PaV, lettered on plate 27 alone and there printed inside the
+    # AHC oval with a line drawn out to the periventricular strip it names. Seeded on
+    # the word it held a slab of AHC's face; seeded where the line goes, its ground is
+    # the strip, which the atlas draws at 0.02 mm2 -- under MIN_AREA_PX -- so it is no
+    # longer published anywhere (20260911T140555Z-p27-AHC).
+    assert V['summary']['structures'] == len(V['data']) == 688
     assert not (have & set(db['features']['data']))
     assert 'little-endian' in V['note']
     for ab, e in V['data'].items():

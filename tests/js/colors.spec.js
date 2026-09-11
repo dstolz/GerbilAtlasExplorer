@@ -36,8 +36,12 @@ test('every region on every plate carries a color, and one color only', async ({
   // territory anywhere was cut by MIN_AREA_PX while that floor stood above MIN_FACE_PX.
   // 689 rather than 691: ALPO and MRe, lettered on one plate each, whose only area was
   // their printed word on the photograph's edge, gone with the outline that took it in
-  // (tools/build_brain_outline.py).
-  expect(out.named).toBe(689);
+  // (tools/build_brain_outline.py). 688 rather than 689: PaV, lettered on plate 27 alone
+  // and there printed inside the AHC oval with a line drawn out to the periventricular
+  // strip it names. Seeded where the line goes rather than on the word, its ground is the
+  // strip, which the atlas draws at 0.02 mm2 -- under MIN_AREA_PX -- so it is no longer
+  // published anywhere (20260911T140555Z-p27-AHC).
+  expect(out.named).toBe(688);
   // eight is what a color that holds across the atlas costs, and no plate asks for more
   expect(out.pal).toBe(8);
   expect(Math.max(...out.counts)).toBeLessThanOrEqual(out.pal);
