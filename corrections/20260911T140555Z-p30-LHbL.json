@@ -1,0 +1,67 @@
+{
+ "schema": "gerbil-atlas-correction/1",
+ "id": "20260911T140555Z-p30-LHbL",
+ "created": "2026-09-11T14:05:55Z",
+ "author": "",
+ "plate": 30,
+ "ap_bregma_mm": -2.35,
+ "abbr": "LHbL",
+ "hemisphere": "both",
+ "problem": "",
+ "seeds": [
+  {
+   "abbr": "LHbL",
+   "kind": "positive",
+   "page_px": [1566.22,1088.5],
+   "mm": [-0.713,-3.815],
+   "note": ""
+  },
+  {
+   "abbr": "LHbL",
+   "kind": "positive",
+   "page_px": [1554.89,1107.06],
+   "mm": [-0.792,-3.945],
+   "note": ""
+  },
+  {
+   "abbr": "LHbL",
+   "kind": "positive",
+   "page_px": [1549.83,1124.66],
+   "mm": [-0.828,-4.069],
+   "note": ""
+  },
+  {
+   "abbr": "LHbL",
+   "kind": "positive",
+   "page_px": [1799.31,1101.76],
+   "mm": [0.921,-3.908],
+   "note": ""
+  },
+  {
+   "abbr": "LHbL",
+   "kind": "positive",
+   "page_px": [1794.49,1115.74],
+   "mm": [0.888,-4.007],
+   "note": ""
+  },
+  {
+   "abbr": "LHbL",
+   "kind": "positive",
+   "page_px": [1790.87,1122.49],
+   "mm": [0.862,-4.054],
+   "note": ""
+  }
+ ],
+ "boundaries": [],
+ "extents": [],
+ "notes": [],
+ "preview": null,
+ "snapshot": "corrections/20260911T140555Z-p30-LHbM.png",
+ "source": {
+  "commit": "",
+  "site": "https://dstolz.github.io/GerbilAtlasExplorer/",
+  "repo": "dstolz/GerbilAtlasExplorer",
+  "tool": "atlasfix (the published page) 1.0",
+  "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+ }
+}

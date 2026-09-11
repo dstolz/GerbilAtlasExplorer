@@ -1,0 +1,60 @@
+{
+ "schema": "gerbil-atlas-correction/1",
+ "id": "20260911T140555Z-p29-LHbL",
+ "created": "2026-09-11T14:05:55Z",
+ "author": "",
+ "plate": 29,
+ "ap_bregma_mm": -2,
+ "abbr": "LHbL",
+ "hemisphere": "both",
+ "problem": "",
+ "seeds": [
+  {
+   "abbr": "LHbL",
+   "kind": "positive",
+   "page_px": [1550.92,1097.87],
+   "mm": [-0.82,-3.881],
+   "note": ""
+  },
+  {
+   "abbr": "LHbL",
+   "kind": "positive",
+   "page_px": [1562.95,1082.84],
+   "mm": [-0.735,-3.775],
+   "note": ""
+  },
+  {
+   "abbr": "LHbL",
+   "kind": "positive",
+   "page_px": [1792.82,1091.86],
+   "mm": [0.876,-3.838],
+   "note": ""
+  },
+  {
+   "abbr": "LHbL",
+   "kind": "positive",
+   "page_px": [1770.05,1080.69],
+   "mm": [0.717,-3.76],
+   "note": ""
+  },
+  {
+   "abbr": "LHbL",
+   "kind": "positive",
+   "page_px": [1769.62,1094.87],
+   "mm": [0.714,-3.859],
+   "note": ""
+  }
+ ],
+ "boundaries": [],
+ "extents": [],
+ "notes": [],
+ "preview": null,
+ "snapshot": "corrections/20260911T140555Z-p29-LHbL.png",
+ "source": {
+  "commit": "",
+  "site": "https://dstolz.github.io/GerbilAtlasExplorer/",
+  "repo": "dstolz/GerbilAtlasExplorer",
+  "tool": "atlasfix (the published page) 1.0",
+  "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+ }
+}
