@@ -449,13 +449,30 @@ function viewM() { const v = S.view; return mul6([v.k, 0, 0, v.k, v.x, v.y], S.r
 // canvas px -> the upright frame the view zooms and pans in, short of the page itself
 function viewOf(pt) { const v = S.view; return [(pt[0] - v.x) / v.k, (pt[1] - v.y) / v.k]; }
 
-function toMm(x, y) {                       // page px -> [ML, DV] mm
-  const f = S.d.frame, p = xf(S.d.m, x, y);
+function toMm(x, y, on) {                   // page px -> [ML, DV] mm, on screen unless `on` says
+  const P = on || S.d, f = P.frame, p = xf(P.m, x, y);
   return [(p[0] - f.ml0) / f.mlpx, (f.dv0 - p[1]) / f.dvpx];
 }
 function toPage(ml, dv) {                   // [ML, DV] mm -> page px
   const f = S.d.frame;
   return xf(S.d.im, f.ml0 + ml * f.mlpx, f.dv0 - dv * f.dvpx);
+}
+const frameOf = (pf) => ({w: pf.width_px, h: pf.height_px, ml0: pf.ml_zero_px,
+  mlpx: pf.ml_px_per_mm, dv0: pf.dv_zero_px, dvpx: pf.dv_px_per_mm});
+
+/* The transforms plate n's page px are read through. A mark is only ever made on the
+   plate on screen, but its file is written when Commit is pressed, and one Commit writes
+   every plate that holds marks -- so each file is read through its own plate's
+   registration, not the one in front of the reader. Sixty plates' registrations lie within
+   0.016 mm of one another, which is how reading them through the wrong one went unseen;
+   plate 31's sits 0.83 mm of DV from the rest (#135), and plate 20's is a quarter turn.
+   The published page has every plate's in the database; behind tools/atlasfix.py the
+   server writes the file, through the plate it names. */
+function framesOf(n) {
+  if (n === S.plate && S.d) return S.d;
+  const m = DB && DB.plate_registration.data[String(n)];
+  if (!m) throw new Error('plate ' + n + ': no registration to read its marks in mm');
+  return {m, frame: frameOf(DB.plate_frame)};
 }
 function pip(ring, x, y) {                  // even-odd, the app's own test
   let c = false;
@@ -690,8 +707,7 @@ const Static = {
     return {
       plate: n, bregma: (DB.plates.find((q) => q.plate === n) || {}).bregma,
       page: [W, H], m, im,
-      frame: {w: NW, h: NH, ml0: pf.ml_zero_px, mlpx: pf.ml_px_per_mm,
-        dv0: pf.dv_zero_px, dvpx: pf.dv_px_per_mm},
+      frame: frameOf(pf),
       mm_per_px: Math.sqrt(mm2), mm2_per_px: mm2,
       bridge_px: 20, min_face_px: 400, support_px: 3,
       paths,
@@ -920,8 +936,9 @@ function buildDoc(draft, when) {
   const stamp = stampOf(now);
   const created = now.getUTCFullYear() + '-' + p2(now.getUTCMonth() + 1) + '-' + p2(now.getUTCDate())
     + 'T' + p2(now.getUTCHours()) + ':' + p2(now.getUTCMinutes()) + ':' + p2(now.getUTCSeconds()) + 'Z';
+  const on = framesOf(n);                   // the draft's plate, which need not be on screen
   const pt = (q) => {
-    const mm = toMm(q[0], q[1]);
+    const mm = toMm(q[0], q[1], on);
     return [[trim(q[0], 2), trim(q[1], 2)], [trim(mm[0], 3), trim(mm[1], 3)]];
   };
   const doc = {

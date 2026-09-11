@@ -429,9 +429,10 @@ async function published(page) {
   return page;
 }
 
-// the correction as either backend would write it, with what cannot match taken out
-async function documentOf(page) {
-  const doc = await page.evaluate(async () => (await SRC.document(S.draft)).doc);
+// the correction as either backend would write it, with what cannot match taken out --
+// the draft on screen's, or the one handed in
+async function documentOf(page, draft) {
+  const doc = await page.evaluate(async (d) => (await SRC.document(d || S.draft)).doc, draft || null);
   for (const k of ['id', 'created', 'author', 'source']) delete doc[k];
   return doc;
 }
@@ -491,6 +492,36 @@ test('the two backends write one correction', async ({ page }) => {
   expect(there.seeds[0].page_px).toEqual([1079, 955]);
   expect(there.boundaries[0].style).toBe('dashed');
   expect(there.hemisphere).toBe('left');
+});
+
+// A file is written when Commit is pressed, from whichever plate the reader is on by
+// then, and it has to read its marks through the registration of the plate they were
+// made on. Plate 31's sits 0.83 mm of DV from its neighbours', so read through plate
+// 19's a seed in the third ventricle lands somewhere else -- and tools/corrections.py
+// validate stops the run on it before there is any session, fix or picture (#135).
+test('a plate marked and left is written through its own registration', async ({ page }) => {
+  await published(page);
+  await page.fill('#plate', '31');
+  await page.locator('#plate').press('Enter');
+  await expect(page.locator('#where')).toContainText('plate 31, bregma');
+  await page.evaluate(() => select('3V'));
+  await page.click('[data-t="seed"]');
+  await clickAt(page, [1595, 1154]);                // between the habenulae, where #135 put it
+  const onIt = await documentOf(page);
+  await page.fill('#plate', '19');
+  await page.locator('#plate').press('Enter');
+  await expect(page.locator('#where')).toContainText('plate 19, bregma');
+  const draft = await page.evaluate(() => S.drafts.get(31));
+  const left = await documentOf(page, draft);
+  expect(left).toEqual(onIt);
+  expect(left.seeds[0].mm[1]).toBeCloseTo(-3.45, 1);  // not -4.28, which is plate 19's reading
+
+  const local = await page.context().newPage();       // and it is the file atlasfix.py writes
+  await open(local);
+  const here = await documentOf(local, draft);
+  await local.close();
+  expect(left).toEqual(here);
+  expect(page.errors).toEqual([]);
 });
 
 test('what needs the pipeline is off, and says so', async ({ page }) => {
