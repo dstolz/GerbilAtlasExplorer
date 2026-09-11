@@ -400,6 +400,101 @@ carries a `version` block naming the release its derived fields were built for.
   are what carry the other two and a plain mesh link carries none.
 
 ### Fixed
+- **The lateral habenula is cut into its two parts on both sides of plates 29 and 30, and the
+  anterior hypothalamic area's central part takes back the ground three periventricular words
+  and a broken boundary were holding.** Six corrections on four plates, all of them
+  hypothalamus and habenula, sent as one batch: `20260911T140555Z-p27-AHC`, `-p28-AHC`,
+  `-p29-LHbL`, `-p29-LHbM`, `-p30-LHbL`, `-p30-LHbM`. Three of the four causes between them.
+
+  **Plate 29: a label was never read.** The atlas letters this habenula `LHbL` on the left and
+  `LHbM` on the right, one part to a side, each word set clear of the nucleus with a line drawn
+  back into it — and neither word was in `label_positions` at all. The drawing divides each
+  wedge into a lateral and a medial face, so four sealed faces stood unnamed and neither name
+  had any area on the plate. The two boxes are added where the words are printed, each with a
+  `seed_overrides` row standing in for it at the end of its line (`label_leaders` reads a tip
+  only on a run against the PDF, and has not been run since), and the mirror pass then letters
+  the wedge on the other side of each: `LHbL` no area → **0.2001 mm² in 2 polygons** (0.0946
+  left, 0.1055 right), `LHbM` no area → **0.1933 mm² in 2** (0.1081 left, 0.0852 right). `fr`
+  0.1257 → 0.1191, `sm` 0.2710 → 0.2672, `MHb` 0.2484 → 0.2453: each gives up its half of a
+  wall that now has a region on the other side of it.
+
+  **Plate 30: a run of tracing is missing, and a seed sits on the wrong side of a wall.** Here
+  the atlas sets the pair as one label a side — `LHbL/M` on the left, `LHbM/L` on the right —
+  and draws the line between the two parts. On the left the line is traced; on the right it
+  survives only as two short dangling strokes, so the whole wedge was one face, the printed
+  `LHbM` took all of it and `LHbL`'s mirror had nowhere to land. The correction's boundary
+  (0.53 mm, 75% of it on ink already) completes that line; its two shorter ones close the gaps
+  at either end of the left-hand line, which `BRIDGE_PX` had been sealing on its own. On the
+  left, `fr` is printed on the wall between the wedge and the fibre band wrapping its ventral
+  edge and fell on the wedge's side, so `fr` held the wedge's medial half — 2,397 px, against
+  the 1,556 px band the right-hand `fr` lands in of its own accord — and `LHbM` had no unnamed
+  face to mirror into; a row moves that seed two plate pixels ventral, into the band. `LHbM`'s
+  mirror then falls on the ink of the left-hand dividing line itself and is dropped, so the
+  left medial half is seeded from the reader's mark nearest that mirror. `LHbL` 0.1913 mm² in
+  1 polygon → **0.3229 in 2** (0.1892 left, 0.1337 right); `LHbM` 0.3038 in 1 → **0.2952 in 2**
+  (0.1243 left, 0.1709 right), both sides now medial as the label reads; `fr` 0.2084 → 0.1556,
+  the two bands the atlas draws for it and not the half-nucleus.
+
+  **Plate 28: a run of tracing is missing.** The anterior hypothalamic area is drawn on this
+  plate as a shell around the `AHP` oval, and the line between shell and oval is interrupted
+  exactly where the word `AHC` is printed across it. Through that 0.40 mm gap the oval and the
+  ventral shell were one face, which `AHP` and `AHC` shared; the correction's boundary (89% of
+  it on ink already) closes it, and the reader's two negative marks — `AHC` before, and they
+  said they should not be — come out `AHP`. Two rows then seed the shell where the atlas prints
+  no second word: the left shell, which the printed `AHC`'s mirror missed because the left oval
+  is the wider of the two and the mirrored point falls inside it, and the right shell above the
+  fornix, which the `f` oval cuts off from the part the word seeds. `AHC` 0.0777 mm² in 1
+  polygon at 0.83 traced → **0.4439 in 3** at 1.00, 1.00 and 0.98 (0.2082 left, 0.2357 right);
+  `AHP` 0.4137 → 0.4234, and nothing else on the plate moves by more than 0.0042 mm².
+
+  **Plate 27: a seed lands in the wrong face — and a structure leaves the atlas.** `PaV`, `SPa`
+  and `Pe` name the periventricular strip between the left `AHC` oval and the third ventricle.
+  The strip has no room for a word, so all three are printed inside the oval, each with a short
+  line that crosses the oval's medial border and stops at the ventricle wall. Seeded on the
+  words, the three of them watershedded 0.17 mm² out of the face the atlas letters `AHC` alone,
+  which left the left `AHC` a notched scrap with 0.54 of its border on ink beside its
+  1.00-traced mirror. Three rows put each seed where its line leaves the oval: `AHC` on the
+  plate 1.1387 → **1.3128 mm²**, the left hemisphere 0.5621 → 0.7362, both polygons 1.00 traced
+  and the left oval now its fellow's equal.
+
+  The price is stated plainly, because it is a real one. The strip those three lines point into
+  is 0.02 mm² at its widest, under `MIN_AREA_PX` — the 400-page-pixel floor below which a
+  territory is not published — so none of the three keeps an entry on plate 27: `PaV` 0.0670,
+  `SPa` 0.0560 and `Pe` 0.0508 → no area, and `RChL` 0.6909 → 0.6609 where the ground they used
+  to reach went on. `SPa` and `Pe` are lettered on other plates and keep their meshes;
+  **`PaV` is lettered on plate 27 alone, so it leaves `region_extents` and the volumes
+  altogether**, 689 structures to 688. That is the extraction's publishing floor meeting a strip
+  the atlas draws thinner than the floor, not a finding that `PaV` is not there. The reading not
+  taken was to leave the three seeds on their words and let `AHC` keep the notch; what tells the
+  two apart is whether those short lines are leaders, and each of them crosses the oval's medial
+  border and stops at the ventricle wall, which is what a leader does and what a boundary
+  between two parts of the oval would not.
+
+  **Two of the fifteen marks on `20260911T140555Z-p28-AHC` are not applied.** Seeds 14 and 15
+  fall on the word `PaXi` — ML −0.12 and +0.14, DV −6.4, the paraxiphoid nucleus of the
+  thalamus, which the atlas prints on plates 27, 28 and 29 and whose box was read on 27 and 29
+  but not on 28, so its face stands unlettered. They are not `AHC`, and they carry
+  `label_index 0`, which would have withdrawn the printed `AHC` box that — once the boundary
+  above is closed — seeds the shell correctly. `PaXi`'s missing box on plate 28 wants a
+  correction of its own.
+
+  One note on the tools, which this run does not touch: the fixer wrote `label_index 0` on all
+  six seeds of `20260911T140555Z-p27-AHC` and on both of the two above. `build_region_extents`
+  keeps one tip per box, so of several rows standing in for the same box only the last would
+  ever take effect; a mark meant to seed beside a printed box rather than replace it wants
+  `label_index` absent.
+
+  Over the atlas: `boundary_edges_shared_exactly` stays **1.0**. `structure_plate_entries`
+  3,092 → 3,091, `polygons` 5,823 → 5,828, `points` 154,923 → 155,067,
+  `faces_named_by_one_abbreviation` 3,435 → 3,446, `labels_mirrored` 112 → 115,
+  `seeds_moved_by_hand` 66 → 75, `entries_without_a_drawn_outline` 315 → 312,
+  `label_inside_its_own_region` 0.9733 → 0.9728 — the words moved off their own faces are the
+  five now read at the end of their lines instead. 47 volumes move, the label volume
+  interpolating a moved boundary into the slabs either side; `unnamed_fraction` 0.0187 →
+  0.0185. Three test literals are reconciled and no test logic is: `test_label_positions` and
+  `test_labels_table_rows` read 6,351 located labels for 6,349 and 3,353 (plate, name) pairs for
+  3,351, the two boxes added on plate 29; `test_volumes_consistent` reads 688 structures for
+  689, which is `PaV`.
 - **A plate marked and left is written in its own millimetres, so a batch sent from the
   published fixer reaches its session again.** The page wrote every file of a Commit through
   the registration of whichever plate was on screen when Commit was pressed: `buildDoc` read

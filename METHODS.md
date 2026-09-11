@@ -434,9 +434,9 @@ the photograph's edge (`Mi` on the bulb plates, `LNTB` on 45, `LRtPC` on 57 and 
 `label_positions` says where an abbreviation is *printed*. `region_extents` says what it
 *names*: the area of each structure on each plate, as closed polygons of `[x, y]` fractions
 of the frame-cropped image, the convention `brain_outline` uses, so the app's point-in-polygon
-test reads them unchanged. **<!-- n:region_extents.summary.structure_plate_entries -->3,092<!-- /n --> structure–plate entries carry an area**, 96% of the 3,216 the
+test reads them unchanged. **<!-- n:region_extents.summary.structure_plate_entries -->3,091<!-- /n --> structure–plate entries carry an area**, 96% of the 3,216 the
 label pass located and 92% of the 3,369 the published index lists (both counted over the
-structures that are regions), as <!-- n:region_extents.summary.polygons -->5,823<!-- /n --> polygons over <!-- n:region_extents.summary.points -->154,923<!-- /n --> points.
+structures that are regions), as <!-- n:region_extents.summary.polygons -->5,828<!-- /n --> polygons over <!-- n:region_extents.summary.points -->155,067<!-- /n --> points.
 Where the atlas prints two names as one label the two share an entry (step 8). Twenty of the
 724 names have no entry anywhere and never could: they name no region (step 7).
 
@@ -455,7 +455,7 @@ already here: the lines in `svg/`, the abbreviations in `label_positions`. The s
 3. **Close against `brain_outline`**, inverse-transformed into the page frame, and fill it
    for the section interior.
 4. **Cut the empty space into faces.** A face sealed by traced ink and holding exactly one
-   abbreviation is that structure's area *as drawn*: <!-- n:region_extents.summary.faces_named_by_one_abbreviation -->3,435<!-- /n --> faces. A label the atlas set
+   abbreviation is that structure's area *as drawn*: <!-- n:region_extents.summary.faces_named_by_one_abbreviation -->3,446<!-- /n --> faces. A label the atlas set
    outside its region is seeded at the end of the line it draws rather than on the word
    (<!-- n:region_extents.summary.labels_on_a_leader -->217<!-- /n --> labels; see [Where the name is not the place](#where-the-name-is-not-the-place)).
 5. **Letter the hemisphere the atlas did not.** Some abbreviations are set once (`S1J` on
@@ -465,7 +465,7 @@ already here: the lines in `svg/`, the abbreviations in `label_positions`. The s
    printed abbreviation names*, so the page always wins, and where at least half of that face
    reflects into the faces the seeds came from, which a face merely opposite a named one does
    not do. The second test is against all of those faces together, because one side may draw
-   a boundary the other does not. <!-- n:region_extents.summary.labels_mirrored -->112<!-- /n --> seeds are added this way; they carry no weight in
+   a boundary the other does not. <!-- n:region_extents.summary.labels_mirrored -->115<!-- /n --> seeds are added this way; they carry no weight in
    `n`, which counts printed labels.
 6. **Split the rest.** Where a face holds several abbreviations, ink is missing somewhere on
    the boundary between them. A watershed seeded on the labels and ridged on the distance
@@ -527,17 +527,17 @@ Three checks, none of which the extraction was tuned to pass:
 | Check | Extracted |
 | --- | --- |
 | Every boundary between two regions stored as one polyline, twice | **100%** of directed boundary edges have their reverse in exactly one neighbour, so the regions tile the section: a point is inside exactly one, or inside none |
-| Printed labels inside the region they name | **<!-- n:region_extents.summary.label_inside_its_own_region -->0.9733<!-- /n -->**, read at the end of the label's line where the atlas draws one |
+| Printed labels inside the region they name | **<!-- n:region_extents.summary.label_inside_its_own_region -->0.9728<!-- /n -->**, read at the end of the label's line where the atlas draws one |
 | Regions plus unassigned faces against the section area | within **<!-- n:region_extents.summary.section_area_residual_worst_plate -->0.007<!-- /n -->** of it on the worst plate |
 
 **Every polygon also says which boundaries are real.** `s` is the traced share of its border:
-median <!-- n:region_extents.summary.traced_fraction_median -->0.998<!-- /n -->, a share of <!-- n:region_extents.summary.traced_fraction_ge_90 -->0.799<!-- /n --> at or above 0.90, <!-- n:region_extents.summary.traced_fraction_ge_75 -->0.895<!-- /n --> at or above 0.75,
+median <!-- n:region_extents.summary.traced_fraction_median -->0.999<!-- /n -->, a share of <!-- n:region_extents.summary.traced_fraction_ge_90 -->0.8<!-- /n --> at or above 0.90, <!-- n:region_extents.summary.traced_fraction_ge_75 -->0.896<!-- /n --> at or above 0.75,
 <!-- n:region_extents.summary.traced_fraction_lt_50 -->0.035<!-- /n --> below 0.50. A polygon at 0.98 is the boundary the atlas prints; one at 0.16 is a split
 the extraction had to invent, and the app dashes those outlines. The weak ones are where a
 reader would expect them: `7Cb` on plate 51, `RRF` on 39, `imvc` on 29, the facial subnuclei
 on 48–50, thin subdivisions the pages bound with faint or dashed print, if at all.
 
-**And <!-- n:region_extents.summary.entries_without_a_drawn_outline -->315<!-- /n --> entries have no boundary of their own, which `w` says outright.** A face carrying
+**And <!-- n:region_extents.summary.entries_without_a_drawn_outline -->312<!-- /n --> entries have no boundary of their own, which `w` says outright.** A face carrying
 several abbreviations was split in step 6, and that split is one of two things: either the
 atlas prints the boundary and the tracing missed it, so the ridge found the ink again (`CPu`
 on plate 25 keeps a rim 98% drawn), or the atlas prints nothing between those names anywhere,
@@ -662,7 +662,7 @@ plate's own ink, and 95 of the 198 pairs that share an unprinted border somewher
 apart by a printed line somewhere else; the printed line wins every time, since a color change
 where the atlas prints nothing is the milder error. The remaining 103 pairs are joined as far
 as they can be without a printed boundary falling *inside* a patch along a chain of merges:
-77 joins hold, <!-- n:region_colors.summary.merges_refused -->26<!-- /n --> are refused, and the <!-- n:region_colors.summary.regions -->689<!-- /n --> regions become <!-- n:region_colors.summary.patches -->630<!-- /n --> patches, the largest of them
+77 joins hold, <!-- n:region_colors.summary.merges_refused -->26<!-- /n --> are refused, and the <!-- n:region_colors.summary.regions -->688<!-- /n --> regions become <!-- n:region_colors.summary.patches -->631<!-- /n --> patches, the largest of them
 seven names.
 
 **Eight colors, which is the fewest.** Eight regions pairwise touch (cortical layers 1, 2 and
@@ -805,7 +805,7 @@ The divisions are **not part of the published atlas**, exactly as the system tag
 app's own `plateAt()` quantizes an AP to the nearest section rather than blending two.
 `data/gerbil_atlas_volumes.json` sets that aside on purpose: it stacks the 62 plates and
 fills the six planes between each pair at 50 µm, giving **a brain surface and one mesh for
-each of the <!-- n:vol:summary.structures -->689<!-- /n --> structures that carry an area**.
+each of the <!-- n:vol:summary.structures -->688<!-- /n --> structures that carry an area**.
 
 **Six planes in seven are arithmetic.** The atlas samples AP twenty times more coarsely than
 it samples a section, so what these meshes add along the brain is a linear guess. Where a
@@ -848,7 +848,7 @@ why this is not a segmentation either.
 | Grade | What it is | Count |
 | --- | --- | --- |
 | `surface` | At least three consecutive plates. The mesh follows the drawn boundaries, interpolated between them. | <!-- n:vol:summary.graded_surface -->427<!-- /n --> |
-| `slab` | One or two plates. The series does not sample the structure along AP at all, so the mesh is a **convex hull per connected component**, a claim about where the structure is rather than what shape it is, closed half a section step beyond the plates that name it. | <!-- n:vol:summary.graded_slab -->262<!-- /n --> |
+| `slab` | One or two plates. The series does not sample the structure along AP at all, so the mesh is a **convex hull per connected component**, a claim about where the structure is rather than what shape it is, closed half a section step beyond the plates that name it. | <!-- n:vol:summary.graded_slab -->261<!-- /n --> |
 
 A `slab` is marked `bounding: true`, and two slabs may overlap: a bounding volume is not a
 partition. The hull is taken per connected component, never over all of them at once, since
@@ -877,20 +877,20 @@ move the plates, and that the 2-D extraction's guarantees survived into three di
 
 | Check | 2-D | Extracted in 3-D |
 | --- | --- | --- |
-| Cross-section area on a plate a structure was built from, against `region_extents` | — | **median <!-- n:vol:checks.section_area_median_rel_error -->0.0115<!-- /n --> off**, 90th percentile <!-- n:vol:checks.section_area_p90_rel_error -->0.0557<!-- /n -->, the lattice's own quantisation |
-| Regions partition the volume | a point is inside one region or none | **holds**: every voxel inside the surface carries exactly one label or is an unnamed sealed face, <!-- n:vol:checks.unnamed_fraction -->0.0187<!-- /n --> of the brain |
+| Cross-section area on a plate a structure was built from, against `region_extents` | — | **median <!-- n:vol:checks.section_area_median_rel_error -->0.0115<!-- /n --> off**, 90th percentile <!-- n:vol:checks.section_area_p90_rel_error -->0.0558<!-- /n -->, the lattice's own quantisation |
+| Regions partition the volume | a point is inside one region or none | **holds**: every voxel inside the surface carries exactly one label or is an unnamed sealed face, <!-- n:vol:checks.unnamed_fraction -->0.0185<!-- /n --> of the brain |
 | Highest point of the surface | DV −0.06 | **DV <!-- n:vol:checks.dv_highest_mm -->-0.1<!-- /n -->** (one voxel) |
 | Lowest point of the surface | DV −9.04 | **DV <!-- n:vol:checks.dv_lowest_mm -->-9.0<!-- /n -->** |
 | Printed labels inside the surface | 0.9693 | **<!-- n:vol:checks.labels_inside_the_surface -->0.9693<!-- /n -->** |
-| Printed labels inside the region they name | <!-- n:region_extents.summary.label_inside_its_own_region -->0.9733<!-- /n --> | **<!-- n:vol:checks.labels_in_their_own_region -->0.9489<!-- /n -->**: the 2-D figure is after labels were pulled to the nearest face; this one is not |
+| Printed labels inside the region they name | <!-- n:region_extents.summary.label_inside_its_own_region -->0.9728<!-- /n --> | **<!-- n:vol:checks.labels_in_their_own_region -->0.9478<!-- /n -->**: the 2-D figure is after labels were pulled to the nearest face; this one is not |
 | Brain volume | not published | **<!-- n:vol:summary.brain_volume_mm3 -->1027.821<!-- /n --> mm³** |
 
 Two costs are larger than the interpolation is likely to be: reading the distance field
 coarsely costs a mesh a median <!-- n:vol:checks.coarsening_median_rel_error -->0.041<!-- /n --> of its volume, and an isosurface sitting half a
 voxel inside the voxels it was cut from accounts for another <!-- n:vol:checks.mesh_vs_voxel_median_rel_error -->0.0502<!-- /n -->, the difference
-between a surface and a pile of cubes. And <!-- n:vol:checks.structures_in_one_or_two_pieces -->0.7866<!-- /n --> of structures arrive as the one or
+between a surface and a pile of cubes. And <!-- n:vol:checks.structures_in_one_or_two_pieces -->0.7878<!-- /n --> of structures arrive as the one or
 two pieces anatomy expects; where a thin sheet pinches off into more (`CA1`, the ventricle
-slits, `DCl`) a median <!-- n:vol:checks.fragment_share_when_more_median -->0.1378<!-- /n --> of it sits outside the largest two. This is reported
+slits, `DCl`) a median <!-- n:vol:checks.fragment_share_when_more_median -->0.136<!-- /n --> of it sits outside the largest two. This is reported
 rather than closed up, since closing it would grow a structure into a neighbour; the
 per-component volumes are in the file.
 
