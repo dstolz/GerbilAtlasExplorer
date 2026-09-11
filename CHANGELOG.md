@@ -385,6 +385,27 @@ carries a `version` block naming the release its derived fields were built for.
   are what carry the other two and a plain mesh link carries none.
 
 ### Fixed
+- **A plate marked and left is written in its own millimetres, so a batch sent from the
+  published fixer reaches its session again.** The page wrote every file of a Commit through
+  the registration of whichever plate was on screen when Commit was pressed: `buildDoc` read
+  `S.d`, which was the draft's own plate while Commit sent one plate, and stopped being so
+  when it began sending every plate that holds marks. Sixty of the sixty-two registrations lie
+  within 0.016 mm of one another, under the 0.02 mm `validate` allows, so nothing showed;
+  plate 31's lies 0.83 mm of DV from the rest, and plate 20's is a quarter turn. #135 sent
+  eleven corrections on seven plates, its plate-31 file said DV -4.273 where its own page px
+  read -3.444, `tools/corrections.py validate` stopped `apply-correction.yml` at `Read
+  them`, and the run ended before any session -- so none of the eleven was applied, and there
+  was no pull request opening on its before-and-after picture. Each file is now read
+  through its own plate's registration (`framesOf` in `src/fixer.js`), which is what
+  `tools/atlasfix.py` always did behind the local page. The pipeline reads page px and never
+  mm, so the other batch files sent this way moved nothing: their mm are off by 0.015 mm at
+  most (`MiA` on plates 5 to 7), and only #135's plate 31 is outside the tolerance. #137
+  recomputed that file's four mm pairs from its own page px, which are where the reader put
+  the seeds, so main reads it again; this is the change to the page that wrote it, which #137
+  held back. `tests/js/fixer.spec.js` marks plate 31 on the published page, leaves it for
+  plate 19, and checks the file is the one written with plate 31 on screen and the one
+  `atlasfix.py` writes.
+
 - **The section outline follows the drawn line, and the gray blobs leave the SVG export.**
   The export drew, faint and gray, a scatter of small shapes hanging off the drawing on
   nearly every plate -- letter-shaped where a label sat on the section's edge. They were
