@@ -89,6 +89,21 @@ carries a `version` block naming the release its derived fields were built for.
   that has never been here sees.
 
 ### Changed
+- **A word on what is wrong is optional: a plate goes on its marks alone.** The fixer would
+  not send a plate until something had been written for it, and asked twice -- once in the
+  page beside the marks, once on the send sheet, where a single plate left blank refused the
+  whole send, every other plate with it. What the applying session works from is the marks:
+  a seed, a boundary or an extent, in that plate's own pixels with millimetres beside them.
+  The sentence is context on top of that, so it is now asked for rather than required. The
+  sheet says *(optional)*, a plate can be sent on its marks alone, and its file carries
+  `problem: ""` -- which `tools/corrections.py` already read, printing `problem: (none given)`.
+  What is written still goes on the commit message; a plate left blank writes no line there
+  rather than an empty one, and a send with nothing written on any plate writes no body at
+  all. Naming the region and marking something are unchanged, and both backends agree, the
+  published page and `tools/atlasfix.py` behind `/api/commit` alike. `tests/python/test_atlasfix.py`
+  sends a wordless correction and reads the file and the message back; `tests/js/fixer.spec.js`
+  sends one from the page.
+
 - **METHODS.md is brought up to the data and cut by a third.** Every figure in it was read
   again off the current build, and the ones that had drifted are moved: 6,349 located labels
   (6,345), 3,351 of 3,514 structure-plate entries with a label, region extents at 96% of the

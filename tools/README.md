@@ -141,10 +141,11 @@ down with marks on them -- and on each plate one file for each region marked on 
 builds the files in a temporary git worktree cut from `origin/main` and pushes the branch,
 so the checkout you are reading the plate from is untouched and the branch carries one
 commit. One file goes on `correction/<id>`; several go on `correction/<stamp>`, their ids
-sharing the stamp. It shows the files first, with a line for what is wrong on each plate,
-and *dry run* there writes them under `build/corrections/` and stops, which is the way to
-look at what would be sent. A picture of each plate as it stands goes beside its files, and
-the page walks to each plate to take it.
+sharing the stamp. It shows the files first, with a line for what is wrong on each plate --
+optional, so a plate can go on its marks alone, and one left blank writes no line on the
+commit -- and *dry run* there writes them under `build/corrections/` and stops, which is
+the way to look at what would be sent. A picture of each plate as it stands goes beside its
+files, and the page walks to each plate to take it.
 
 ### From a phone
 
