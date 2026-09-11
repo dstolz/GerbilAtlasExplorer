@@ -726,7 +726,7 @@ footer p{margin:0}
 footer a{color:var(--accent)}
 .fattr{opacity:.85}
 .fsep{opacity:.45;padding:0 5px}
-.fstamp{white-space:nowrap}
+.fstamp,footer .fdata{white-space:nowrap}
 .flink{border:0;background:none;padding:0;font:inherit;color:var(--accent);cursor:pointer}
 .flink:hover{text-decoration:underline}
 
@@ -1448,7 +1448,7 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
 
 <footer>
   <p>Radtke-Schuller et al. (2016), <em>Brain Struct Funct</em> 221(Suppl 1):1&ndash;272
-    <a href="https://doi.org/10.1007/s00429-016-1259-0" target="_blank" rel="noopener">doi:10.1007/s00429-016-1259-0</a><span class="fsep">&middot;</span><button type="button" class="flink" id="aboutb2">About the data</button><span class="fsep">&middot;</span><a href="https://github.com/dstolz/GerbilAtlasExplorer/blob/main/METHODS.md" target="_blank" rel="noopener">Methods</a><span class="fsep">&middot;</span><a href="https://github.com/dstolz/GerbilAtlasExplorer" target="_blank" rel="noopener">Source</a><span class="fsep">&middot;</span><a href="https://github.com/dstolz/GerbilAtlasExplorer/issues" target="_blank" rel="noopener">Report an issue</a><span class="fsep">&middot;</span><button type="button" class="flink" id="repdb">Report a drawing error</button><span class="fsep">&middot;</span><button type="button" class="flink" id="repfb">Request a feature</button><span class="fbuild"><span class="fsep">&middot;</span>Build <a href="https://github.com/dstolz/GerbilAtlasExplorer/commit/{{BUILD_HASH}}" target="_blank" rel="noopener"><code>{{BUILD_HASH}}</code></a><span class="fsep">&middot;</span><span class="fstamp">Updated <time class="bwhen" datetime="{{BUILD_ISO}}">{{BUILD_DATE}} {{BUILD_TIME}}</time></span></span></p>
+    <a href="https://doi.org/10.1007/s00429-016-1259-0" target="_blank" rel="noopener">doi:10.1007/s00429-016-1259-0</a><span class="fsep">&middot;</span><button type="button" class="flink" id="aboutb2">About the data</button><span class="fsep">&middot;</span><a href="https://github.com/dstolz/GerbilAtlasExplorer/blob/main/METHODS.md" target="_blank" rel="noopener">Methods</a><span class="fsep">&middot;</span><a href="https://github.com/dstolz/GerbilAtlasExplorer" target="_blank" rel="noopener">Source</a><span class="fsep">&middot;</span><a href="https://github.com/dstolz/GerbilAtlasExplorer/issues" target="_blank" rel="noopener">Report an issue</a><span class="fsep">&middot;</span><button type="button" class="flink" id="repdb">Report a drawing error</button><span class="fsep">&middot;</span><button type="button" class="flink" id="repfb">Request a feature</button><span class="fbuild"><span class="fsep">&middot;</span>Build <a href="https://github.com/dstolz/GerbilAtlasExplorer/commit/{{BUILD_HASH}}" target="_blank" rel="noopener"><code>{{BUILD_HASH}}</code></a><span class="fsep">&middot;</span><span class="fstamp">Updated <time class="bwhen" datetime="{{BUILD_ISO}}">{{BUILD_DATE}} {{BUILD_TIME}}</time></span></span><span class="fdata" hidden title="The day the atlas data in this copy was last recomputed. This copy carries no build stamp, so it cannot name the build it came from."><span class="fsep">&middot;</span>Atlas data updated <time class="dwhen"></time></span></p>
   <p class="fattr">Developed and maintained by Daniel Stolzberg and the
     <a href="https://www.caraslab.org" target="_blank" rel="noopener">Caras Lab</a>,
     <a href="https://biology.umd.edu" target="_blank" rel="noopener">Department of Biology</a>,
@@ -1830,7 +1830,7 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
     <h3>This build</h3>
     <p>Spotted an error in the atlas data, hit a bug, or want a new feature?
       <a href="https://github.com/dstolz/GerbilAtlasExplorer/issues" target="_blank" rel="noopener">Raise an issue on GitHub</a>.
-      <span class="fbuild">Build <a href="https://github.com/dstolz/GerbilAtlasExplorer/commit/{{BUILD_HASH}}" target="_blank" rel="noopener"><code>{{BUILD_HASH}}</code></a>, <time class="bwhen" data-date datetime="{{BUILD_ISO}}">{{BUILD_DATE}}</time>.</span></p>
+      <span class="fbuild">Build <a href="https://github.com/dstolz/GerbilAtlasExplorer/commit/{{BUILD_HASH}}" target="_blank" rel="noopener"><code>{{BUILD_HASH}}</code></a>, <time class="bwhen" data-date datetime="{{BUILD_ISO}}">{{BUILD_DATE}}</time>.</span><span class="fdata" hidden>This copy carries no build stamp, so it cannot name the build it came from; the atlas data in it was last recomputed <time class="dwhen"></time>.</span></p>
   </div>
 </dialog>
 
@@ -8606,11 +8606,16 @@ $('repcp').onclick=function(){
 function stampLocal(){
   /* A page nothing stamped has no build to name, and an unfilled token is not one: rather
      than print the token at a reader, and link a commit that does not exist, the footer and
-     About drop the claim. This is what a page opened straight from the repository does, and
-     what a local build does; the copy pages.yml deploys is stamped and keeps both.
+     About drop the claim and date the data instead. This is what a page opened straight from
+     the repository does, and what a local build does; the copy pages.yml deploys is stamped
+     and keeps both.
      (No token may be written literally in this file: the build fills them wherever they
      appear, and tests/python/test_atlaslib.py holds it to that.) */
-  if(!BUILD){ for(const el of document.querySelectorAll('.fbuild')) el.remove(); return; }
+  if(!BUILD){
+    for(const el of document.querySelectorAll('.fbuild')) el.remove();
+    dataWhen();
+    return;
+  }
   const p=n=>String(n).padStart(2,'0');
   /* EDT, JST, GMT+5:30 -- whatever this browser calls the zone, and a plain offset if it
      will not say. Without it the reader cannot tell which clock the stamp is on. */
@@ -8628,6 +8633,23 @@ function stampLocal(){
     el.textContent=`${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`
       +(el.hasAttribute('data-date')?'':` ${p(d.getHours())}:${p(d.getMinutes())} ${zone(d)}`);
     el.title=`Built ${iso.slice(0,16).replace('T',' ')} UTC`;   /* the moment as it was stamped */
+  }
+}
+/* What a page with no build stamp can still say was last updated: not the build, which it has
+   no way to name, but the day the database it carries was last recomputed -- version.generated
+   in data/gerbil_atlas.json, which tools/export_tables.py moves only when the data moves. Said
+   to be the data's date and not the page's, because a change to the app alone does not move it.
+   Printed exactly as it is stamped rather than on the reader's clock, as the stamps above are:
+   behind this one is a calendar day and no hour, and a day read in another zone is the day
+   before. Nothing is said at all if the database gives no date. */
+function dataWhen(){
+  const d=((DB.version||{}).generated||'').trim();
+  if(!/^\d{4}-\d\d-\d\d$/.test(d)) return;
+  for(const el of document.querySelectorAll('.fdata')){
+    const t=el.querySelector('time.dwhen');
+    if(!t) continue;
+    t.setAttribute('datetime',d); t.textContent=d;
+    el.hidden=false;
   }
 }
 stampLocal();
