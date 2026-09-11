@@ -148,13 +148,32 @@ def test_hemisphere_is_read_off_the_marks():
 def test_commit_refuses_a_draft_with_nothing_in_it():
     S = session()
     for draft, why in (({'plate': PLATE, 'abbr': '', 'problem': 'x'}, 'region'),
-                       ({'plate': PLATE, 'abbr': 'S1DZ', 'problem': ''}, 'wrong'),
                        ({'plate': PLATE, 'abbr': 'S1DZ', 'problem': 'x'}, 'Mark')):
         try:
             F.commit(S, draft, dry=True)
             raise AssertionError('committed %r' % draft)
         except F.Failed as e:
             assert why.lower() in str(e).lower()
+
+
+def test_a_word_on_what_is_wrong_is_optional(tmp_path, monkeypatch):
+    """The marks are the correction; what is wrong is for the session that applies it
+    and can be left unwritten. The file still carries the field, empty, and the commit
+    message that would go with it has no body rather than a blank one."""
+    S = session()
+    monkeypatch.setattr(A, 'ROOT', str(tmp_path))
+    draft = fixture_draft()
+    draft['problem'] = ''
+    r = F.commit(S, draft, dry=True)
+    c = C.load(os.path.join(str(tmp_path), r['path']))
+    C.validate(c, S.DB, S.VECM)
+    assert c['problem'] == ''
+    assert F.commit_message([c]) == ('Correction: S1DZ on plate %d\n\nCorrection-Id: %s\n'
+                                     % (PLATE, c['id']))
+    said = dict(c, abbr='S1J', id=c['id'].replace('S1DZ', 'S1J'), problem='S1J is wrong beside it.')
+    msg = F.commit_message([c, said])
+    assert 'plate %d: S1J is wrong beside it.' % PLATE in msg
+    assert msg.count('plate %d: ' % PLATE) == 1          # the one left blank writes no line
 
 
 def test_a_dry_run_writes_a_file_that_validates(tmp_path, monkeypatch):

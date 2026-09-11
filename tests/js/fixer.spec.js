@@ -135,6 +135,22 @@ test('commit shows the file it would write before it writes anything', async ({ 
   await expect(page.locator('#modal')).toBeHidden();
 });
 
+test('a plate goes on its marks alone, with no word on what is wrong', async ({ page }) => {
+  await open(page);
+  await page.click('[data-t="seed"]');
+  await clickAt(page, SEED);                       // marked, and nothing said about it
+  await expect(page.locator('#report')).toContainText('page 1079, 955');
+  await page.click('#commitb');
+  await expect(page.locator('#m-prob-19')).toHaveValue('');
+  await page.check('#m-dry');
+  await page.click('#mbtns button:last-child');
+  await expect(page.locator('#modal')).toBeHidden();
+  const said = page.locator('#report');
+  await expect(said).toContainText('"problem": ""');
+  await expect(said).toContainText('"page_px": [1079,955]');
+  expect(page.errors).toEqual([]);
+});
+
 test('one Commit sends every marked plate, one file for each region marked on it',
   async ({ page }) => {
     await open(page);
@@ -151,6 +167,9 @@ test('one Commit sends every marked plate, one file for each region marked on it
     await page.evaluate(() => select('Pir'));
     await page.click('[data-t="unseed"]');
     await clickAt(page, [1600, 1200]);
+    // the click reads the point as well as marking it, and the read is the server's: let
+    // it land before the send, or it lands on the report the send writes there
+    await expect(page.locator('#report')).toContainText('page 1600, 1200');
     await page.click('#commitb');
     await expect(page.locator('#mtitle')).toHaveText('Send 3 corrections on 2 plates');
     const list = page.locator('#m-list li');
