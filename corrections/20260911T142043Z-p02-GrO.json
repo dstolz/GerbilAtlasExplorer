@@ -1,0 +1,166 @@
+{
+ "schema": "gerbil-atlas-correction/1",
+ "id": "20260911T142043Z-p02-GrO",
+ "created": "2026-09-11T14:20:43Z",
+ "author": "",
+ "plate": 2,
+ "ap_bregma_mm": 7.45,
+ "abbr": "GrO",
+ "hemisphere": "both",
+ "problem": "",
+ "seeds": [
+  {
+   "abbr": "GrO",
+   "kind": "negative",
+   "page_px": [1561.7,1247.6],
+   "mm": [-0.744,-4.933],
+   "note": ""
+  },
+  {
+   "abbr": "GrO",
+   "kind": "negative",
+   "page_px": [1544.83,1271.15],
+   "mm": [-0.862,-5.099],
+   "note": ""
+  },
+  {
+   "abbr": "GrO",
+   "kind": "negative",
+   "page_px": [1541.66,1312.98],
+   "mm": [-0.884,-5.393],
+   "note": ""
+  },
+  {
+   "abbr": "GrO",
+   "kind": "negative",
+   "page_px": [1548.34,1314.39],
+   "mm": [-0.838,-5.403],
+   "note": ""
+  },
+  {
+   "abbr": "GrO",
+   "kind": "negative",
+   "page_px": [1544.47,1343.21],
+   "mm": [-0.865,-5.606],
+   "note": ""
+  },
+  {
+   "abbr": "GrO",
+   "kind": "negative",
+   "page_px": [1545.18,1369.22],
+   "mm": [-0.86,-5.789],
+   "note": ""
+  },
+  {
+   "abbr": "GrO",
+   "kind": "negative",
+   "page_px": [1544.47,1388.91],
+   "mm": [-0.865,-5.927],
+   "note": ""
+  },
+  {
+   "abbr": "GrO",
+   "kind": "negative",
+   "page_px": [1548.69,1408.94],
+   "mm": [-0.835,-6.068],
+   "note": ""
+  },
+  {
+   "abbr": "GrO",
+   "kind": "negative",
+   "page_px": [1544.12,1439.88],
+   "mm": [-0.867,-6.286],
+   "note": ""
+  },
+  {
+   "abbr": "GrO",
+   "kind": "negative",
+   "page_px": [1777.52,1241.28],
+   "mm": [0.769,-4.889],
+   "note": ""
+  },
+  {
+   "abbr": "GrO",
+   "kind": "negative",
+   "page_px": [1781.74,1265.53],
+   "mm": [0.799,-5.059],
+   "note": ""
+  },
+  {
+   "abbr": "GrO",
+   "kind": "negative",
+   "page_px": [1783.14,1293.65],
+   "mm": [0.809,-5.257],
+   "note": ""
+  },
+  {
+   "abbr": "GrO",
+   "kind": "negative",
+   "page_px": [1785.25,1313.69],
+   "mm": [0.823,-5.398],
+   "note": ""
+  },
+  {
+   "abbr": "GrO",
+   "kind": "negative",
+   "page_px": [1783.14,1337.94],
+   "mm": [0.809,-5.569],
+   "note": ""
+  },
+  {
+   "abbr": "GrO",
+   "kind": "negative",
+   "page_px": [1781.04,1359.73],
+   "mm": [0.794,-5.722],
+   "note": ""
+  },
+  {
+   "abbr": "GrO",
+   "kind": "negative",
+   "page_px": [1781.04,1386.1],
+   "mm": [0.794,-5.907],
+   "note": ""
+  },
+  {
+   "abbr": "GrO",
+   "kind": "negative",
+   "page_px": [1783.85,1413.87],
+   "mm": [0.814,-6.103],
+   "note": ""
+  },
+  {
+   "abbr": "GrO",
+   "kind": "negative",
+   "page_px": [1791.58,1426.52],
+   "mm": [0.868,-6.192],
+   "note": ""
+  }
+ ],
+ "boundaries": [
+  {
+   "style": "solid",
+   "closed": false,
+   "page_px": [[1778.58,1294],[1772.95,1362.9],[1772.95,1362.9]],
+   "mm": [[0.777,-5.26],[0.737,-5.744],[0.737,-5.744]],
+   "note": ""
+  },
+  {
+   "style": "solid",
+   "closed": false,
+   "page_px": [[1788.42,1372.04],[1794.39,1266.94],[1794.39,1266.94]],
+   "mm": [[0.846,-5.808],[0.888,-5.069],[0.888,-5.069]],
+   "note": ""
+  }
+ ],
+ "extents": [],
+ "notes": [],
+ "preview": null,
+ "snapshot": "corrections/20260911T142043Z-p02-GrO.png",
+ "source": {
+  "commit": "",
+  "site": "https://dstolz.github.io/GerbilAtlasExplorer/",
+  "repo": "dstolz/GerbilAtlasExplorer",
+  "tool": "atlasfix (the published page) 1.0",
+  "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36"
+ }
+}
