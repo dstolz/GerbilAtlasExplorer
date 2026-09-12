@@ -97,30 +97,36 @@ def test_the_tips_land_where_the_atlas_says_they_do(rows, db):
     middle of a face too small to publish, and came back to their own region when the
     floor came down to `MIN_FACE_PX`.
 
-    The other 21 are tips a row of `seed_overrides` supersedes, and they show here
+    The other 24 are tips a row of `seed_overrides` supersedes, and they show here
     precisely because they were fixed. Three are marks the pass misread -- 4Sh and 4N on
     plate 39, Sp5O on 51; three more are EPlA on plates 5, 6 and 8, where the march
     stopped a real line short of its end on 5 and 6 and followed the neighboring MiA
     leader on 8; one is the right VMHSh on 30, a real line the march followed to two
-    pixels short of the shell it points into; and fourteen are the joined E/OV label on
+    pixels short of the shell it points into; fourteen are the joined E/OV label on
     plates 7, 9, 14 and 15, where the march stopped each line short of the olfactory
-    ventricle it is drawn to and both names of the label carry the same stopped tip. In
-    every case the extents no longer follow the recorded tip, so the tip is left visibly
-    sitting in the neighbor it used to take ground from. A tip in a neighbor that is
-    neither a feature nor superseded is a new one of these.
+    ventricle it is drawn to and both names of the label carry the same stopped tip; and
+    three are on plate 1, where both IPl lines end on the wall between the two laminae
+    the atlas draws there and the left aci line ends in the granule layer beside the
+    tract. In every case the extents no longer follow the recorded tip, so the tip is
+    left visibly sitting in the neighbor it used to take ground from. A tip in a neighbor
+    that is neither a feature nor superseded is a new one of these.
 
     38 in none rather than 35 since the section outline moved onto the drawn line
     (tools/build_brain_outline.py): three tips sit on the section's edge -- IPl on plate
     6 in the paper beside the bulb, cu on 54 on the outer line itself, LRt on 56 a pixel
     outside it -- where the photograph's edge used to reach out and take them in. Each
     region keeps its area on that plate from its other seeds.
+
+    29 in a neighbor rather than 26, and 173 in their own rather than 176: the three
+    plate-1 tips above, each of which used to land in the region it names because that
+    region was holding ground the drawing gives its neighbor.
     """
     where = {k: [r for r in rows if L.lands(r) == k] for k in ('own', 'other', 'none')}
-    assert (len(where['own']), len(where['other']), len(where['none'])) == (176, 26, 38)
+    assert (len(where['own']), len(where['other']), len(where['none'])) == (173, 29, 38)
     for r in where['other']:
         assert r['feature'] or r['superseded_by'], (r['plate'], r['abbr'], r['index'])
     assert sorted((r['plate'], r['abbr']) for r in where['other'] if r['superseded_by']) == \
-        [(5, 'EPlA'), (6, 'EPlA'),
+        [(1, 'IPl'), (1, 'IPl'), (1, 'aci'), (5, 'EPlA'), (6, 'EPlA'),
          (7, 'E'), (7, 'E'), (7, 'OV'), (7, 'OV'), (8, 'EPlA'), (9, 'E'), (9, 'OV'),
          (14, 'E'), (14, 'E'), (14, 'OV'), (14, 'OV'),
          (15, 'E'), (15, 'E'), (15, 'OV'), (15, 'OV'),
@@ -152,7 +158,7 @@ def test_filters(db, rows):
     a.shared = True
     assert len(L.select(rows, a, db)) == 42            # 21 lines, two names each
     a.shared, a.odd = False, True
-    assert len(L.select(rows, a, db)) == 64            # 26 in a neighbor, 35 in none
+    assert len(L.select(rows, a, db)) == 67            # 29 in a neighbor, 38 in none
     a.odd, a.abbr = False, 'VMHSh'
     assert {r['abbr'] for r in L.select(rows, a, db)} == {'VMHSh'}
     a.abbr = 'auditory cortex'                         # an alias resolves to its members

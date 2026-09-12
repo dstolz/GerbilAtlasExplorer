@@ -400,6 +400,112 @@ carries a `version` block naming the release its derived fields were built for.
   are what carry the other two and a plain mesh link carries none.
 
 ### Fixed
+- **The granule layer of the olfactory bulb gets the core of plate 1 back, from an internal
+  plexiform layer that was holding the whole of one and a commissure that was holding half
+  the other.** Two corrections, one plate, one cause between them — a seed in the wrong face
+  — and one reading to take before either could be applied: `20260912T141111Z-p01-IPI` and
+  `-p01-aci`.
+
+  **The first file names a structure the atlas does not print on plate 1.** `IPI` is the
+  intermediate subnucleus of the interpeduncular nucleus, which `data/index_published.csv`
+  puts on plates 38 and 39, bregma −5.15 to −5.50; plate 1 is bregma +7.80 and the olfactory
+  bulb. What plate 1 letters, twice, is **`IPl`** — the internal plexiform layer — and in a
+  sans-serif list the two are the same three glyphs. Every mark in the file is in the
+  internal plexiform layer: the nine negatives are inside the ground `IPl` holds today, the
+  eight positives are in the lamina the drawing seals between the granule layer and `Mi`,
+  and the two boundaries retrace that lamina's own walls (100% of each is on ink already, so
+  neither adds anything). The file is read as `IPl`, and the rows it writes say `IPl`.
+  `corrections/` is untouched, as it must be. The alternative reading is that plate 1
+  supports none of the four causes for `IPI` and the file should be stopped on; what tells
+  the two apart is the index above, the position of the marks — and the same reader's
+  `20260911T142043Z-p01-IPl`, sent the day before, which carries the same eight positives
+  within a few page pixels, the same two boundaries, and the name spelled with the letter
+  ell. That file is on main, unapplied; this run applies what both of them ask for.
+
+  **`IPl` was holding the entire right-hand bulb core, 0.7558 mm² of it.** The atlas draws
+  two laminae between the granule layer and the external plexiform layer and letters them
+  `IPl` and `Mi`, each word set clear of the section with a line drawn back in. On the left
+  the `IPl` line ends in the **outer** of the two — the 4,598 px face `Mi` is printed in —
+  so `IPl` watershedded a slice of `Mi`'s own lamina; on the right it stops **five page
+  pixels short of the lamina**, on the core side of the wall, in the **15,001 px face that is
+  the bulb core**, which `IPl` then held whole against `GrO`, `aci` and `E`, each of whose
+  seeds is pinned in
+  the drawn spindle and came out under `MIN_AREA_PX`. Two rows of `seed_overrides` withdraw
+  both boxes onto the inner lamina, at the marks the reader put deepest in it.
+
+  **`aci` was holding half the left granule layer, 0.4087 mm².** The anterior commissure's
+  intrabulbar part is the slender tract drawn down the core of each bulb; the atlas prints
+  `aci` at the margin, one word a side, and draws a long line into the tract. On the left the
+  recorded tip stops five page pixels short of the tract's wall, in the 16,088 px face `GrO`
+  is printed in, and the watershed split that face 8,255 px to `GrO` and 7,833 to `aci` —
+  which is what the reader's eight negatives cross out. On the right the tip lands in the
+  bulb core. Two more rows put both seeds in the tract, and the correction's **two runs of
+  tracing** (0.22 mm and 0.30 mm, 51% and 74% of each on ink already) close the left tract's
+  dorsal mouth, where the drawing's own line stops between the hooked tip of the spindle and
+  the wall below it.
+
+  **The price is stated plainly, and it is a real one: neither region gets the band it points
+  at, because the atlas draws both finer than the extraction publishes.** The inner lamina on
+  the right is cut by the drawing's own pinch into faces of **239 and 168 page px**, and the
+  tract into faces of **300 px and less** on the right, **272 px and less** on the left, the
+  one piece over the floor being the 653 px slit `E` was given on plate 1 by
+  `20260910T134521Z-p01-E` and keeps. `MIN_FACE_PX` is 400: `locate()` will not seed a face
+  under it, and `MIN_AREA_PX` would not publish a territory that size anyway. So **`IPl` goes
+  0.8064 mm² in 3 polygons (traced 1.00, 1.00, 0.72) to 0.0456 in 1 at 1.00** — the 799 px
+  left lamina, a face the drawing seals and one name now letters — with no area on the right;
+  and **`aci` goes 0.4087 mm² to no area on plate 1**, 4.715 mm² on 8 plates to **4.306 on
+  7**, keeping its mesh and every other plate. The rows go in all the same, because the
+  negatives are unambiguous and withdrawing the box is what honours them: a scrap of a lamina
+  is not published, but half a granule layer is not the anterior commissure.
+
+  What the two withdrawals hand back is the granule layer. **`GrO` goes 0.4271 mm² in 1
+  polygon at 0.93 to 1.5733 in 4 at 1.00, 1.00, 0.94 and 0.83** (0.8169 left, 0.7564 right),
+  its own printed line ending in each core and no other name left in them; `Mi` 0.6306 →
+  **0.6908**, the left lamina whole rather than shared; `EPl` 1.3182 → 1.3152 and `E` 0.0386
+  → **0.0394**, the slit a little larger for the tracing added above it. Six entries move in
+  all, every one of them on plate 1, and **nothing anywhere else in the atlas moves**. Over
+  the series `IPl` goes 3.239 → **2.478 mm²** on the same 9 plates and `GrO` 19.136 →
+  **20.282** on the same 10. In the meshes `GrO` 6.8326 → **7.4184 mm³**, `IPl` 0.9200 →
+  **0.7491** in 10 components rather than 11, `aci` 1.2605 → **1.1528** in 5, `EPl` 6.9431 →
+  6.8613, `Mi` 0.5888 → 0.5493, `E` 0.7028 → 0.6928, `Gl` and `ON` by less;
+  `unnamed_fraction` 0.0185 → **0.0183** and `regions_partition_the_volume` holds.
+
+  **`boundary_edges_shared_exactly` stays 1.0.** `structure_plate_entries` 3,091 → **3,090**,
+  which is `aci` losing plate 1; polygons stay 5,828, points 155,067 → 155,060,
+  `faces_named_by_one_abbreviation` 3,446 → **3,448**, `seeds_moved_by_hand` 75 → **79**,
+  `section_covered_mean` 0.9707 → 0.9708, `label_inside_its_own_region` 0.9728 → 0.9726 —
+  the four words now read somewhere other than where the leader pass left them — and the
+  coloring (688 regions, 631 patches, 8 colors) and the mesh count are unchanged. `METHODS.md`
+  takes the entry and point counts through its markers; no rule in it changed.
+
+  Three literals are reconciled in `tests/python/test_leaders.py` and no test logic is. The
+  tally of where the recorded tips land goes `176/26/38` to **`173/29/38`** and the `--odd`
+  filter's 64 to **67**, and the list of superseded tips gains `(1, 'IPl')` twice and
+  `(1, 'aci')`. That test's own docstring says to expect this: a `seed_overrides` row
+  supersedes a tip without rewriting `label_leaders`, so a corrected tip is left visibly
+  sitting in the neighbour it used to take ground from.
+
+  **The readings not taken.** For `IPl` the alternative is the tracing: two faces the atlas
+  separates cut as one would put the word and the region in a single face. It is not that —
+  the lamina and the core are already separated by drawn ink on both sides, which is why the
+  correction's own two boundaries come back "already traced", and what is wrong is which side
+  of that ink the tip was read onto. For `aci` the alternative is live, and it is the tracer's
+  stray rather than the missing run: the tract's corridor is chopped into scraps by four
+  dangling strokes of 10 to 23 page px (paths 24, 33, 37 and 40 of
+  `svg/GerbilAtlas_Plate_01.svg`), and if those are the tracer's own specks rather than ink
+  the atlas prints, removing them would merge the corridor into a single face of about a
+  thousand pixels and `aci` would take it. The same question was asked of the same plate by
+  the `E` corrections above and left open for the same reason: at the 1,100 × 703 plate image
+  this session can read, the tract is four image pixels across, and whether those strokes are
+  drawn cannot be shown either way. What would settle it is the plate at page resolution. No
+  path was removed.
+
+  Two notes on things this run does not touch. `20260911T142043Z-p01-GrO`, on main and
+  unapplied, asks for the right-hand core that `GrO` is given here as a consequence; its
+  session will find most of it already done. And the published fixer let a reader choose
+  `IPI` on a plate the atlas letters `IPl` on, on a page that knows which structures the
+  index puts on the plate in view — offering the plate's own names first would have caught
+  this at the keyboard. A fix to the page is its own pull request.
 - **The lateral habenula is cut into its two parts on both sides of plates 29 and 30, and the
   anterior hypothalamic area's central part takes back the ground three periventricular words
   and a broken boundary were holding.** Six corrections on four plates, all of them
