@@ -97,7 +97,7 @@ def test_the_tips_land_where_the_atlas_says_they_do(rows, db):
     middle of a face too small to publish, and came back to their own region when the
     floor came down to `MIN_FACE_PX`.
 
-    The other 27 are tips a row of `seed_overrides` supersedes, and they show here
+    The other 28 are tips a row of `seed_overrides` supersedes, and they show here
     precisely because they were fixed. Three are marks the pass misread -- 4Sh and 4N on
     plate 39, Sp5O on 51; three more are EPlA on plates 5, 6 and 8, where the march
     stopped a real line short of its end on 5 and 6 and followed the neighboring MiA
@@ -107,10 +107,12 @@ def test_the_tips_land_where_the_atlas_says_they_do(rows, db):
     ventricle it is drawn to and both names of the label carry the same stopped tip;
     three are on plate 1, where both IPl lines end on the wall between the two laminae
     the atlas draws there and the left aci line ends in the granule layer beside the
-    tract; and three are on plate 3, where the right GrA and aci lines stop 22 plate px
-    short of the slit and the sheath at the head of the olfactory ventricle and the left
-    aci line stops 11 short of the same sheath, all three out in the granule layer. In
-    every case the extents no longer follow the recorded tip, so the tip is
+    tract; one is the left aci on plate 2, whose line ends in the internal plexiform
+    ring IPl is printed in, 88 page px short of the tract down the core of the bulb the
+    line is drawn into; and three are on plate 3, where the right GrA and aci lines stop
+    22 plate px short of the slit and the sheath at the head of the olfactory ventricle
+    and the left aci line stops 11 short of the same sheath, all three out in the granule
+    layer. In every case the extents no longer follow the recorded tip, so the tip is
     left visibly sitting in the neighbor it used to take ground from. A tip in a neighbor
     that is neither a feature nor superseded is a new one of these.
 
@@ -120,23 +122,23 @@ def test_the_tips_land_where_the_atlas_says_they_do(rows, db):
     outside it -- where the photograph's edge used to reach out and take them in. Each
     region keeps its area on that plate from its other seeds.
 
-    29 in a neighbor rather than 26, and 173 in their own rather than 176: the three
-    plate-1 tips above, each of which used to land in the region it names because that
-    region was holding ground the drawing gives its neighbor.
+    30 in a neighbor rather than 26, and 172 in their own rather than 176: the three
+    plate-1 tips above and the left aci tip on plate 2, each of which used to land in the
+    region it names because that region was holding ground the drawing gives its neighbor.
 
-    32 in a neighbor rather than 29, 171 in their own rather than 173 and 37 in none
+    33 in a neighbor rather than 30, 170 in their own rather than 172 and 37 in none
     rather than 38: the three plate-3 tips above. GrA's and the left aci's used to land
     in the region they name, because each was holding the granule core it stopped in;
     the right aci's used to fall in the seam between GrA and GrO there, which no polygon
     covered. All three now sit in the GrO the drawing gives that core.
     """
     where = {k: [r for r in rows if L.lands(r) == k] for k in ('own', 'other', 'none')}
-    assert (len(where['own']), len(where['other']), len(where['none'])) == (171, 32, 37)
+    assert (len(where['own']), len(where['other']), len(where['none'])) == (170, 33, 37)
     for r in where['other']:
         assert r['feature'] or r['superseded_by'], (r['plate'], r['abbr'], r['index'])
     assert sorted((r['plate'], r['abbr']) for r in where['other'] if r['superseded_by']) == \
-        [(1, 'IPl'), (1, 'IPl'), (1, 'aci'), (3, 'GrA'), (3, 'aci'), (3, 'aci'),
-         (5, 'EPlA'), (6, 'EPlA'),
+        [(1, 'IPl'), (1, 'IPl'), (1, 'aci'), (2, 'aci'),
+         (3, 'GrA'), (3, 'aci'), (3, 'aci'), (5, 'EPlA'), (6, 'EPlA'),
          (7, 'E'), (7, 'E'), (7, 'OV'), (7, 'OV'), (8, 'EPlA'), (9, 'E'), (9, 'OV'),
          (14, 'E'), (14, 'E'), (14, 'OV'), (14, 'OV'),
          (15, 'E'), (15, 'E'), (15, 'OV'), (15, 'OV'),
@@ -168,7 +170,7 @@ def test_filters(db, rows):
     a.shared = True
     assert len(L.select(rows, a, db)) == 42            # 21 lines, two names each
     a.shared, a.odd = False, True
-    assert len(L.select(rows, a, db)) == 69            # 32 in a neighbor, 37 in none
+    assert len(L.select(rows, a, db)) == 70            # 33 in a neighbor, 37 in none
     a.odd, a.abbr = False, 'VMHSh'
     assert {r['abbr'] for r in L.select(rows, a, db)} == {'VMHSh'}
     a.abbr = 'auditory cortex'                         # an alias resolves to its members
