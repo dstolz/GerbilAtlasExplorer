@@ -400,6 +400,99 @@ carries a `version` block naming the release its derived fields were built for.
   are what carry the other two and a plain mesh link carries none.
 
 ### Fixed
+- **The granule layer of the olfactory bulb gets both cores of plate 3 back, and `GrA` is
+  read on the left hemisphere for the first time.** Three corrections, one plate, one
+  structure between them: `20260917T210847Z-p03-GrO`, `-p03-aci` and `-p03-GrA`, all three
+  reported as "GrO occupied by aci and GrA", and all three fixed by the same two inputs.
+
+  **The cause is a seed in the wrong face, three times over, and a label that was never
+  read.** At the head of the olfactory ventricle in each bulb the atlas draws a small
+  closed figure — on the left a ring around a core, on the right a hook — and letters the
+  two parts of it `aci` and `GrA`, each word set clear of the section with a line drawn
+  back in. All three lines were marched short of their ends. The right `GrA` line stops
+  **22 plate px** short at (592.8, 366.5) instead of about (571, 371); the right `aci` line
+  stops 22 px short at (599.1, 381.5) instead of about (577, 383); the left `aci` line
+  stops **11 px** short at (447.5, 384.3) instead of about (458, 384). Every one of those
+  three tips lands out in the granule core the bulb is mostly made of, so the **26,310 px
+  face** on the right (1.2974 mm²) carried three names and the **28,211 px face** on the
+  left (1.3912 mm²) carried two, and the watershed split each of them: `GrA` took
+  **1.1375 mm²** of the right-hand core and `aci` **1.2940 mm²** of the left, while `GrO`,
+  whose own word is printed inside both, was left **0.4559 mm²** in scraps. Meanwhile the
+  left-hand `GrA` — printed at the margin with a line of its own, as the reader says —
+  was never located at all, so that hemisphere had no `GrA` seed and no `GrA` area.
+
+  **Four rows of `seed_overrides` and one box in `label_positions`.** The rows withdraw
+  both `GrA` boxes onto the slit inside the figure (the **555 px** face on the right, the
+  **830 px** face on the left) and both `aci` boxes onto the sheath around it (the
+  **867 px** face on the right, the **1,668 px** face on the left), each at the reader's own
+  mark where the file carries one. The box is the left-hand `GrA` word, measured off the
+  plate at `[0.3636, 0.5171, 0.0131, 0.0105]` — centre (400.0, 363.5) px of the 1,100 × 703
+  frame, the same 14.4 px wide as the right-hand word — and it is index 1 of `GrA` on
+  plate 3, which the second row then stands in for. Nothing else is touched: no tracing is
+  added, the drawing already seals every one of these faces.
+
+  **What moves.** `GrO` on plate 3 goes **0.4559 mm² in 3 polygons (traced 0.94, 0.72, 1.00)
+  to 2.8961 in 7, every one at 1.00** — 0.1597 → **1.5100** left, 0.2962 → **1.3861** right —
+  and over the series 20.282 → **22.723 mm²** on the same 10 plates. `GrA` goes
+  **1.1375 mm² in 1 polygon to 0.0763 in 2**, and for the first time has ground on both
+  sides (0.0000 → **0.0447** left, 1.1375 → **0.0316** right); over the series 3.237 →
+  **2.176** on the same 7 plates. `aci` goes **1.2940 mm² in 1 polygon to 0.1422 in 3**,
+  likewise on both sides at last (1.2940 → **0.1125** left, 0.0000 → **0.0297** right);
+  over the series 4.306 → **3.154** on the same 7 plates. The only other entries that move
+  are the two the walls are shared with, by the width of a wall: `IPl` 0.2974 → 0.2979 and
+  `EPl` 2.8353 → 2.8351. **Nothing on any other plate moves.**
+
+  Eight meshes move, because the label volume interpolates between plates and a boundary
+  that moves on one redistributes voxels in the slabs either side: `GrO` 7.4184 →
+  **8.6678 mm³** in 2 components, `aci` 1.1528 → **0.8024** in 6 rather than 5, `GrA`
+  1.0053 → **0.7355** in 4, `IPl` 0.7491 → **0.6006** in 11 rather than 10, `EPl` 6.8613 →
+  6.7806, `Gl` 6.0554 → 6.0050, `E` 0.6928 → 0.6575, `Mi` 0.5493 → 0.5410;
+  `unnamed_fraction` 0.0183 → **0.0180** and `regions_partition_the_volume` holds.
+
+  **`boundary_edges_shared_exactly` stays 1.0.** `structure_plate_entries` stays 3,090;
+  polygons 5,828 → **5,835**, points 155,060 → **155,109**,
+  `faces_named_by_one_abbreviation` 3,448 → **3,454**, `seeds_moved_by_hand` 79 → **83**,
+  `labels_on_a_leader` 213 → **210** (the three superseded tips), `label_positions_located`
+  6,351 → **6,352**, `section_covered_mean` 0.9708 → **0.9711**,
+  `label_inside_its_own_region` 0.9726 → 0.9721; the coloring (688 regions, 631 patches,
+  8 colors) and the mesh count are unchanged. `METHODS.md` takes its counts through its own
+  markers; no rule in it changed.
+
+  Four literals are reconciled and no test logic is. `test_label_positions` and
+  `test_labels_table_rows` count 6,351 labels and now count **6,352**, which is the
+  left-hand `GrA`; `ocr_confirmed` is unchanged, because `GrA` was already a name plate 3
+  prints. In `tests/python/test_leaders.py` the tally of where the recorded tips land goes
+  `173/29/38` to **`171/32/37`** and the `--odd` filter's 67 to **69**, and the list of
+  superseded tips gains `(3, 'GrA')` and `(3, 'aci')` twice — which that test's docstring
+  says to expect, since a `seed_overrides` row supersedes a tip without rewriting
+  `label_leaders`, leaving the tip visibly sitting in the neighbour it used to take ground
+  from.
+
+  **Three of the reader's marks are not honoured, and each is worth saying.** Seven `GrO`
+  negatives lie on the **1,652 px band** between the right-hand core and the internal
+  plexiform layer; that band is a face no printed name reaches, and `GrO` holds it through
+  the mirror rule — the drawing splits the right core in two where the left draws it whole,
+  so the mirror of the left `GrO` word falls there — which was already true before this
+  change and is untouched by it. One `aci` positive falls in the **547 px** ventral spindle
+  the atlas letters `E` alone, which `20260908T012002Z-p03-E` seeded deliberately; splitting
+  it would undo that. And one `GrA` positive falls in the **208 px** eye of the right-hand
+  hook, under `MIN_FACE_PX` (400), so no seed can be placed there at all.
+
+  **The readings not taken.** For all three the alternative is the tracing: that the atlas
+  separates core from sheath and the tracing missed the run, so one face carries several
+  names. It is not that — `inspect` puts the reader's positives in faces the drawing
+  already seals, 555, 830, 867 and 1,668 px of them, lettered by nobody, and no boundary in
+  any of the three files would add ink. For `aci` on the right hemisphere the file carries
+  only negatives, and the row put there is read from the drawing rather than from a mark:
+  the right `aci` line ends on the outer wall of the sheath, the reader's negatives say the
+  slit inside it is not `aci`, and the left hemisphere letters the same sheath from the same
+  kind of line. The alternative is to leave that box where the pass left it, which would
+  have left `aci` sharing the right-hand core with `GrO`; what would tell them apart is a
+  positive mark on the right-hand sheath, which a second pass over this plate could give.
+  The misreadings themselves are the leader pass's, `tools/label_leaders.py`: `TIP_READ`
+  is the idiom for fixing them there, but it only takes effect on a re-run against the PDF,
+  so a fix to the pass is its own pull request rather than part of a correction run.
+
 - **The granule layer of the olfactory bulb gets the core of plate 1 back, from an internal
   plexiform layer that was holding the whole of one and a commissure that was holding half
   the other.** Two corrections, one plate, one cause between them — a seed in the wrong face

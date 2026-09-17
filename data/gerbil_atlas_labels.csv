@@ -44,6 +44,7 @@ EPl,external plexiform layer of the olfactory bulb,3,1,7.1,-1.56,1.56,-5.56,labe
 Gl,glomerular layer of the olfactory bulb,3,0,7.1,-1.84,1.84,-5.67,label box,0.3772,0.5946,0.0065,0.0119,,
 Gl,glomerular layer of the olfactory bulb,3,1,7.1,1.64,1.64,-5.63,label box,0.5578,0.5913,0.0069,0.0125,,
 GrA,granule cell layer of the accessory olfactory bulb,3,0,7.1,1.28,1.28,-4.77,leader tip,0.5808,0.512,0.0131,0.0119,0.5389,0.5213
+GrA,granule cell layer of the accessory olfactory bulb,3,1,7.1,-2.11,2.11,-4.71,label box,0.3636,0.5171,0.0131,0.0105,,
 GrO,granular cell layer of the olfactory bulb,3,0,7.1,1.08,1.08,-5.3,label box,0.5289,0.5645,0.0134,0.0119,,
 GrO,granular cell layer of the olfactory bulb,3,1,7.1,-1.25,1.25,-5.32,label box,0.4078,0.5665,0.0134,0.0119,,
 IPl,internal plexiform layer of the olfactory bulb,3,0,7.1,1.23,1.23,-4.46,leader tip,0.5492,0.4521,0.008,0.0114,0.5366,0.497
