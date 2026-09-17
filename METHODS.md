@@ -436,7 +436,7 @@ the photograph's edge (`Mi` on the bulb plates, `LNTB` on 45, `LRtPC` on 57 and 
 of the frame-cropped image, the convention `brain_outline` uses, so the app's point-in-polygon
 test reads them unchanged. **<!-- n:region_extents.summary.structure_plate_entries -->3,090<!-- /n --> structure–plate entries carry an area**, 96% of the 3,216 the
 label pass located and 92% of the 3,369 the published index lists (both counted over the
-structures that are regions), as <!-- n:region_extents.summary.polygons -->5,831<!-- /n --> polygons over <!-- n:region_extents.summary.points -->155,106<!-- /n --> points.
+structures that are regions), as <!-- n:region_extents.summary.polygons -->5,832<!-- /n --> polygons over <!-- n:region_extents.summary.points -->155,131<!-- /n --> points.
 Where the atlas prints two names as one label the two share an entry (step 8). Twenty of the
 724 names have no entry anywhere and never could: they name no region (step 7).
 
@@ -455,7 +455,7 @@ already here: the lines in `svg/`, the abbreviations in `label_positions`. The s
 3. **Close against `brain_outline`**, inverse-transformed into the page frame, and fill it
    for the section interior.
 4. **Cut the empty space into faces.** A face sealed by traced ink and holding exactly one
-   abbreviation is that structure's area *as drawn*: <!-- n:region_extents.summary.faces_named_by_one_abbreviation -->3,452<!-- /n --> faces. A label the atlas set
+   abbreviation is that structure's area *as drawn*: <!-- n:region_extents.summary.faces_named_by_one_abbreviation -->3,454<!-- /n --> faces. A label the atlas set
    outside its region is seeded at the end of the line it draws rather than on the word
    (<!-- n:region_extents.summary.labels_on_a_leader -->212<!-- /n --> labels; see [Where the name is not the place](#where-the-name-is-not-the-place)).
 5. **Letter the hemisphere the atlas did not.** Some abbreviations are set once (`S1J` on
@@ -567,7 +567,7 @@ with a line drawn into the collar around `IF`.
 240 of the printed labels carry a line the leader pass read, and <!-- n:region_extents.summary.labels_on_a_leader -->212<!-- /n --> are seeded at
 the end of it; the rest are tips a row of `seed_overrides` supersedes, three of them marks the
 pass misread (`4Sh` and `4N` on plate 39, `Sp5O` on 51, each printed inside the region it
-names). A further <!-- n:region_extents.summary.labels_relocated -->282<!-- /n --> sit outside the face they name with no line to follow, printed on
+names). A further <!-- n:region_extents.summary.labels_relocated -->281<!-- /n --> sit outside the face they name with no line to follow, printed on
 a boundary or beside the section, and are pulled to the largest face within a millimeter,
 most on the olfactory bulb plates 5–9. <!-- n:region_extents.summary.labels_dropped -->0<!-- /n --> could not be resolved.
 
@@ -877,7 +877,7 @@ move the plates, and that the 2-D extraction's guarantees survived into three di
 
 | Check | 2-D | Extracted in 3-D |
 | --- | --- | --- |
-| Cross-section area on a plate a structure was built from, against `region_extents` | — | **median <!-- n:vol:checks.section_area_median_rel_error -->0.0115<!-- /n --> off**, 90th percentile <!-- n:vol:checks.section_area_p90_rel_error -->0.0558<!-- /n -->, the lattice's own quantisation |
+| Cross-section area on a plate a structure was built from, against `region_extents` | — | **median <!-- n:vol:checks.section_area_median_rel_error -->0.0116<!-- /n --> off**, 90th percentile <!-- n:vol:checks.section_area_p90_rel_error -->0.0558<!-- /n -->, the lattice's own quantisation |
 | Regions partition the volume | a point is inside one region or none | **holds**: every voxel inside the surface carries exactly one label or is an unnamed sealed face, <!-- n:vol:checks.unnamed_fraction -->0.0182<!-- /n --> of the brain |
 | Highest point of the surface | DV −0.06 | **DV <!-- n:vol:checks.dv_highest_mm -->-0.1<!-- /n -->** (one voxel) |
 | Lowest point of the surface | DV −9.04 | **DV <!-- n:vol:checks.dv_lowest_mm -->-9.0<!-- /n -->** |
@@ -886,7 +886,7 @@ move the plates, and that the 2-D extraction's guarantees survived into three di
 | Brain volume | not published | **<!-- n:vol:summary.brain_volume_mm3 -->1027.821<!-- /n --> mm³** |
 
 Two costs are larger than the interpolation is likely to be: reading the distance field
-coarsely costs a mesh a median <!-- n:vol:checks.coarsening_median_rel_error -->0.041<!-- /n --> of its volume, and an isosurface sitting half a
+coarsely costs a mesh a median <!-- n:vol:checks.coarsening_median_rel_error -->0.0409<!-- /n --> of its volume, and an isosurface sitting half a
 voxel inside the voxels it was cut from accounts for another <!-- n:vol:checks.mesh_vs_voxel_median_rel_error -->0.0502<!-- /n -->, the difference
 between a surface and a pile of cubes. And <!-- n:vol:checks.structures_in_one_or_two_pieces -->0.7878<!-- /n --> of structures arrive as the one or
 two pieces anatomy expects; where a thin sheet pinches off into more (`CA1`, the ventricle

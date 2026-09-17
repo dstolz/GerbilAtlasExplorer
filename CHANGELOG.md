@@ -400,6 +400,99 @@ carries a `version` block naming the release its derived fields were built for.
   are what carry the other two and a plain mesh link carries none.
 
 ### Fixed
+- **The external plexiform layer gets the right-hand bulb of plate 1 back, through six page
+  pixels of tracing under its own printed word.** `20260917T210251Z-p01-EPl`, sent as "EPI
+  incomplete": thirteen marks round the band on the right, fourteen round the band on the
+  left, and twelve crosses through the core between them.
+
+  **The cause is a run of tracing, and the run is 0.045 mm long.** The atlas draws the
+  glomerular layer, the external plexiform layer, the two laminae and the granule core as
+  closed rings, one inside the next. On the right-hand bulb the ring between the glomerular
+  and external plexiform layers is traced as a single *open* path — path 10 of
+  `svg/GerbilAtlas_Plate_01.svg`, 298 points — whose two ends stop **6.4 page px apart at
+  ML +1.16, DV −4.75**, which is where the atlas prints the word `EPl` across its own line.
+  `BRIDGE_PX` cannot close it: bridging joins a dangling end to the nearest point on
+  *another* path and never to its own, so a ring traced as one path stays open however small
+  the gap. Through it the glomerular, external plexiform and laminar bands ran together as
+  **one face of 29,092 px (1.435 mm²) lettered `EPl`, `Gl`, `IPl` and `Mi`**, and the
+  watershed gave `EPl` the patch beside its printed box and nothing else: **0.3889 mm² on
+  the right against 0.9263 on the left**, which is what the reader's thirteen marks cross.
+  One run of tracing is added, `M 1832 1221 C … 1836 1226`, and the face falls apart into
+  the 13,264 px `Gl` band and the **15,822 px external plexiform band** the marks ring.
+
+  **A sealed band is still lettered twice.** `Mi`'s line ends *inside* it — at page
+  (1763, 1206), two pixels above the 1,061 px lamina the drawing seals — so closing the ring
+  alone left the band split between the two and `EPl` at 1.3175 mm², no better than before.
+  The reader's thirteen right-hand marks go in as **rows of `seed_overrides` of their own**
+  and hold the band for `EPl`. Nothing is written for the left: there the fourteen positives
+  are already inside `EPl`'s own 17,816 px face and the negatives already outside it.
+  Applying the file as it stands would not have done this — its seeds carry `label_index`,
+  and `apply` keeps one row per (name, index) with the last written winning, so thirteen
+  marks would have collapsed into a single 4-px mark standing in for the printed box.
+
+  **`EPl` on plate 1 goes 1.3152 mm² to 1.7288**, in 3 polygons still, the right-hand
+  polygon **0.3889 → 0.8026 mm²** (traced share 0.96 → **0.97**, 40 points → 90) and the
+  left untouched at 0.9263; over the series **19.722 → 20.136 mm²** on the same 9 plates,
+  and in the meshes **6.8613 → 7.0399 mm³** in one component.
+
+  **`Mi` pays for it: 0.6908 → 0.2790 mm²**, and the write-up owes an explanation. Its left
+  lamina, the 4,598 px face the drawing seals, is untouched; what it loses is the half of
+  `EPl`'s band it was holding because its own leader tip ends there. It keeps 0.031 mm²
+  around that tip. The right-hand mitral lamina is drawn as the 1,061 px strip and scraps
+  under `MIN_FACE_PX`, and `Mi`'s line stops two pixels outside the strip — **a `Mi`
+  correction is the next thing this plate wants, and it is its own file**, not a guess made
+  inside this one.
+
+  **`IPl` had to be moved, and that is the uncomfortable part.**
+  `20260912T141111Z-p01-IPI` put `IPl`'s right-hand seed on the inner lamina so that it
+  would withdraw and keep no area on that hemisphere. The withdrawal was never a property of
+  the placement: the lamina there is drawn as faces of 239 and 168 px, both under
+  `MIN_FACE_PX`, so `locate()` will not seed them and `SNAP_PX` hands the seed to whichever
+  face fills most of the 60 px around it — which was the 29,092 px merged band, where `IPl`
+  lost the watershed and kept 0.0066 mm². With the band sealed that face is the **15,001 px
+  bulb core**, and the tracing fix on its own handed `IPl` the whole of it: `GrO` 1.5733 →
+  0.8124 mm². So the row moves 25 page px, onto the **1,061 px lamina the drawing does seal**
+  between the core and the band, at its ventral reach where the two laminae are drawn as one
+  strip. **`IPl` 0.0456 → 0.1063 mm²** — that face is unassigned space today, so this takes
+  ground from no one — and **`GrO` keeps its core, 1.5733 → 1.5705**. `Gl` −0.0015. Four
+  entries move beside `EPl`, all on plate 1, and **nothing anywhere else in the atlas moves**.
+  In the meshes `Mi` 0.5493 → 0.4213 mm³ in 7 components, `IPl` 0.7491 → 0.7674 in 11 rather
+  than 10, `Gl` 6.0554 → 6.0310, `GrO` 7.4184 → 7.3963, `ON` 3.4214 → 3.4184.
+
+  **`boundary_edges_shared_exactly` stays 1.0.** `structure_plate_entries` 3,090 unchanged,
+  polygons 5,828 → **5,829**, points 155,060 → **155,085**,
+  `faces_named_by_one_abbreviation` 3,448 → **3,450**, `seeds_moved_by_hand` 79 → **92**,
+  `labels_relocated` 282 → **281** (one seed fewer has to be snapped),
+  `section_covered_mean` 0.9708 → **0.9709**, `label_inside_its_own_region` 0.9726 unchanged,
+  and the coloring (688 regions, 631 patches, 8 colors), the mesh count and
+  `unnamed_fraction` 0.0183 all unchanged. `METHODS.md` takes the polygon, point, face and
+  relocation counts through its markers; no rule in it changed, and no test literal moved.
+
+  **The readings taken.** The file carries seeds and no boundary, which reads as the third
+  cause — a seed in the wrong face — and the drawing says otherwise: the atlas draws the
+  ring, the tracer traced all but six pixels of it, and the marks are a reader drawing round
+  a band, not thirteen separate seeds. What tells the two apart is what each does to the
+  neighbour. Seeds alone, with the break left open, flood `EPl` across it and into the
+  glomerular band, and `Gl` falls **1.4423 → 1.05 mm²** — a boundary invented down the
+  middle of a layer the atlas draws a line along. With the ring closed the boundary *is* that
+  line and `Gl` keeps its band to within 0.0015 mm². Both halves were needed: the tracing
+  alone gains `EPl` 0.0023 mm², the marks alone cost `Gl` a third of itself.
+
+  **The reading not taken, and what would settle it.** The strip `IPl`'s seed now sits in can
+  be read as the mitral lamina alone — dorsally the drawing does separate the two, and the
+  239 and 168 px fragments lie inside it — in which case the row that should move is `Mi`'s,
+  into that strip, and `IPl` should keep no area on the right. The pipeline cannot say that:
+  there is no placement that withdraws a name, because a seed in a face under `MIN_FACE_PX`
+  is snapped to the largest face nearby rather than dropped, and every face near that lamina
+  is the core or the band. What would settle it is the plate at page resolution, where the
+  laminae ventral to DV −5.2 can be counted; the strip is 7 page px across here. Two changes
+  to `tools/` would make the question answerable rather than hostage — a seed that falls in a
+  face under the floor being dropped rather than snapped, and a `seed_overrides` row that can
+  say a name has no publishable area on a plate — and each is its own pull request, not this
+  one. One smaller tool note: `corrections.py report` splits an entry by hemisphere on each
+  ring's own centroid and counts a ring's hole as area, so for a region drawn as a ring, like
+  this one, it reads 1.1775/0.1377 mm² before and 1.3927/0.3361 after where the faces
+  themselves say 0.9263/0.3889 and 0.9263/0.8026.
 - **The anterior commissure comes off the internal plexiform ring of plate 2 and onto the
   tract down the core of the bulb, on both sides.** One correction, one cause — a seed in the
   wrong face — and one reading to take about what the reader's marks are for:
