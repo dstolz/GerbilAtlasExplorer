@@ -1,0 +1,191 @@
+{
+ "schema": "gerbil-atlas-correction/1",
+ "id": "20260917T210847Z-p03-GrA",
+ "created": "2026-09-17T21:08:47Z",
+ "author": "",
+ "plate": 3,
+ "ap_bregma_mm": 7.1,
+ "abbr": "GrA",
+ "hemisphere": "both",
+ "problem": "GrO occupied by aci and GrA. GrA of the left hemisphere is labeled but not found on this plate - label exists clearly in both hemispheres with leaders.",
+ "seeds": [
+  {
+   "abbr": "GrA",
+   "kind": "negative",
+   "page_px": [1836.69,1264.36],
+   "mm": [1.181,-5.053],
+   "note": ""
+  },
+  {
+   "abbr": "GrA",
+   "kind": "negative",
+   "page_px": [1817.57,1203.84],
+   "mm": [1.047,-4.627],
+   "note": ""
+  },
+  {
+   "abbr": "GrA",
+   "kind": "negative",
+   "page_px": [1774.04,1194.28],
+   "mm": [0.742,-4.56],
+   "note": ""
+  },
+  {
+   "abbr": "GrA",
+   "kind": "negative",
+   "page_px": [1754.93,1220.83],
+   "mm": [0.608,-4.747],
+   "note": ""
+  },
+  {
+   "abbr": "GrA",
+   "kind": "negative",
+   "page_px": [1765.01,1278.17],
+   "mm": [0.679,-5.15],
+   "note": ""
+  },
+  {
+   "abbr": "GrA",
+   "kind": "negative",
+   "page_px": [1773.51,1330.19],
+   "mm": [0.738,-5.516],
+   "note": ""
+  },
+  {
+   "abbr": "GrA",
+   "kind": "negative",
+   "page_px": [1767.14,1384.35],
+   "mm": [0.694,-5.897],
+   "note": ""
+  },
+  {
+   "abbr": "GrA",
+   "kind": "negative",
+   "page_px": [1763.42,1433.72],
+   "mm": [0.668,-6.244],
+   "note": ""
+  },
+  {
+   "abbr": "GrA",
+   "kind": "negative",
+   "page_px": [1817.57,1469.82],
+   "mm": [1.047,-6.498],
+   "note": ""
+  },
+  {
+   "abbr": "GrA",
+   "kind": "negative",
+   "page_px": [1786.25,1479.38],
+   "mm": [0.828,-6.565],
+   "note": ""
+  },
+  {
+   "abbr": "GrA",
+   "kind": "negative",
+   "page_px": [1808.55,1407.71],
+   "mm": [0.984,-6.061],
+   "note": ""
+  },
+  {
+   "abbr": "GrA",
+   "kind": "negative",
+   "page_px": [1810.14,1355.15],
+   "mm": [0.995,-5.691],
+   "note": ""
+  },
+  {
+   "abbr": "GrA",
+   "kind": "negative",
+   "page_px": [1817.57,1306.83],
+   "mm": [1.047,-5.351],
+   "note": ""
+  },
+  {
+   "abbr": "GrA",
+   "kind": "negative",
+   "page_px": [1830.32,1264.36],
+   "mm": [1.137,-5.053],
+   "note": ""
+  },
+  {
+   "abbr": "GrA",
+   "kind": "positive",
+   "page_px": [1792.74,1238.45],
+   "mm": [0.873,-4.871],
+   "note": "",
+   "label_index": 0
+  },
+  {
+   "abbr": "GrA",
+   "kind": "positive",
+   "page_px": [1793.56,1246.02],
+   "mm": [0.879,-4.924],
+   "note": "",
+   "label_index": 0
+  },
+  {
+   "abbr": "GrA",
+   "kind": "positive",
+   "page_px": [1794.26,1256.49],
+   "mm": [0.884,-4.997],
+   "note": "",
+   "label_index": 0
+  },
+  {
+   "abbr": "GrA",
+   "kind": "positive",
+   "page_px": [1793.2,1307.45],
+   "mm": [0.877,-5.356],
+   "note": "",
+   "label_index": 0
+  },
+  {
+   "abbr": "GrA",
+   "kind": "positive",
+   "page_px": [1796.38,1284.09],
+   "mm": [0.899,-5.192],
+   "note": "",
+   "label_index": 0
+  },
+  {
+   "abbr": "GrA",
+   "kind": "positive",
+   "page_px": [1534.71,1244.78],
+   "mm": [-0.936,-4.915],
+   "note": ""
+  },
+  {
+   "abbr": "GrA",
+   "kind": "positive",
+   "page_px": [1526.95,1257.12],
+   "mm": [-0.99,-5.002],
+   "note": ""
+  },
+  {
+   "abbr": "GrA",
+   "kind": "positive",
+   "page_px": [1537.91,1258.03],
+   "mm": [-0.913,-5.008],
+   "note": ""
+  },
+  {
+   "abbr": "GrA",
+   "kind": "positive",
+   "page_px": [1541.57,1246.61],
+   "mm": [-0.888,-4.928],
+   "note": ""
+  }
+ ],
+ "boundaries": [],
+ "extents": [],
+ "notes": [],
+ "preview": null,
+ "snapshot": "corrections/20260917T210847Z-p03-GrO.png",
+ "source": {
+  "commit": "",
+  "site": "https://dstolz.github.io/GerbilAtlasExplorer/",
+  "repo": "dstolz/GerbilAtlasExplorer",
+  "tool": "atlasfix (the published page) 1.0",
+  "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36"
+ }
+}
