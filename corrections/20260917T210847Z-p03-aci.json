@@ -1,0 +1,205 @@
+{
+ "schema": "gerbil-atlas-correction/1",
+ "id": "20260917T210847Z-p03-aci",
+ "created": "2026-09-17T21:08:47Z",
+ "author": "",
+ "plate": 3,
+ "ap_bregma_mm": 7.1,
+ "abbr": "aci",
+ "hemisphere": "both",
+ "problem": "GrO occupied by aci and GrA. GrA of the left hemisphere is labeled but not found on this plate - label exists clearly in both hemispheres with leaders.",
+ "seeds": [
+  {
+   "abbr": "aci",
+   "kind": "negative",
+   "page_px": [1476.2,1259.05],
+   "mm": [-1.346,-5.015],
+   "note": ""
+  },
+  {
+   "abbr": "aci",
+   "kind": "negative",
+   "page_px": [1515.49,1204.37],
+   "mm": [-1.071,-4.631],
+   "note": ""
+  },
+  {
+   "abbr": "aci",
+   "kind": "negative",
+   "page_px": [1565.92,1197.47],
+   "mm": [-0.717,-4.582],
+   "note": ""
+  },
+  {
+   "abbr": "aci",
+   "kind": "negative",
+   "page_px": [1573.36,1246.31],
+   "mm": [-0.665,-4.926],
+   "note": ""
+  },
+  {
+   "abbr": "aci",
+   "kind": "negative",
+   "page_px": [1562.74,1326.48],
+   "mm": [-0.739,-5.49],
+   "note": ""
+  },
+  {
+   "abbr": "aci",
+   "kind": "negative",
+   "page_px": [1562.21,1394.43],
+   "mm": [-0.743,-5.968],
+   "note": ""
+  },
+  {
+   "abbr": "aci",
+   "kind": "negative",
+   "page_px": [1568.05,1442.22],
+   "mm": [-0.702,-6.304],
+   "note": ""
+  },
+  {
+   "abbr": "aci",
+   "kind": "negative",
+   "page_px": [1513.36,1475.66],
+   "mm": [-1.086,-6.539],
+   "note": ""
+  },
+  {
+   "abbr": "aci",
+   "kind": "negative",
+   "page_px": [1542.56,1474.6],
+   "mm": [-0.881,-6.531],
+   "note": ""
+  },
+  {
+   "abbr": "aci",
+   "kind": "negative",
+   "page_px": [1504.34,1456.02],
+   "mm": [-1.149,-6.401],
+   "note": ""
+  },
+  {
+   "abbr": "aci",
+   "kind": "negative",
+   "page_px": [1512.3,1424.16],
+   "mm": [-1.093,-6.177],
+   "note": ""
+  },
+  {
+   "abbr": "aci",
+   "kind": "negative",
+   "page_px": [1523.45,1387.53],
+   "mm": [-1.015,-5.919],
+   "note": ""
+  },
+  {
+   "abbr": "aci",
+   "kind": "negative",
+   "page_px": [1500.09,1314.8],
+   "mm": [-1.179,-5.408],
+   "note": ""
+  },
+  {
+   "abbr": "aci",
+   "kind": "positive",
+   "page_px": [1516.02,1267.02],
+   "mm": [-1.067,-5.071],
+   "note": "",
+   "label_index": 1
+  },
+  {
+   "abbr": "aci",
+   "kind": "positive",
+   "page_px": [1514.43,1253.21],
+   "mm": [-1.078,-4.974],
+   "note": "",
+   "label_index": 1
+  },
+  {
+   "abbr": "aci",
+   "kind": "positive",
+   "page_px": [1548.94,1267.02],
+   "mm": [-0.836,-5.071],
+   "note": "",
+   "label_index": 1
+  },
+  {
+   "abbr": "aci",
+   "kind": "positive",
+   "page_px": [1525.04,1300.46],
+   "mm": [-1.004,-5.307],
+   "note": "",
+   "label_index": 1
+  },
+  {
+   "abbr": "aci",
+   "kind": "positive",
+   "page_px": [1539.91,1444.87],
+   "mm": [-0.899,-6.322],
+   "note": "",
+   "label_index": 1
+  },
+  {
+   "abbr": "aci",
+   "kind": "negative",
+   "page_px": [1536.72,1252.15],
+   "mm": [-0.922,-4.967],
+   "note": ""
+  },
+  {
+   "abbr": "aci",
+   "kind": "negative",
+   "page_px": [1537.79,1293.56],
+   "mm": [-0.914,-5.258],
+   "note": ""
+  },
+  {
+   "abbr": "aci",
+   "kind": "negative",
+   "page_px": [1539.38,1321.7],
+   "mm": [-0.903,-5.456],
+   "note": ""
+  },
+  {
+   "abbr": "aci",
+   "kind": "negative",
+   "page_px": [1542.56,1371.07],
+   "mm": [-0.881,-5.803],
+   "note": ""
+  },
+  {
+   "abbr": "aci",
+   "kind": "negative",
+   "page_px": [1544.69,1420.98],
+   "mm": [-0.866,-6.154],
+   "note": ""
+  },
+  {
+   "abbr": "aci",
+   "kind": "negative",
+   "page_px": [1791.03,1239.94],
+   "mm": [0.861,-4.881],
+   "note": ""
+  },
+  {
+   "abbr": "aci",
+   "kind": "negative",
+   "page_px": [1795.28,1264.36],
+   "mm": [0.891,-5.053],
+   "note": ""
+  }
+ ],
+ "boundaries": [],
+ "extents": [],
+ "notes": [],
+ "preview": null,
+ "snapshot": "corrections/20260917T210847Z-p03-GrO.png",
+ "source": {
+  "commit": "",
+  "site": "https://dstolz.github.io/GerbilAtlasExplorer/",
+  "repo": "dstolz/GerbilAtlasExplorer",
+  "tool": "atlasfix (the published page) 1.0",
+  "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36"
+ }
+}
