@@ -1,0 +1,152 @@
+{
+ "schema": "gerbil-atlas-correction/1",
+ "id": "20260917T210100Z-p01-Mi",
+ "created": "2026-09-17T21:01:00Z",
+ "author": "",
+ "plate": 1,
+ "ap_bregma_mm": 7.8,
+ "abbr": "Mi",
+ "hemisphere": "right",
+ "problem": "MI is occupying EPI space",
+ "seeds": [
+  {
+   "abbr": "Mi",
+   "kind": "negative",
+   "page_px": [1759.64,1189.87],
+   "mm": [0.636,-4.518],
+   "note": ""
+  },
+  {
+   "abbr": "Mi",
+   "kind": "negative",
+   "page_px": [1716.59,1194.43],
+   "mm": [0.334,-4.55],
+   "note": ""
+  },
+  {
+   "abbr": "Mi",
+   "kind": "negative",
+   "page_px": [1709.42,1279.87],
+   "mm": [0.284,-5.151],
+   "note": ""
+  },
+  {
+   "abbr": "Mi",
+   "kind": "negative",
+   "page_px": [1697.03,1223.78],
+   "mm": [0.197,-4.756],
+   "note": ""
+  },
+  {
+   "abbr": "Mi",
+   "kind": "negative",
+   "page_px": [1706.81,1379.66],
+   "mm": [0.265,-5.853],
+   "note": ""
+  },
+  {
+   "abbr": "Mi",
+   "kind": "negative",
+   "page_px": [1700.29,1419.45],
+   "mm": [0.22,-6.132],
+   "note": ""
+  },
+  {
+   "abbr": "Mi",
+   "kind": "negative",
+   "page_px": [1727.68,1446.19],
+   "mm": [0.412,-6.321],
+   "note": ""
+  },
+  {
+   "abbr": "Mi",
+   "kind": "negative",
+   "page_px": [1789.34,1458.93],
+   "mm": [0.844,-6.41],
+   "note": ""
+  },
+  {
+   "abbr": "Mi",
+   "kind": "negative",
+   "page_px": [1753.5,1461.35],
+   "mm": [0.593,-6.427],
+   "note": ""
+  },
+  {
+   "abbr": "Mi",
+   "kind": "positive",
+   "page_px": [1767.06,1217.24],
+   "mm": [0.688,-4.71],
+   "note": "",
+   "label_index": 1
+  },
+  {
+   "abbr": "Mi",
+   "kind": "positive",
+   "page_px": [1757.86,1214.82],
+   "mm": [0.623,-4.693],
+   "note": "",
+   "label_index": 1
+  },
+  {
+   "abbr": "Mi",
+   "kind": "positive",
+   "page_px": [1782.56,1227.41],
+   "mm": [0.797,-4.782],
+   "note": "",
+   "label_index": 1
+  },
+  {
+   "abbr": "Mi",
+   "kind": "positive",
+   "page_px": [1812.59,1264.22],
+   "mm": [1.007,-5.041],
+   "note": "",
+   "label_index": 1
+  },
+  {
+   "abbr": "Mi",
+   "kind": "positive",
+   "page_px": [1798.06,1328.64],
+   "mm": [0.905,-5.494],
+   "note": "",
+   "label_index": 1
+  },
+  {
+   "abbr": "Mi",
+   "kind": "positive",
+   "page_px": [1796.12,1361.58],
+   "mm": [0.892,-5.725],
+   "note": "",
+   "label_index": 1
+  },
+  {
+   "abbr": "Mi",
+   "kind": "positive",
+   "page_px": [1800.48,1405.65],
+   "mm": [0.922,-6.035],
+   "note": "",
+   "label_index": 1
+  },
+  {
+   "abbr": "Mi",
+   "kind": "positive",
+   "page_px": [1801.45,1435.19],
+   "mm": [0.929,-6.243],
+   "note": "",
+   "label_index": 1
+  }
+ ],
+ "boundaries": [],
+ "extents": [],
+ "notes": [],
+ "preview": null,
+ "snapshot": "corrections/20260917T210100Z-p01-Mi.png",
+ "source": {
+  "commit": "",
+  "site": "https://dstolz.github.io/GerbilAtlasExplorer/",
+  "repo": "dstolz/GerbilAtlasExplorer",
+  "tool": "atlasfix (the published page) 1.0",
+  "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36"
+ }
+}

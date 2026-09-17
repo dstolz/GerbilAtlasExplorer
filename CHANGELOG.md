@@ -493,6 +493,79 @@ carries a `version` block naming the release its derived fields were built for.
   ring's own centroid and counts a ring's hole as area, so for a region drawn as a ring, like
   this one, it reads 1.1775/0.1377 mm² before and 1.3927/0.3361 after where the faces
   themselves say 0.9263/0.3889 and 0.9263/0.8026.
+- **The anterior commissure comes off the internal plexiform ring of plate 2 and onto the
+  tract down the core of the bulb, on both sides.** One correction, one cause — a seed in the
+  wrong face — and one reading to take about what the reader's marks are for:
+  `20260917T210416Z-p02-aci`.
+
+  **The left `aci` was a band down the lateral side of the ring `IPl` is printed in, 0.1829
+  mm² of it.** The atlas prints `aci` at the margin of each bulb, one word a side, and draws
+  a long line from it into the slender tract down the core — the same arrangement as plate 1
+  above. On the right the line was read to its end and `aci` holds the tract's upper piece.
+  On the left the recorded tip stops at page (1474, 1232), **88 page px short of the tract**,
+  inside the **6,014 px internal plexiform ring** the `IPl` line ends in, and the watershed
+  split that ring between the two names. Ten of the reader's sixteen negatives are on the
+  ground `aci` took from it — eight inside the ring, two on drawn lines the watershed splits
+  down the middle — and the remaining six are in `GrO`, which never held any of it. One row of
+  `seed_overrides` withdraws box 0 onto the mark the reader put at the tract's top, which is
+  where the drawn line ends: the word at (1369, 1208) through the recorded tip, carried on,
+  arrives within two page px of that mark.
+
+  **The plate letters the tract once and the drawing leaves it in three pieces a side.** Above
+  and below the slit `E` and `OV` are printed in, the band is sealed into an upper piece and a
+  lower one: 1,363 px and 618 px on the left, 887 px and 789 px on the right, each pair the
+  mirror of the other about ML 0. Only the upper pieces can take the printed box, so **two
+  rows with `i = -1`** seed the lower two, at the marks the reader put in them — a seed of its
+  own beside the box, which is what that form of the row is for. All eight of the file's
+  positives are now inside `aci`, all sixteen negatives outside it, and the region is the
+  tract on both sides rather than a ring on one.
+
+  **`aci` on plate 2 goes 0.2336 mm² in 2 polygons to 0.2057 in 4**, traced share 1.00 on
+  every one, and the hemispheres come level: left **0.1829 → 0.1114**, right **0.0507 →
+  0.0943**. Over the series 4.306 → **4.278 mm²** on the same 7 plates. `IPl` takes back the
+  ring whole, **0.1896 → 0.3752** (+0.1856); `GrO` 2.3464 → 2.3405, `E` 0.0568 → 0.0535 and
+  `EPl` 2.5278 → 2.5251, each a share of the lines the watershed now draws round three more
+  regions. Four entries move besides `aci`, every one on plate 2, and **nothing on another
+  plate moves**. In the meshes `aci` 1.1528 → **1.1439 mm³** in 6 components rather than 5 —
+  the tract is two pieces a side here — `IPl` 0.7491 → 0.7536, `EPl` 6.8613 → 6.9274, `GrO`
+  7.4184 → 7.4209, `E` 0.6928 → 0.6904, `ON` 3.4214 → 3.4238, `GrA` 1.0053 → 1.0069 and `Gl`
+  by less, the volume interpolating between plates so a boundary that moves on one
+  redistributes voxels in the slabs either side; `unnamed_fraction` 0.0183 → **0.0182** and
+  `regions_partition_the_volume` holds.
+
+  **`boundary_edges_shared_exactly` stays 1.0.** `structure_plate_entries` stays 3,090,
+  polygons 5,828 → **5,831**, points 155,060 → **155,106**,
+  `faces_named_by_one_abbreviation` 3,448 → **3,452**, `seeds_moved_by_hand` 79 → **82**,
+  `section_covered_mean` 0.9708 → **0.9710**. `label_inside_its_own_region` 0.9726 →
+  **0.9724**: that check reads the printed tip rather than the row that supersedes it, so the
+  left `aci` word now counts as outside — which is the finding, not a cost.
+  `section_area_residual_worst_plate` 0.0070 → **0.0071**, plate 2 being the worst plate
+  before and after; three narrow pieces are now simplified as regions rather than as
+  unassigned faces, which moves the residual by 8e-5 of the section. The coloring (688
+  regions, 631 patches, 8 colors) and the mesh count are unchanged. `METHODS.md` takes the
+  counts through its markers; no rule in it changed.
+
+  Three literals are reconciled in `tests/python/test_leaders.py` and no test logic is. The
+  tally of where the recorded tips land goes `173/29/38` to **`172/30/38`** and the `--odd`
+  filter's 67 to **68**, and the list of superseded tips gains `(2, 'aci')`. That test's own
+  docstring says to expect this: a `seed_overrides` row supersedes a tip without rewriting
+  `label_leaders`, so a corrected tip is left visibly sitting in the neighbour it used to take
+  ground from.
+
+  **The reading taken, and the one not taken.** The file gives every one of its eight positive
+  marks a `label_index` — five for the left box, three for the right — and `corrections.py
+  apply` reads a set of them as one row and keeps the last: applied by the tool alone this
+  file would have put the left box in the 618 px lower piece, left the 1,363 px upper piece
+  that four of those five marks sit in unnamed, and left the right-hand lower piece unnamed
+  too. Taken instead as what they look like — a reader running the length of the tract in both
+  bulbs — they say the whole tract is `aci`, and the rows were written by hand through
+  `atlaslib.save_db` accordingly: the box for the piece its own printed line ends in, a row of
+  its own for each further piece. What tells the two readings apart is the mirror: the marks
+  pair up across ML 0, upper with upper and lower with lower, and a reader who meant one face
+  a side would not have marked four points in one piece. The middle piece of each band is left
+  to `E`, where the `E`/`OV` lines end and where the reader put no mark. A row for the right
+  box was not written: its own tip already lands in the tract, so the two marks there confirm
+  it and a row that changes nothing is noise in a block whose rows are counted.
 - **The granule layer of the olfactory bulb gets the core of plate 1 back, from an internal
   plexiform layer that was holding the whole of one and a commissure that was holding half
   the other.** Two corrections, one plate, one cause between them — a seed in the wrong face
