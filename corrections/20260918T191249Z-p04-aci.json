@@ -1,0 +1,164 @@
+{
+ "schema": "gerbil-atlas-correction/1",
+ "id": "20260918T191249Z-p04-aci",
+ "created": "2026-09-18T19:12:49Z",
+ "author": "",
+ "plate": 4,
+ "ap_bregma_mm": 6.75,
+ "abbr": "aci",
+ "hemisphere": "right",
+ "problem": "aci incorrectly occupying GrO in right hemisphere; GrO in right hemisphere incorrectly occupying EPI. EPI incomplete",
+ "seeds": [
+  {
+   "abbr": "aci",
+   "kind": "negative",
+   "page_px": [1792.57,1193.93],
+   "mm": [0.873,-4.557],
+   "note": ""
+  },
+  {
+   "abbr": "aci",
+   "kind": "negative",
+   "page_px": [1807.05,1241.32],
+   "mm": [0.974,-4.89],
+   "note": ""
+  },
+  {
+   "abbr": "aci",
+   "kind": "negative",
+   "page_px": [1765.58,1284.77],
+   "mm": [0.683,-5.195],
+   "note": ""
+  },
+  {
+   "abbr": "aci",
+   "kind": "negative",
+   "page_px": [1806.39,1293.32],
+   "mm": [0.969,-5.256],
+   "note": ""
+  },
+  {
+   "abbr": "aci",
+   "kind": "negative",
+   "page_px": [1803.1,1336.11],
+   "mm": [0.946,-5.557],
+   "note": ""
+  },
+  {
+   "abbr": "aci",
+   "kind": "negative",
+   "page_px": [1780.06,1415.76],
+   "mm": [0.785,-6.117],
+   "note": ""
+  },
+  {
+   "abbr": "aci",
+   "kind": "negative",
+   "page_px": [1798.49,1407.2],
+   "mm": [0.914,-6.057],
+   "note": ""
+  },
+  {
+   "abbr": "aci",
+   "kind": "negative",
+   "page_px": [1823.5,1473.68],
+   "mm": [1.089,-6.524],
+   "note": ""
+  },
+  {
+   "abbr": "aci",
+   "kind": "negative",
+   "page_px": [1824.16,1371.65],
+   "mm": [1.094,-5.807],
+   "note": ""
+  },
+  {
+   "abbr": "aci",
+   "kind": "negative",
+   "page_px": [1843.25,1315.04],
+   "mm": [1.228,-5.408],
+   "note": ""
+  },
+  {
+   "abbr": "aci",
+   "kind": "negative",
+   "page_px": [1863,1257.12],
+   "mm": [1.366,-5.001],
+   "note": ""
+  },
+  {
+   "abbr": "aci",
+   "kind": "negative",
+   "page_px": [1848.52,1223.55],
+   "mm": [1.265,-4.765],
+   "note": ""
+  },
+  {
+   "abbr": "aci",
+   "kind": "negative",
+   "page_px": [1764.92,1228.16],
+   "mm": [0.679,-4.797],
+   "note": ""
+  },
+  {
+   "abbr": "aci",
+   "kind": "positive",
+   "page_px": [1791.91,1228.16],
+   "mm": [0.868,-4.797],
+   "note": "",
+   "label_index": 0
+  },
+  {
+   "abbr": "aci",
+   "kind": "positive",
+   "page_px": [1797.17,1265.02],
+   "mm": [0.905,-5.057],
+   "note": "",
+   "label_index": 0
+  },
+  {
+   "abbr": "aci",
+   "kind": "positive",
+   "page_px": [1819.55,1278.18],
+   "mm": [1.062,-5.149],
+   "note": "",
+   "label_index": 0
+  },
+  {
+   "abbr": "aci",
+   "kind": "positive",
+   "page_px": [1833.38,1247.25],
+   "mm": [1.159,-4.932],
+   "note": "",
+   "label_index": 0
+  },
+  {
+   "abbr": "aci",
+   "kind": "positive",
+   "page_px": [1815.6,1437.48],
+   "mm": [1.034,-6.27],
+   "note": "",
+   "label_index": 0
+  },
+  {
+   "abbr": "aci",
+   "kind": "positive",
+   "page_px": [1806.39,1393.37],
+   "mm": [0.969,-5.959],
+   "note": "",
+   "label_index": 0
+  }
+ ],
+ "boundaries": [],
+ "extents": [],
+ "notes": [],
+ "preview": null,
+ "snapshot": "corrections/20260918T191249Z-p04-aci.png",
+ "source": {
+  "commit": "",
+  "site": "https://dstolz.github.io/GerbilAtlasExplorer/",
+  "repo": "dstolz/GerbilAtlasExplorer",
+  "tool": "atlasfix (the published page) 1.0",
+  "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36"
+ }
+}
