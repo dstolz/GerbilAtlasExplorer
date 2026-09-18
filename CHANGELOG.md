@@ -400,6 +400,14 @@ carries a `version` block naming the release its derived fields were built for.
   are what carry the other two and a plain mesh link carries none.
 
 ### Fixed
+- **`export_tables.py --refresh-db` no longer stops a Windows rebuild when a number in
+  METHODS.md changes.** It replaced METHODS.md from inside the `with` that had read it,
+  so it was renaming over a file its own process still held open. POSIX allows that;
+  Windows refuses with `PermissionError: [WinError 5] Access is denied`, and
+  `pipeline.py rebuild` stopped at `tables` after any rebuild that moved a marked number.
+  Linux CI never saw it. The file is now read and closed before it is compared and
+  replaced. Every other `os.replace` in `tools/` already closed its handle first.
+
 - **The granule layer of the olfactory bulb gets both cores of plate 3 back, and `GrA` is
   read on the left hemisphere for the first time.** Three corrections, one plate, one
   structure between them: `20260917T210847Z-p03-GrO`, `-p03-aci` and `-p03-GrA`, all three
