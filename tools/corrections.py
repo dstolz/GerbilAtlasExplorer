@@ -1127,6 +1127,12 @@ def rebase(against='origin/main', dry=False, no_build=False, quiet=False):
     and the corrected region's rings come out identical -- and commits the merge with
     the report as its body. Exit 0 with the branch current; 1 where it stopped, with the
     tree left as it stands so a person or a session can take it from there.
+
+    Of the authored files, two are resolved here. CHANGELOG.md keeps both sides' lines.
+    METHODS.md is resolved to `against`'s side only where every hunk is the same prose
+    with different marked numbers (resolve_marked_numbers), which the rebuild rewrites;
+    a hunk that differs in its prose stops the rebase. It is not a derived path: a
+    whole-file checkout of `against`'s copy would drop the branch's own prose.
     """
     say = (lambda *a: None) if quiet else print
     if git_out('status', '--porcelain', '--untracked-files=no', check=False).strip():
@@ -1186,12 +1192,30 @@ def rebase(against='origin/main', dry=False, no_build=False, quiet=False):
     A.save_db(DBm)
     git_out('add', '--', rel_db)
     conflicted.discard(rel_db)
+    methods = None                                   # (resolved, hunks, prose lines) if METHODS.md conflicted
     for path in list(conflicted):
         if any(_glob_match(path, g) for g in derived_paths()):
             conflicted.discard(path)                 # checked out above
         elif path == 'CHANGELOG.md':
             _union_merge(path)
             conflicted.discard(path)
+        elif path == 'METHODS.md':
+            methods = _resolve_marked_numbers(path)
+            if methods[0]:
+                conflicted.discard(path)
+    if methods:
+        done, n, prose = methods
+        if done:
+            say('  METHODS.md: %d conflict hunk%s, the same prose on both sides with different '
+                'marked numbers; took %s\'s side, %s' % (n, 's'[:n != 1], against,
+                                                        'and the rebuild rewrites the numbers' if ours or our_svg
+                                                        else 'whose numbers stand: the branch changes no input'))
+        elif prose:
+            say('  METHODS.md: the prose differs, not only the marked numbers, in the hunk%s at line%s %s '
+                '(of %d) -- an editorial conflict' % ('s'[:len(prose) != 1], 's'[:len(prose) != 1],
+                                                      ', '.join(map(str, prose)), n))
+        else:
+            say('  METHODS.md: conflicted, but not in hunks this reads (deleted or renamed on one side?)')
     if conflicted:
         say('STOP: conflicts outside the derived files, which this does not resolve: %s'
             % ', '.join(sorted(conflicted)))
@@ -1243,9 +1267,18 @@ def rebase(against='origin/main', dry=False, no_build=False, quiet=False):
              '',
              'The inputs are merged, the derived files are %s\'s, and the pipeline was run again '
              'on the result (tools/corrections.py rebase). %s' % (against, 'Nothing derived is resolved by hand.'),
-             '',
-             'Entries moved against the old base: %d; against %s now: %d; %s moved %d itself.'
-             % (len(old_moved), against, len(new_moved), against, len(main_moved))]
+             '']
+    if methods:
+        n = methods[1]
+        lines += ['METHODS.md conflicted in %d hunk%s, each the same prose on both sides with '
+                  'different marked numbers (the <!-- n:KEY --> values); each was resolved to %s\'s '
+                  'side, and %s.' % (n, 's'[:n != 1], against,
+                                     'the rebuild rewrote the numbers from the merged database'
+                                     if ours or our_svg else
+                                     'the branch changes no input, so those are the right numbers'),
+                  '']
+    lines.append('Entries moved against the old base: %d; against %s now: %d; %s moved %d itself.'
+                 % (len(old_moved), against, len(new_moved), against, len(main_moved)))
     if extra:
         lines.append('Entries that move now and did not before: %s' % ', '.join('%d/%s' % k for k in sorted(extra)))
     if missing:
@@ -1297,6 +1330,69 @@ def _union_merge(path):
     for t in stages:
         os.remove(t)
     git_out('add', '--', path)
+
+
+def resolve_marked_numbers(txt):
+    """METHODS.md as a merge left it conflicted, resolved where only its numbers collide.
+
+    Its prose is authored and its totals are derived: each total sits between markers
+    naming the field it is read from, `<!-- n:KEY -->value<!-- /n -->`, and
+    `export_tables.py --refresh-db` rewrites every value from the database. Two
+    corrections move the same totals, so they conflict there for no reason. A hunk whose
+    two sides read the same once every marked value is blanked -- the keys kept -- is
+    that collision, and resolves to the merged-in side: the rebuild writes the value the
+    merged database gives either way. A hunk that differs in anything else is an
+    editorial conflict, and a person settles it.
+
+    Returns (text, hunks, prose): `text` the file with every hunk resolved to the
+    merged-in side, or None when any hunk differs in its prose or the file holds no
+    hunk git writes; `hunks` how many there were; `prose` the line each prose-differing
+    hunk opens on. A diff3 base section is allowed for and dropped.
+    """
+    from export_tables import MARK
+
+    def blank(s):
+        return MARK.sub(lambda m: m.group(1) + m.group(4), s)
+
+    def marker(bare, c):
+        return bare == c * 7 or bare.startswith(c * 7 + ' ')
+    out, ours, theirs, prose = [], [], [], []
+    hunks, state, at = 0, None, 0
+    for i, line in enumerate(txt.splitlines(keepends=True), 1):
+        bare = line.rstrip('\r\n')
+        if state is None and marker(bare, '<'):
+            state, at, ours, theirs = 'ours', i, [], []
+        elif state == 'ours' and marker(bare, '|'):
+            state = 'base'
+        elif state in ('ours', 'base') and bare == '=' * 7:
+            state = 'theirs'
+        elif state == 'theirs' and marker(bare, '>'):
+            hunks += 1
+            if blank(''.join(ours)) != blank(''.join(theirs)):
+                prose.append(at)
+            out.extend(theirs)
+            state = None
+        elif state == 'ours':
+            ours.append(line)
+        elif state == 'theirs':
+            theirs.append(line)
+        elif state is None:
+            out.append(line)
+    if state is not None or not hunks or prose:
+        return None, hunks, prose
+    return ''.join(out), hunks, prose
+
+
+def _resolve_marked_numbers(path):
+    """resolve_marked_numbers on the file at `path`, written and added when it resolves."""
+    full = os.path.join(A.ROOT, path)
+    with open(full, encoding='utf8', newline='') as f:
+        txt, hunks, prose = resolve_marked_numbers(f.read())
+    if txt is not None:
+        with open(full, 'w', encoding='utf8', newline='') as f:
+            f.write(txt)
+        git_out('add', '--', path)
+    return txt is not None, hunks, prose
 
 
 # --------------------------------------------------------------------- main
