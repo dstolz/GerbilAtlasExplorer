@@ -393,12 +393,14 @@ def main():
             f.write(text)
         os.replace(path + '.tmp', path)
     md = methods_text(db)
+    # closed before the replace: Windows refuses to rename over a file this process holds open
     with open(METHODS, encoding='utf8', newline='') as f:
-        if f.read() != md:
-            with open(METHODS + '.tmp', 'w', encoding='utf8', newline='') as g:
-                g.write(md)
-            os.replace(METHODS + '.tmp', METHODS)
-            print('METHODS.md: marked numbers refreshed')
+        have = f.read()
+    if have != md:
+        with open(METHODS + '.tmp', 'w', encoding='utf8', newline='') as f:
+            f.write(md)
+        os.replace(METHODS + '.tmp', METHODS)
+        print('METHODS.md: marked numbers refreshed')
     print('wrote %d files under data/' % len(outputs(db)))
     return 0
 
