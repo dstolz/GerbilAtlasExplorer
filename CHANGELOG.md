@@ -89,6 +89,23 @@ carries a `version` block naming the release its derived fields were built for.
   that has never been here sees.
 
 ### Changed
+- **A correction rebase no longer stops on METHODS.md when only its numbers collide.**
+  `tools/corrections.py rebase` stopped on any conflict in `METHODS.md`, and on 2026-09-17
+  `rebase-corrections.yml` left both open corrections, #146 and #147, unrebased for that
+  alone. Every conflict hunk in both was the same prose on both sides with different
+  numbers inside `<!-- n:KEY -->value<!-- /n -->` markers, which `export_tables.py
+  --refresh-db` rewrites from the database anyway. The rebase now blanks every marked
+  value on both sides of each hunk, keeping the keys, and compares what is left. If every
+  hunk reads the same, it takes main's side and the rebuild writes the numbers the merged
+  database gives. If any hunk differs in its prose, it stops and names the file as before,
+  because that is an editorial conflict. The printed report and the merge's commit message
+  say which way it went. `METHODS.md` is not made a derived path, because a whole-file
+  checkout of main's copy would drop a branch's own prose. Replayed on the two branches,
+  it resolves #147's 3 hunks and #146's 6, and after renumbering from the hand-made merge's
+  own database and volumes the result is that merge's `METHODS.md` byte for byte.
+  `tests/python/test_corrections.py` covers the numbers-only case and the prose case, on
+  text and on a real merge under each of git's three conflict styles.
+
 - **A word on what is wrong is optional: a plate goes on its marks alone.** The fixer would
   not send a plate until something had been written for it, and asked twice -- once in the
   page beside the marks, once on the send sheet, where a single plate left blank refused the

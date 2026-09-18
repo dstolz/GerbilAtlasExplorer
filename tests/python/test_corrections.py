@@ -9,6 +9,8 @@ reads the file, says so, and writes what the pipeline reads back.
 import math
 import os
 
+import pytest
+
 import atlaslib as A
 import build_region_extents as B
 import corrections as C
@@ -206,3 +208,105 @@ def test_report_against_a_ref_this_checkout_has(tmp_path):
     assert rep2['preview_agrees'] and 'the re-cut here agrees' in md2
     md3, _rep3 = C.report(c, DB, A.vec_matrices(), against='no-such-ref')
     assert 'not a ref this checkout can read' in md3
+
+
+# ---- rebase: METHODS.md, whose prose is authored and whose marked numbers are derived
+
+POLY = '<!-- n:region_extents.summary.polygons -->%s<!-- /n -->'
+FACES = '<!-- n:region_extents.summary.faces_named_by_one_abbreviation -->%s<!-- /n -->'
+
+
+def test_methods_conflict_in_marked_numbers_only_takes_the_merged_in_side():
+    """The shape #146 and #147 both stopped on: the same line on both sides, a marked
+    number apart. CRLF, as a Windows checkout writes it, and a diff3 base section."""
+    txt = '\r\n'.join(['# Methods',
+                       '<<<<<<< HEAD',
+                       'cut as ' + POLY % '5,829' + ' polygons.',
+                       '=======',
+                       'cut as ' + POLY % '5,831' + ' polygons.',
+                       '>>>>>>> origin/main',
+                       'prose between',
+                       '<<<<<<< HEAD',
+                       FACES % '3,450' + ' faces',
+                       '||||||| merged common ancestors',
+                       FACES % '3,449' + ' faces',
+                       '=======',
+                       FACES % '3,452' + ' faces',
+                       '>>>>>>> origin/main',
+                       '======= a setext rule outside a hunk is prose', ''])
+    out, hunks, prose = C.resolve_marked_numbers(txt)
+    assert (hunks, prose) == (2, [])
+    assert out == ('# Methods\r\ncut as ' + POLY % '5,831' + ' polygons.\r\nprose between\r\n'
+                   + FACES % '3,452' + ' faces\r\n======= a setext rule outside a hunk is prose\r\n')
+
+
+def test_methods_conflict_in_prose_is_left_to_a_person():
+    both = ('<<<<<<< HEAD\n' + 'cut as ' + POLY % '5,829' + ' polygons.\n'
+            '=======\n' + 'cut as ' + POLY % '5,831' + ' polygons.\n' + '>>>>>>> origin/main\n')
+    worded = ('\n<<<<<<< HEAD\n' + 'cut as ' + POLY % '5,829' + ' polygons.\n'
+              '=======\n' + 'drawn as ' + POLY % '5,831' + ' polygons.\n' + '>>>>>>> origin/main\n')
+    assert C.resolve_marked_numbers(both + worded) == (None, 2, [7])
+    rekeyed = ('<<<<<<< HEAD\n' + POLY % '5,829' + '\n=======\n' + FACES % '5,829'
+               + '\n>>>>>>> origin/main\n')         # a marker that names another field is prose
+    assert C.resolve_marked_numbers(rekeyed) == (None, 1, [1])
+    assert C.resolve_marked_numbers('no hunk\n') == (None, 0, [])
+    assert C.resolve_marked_numbers(both[:-len('>>>>>>> origin/main\n')])[0] is None
+
+
+BASE_METHODS = ''.join(
+    ['# Methods\n', '\n', 'The regions are cut as %s polygons.\n']
+    + ['A line of prose, %d.\n' % i for i in range(6)]
+    + ['| faces named by one abbreviation | %s |\n']
+    + ['A line of prose, %d.\n' % i for i in range(6, 12)]
+    + ['%s\n'])
+
+
+def _methods(polygons, faces, closing='The closing paragraph.', cut='cut'):
+    return BASE_METHODS.replace('cut as', cut + ' as') % (POLY % polygons, FACES % faces, closing)
+
+
+@pytest.mark.parametrize('style', ['merge', 'diff3', 'zdiff3'])
+@pytest.mark.parametrize('worded', [False, True])
+def test_methods_conflict_as_git_writes_it(tmp_path, monkeypatch, style, worded):
+    """A real merge: the branch moves the numbers and rewrites a paragraph clear of
+    them, main moves the same numbers -- and, for `worded`, rewords the sentence one of
+    them sits in. Numbers only: main's numbers and the branch's paragraph, and the file
+    is no longer unmerged. Worded: nothing is touched and it is still unmerged."""
+    import subprocess
+
+    def git(*args):
+        return subprocess.run(['git', '-c', 'user.name=t', '-c', 'user.email=t@t', '-c',
+                               'commit.gpgsign=false', '-c', 'merge.conflictStyle=' + style]
+                              + list(args), cwd=str(tmp_path), check=False,
+                              capture_output=True, text=True).stdout
+
+    def write(text):
+        with open(os.path.join(str(tmp_path), 'METHODS.md'), 'w', encoding='utf8', newline='') as f:
+            f.write(text)
+    git('init', '-q', '-b', 'main')
+    git('config', 'core.autocrlf', 'false')
+    write(_methods('5,829', '3,450'))
+    git('add', '-A')
+    git('commit', '-qm', 'base')
+    git('checkout', '-qb', 'correction/x')
+    write(_methods('5,831', '3,452', closing='The closing paragraph, as the branch has it.'))
+    git('commit', '-qam', 'the branch')
+    git('checkout', '-q', 'main')
+    write(_methods('5,830', '3,451', cut='drawn' if worded else 'cut'))
+    git('commit', '-qam', 'main')
+    git('checkout', '-q', 'correction/x')
+    git('merge', '--no-commit', '--no-ff', 'main')
+    assert git('diff', '--name-only', '--diff-filter=U').split() == ['METHODS.md']
+    with open(os.path.join(str(tmp_path), 'METHODS.md'), encoding='utf8', newline='') as f:
+        left = f.read()
+    monkeypatch.setattr(A, 'ROOT', str(tmp_path))
+    done, hunks, prose = C._resolve_marked_numbers('METHODS.md')
+    with open(os.path.join(str(tmp_path), 'METHODS.md'), encoding='utf8', newline='') as f:
+        now = f.read()
+    unmerged = git('diff', '--name-only', '--diff-filter=U').split()
+    if worded:
+        assert not done and prose and now == left and unmerged == ['METHODS.md']
+    else:
+        assert done and hunks >= 1 and prose == [] and unmerged == []
+        assert now == _methods('5,830', '3,451', closing='The closing paragraph, as the branch has it.')
+        assert git('show', ':METHODS.md') == now
