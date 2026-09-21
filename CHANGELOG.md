@@ -440,6 +440,19 @@ carries a `version` block naming the release its derived fields were built for.
   moved to `cfc3eb2` between that run and the two that died: the CLI is already pinned to a
   version that has carried a run, and the action it is handed to is now pinned the same way.
 
+  **What the re-runs then showed, and what the pin is not.** Run #61 asked the model one
+  word through the pinned CLI with the workflow's own token and got `ready` back in 2.5 s,
+  so neither #57 nor #59 was a lapsed token or a limit that had been reached. Run #62 then
+  took `20260921T142343Z-p01-E` again, on the revision `v1` had moved to, and the session
+  *ran*: 115 turns, 22 minutes, `is_error: false` -- and left nothing on the branch. So the
+  instant failure has not reproduced, and the pin is not a claim that `cfc3eb2` caused it;
+  it holds the action at the one revision known to have carried a correction the whole way,
+  and moves when another does. What #62 reproduced is the other failure, the one runs #45
+  and #55 ended in: a session that reads its plate, spends its turns and stops without
+  pushing. Its reason is the last message it wrote, and that message is now in the log
+  beside the job summary -- because a run read through the API, which is how a failed one
+  is read when nobody is at a browser, carries the log alone.
+
 - **A correction run dispatched on the branch the ref dropdown starts on says which branch
   it wanted.** `main` adds no correction file to itself, so a dispatch left on it stopped
   at `no correction file on this branch against origin/main` -- a true answer to a question
