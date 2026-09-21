@@ -80,13 +80,23 @@ from atlaslib import xf, inv6, pip, poly_area     # noqa: E402
 BRIDGE_PX = 20      # page px; 99% of tracing gaps are under 25, 94% under 12
 DP_PX = 0.5         # plate px: 9 um, and 1.5 page px, so the tolerance still
                     # sits above the lattice the boundary is traced on
-MIN_FACE_PX = 400   # page px; below this a face is tracer noise, not a region
-MIN_AREA_PX = 400   # page px; a territory smaller than this is not published. Equal to
-                    # MIN_FACE_PX by intent: a face big enough to be a region at all is
-                    # big enough to publish, so the cull now takes only the watershed
-                    # slivers it was written for and not whole sealed faces a single
-                    # printed label seeds -- 51 of those, 13 of them a structure's only
-                    # claim on its plate, were being dropped at 600
+MIN_FACE_PX = 100   # page px; below this a face is tracer noise, not a region. 400 until
+                    # the olfactory ventricle: the slit the atlas letters `E/OV` cuts into
+                    # faces of 300 px and less, so `locate()` would seed none of it, `E`
+                    # had no area on the right of plate 1 and `aci` none on the plate at
+                    # all. Two sessions read that as this floor's doing rather than the
+                    # tracing's and neither could move it -- a floor is the whole series'
+                    # business, not one plate's, and the skill forbids a correction run
+                    # touching it.
+MIN_AREA_PX = 100   # page px; a territory smaller than this is not published. Equal to
+                    # MIN_FACE_PX by intent, and it comes down with it: a face big enough
+                    # to be a region at all is big enough to publish, so the cull takes
+                    # only the watershed slivers it was written for and not whole sealed
+                    # faces a single printed label seeds -- 51 of those, 13 of them a
+                    # structure's only claim on its plate, were being dropped at 600. Left
+                    # behind at 400 it would undo the move above on its own: a 300 px slit
+                    # would be seeded and then erased by the cull below, and the seed would
+                    # be left pointing at nothing.
 SEED_PAD = 1.0      # label box is used as the marker at this scale
 SNAP_PX = 60        # a label printed beside its section is pulled this far in
 TIP_SEED_PX = 4     # plate px: the mark a label on a leader line seeds with

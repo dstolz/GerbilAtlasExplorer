@@ -89,6 +89,40 @@ carries a `version` block naming the release its derived fields were built for.
   that has never been here sees.
 
 ### Changed
+- **The floor under a face comes down from 400 page px to 100, and the atlas is not re-cut
+  with it.** `MIN_FACE_PX` is what `locate()` will seed: a label landing in a smaller face
+  is treated as landing nowhere, snapped to the largest face within `SNAP_PX` or dropped.
+  At 400 that took the olfactory ventricle. The slit the atlas letters `E/OV` is 8 to 10 px
+  across and its own inner line cuts it into faces of 300 px and less, so `aci` had **no
+  entry at all on plate 1** and `E` none on the right hemisphere, with 0.2431 mm² of the
+  plate unassigned. Two sessions read that plate this week and both ended in the same place:
+  the tracing is right, the seeds are where they belong, and the floor is what refuses them
+  -- a fault in the tool, and not one a correction run may fix, because a floor is the whole
+  series' business and the skill forbids a run touching it for one plate.
+
+  **`MIN_AREA_PX` comes down with it, to 100.** The two are equal by intent and the file has
+  said so since the cull came down from 600: `MIN_FACE_PX` gates what may be *seeded*,
+  `MIN_AREA_PX` what may be *published*. Left behind at 400 it would have undone the move on
+  its own -- a 300 px slit seeded and then erased by the cull, with the seed left pointing at
+  nothing.
+
+  **What has moved here, and what has not.** The 62 face sidecars under `data/facemaps/` are
+  rebuilt, because they carry `min_face_px` and the seed each printed label takes; the
+  rasters beside them are byte-identical, the cut itself never having read the floor.
+  **57 label seeds on 33 of the 62 plates** now land in a face of their own -- 102 to 391 px,
+  median 266 -- where they used to be snapped into a neighbour or dropped. On plate 1 that is
+  `aci[0]` into 272 px, `aci[1]` into 300, `E[0]` and `OV[1]` into 259, and `GrO[0]` into 151.
+
+  **`data/gerbil_atlas.json` is untouched: no plate is re-cut here.** A dry run of plate 1
+  under the new floor reads **8 regions against the 7 committed, 0 snapped seeds against 5,
+  and 98% of the section covered against 97%** -- but that is a reading, not a cut, and it is
+  not published. Each plate takes the new floor when something next re-cuts it, so the series
+  carries both floors until `python3 tools/pipeline.py rebuild` is run over all 62. The
+  change is also not purely additive: a label whose mark sits in a small face now seeds that
+  face instead of snapping to the large one it used to take, which is what `GrO[0]` above
+  does, so some entries will lose ground where others gain it. What every plate's areas
+  become is the rebuild's to say, and it is not said here.
+
 - **A correction rebase no longer stops on METHODS.md when only its numbers collide.**
   `tools/corrections.py rebase` stopped on any conflict in `METHODS.md`, and on 2026-09-17
   `rebase-corrections.yml` left both open corrections, #146 and #147, unrebased for that
