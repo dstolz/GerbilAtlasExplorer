@@ -94,6 +94,40 @@ def test_fix_reads_the_branch_not_the_exit_code(repo):
     assert code == 0 and 'fixed=true' in out and 'data/db.json' in out
 
 
+def test_verdict_reads_a_fix_on_the_branch(repo):
+    write(repo, 'data/db.json', '{"fixed": 1}\n')
+    git(repo, 'commit', '-qam', 'the fix')
+    code, out = sh(repo, 'verdict')
+    assert code == 0 and 'verdict=fixed' in out and 'data/db.json' in out
+
+
+def test_verdict_reads_a_plate_that_asks_for_nothing(repo):
+    # the one stop the prompt allows, and the file is the whole of what makes it one
+    write(repo, 'build/no-fix.md', 'GrO on plate 1 is where it already is\n\n1.5670 vs 1.5662 mm2\n')
+    code, out = sh(repo, 'verdict')
+    assert code == 0 and 'verdict=read-and-closed' in out
+
+
+def test_verdict_refuses_an_empty_no_fix_file(repo):
+    write(repo, 'build/no-fix.md', '')
+    code, out = sh(repo, 'verdict')
+    assert code == 0 and 'verdict=nothing' in out
+
+
+def test_verdict_reads_a_session_that_left_neither(repo):
+    code, out = sh(repo, 'verdict')
+    assert code == 0 and 'verdict=nothing' in out
+
+
+def test_verdict_does_not_take_an_edited_correction_for_a_fix(repo):
+    # a session that only touched corrections/ has pushed no fix, whatever else it did;
+    # `untouched` is what refuses it, and the verdict must not call it one
+    write(repo, 'corrections/x.json', '{"id": "x", "edited": true}\n')
+    git(repo, 'commit', '-qam', 'the session edited the correction')
+    code, out = sh(repo, 'verdict')
+    assert code == 0 and 'verdict=nothing' in out
+
+
 def test_untouched_refuses_an_edited_correction(repo):
     sha = git(repo, 'rev-parse', 'HEAD')
     write(repo, 'data/db.json', '{"fixed": 1}\n')

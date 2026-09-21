@@ -7,6 +7,7 @@
 #   correction.sh pushed                 did the commit at HEAD add corrections/*.json, on one parent?
 #   correction.sh list                   the correction files this branch adds to $BASE (space-separated)
 #   correction.sh fix                    the files outside corrections/ this branch changes against $BASE
+#   correction.sh verdict                what the session left: a fix, a reasoned no-fix, or nothing
 #   correction.sh untouched SHA FILE...  each correction FILE (and its snapshot) is the same at SHA and HEAD
 #   correction.sh credential BIN         ask the model one word through BIN; exit 1 if it cannot be reached
 #   correction.sh open-pr BRANCH         open the pull request from build/pr.md (or --fill-first), print its number
@@ -23,7 +24,7 @@ out() {                                  # out key value -- to the log, and to t
   if [ -n "${GITHUB_OUTPUT:-}" ]; then printf '%s=%s\n' "$1" "$2" >> "$GITHUB_OUTPUT"; fi
 }
 
-cmd=${1:?usage: correction.sh pushed|list|fix|untouched|open-pr|wait-ci ...}
+cmd=${1:?usage: correction.sh pushed|list|fix|verdict|untouched|open-pr|wait-ci ...}
 shift
 
 case "$cmd" in
@@ -65,6 +66,26 @@ case "$cmd" in
     else
       echo "the branch carries nothing outside corrections/"
       out fixed false
+    fi
+    ;;
+  verdict)
+    # What a session left behind, in the three ways it can end. `read-and-closed` is the one
+    # stop the prompt allows -- a plate that supports none of the four causes -- and it is an
+    # outcome rather than a failure: the session read the plate, said what it found in
+    # build/no-fix.md, and left the inputs alone, which is the right answer to a correction
+    # that asks for nothing. Only the file makes it that: a session that stops without
+    # writing one has stopped without a reason, and reads as `nothing`.
+    fix=$(git diff --name-only "$BASE...HEAD" | grep -v '^corrections/' || true)
+    nofix=${NOFIX:-build/no-fix.md}
+    if [ -n "$fix" ]; then
+      printf 'the branch changes, outside corrections/:\n%s\n' "$fix"
+      out verdict fixed
+    elif [ -s "$nofix" ]; then
+      echo "the session left $nofix: it read the plate and found none of the four causes"
+      out verdict read-and-closed
+    else
+      echo "the branch carries nothing outside corrections/, and there is no $nofix"
+      out verdict nothing
     fi
     ;;
   untouched)

@@ -417,6 +417,30 @@ carries a `version` block naming the release its derived fields were built for.
   are what carry the other two and a plain mesh link carries none.
 
 ### Fixed
+- **A plate that asks for nothing is an answer, and the run that says so is green.** The
+  prompt has always allowed a session one stop -- "the one case for stopping is a plate that
+  supports none of the four causes" -- and the workflow then marked it exactly as it marks a
+  session that crashed: `the session ended without a fix; the correction is unapplied`, in
+  red. Run #65 is what that costs. It read `20260921T142149Z-p01-GrO`, rasterised the four
+  extents the reader drew the way the pipeline rasterises them, and got **1.5670 mm²** against
+  the **1.5662** `GrO` already holds -- the reader's four rings are `GrO`'s own four rings,
+  drawn two or three page pixels off by hand, with **96.6%** of the drawing already `GrO`
+  today. It took the one run off the ink `inspect` flags, applied it, and re-cut the plate to
+  see: `GrO` 1.5705 -> 1.5618 mm², `section_covered` 0.9682 -> 0.9670, 0.0087 mm² of granule
+  core sealed off as an unnamed sliver. A loss, so it put the tracing back byte for byte and
+  stopped. That is the correct reading, reached by doing the work, and it was filed as a
+  failure.
+
+  **A session that stops writes `build/no-fix.md`, and that file is the difference.** It holds
+  what the session read, in the voice `build/pr.md` would have had; `correction.sh verdict`
+  reads the branch and the file together and answers `fixed`, `read-and-closed` or `nothing`.
+  A fix goes on to the pull request as before. `read-and-closed` ends the run green, with the
+  reading as the job summary and in the log, nothing pushed and no pull request opened --
+  there is nothing to read in a diff that does not exist. `nothing` stays red, because a
+  session that left neither a fix nor a reason has stopped for no reason on record. The
+  correction file is checked as untouched on both paths that end well, so a session that
+  edited the file it was applying is refused whichever way it ended.
+
 - **The olfactory ventricle of plate 1 is one slit again on the left, rather than a chain
   of eight beads.** `20260921T142343Z-p01-E`, sent as "E[0] border was missing": a boundary
   of 14 points drawn round the right-hand slit and an extent of 18 points, 0.0760 mm²,
