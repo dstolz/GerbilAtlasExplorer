@@ -314,6 +314,12 @@ jobs:
         run: |
           execution=${EXECUTION:-$RUNNER_TEMP/claude-execution-output.json}
           said=$(jq -r '[.[]? | select(.type == "result")] | last | .result // empty' "$execution" 2>/dev/null || true)
+          said=${said:-(the run left no final message)}
+          # Into the log as well as the summary below. The summary is a web page: a run
+          # read any other way -- the API, `gh run view`, a session looking into why the
+          # last one stopped -- gets the log and nothing else. Run #62 spent 115 turns and
+          # 22 minutes and left its one useful sentence where only a browser could reach it.
+          printf '::group::What the session said before it stopped\n%s\n::endgroup::\n' "$said"
           git fetch origin main "$GITHUB_REF_NAME"
           git checkout -q "origin/$GITHUB_REF_NAME"
           fixed=no
@@ -328,10 +334,10 @@ jobs:
               echo "What the session said before it stopped:"
               echo
               echo '```'
-              echo "${said:-(the run left no final message)}"
+              echo "$said"
               echo '```'
             } >> "$GITHUB_STEP_SUMMARY"
-            echo "::error::the session ended on an error: ${said:-(the run left no final message)}"
+            echo "::error::the session ended on an error: $said"
             exit 1
           fi
           if [ "$fixed" != yes ]; then
@@ -343,7 +349,7 @@ jobs:
               echo "What the session said before it stopped:"
               echo
               echo '```'
-              echo "${said:-(the run left no final message)}"
+              echo "$said"
               echo '```'
             } >> "$GITHUB_STEP_SUMMARY"
             echo "::error::the session ended without a fix on $GITHUB_REF_NAME; the correction is unapplied"
