@@ -123,6 +123,17 @@ carries a `version` block naming the release its derived fields were built for.
   does, so some entries will lose ground where others gain it. What every plate's areas
   become is the rebuild's to say, and it is not said here.
 
+  **One plate's areas are readable now, and they are the browser's own.**
+  `tests/js/fixer.spec.js` puts a draft on plate 19 and re-cuts it in the page, which is
+  the extraction's rules run against the published face maps rather than a dry run of the
+  Python. That re-cut read **40 regions at the old floor and reads 42 at this one**: `ICj`
+  at **0.0208 mm²** and `IG` at **0.0063**, neither of which had any ground on plate 19,
+  and ten entries shifted -- `mfb` +0.0192, `LSD` +0.0187, `VP` +0.0033, `AcbSh` +0.0016,
+  the rest under 0.002, `S1FL` and `S1J` down by 0.0005 and 0.0017. The test's own
+  `seed_overrides` draft is in that re-cut too, so not all twelve are the floor's doing;
+  the two new entries are. Its expected count moves 40 -> 42 with a note saying why, as it
+  did when the floor last moved.
+
 - **A correction rebase no longer stops on METHODS.md when only its numbers collide.**
   `tools/corrections.py rebase` stopped on any conflict in `METHODS.md`, and on 2026-09-17
   `rebase-corrections.yml` left both open corrections, #146 and #147, unrebased for that

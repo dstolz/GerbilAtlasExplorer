@@ -112,9 +112,11 @@ test('recut applies the draft to a scratch tree and builds the plate again',
     await page.click('#recutb');
     const r = page.locator('#report');
     await expect(r).toContainText('seed_overrides 19/S1DZ', {timeout: 60000});
-    // 40 rather than 39: E is drawn on this plate now that MIN_AREA_PX matches
-    // MIN_FACE_PX, so a face the extraction had accepted is published too.
-    await expect(r).toContainText('recut plate 19: 40 regions');
+    // 42 rather than 40: the floor under a face came down from 400 page px to 100, and
+    // this re-cut publishes `ICj` at 0.0208 mm2 and `IG` at 0.0063, neither of which had
+    // any ground on plate 19 before. It was 40 rather than 39 for the last move of the
+    // same floor: E is drawn here now that MIN_AREA_PX matches MIN_FACE_PX.
+    await expect(r).toContainText('recut plate 19: 42 regions');
     await expect(page.locator('#v-cut')).toBeChecked();          // and it is what is drawn
   });
 
