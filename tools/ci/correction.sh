@@ -8,10 +8,12 @@
 #   correction.sh list                   the correction files this branch adds to $BASE (space-separated)
 #   correction.sh fix                    the files outside corrections/ this branch changes against $BASE
 #   correction.sh untouched SHA FILE...  each correction FILE (and its snapshot) is the same at SHA and HEAD
+#   correction.sh credential BIN         ask the model one word through BIN; exit 1 if it cannot be reached
 #   correction.sh open-pr BRANCH         open the pull request from build/pr.md (or --fill-first), print its number
 #   correction.sh wait-ci NUMBER         wait on the checks of pull request NUMBER; exit 1 if any fails
 #
-# BASE defaults to origin/main. Nothing here needs more than git, and open-pr/wait-ci gh.
+# BASE defaults to origin/main. Nothing here needs more than git; credential wants jq and
+# the Claude Code binary, and open-pr/wait-ci gh.
 set -euo pipefail
 
 BASE=${BASE:-origin/main}
@@ -47,7 +49,13 @@ case "$cmd" in
   list)
     list=$(git diff --name-only --diff-filter=A "$BASE...HEAD" -- 'corrections/*.json' | tr '\n' ' ' | sed 's/ $//')
     out list "$list"
-    [ -n "$list" ] || { echo "::error::no correction file on this branch against $BASE"; exit 1; }
+    # The common way to land here is a dispatch left on the default branch, where the
+    # ref dropdown starts: main adds nothing to itself, so the list is empty. Say that,
+    # rather than leave a correct answer to a question nobody meant to ask.
+    if [ -z "$list" ]; then
+      echo "::error::no correction file on this branch against $BASE -- $(git rev-parse --abbrev-ref HEAD) adds none. Dispatch this on the correction/<id> branch that carries it, or name the file in the \`correction\` input to take one that is already on $BASE"
+      exit 1
+    fi
     ;;
   fix)
     fix=$(git diff --name-only "$BASE...HEAD" | grep -v '^corrections/' || true)
@@ -69,6 +77,33 @@ case "$cmd" in
       fi
     done
     echo "the correction files are as they were pushed"
+    ;;
+  credential)
+    # One word through the binary the session will use, with the token the workflow holds.
+    # A session that cannot reach the model ends the same way in under a second, inside an
+    # action that hides its output -- so what the CLI says is read here instead, left in
+    # build/credential.txt for the job summary and printed.
+    bin=${1:?credential BIN}
+    mkdir -p build
+    set +e
+    "$bin" -p 'Reply with one word: ready' --model "${MODEL:-claude-opus-5}" --max-turns 1 \
+      --output-format json > build/credential.json 2> build/credential.err
+    code=$?
+    set -e
+    said=$(jq -r '.result // empty' build/credential.json 2>/dev/null || true)
+    [ -n "$said" ] || said=$(tail -n 20 build/credential.err 2>/dev/null || true)
+    printf '%s\n' "${said:-(the CLI said nothing)}" > build/credential.txt
+    cat build/credential.txt
+    # a run that wrote no readable result is not a run that reached the model, and an
+    # is_error the CLI set is one whatever else it wrote (`.is_error // true` would not do:
+    # in jq, `false // true` is true, and every good run would read as a bad one)
+    ok=$(jq -r 'if .is_error == false then "yes" else "no" end' build/credential.json 2>/dev/null || echo no)
+    if [ "$code" -ne 0 ] || [ "$ok" != yes ]; then
+      echo "::error::the model could not be reached with this token (claude -p exited $code)"
+      out credential bad
+      exit 1
+    fi
+    out credential good
     ;;
   open-pr)
     branch=${1:?open-pr BRANCH}

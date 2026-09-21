@@ -22,8 +22,9 @@
 # Setup, once: `claude /install-github-app` from a local terminal, taking the subscription
 # option. That installs the Claude GitHub App on the repository and writes the one secret
 # this reads, CLAUDE_CODE_OAUTH_TOKEN; by hand it is `claude setup-token` and `gh secret
-# set`. The token lasts a year, and a lapsed one shows up as the `Apply them` step failing
-# to authenticate with the branch and its correction untouched.
+# set`. The token lasts a year, and a lapsed one is caught by `Is the credential good`
+# before the session is started, with the branch and its correction untouched; what the
+# CLI said is in the log and the job summary, since the action hides the session's output.
 #
 # The action is deliberately handed no `github_token`: without one it exchanges this
 # workflow's OIDC token (hence `id-token: write`) for a short-lived App installation token,
@@ -181,9 +182,12 @@ jobs:
       # installer that downloaded the binary to its versioned path and failed only to
       # place the launcher; and a step that finds neither fails here, naming what it
       # looked for, rather than at the SDK with a stack trace.
+      #
+      # A dry run installs it too, so that the credential below is part of the wiring
+      # `dry_run` checks.
       - name: Install Claude Code
         id: cli
-        if: (steps.state.outputs.fixed != 'true' || inputs.force) && !inputs.dry_run
+        if: steps.state.outputs.fixed != 'true' || inputs.force
         env:
           VERSION: '2.1.263'
         run: |
@@ -200,10 +204,48 @@ jobs:
           "$bin" --version
           echo "path=$bin" >> "$GITHUB_OUTPUT"
 
+      # The credential is read before the forty minutes are spent on it, with the binary
+      # just installed and the secret this workflow holds. A session that cannot reach the
+      # model ends inside the action in under a second, and the action hides its output, so
+      # the run says only "Claude execution failed" with nothing to go on -- which is what
+      # runs #57 and #59 left behind. Here the CLI's own words are in the log and in the job
+      # summary, and a lapsed token is named as one rather than read as a broken pipeline.
+      # The prompt is a single word so the check costs a few tokens.
+      - name: Is the credential good
+        id: credential
+        if: steps.state.outputs.fixed != 'true' || inputs.force
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          BIN: ${{ steps.cli.outputs.path }}
+        run: |
+          if ! bash tools/ci/correction.sh credential "$BIN"; then
+            {
+              echo "### The session could not reach the model"
+              echo
+              echo "One word through \`claude -p\` came back an error before the correction was"
+              echo "touched, so the session would have ended the same way. What the CLI said:"
+              echo
+              echo '```'
+              cat build/credential.txt
+              echo '```'
+              echo
+              echo "A token that has lapsed or been revoked is replaced with \`claude setup-token\`"
+              echo "and \`gh secret set CLAUDE_CODE_OAUTH_TOKEN\`; a limit that has been reached"
+              echo "wants the run again after it resets. The branch and its correction are untouched."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+
+      # The action is pinned to the revision that carried a correction the whole way
+      # (run #51), as the CLI above is pinned to a version that has: `@v1` moves, and it
+      # moved between the last run that finished and the two that died in under a second.
+      # Move it by hand to a revision that has carried a run, never to a floating tag.
       - name: Apply them
         id: claude
+        # so the step below can say what the session said; it fails the job itself
+        continue-on-error: true
         if: (steps.state.outputs.fixed != 'true' || inputs.force) && !inputs.dry_run
-        uses: anthropics/claude-code-action@v1
+        uses: anthropics/claude-code-action@3b8197d3d486006dd4af54613517f21ac6ac625e # v1
         env:
           GH_TOKEN: ${{ github.token }}
         with:
@@ -259,16 +301,40 @@ jobs:
       # workflow's own GITHUB_TOKEN. What that token cannot do is start a workflow, and
       # nothing here needs it to: the session's push, made with the app token, has already
       # put ci.yml onto the head commit.
+      # This step runs whether the action returned or failed under the session -- hence
+      # `continue-on-error` above. A session that ends on an error leaves its last message
+      # in the execution log and nothing in the action's own output, so where this step
+      # used to be skipped by the failure it is now the only place that message is read.
       - name: The session left a fix on the branch
         if: (steps.state.outputs.fixed != 'true' || inputs.force) && !inputs.dry_run
         env:
           LIST: ${{ steps.files.outputs.list }}
           EXECUTION: ${{ steps.claude.outputs.execution_file }}
+          OUTCOME: ${{ steps.claude.outcome }}
         run: |
+          execution=${EXECUTION:-$RUNNER_TEMP/claude-execution-output.json}
+          said=$(jq -r '[.[]? | select(.type == "result")] | last | .result // empty' "$execution" 2>/dev/null || true)
           git fetch origin main "$GITHUB_REF_NAME"
           git checkout -q "origin/$GITHUB_REF_NAME"
-          if ! bash tools/ci/correction.sh fix | grep -q '^fixed=true'; then
-            said=$(jq -r '[.[]? | select(.type == "result")] | last | .result // empty' "$EXECUTION" 2>/dev/null || true)
+          fixed=no
+          bash tools/ci/correction.sh fix | grep -q '^fixed=true' && fixed=yes
+          if [ "$OUTCOME" = failure ]; then
+            {
+              echo "### The session ended on an error"
+              echo
+              echo "The action reported the run as failed. \`$GITHUB_REF_NAME\` carries a fix beside"
+              echo "$LIST: **$fixed**."
+              echo
+              echo "What the session said before it stopped:"
+              echo
+              echo '```'
+              echo "${said:-(the run left no final message)}"
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "::error::the session ended on an error: ${said:-(the run left no final message)}"
+            exit 1
+          fi
+          if [ "$fixed" != yes ]; then
             {
               echo "### The correction was not applied"
               echo
@@ -328,4 +394,5 @@ jobs:
             echo
             echo "Every step but the session ran on \`$GITHUB_REF_NAME\` for ${{ steps.files.outputs.list }}."
             echo "The branch already carried a fix: ${{ steps.state.outputs.fixed }}."
+            echo "The credential reached the model: ${{ steps.credential.outcome == 'success' }}."
           } >> "$GITHUB_STEP_SUMMARY"

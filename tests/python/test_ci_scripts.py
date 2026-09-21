@@ -7,6 +7,7 @@ brings corrections/ in, a branch that already carries its fix, a session that ed
 correction it was applying -- and reads what the script prints.
 """
 import os
+import shlex
 import subprocess
 
 import pytest
@@ -78,7 +79,10 @@ def test_list_names_the_files_the_branch_adds(repo):
     assert code == 0 and 'list=corrections/x.json' in out
     git(repo, 'checkout', '-q', 'main')
     code, out = sh(repo, 'list')
+    # the branch it was run on, and the two ways out, so a dispatch left on the default
+    # branch reads as the mistake it is
     assert code == 1 and 'no correction file' in out
+    assert 'main adds none' in out and 'correction` input' in out
 
 
 def test_fix_reads_the_branch_not_the_exit_code(repo):
@@ -100,6 +104,44 @@ def test_untouched_refuses_an_edited_correction(repo):
     git(repo, 'commit', '-qam', 'the snapshot is replaced')
     code, out = sh(repo, 'untouched', sha, 'corrections/x.json')
     assert code == 1 and 'x.json or its snapshot' in out
+
+
+def stub_cli(cwd, name, out='', err='', code=0):
+    """A `claude` that prints what the real one would and exits as it would."""
+    p = os.path.join(cwd, name)
+    write(cwd, name + '.out', out)
+    write(cwd, name + '.err', err)
+    with open(p, 'w') as f:
+        f.write('#!/usr/bin/env bash\n')
+        f.write('cat %s\n' % shlex.quote(p + '.out'))
+        f.write('cat %s >&2\n' % shlex.quote(p + '.err'))
+        f.write('exit %d\n' % code)
+    os.chmod(p, 0o755)
+    return p
+
+
+def test_credential_reads_the_word_the_model_sent_back(repo):
+    bin = stub_cli(repo, 'claude-ok', out='{"is_error": false, "result": "ready"}')
+    code, out = sh(repo, 'credential', bin)
+    assert code == 0 and 'credential=good' in out and 'ready' in out
+
+
+def test_credential_fails_on_a_token_the_model_refuses(repo):
+    # what the CLI leaves when the token has lapsed: a result that is an error, exit 1
+    bin = stub_cli(repo, 'claude-401',
+                   out='{"is_error": true, "result": "Invalid API key - Please run /login"}',
+                   code=1)
+    code, out = sh(repo, 'credential', bin)
+    assert code == 1 and 'credential=bad' in out
+    assert 'Invalid API key' in out                      # the CLI's own words, not ours
+    with open(os.path.join(repo, 'build', 'credential.txt')) as f:
+        assert 'Invalid API key' in f.read()             # and the job summary reads them here
+
+
+def test_credential_fails_when_the_cli_writes_no_result(repo):
+    bin = stub_cli(repo, 'claude-crash', err='claude: error while loading shared libraries', code=127)
+    code, out = sh(repo, 'credential', bin)
+    assert code == 1 and 'credential=bad' in out and 'shared libraries' in out
 
 
 def test_outputs_go_to_the_step(repo, tmp_path):
