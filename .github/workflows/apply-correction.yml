@@ -281,8 +281,13 @@ jobs:
             end the run to ask: the correction is read by a person before it is merged, and
             that is where a question belongs, whereas a session that stops without a commit
             leaves the plate exactly as it was. The one case for stopping is a plate that
-            supports none of the four causes: say that in your last message, which is what
-            the job summary shows.
+            supports none of the four causes. Write what you read to `build/no-fix.md` --
+            first line the title, the rest your reading, in the voice `build/pr.md` would
+            have had -- and stop there, with the inputs as you found them. That file is how
+            the run ends: with it, the run is green and your reading is the job summary,
+            because a correction that asks for nothing is an answer rather than a failure;
+            without it, a session that left no fix is read as one that stopped for no reason,
+            and the run is red. Say it in your last message too.
 
             A correction run changes pipeline inputs, the docs and qc/; it never edits
             tools/, src/, tests/ or the workflows. If a tool is wrong, say so in the write-up.
@@ -305,7 +310,14 @@ jobs:
       # `continue-on-error` above. A session that ends on an error leaves its last message
       # in the execution log and nothing in the action's own output, so where this step
       # used to be skipped by the failure it is now the only place that message is read.
-      - name: The session left a fix on the branch
+      #
+      # It sorts the three ways a run can end. A fix on the branch goes on to the pull
+      # request below. A plate that supports none of the four causes -- the one stop the
+      # prompt allows -- ends the run green on build/no-fix.md, because a correction that
+      # asks for nothing is answered, not failed; run #65 read `GrO` on plate 1 as the
+      # region's own four rings, drawn 0.0008 mm² off by hand, and was marked red for
+      # saying so. A session that left neither is the failure it always was.
+      - name: What the session left
         if: (steps.state.outputs.fixed != 'true' || inputs.force) && !inputs.dry_run
         env:
           LIST: ${{ steps.files.outputs.list }}
@@ -322,14 +334,13 @@ jobs:
           printf '::group::What the session said before it stopped\n%s\n::endgroup::\n' "$said"
           git fetch origin main "$GITHUB_REF_NAME"
           git checkout -q "origin/$GITHUB_REF_NAME"
-          fixed=no
-          bash tools/ci/correction.sh fix | grep -q '^fixed=true' && fixed=yes
+          verdict=$(bash tools/ci/correction.sh verdict | sed -n 's/^verdict=//p')
           if [ "$OUTCOME" = failure ]; then
             {
               echo "### The session ended on an error"
               echo
-              echo "The action reported the run as failed. \`$GITHUB_REF_NAME\` carries a fix beside"
-              echo "$LIST: **$fixed**."
+              echo "The action reported the run as failed. What \`$GITHUB_REF_NAME\` carries beside"
+              echo "$LIST: **$verdict**."
               echo
               echo "What the session said before it stopped:"
               echo
@@ -340,11 +351,12 @@ jobs:
             echo "::error::the session ended on an error: $said"
             exit 1
           fi
-          if [ "$fixed" != yes ]; then
+          if [ "$verdict" = nothing ]; then
             {
               echo "### The correction was not applied"
               echo
-              echo "\`$GITHUB_REF_NAME\` carries nothing but $LIST, so there is nothing to read."
+              echo "\`$GITHUB_REF_NAME\` carries nothing but $LIST, and the session left no"
+              echo "\`build/no-fix.md\` either, so there is nothing to read and no reason on record."
               echo
               echo "What the session said before it stopped:"
               echo
@@ -355,9 +367,25 @@ jobs:
             echo "::error::the session ended without a fix on $GITHUB_REF_NAME; the correction is unapplied"
             exit 1
           fi
-          # A fix that edits the file it is applying breaks the loop guard and the record
-          # of what the reader drew.
+          # A session that edits the file it was applying breaks the loop guard and the
+          # record of what the reader drew, whichever way it ended.
           bash tools/ci/correction.sh untouched "$GITHUB_SHA" $LIST
+          # The plate supports none of the four causes, which the prompt allows and which is
+          # an answer: the run ends here, green, with the reading in the summary. Nothing is
+          # pushed and no pull request is opened, because there is nothing to read in a diff.
+          if [ "$verdict" = read-and-closed ]; then
+            {
+              echo "### Read and closed: the plate supports none of the four causes"
+              echo
+              echo "The session read $LIST against the extraction and found nothing to fix, so the"
+              echo "inputs are as they were. What it read:"
+              echo
+              cat build/no-fix.md
+            } >> "$GITHUB_STEP_SUMMARY"
+            printf '::group::Read and closed\n%s\n::endgroup::\n' "$(cat build/no-fix.md)"
+            echo "the correction asks for nothing; the branch and its inputs are untouched"
+            exit 0
+          fi
 
       # The run ends at a green pull request rather than on main. The session opens the
       # pull request itself, from build/pr.md, with the App token the action hands it --
