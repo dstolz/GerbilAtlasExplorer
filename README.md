@@ -381,6 +381,7 @@ plate range is malformed, and which are printed on one plate more than it gives 
 | `src/` | The app's source: `app.html`, `app.css`, `app.js`. `python3 tools/build_app.py --dev` writes `build/dev.html`, which links these directly, so code edits need no rebuild. `fixer.html`, `fixer.css` and `fixer.js` beside them are the region fixer's page, which `tools/atlasfix.py` serves as three files and `build_app.py` inlines into the site's `fixer.html`. |
 | `METHODS.md` | How everything here was derived, and what its accuracy is. |
 | `TARGETING_PLAN.md` | The design behind the track planner. |
+| `PARTS_PLAN.md` | The design for folding a structure's named parts back into it (`DCl` and `VCl` into `Cl`), at the reader's option. Not yet built. |
 | `data/gerbil_atlas.json` | Full database: structures, coordinates, label positions, brain outlines, region extents, the page-to-plate registration, calibration, a version stamp. |
 | `data/gerbil_atlas_structures.csv` | One row per structure: abbreviation, name, plate and bregma range, tags. |
 | `data/gerbil_atlas_groups.csv` | One row per gross division: its members spelled out, the plates it is on, its other names, and a note saying what it holds and what it deliberately does not. Written by `tools/build_groups.py`; added here, not published with the atlas. |
