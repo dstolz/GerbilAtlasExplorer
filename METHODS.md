@@ -436,7 +436,7 @@ the photograph's edge (`Mi` on the bulb plates, `LNTB` on 45, `LRtPC` on 57 and 
 of the frame-cropped image, the convention `brain_outline` uses, so the app's point-in-polygon
 test reads them unchanged. **<!-- n:region_extents.summary.structure_plate_entries -->3,090<!-- /n --> structure–plate entries carry an area**, 96% of the 3,216 the
 label pass located and 92% of the 3,369 the published index lists (both counted over the
-structures that are regions), as <!-- n:region_extents.summary.polygons -->5,839<!-- /n --> polygons over <!-- n:region_extents.summary.points -->155,180<!-- /n --> points.
+structures that are regions), as <!-- n:region_extents.summary.polygons -->5,839<!-- /n --> polygons over <!-- n:region_extents.summary.points -->155,171<!-- /n --> points.
 Where the atlas prints two names as one label the two share an entry (step 8). Twenty of the
 724 names have no entry anywhere and never could: they name no region (step 7).
 
@@ -877,7 +877,7 @@ move the plates, and that the 2-D extraction's guarantees survived into three di
 
 | Check | 2-D | Extracted in 3-D |
 | --- | --- | --- |
-| Cross-section area on a plate a structure was built from, against `region_extents` | — | **median <!-- n:vol:checks.section_area_median_rel_error -->0.0115<!-- /n --> off**, 90th percentile <!-- n:vol:checks.section_area_p90_rel_error -->0.0558<!-- /n -->, the lattice's own quantisation |
+| Cross-section area on a plate a structure was built from, against `region_extents` | — | **median <!-- n:vol:checks.section_area_median_rel_error -->0.0116<!-- /n --> off**, 90th percentile <!-- n:vol:checks.section_area_p90_rel_error -->0.056<!-- /n -->, the lattice's own quantisation |
 | Regions partition the volume | a point is inside one region or none | **holds**: every voxel inside the surface carries exactly one label or is an unnamed sealed face, <!-- n:vol:checks.unnamed_fraction -->0.0179<!-- /n --> of the brain |
 | Highest point of the surface | DV −0.06 | **DV <!-- n:vol:checks.dv_highest_mm -->-0.1<!-- /n -->** (one voxel) |
 | Lowest point of the surface | DV −9.04 | **DV <!-- n:vol:checks.dv_lowest_mm -->-9.0<!-- /n -->** |

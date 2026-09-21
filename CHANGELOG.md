@@ -417,6 +417,83 @@ carries a `version` block naming the release its derived fields were built for.
   are what carry the other two and a plain mesh link carries none.
 
 ### Fixed
+- **The olfactory ventricle of plate 1 is one slit again on the left, rather than a chain
+  of eight beads.** `20260921T142343Z-p01-E`, sent as "E[0] border was missing": a boundary
+  of 14 points drawn round the right-hand slit and an extent of 18 points, 0.0760 mm²,
+  drawn over the left-hand one — the same claim twice, that this slit is one region and the
+  atlas draws it.
+
+  **The cause is the tracing, and what is wrong is the ink inside the outline rather than
+  the outline.** The atlas letters the slit once per hemisphere, `E/OV`, and letters nothing
+  inside it. The tracing of plate 1 carries seventeen single-cubic scraps of 3.0 to 58.7
+  page px, and eight of them lie inside the two slits, four a side: 3.3 to 22.5 px (0.023 to
+  0.158 mm) long, each with both ends 0.2 to 2.8 px from the slit's own wall. `BRIDGE_PX`
+  joins a dangling end to the nearest point on *another* path within 20 px, and in a lumen
+  8 to 10 px across that nearest point is the opposite wall — so each scrap, with a weld at
+  either end, is a wall straight across the slit. The left slit cut as a chain of eight
+  faces of 28 to 653 px and the right as a chain of eight of 35 to 300 px, where the atlas
+  draws one lumen each.
+
+  `MIN_FACE_PX` is 400. On the left only the 653 px bead could be seeded, and that bead was
+  the whole of `E` on the plate. On the right no bead could: `E[0]`'s seed — put in the slit
+  by `20260910T134521Z-p01-E` — was snapped out into the 15,001 px bulb core, and because
+  the 8 px tip mark finds no pixel of that face there, `place()` dropped the mark into the
+  156 px bead it stands in, which no name holds and the watershed mask leaves out. `E` took
+  no ground on the right at all, which is the missing border the reader reports.
+
+  **The fix is eight paths out of `svg/GerbilAtlas_Plate_01.svg`, and nothing in.** On the
+  left `M 1564 1314`, `M 1557 1358`, `M 1570 1372` and `M 1559 1396`; on the right
+  `M 1759 1321`, `M 1758 1348`, `M 1753 1371` and `M 1758 1387`. Nothing is added: the
+  outline the atlas draws round the left slit is already traced whole, as `M 1564 1304`,
+  25 cubics and 326 px of it, and the reader's boundary is 94% on ink already — `inspect`
+  says it adds no boundary, and laid beside the tracer's own walls 1 to 4 px off them it
+  cuts slivers rather than joining anything, so it is not applied.
+
+  **`E` on plate 1 goes 0.0394 mm² to 0.0527**, one polygon still and traced 1.00 still,
+  the left slit now one sealed face of 960 px seeded by `E`'s own printed `E/OV` leader tip;
+  over the series `E` goes 1.687 to **1.700 mm²** on the same 18 plates and
+  0.6611 to **0.6601 mm³** in 11 components. **One other entry moves**, `GrO` on plate 1 by
+  **+0.0008 mm²**, which is the width of a wall, and `GrO`'s volume with it, 8.6469 to
+  8.6479 mm³. **Nothing on any other plate moves.** `points` goes 155,180 to **155,171** and
+  **`boundary_edges_shared_exactly` stays 1.0**; `structure_plate_entries` (3,090),
+  `polygons` (5,839), `faces_named_by_one_abbreviation` (3,460), `seeds_moved_by_hand` (99),
+  `section_covered_mean` (0.9715), `label_inside_its_own_region` (0.9719), the coloring and
+  the mesh count are all unchanged, and no test literal moves. `METHODS.md` takes `points`
+  through its own marker; no rule in it changed.
+
+  **The right hemisphere is not fixed, and `E` still has no area there.** Where the left
+  slit's outline is traced as one path, the right's is traced as four stretches that stop
+  mid-lumen — `M 1766 1315`, `M 1757 1294`, `M 1759 1335` and the closed lens
+  `M 1759.35 1363` — so with the scraps gone the ends of `M 1766 1315` are still welded 9.3
+  and 5.0 px sideways and the right chain stands at five faces of 127 to 322 px rather than
+  eight of 35 to 300. Taking any further path out takes the lumen's own lateral wall with
+  it and the slit opens into the 15,001 px bulb core. The largest face any removal leaves is
+  322 px, under the 400 px floor, so no seed can be placed in the right slit at all: this is
+  the same floor the twelve-plate `E/OV` correction recorded against plates 1, 12, 13 and 14,
+  it is a fault in the tool rather than in the atlas or in these inputs, and moving it is
+  its own pull request made once against the whole series.
+
+  **The reading taken, and the one not.** Taken: the eight scraps are the tracer's, not a
+  boundary the atlas draws. Not taken: they are ink the atlas prints — a doubled line, or a
+  dark spot inside the ventricle — in which case the chain of beads is the drawing and the
+  only thing to do is leave the tracing alone and wait for the floor to move. What would
+  tell them apart is the drawing at page resolution; the plate image this session can read
+  is 1,100 × 703, where the slit is 12 px across and nothing inside it resolves, which is
+  exactly where the twelve-plate correction left this question. Two things argue for the
+  reading taken and neither is decisive on its own: the atlas letters the slit once and
+  letters nothing within it, so no scrap in there separates two named structures; and the
+  reader, reading the printed plate, drew the right slit as one unbroken outline and the
+  left as one extent, with no partition in either. Left alone beside that: the top lens of
+  each slit, 272 px on the left and 300 on the right, which `20260912T141111Z-p01-aci` seeds
+  for `aci` and which the reader's extent also covers. Both are under the floor, so `aci`
+  still has no area on plate 1; taking those lenses for `E` would overturn that correction,
+  and it is a correction on `aci` rather than on `E`.
+
+  One note on a tool, not fixed here. `inspect` reads a drawn extent's own border against
+  the tracing and concludes, when all of it is on ink, that "the boundary is drawn, so the
+  seed is what is wrong". On this plate the border is drawn and the seed is already where it
+  belongs; what is wrong is the ink *inside* the border, which it does not look at.
+
 - **A correction run that cannot reach the model now says so, in the model's own words,
   before it spends anything.** Runs #57 and #59 of `apply-correction.yml` ended the same
   way on two branches: the session started, and 435 ms later the action reported
