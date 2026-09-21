@@ -417,6 +417,36 @@ carries a `version` block naming the release its derived fields were built for.
   are what carry the other two and a plain mesh link carries none.
 
 ### Fixed
+- **A correction run that cannot reach the model now says so, in the model's own words,
+  before it spends anything.** Runs #57 and #59 of `apply-correction.yml` ended the same
+  way on two branches: the session started, and 435 ms later the action reported
+  `Claude execution failed: result is_error:true` with no tokens spent and nothing else
+  said. Everything the run *could* print it had printed -- the same CLI version, the same
+  SDK options and the same prompt as run #51, which had carried a correction the whole way
+  four days earlier -- because the action hides the session's output by default, and the
+  one step that reads the session's last message out of the execution log, `The session
+  left a fix on the branch`, could never run: a failing action step ends the job before it.
+  The branch was left carrying its correction and no reason.
+
+  **Three changes, none of which touch what a session does.** The credential is now read
+  before the session, by asking the model for one word through the binary just installed
+  (`correction.sh credential`): a token that has lapsed or a limit that has been reached
+  stops the run there, with what the CLI said in the log and in the job summary, and the
+  branch untouched. `dry_run` gets that step too, so the wiring it checks in two minutes
+  now includes the credential. The action step is `continue-on-error`, so the step below
+  it reads the session's final message whether the session ended on its own or the action
+  failed under it -- and fails the job itself, as it did before. And `anthropics/claude-code-action`
+  is pinned to `3b8197d`, the revision that carried run #51, rather than to `v1`, which
+  moved to `cfc3eb2` between that run and the two that died: the CLI is already pinned to a
+  version that has carried a run, and the action it is handed to is now pinned the same way.
+
+- **A correction run dispatched on the branch the ref dropdown starts on says which branch
+  it wanted.** `main` adds no correction file to itself, so a dispatch left on it stopped
+  at `no correction file on this branch against origin/main` -- a true answer to a question
+  nobody meant to ask (run #60). It now names the branch the run was on and the two ways
+  out: dispatch on the `correction/<id>` branch that carries the file, or name a file
+  already on `main` in the `correction` input.
+
 - **`export_tables.py --refresh-db` no longer stops a Windows rebuild when a number in
   METHODS.md changes.** It replaced METHODS.md from inside the `with` that had read it,
   so it was renaming over a file its own process still held open. POSIX allows that;
