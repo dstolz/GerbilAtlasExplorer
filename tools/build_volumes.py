@@ -608,10 +608,12 @@ def main():
             v, f, full = surface_mesh(m[box], grid, stride, box)
         else:
             # one hull per connected component, never one over all of them: a bilateral
-            # pair hulled together would span the midline and claim the brain between
+            # pair hulled together would span the midline and claim the brain between.
+            # Half a voxel of pad is what a component too flat or too small to hull on
+            # its centers is hulled over instead (volume.hull)
             v, f = V.merge(
                 V.hull(np.stack([grid.x[box[2].start + xs], grid.y[box[1].start + ys],
-                                 grid.z[box[0].start + zs]], 1))
+                                 grid.z[box[0].start + zs]], 1), pad=grid.res / 2.0)
                 for c in range(1, ncomp + 1)
                 for zs, ys, xs in [np.nonzero(lab == c)])
             full = abs(V.mesh_volume(v, f))

@@ -224,7 +224,7 @@ test('a folded whole draws as its own mesh and its parts\', and the note says so
   expect(on.fold).toBe(true);
   expect(on.list).toEqual(['Cl', 'DCl', 'VCl']);
   expect(on.note).toContain('Cl as 3 meshes, folded: its own on plates 12–15 and 27, and DCl and VCl standing in for it on 16–26');
-  expect(on.note).toContain('1.63 mm³ in all');         // 0.7296 + 0.256 + 0.64, to the note's two places
+  expect(on.note).toContain('1.62 mm³ in all');         // 0.7294 + 0.2545 + 0.6391, to the note's two places
   expect(on.part).toEqual(on.whole);                     // in Selection colors the parts wear the whole's
   expect(on.other).not.toEqual(on.whole);
   // the STL writes the three as one solid, named for the whole and saying it is folded

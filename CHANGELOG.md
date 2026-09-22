@@ -495,6 +495,54 @@ carries a `version` block naming the release its derived fields were built for.
   are what carry the other two and a plain mesh link carries none.
 
 ### Fixed
+- **A structure too flat to hull is given the box its voxels fill, not `"mesh": null`.**
+  `build_volumes.py` grades a structure the series barely samples `slab` and hands each of its
+  connected components to `volume.hull()`, which claims the ground the component stands on
+  rather than its shape. A component one voxel wide on any axis puts every voxel center on a
+  common plane, and a plane has no volume for qhull to hull, so it was refused -- as was any
+  component of three voxels or fewer, having too few points to be a solid at all. Refused, it
+  contributed nothing, and a structure whose only component was refused was published with a
+  volume and **no mesh at all**. `hull()` now takes `pad`, half the width of the voxel a center
+  stands for, and hulls a refused cloud again over those voxels' own eight corners: the ground
+  the voxels occupy rather than the plane through their middles, which is the claim the grade
+  makes in the first place. A cloud that hulled before hulls byte-identically, pad or no pad --
+  the corners are a fallback, never a dilation.
+
+  **`mlx` is what found it.** It is drawn on plate 56 alone, and the re-cut at a `MIN_FACE_PX`
+  of 100 leaves it 0.0146 mm² there -- 40 voxels spanning z 4, y 12 and **x 1**, one voxel
+  across in ML -- so every center was coplanar and the only structure in the atlas with a
+  volume and no mesh was born. It now carries a 14-vertex, 24-triangle box of 0.0054 mm³
+  against the 0.0050 mm³ its voxels hold, which is the right side of the voxels for an
+  enclosing volume. Size was never the matter: `CC` (54 voxels, x 2), `SChVM` (65, x 7), `PaV`
+  (69, x 4) and `Obex` (77, x 6) all hulled fine, and any structure one voxel thick would have
+  hit this at any size.
+
+  **Four more entries move, each by one box**: `10n` on plate 52, `DMD` on 31, `MedL` on 49-50
+  and `VNLL` on 40 each had a component too small to hull that contributed nothing and now
+  contributes its own voxels, +8 vertices and +12 triangles apiece and 0.0001 to 0.0002 mm³ of
+  mesh volume. Five of 691 entries change and no other byte of the file does: `volume_mm3` is
+  the voxels' and is untouched throughout, `grid`, `grades`, `validation` and the brain
+  `surface` are identical, `region_triangles` goes 1,584,984 -> **1,585,056** (the +72 those
+  five boxes are), and `data/gerbil_atlas_labels.nii.gz` is byte-identical, the label volume
+  never having been read off a mesh. `pipeline.py check --no-tests` is clean on all seven.
+
+  `tests/python/test_volume.py` is new and holds the mechanism rather than the symptom: that a
+  solid cloud is the same hull with the pad and without, that a flat one has no hull without it
+  and the box of its voxels with it, that one voxel is a cube rather than nothing, and that a
+  padded hull never encloses less than its voxels hold. `test_data.test_volumes_consistent` is
+  what caught it in the first place, by requiring every published entry to carry a mesh.
+
+  **Two browser literals go with the three Python ones, and for the same reason.** `browser-tests`
+  declares `needs: python-checks`, so while the Python suite was red the browser suite never ran
+  at all -- it was reported *skipped*, not passing -- and the first green Python run is the first
+  time 129 browser tests have been put to the re-cut series. Two of them read the old floor's
+  numbers: `colors.spec.js` counts 691 named regions off the page rather than 688, which is
+  `test_data.test_volumes_consistent`'s count read from the other side, and `mesh3d.spec.js` reads
+  the folded claustrum's note at **1.62 mm³** rather than 1.63, `Cl` + `DCl` + `VCl` having gone
+  0.7296 + 0.2560 + 0.6400 = 1.6256 to 0.7294 + 0.2545 + 0.6391 = **1.6230** with the re-cut.
+  `METHODS.md`'s copy of that sum is corrected with it. Neither is the hull's doing: both read the
+  same before the hull fix and after, the hull changing no `volume_mm3` anywhere.
+
 - **The olfactory bulb of plate 1 comes out in rings: `EPl` whole on the right, `Mi` closed
   on the left, and the granule core back under `GrO`.** Three corrections sent together --
   `20260922T135037Z-p01-EPl`, `-p01-Mi` and `-p01-GrO` -- carrying one reading between them:
@@ -595,20 +643,30 @@ carries a `version` block naming the release its derived fields were built for.
   `E/OV` and the box is in the core -- and because left `GrO`, which draws no line at all,
   seeds its own box and holds its core.
 
-  **Three test literals in `tests/python` now read the old floor's numbers, and a correction
-  run may not touch them.** `test_leaders.test_the_tips_land_where_the_atlas_says_they_do`
-  reads (170, 33, 37) and the re-cut series gives **(196, 33, 11)** before this plate is
-  fixed and **(195, 35, 10)** after -- 27 tips that used to sit in a face too small to publish
-  now land in the region they name; its `superseded_by` list gains `(1, 'GrO')` and `(1, 'Mi')`,
-  which is what that list is for. `test_leaders.test_filters` reads 70 odd rows where there are
-  now **45**, the same count from the other side. `test_data.test_volumes_consistent` reads 688
-  meshes where there are now **691**. All three are the series re-cut, not this plate: with
-  plate 1 left as `origin/main` has it the first still reads (196, 33, 11). They want one
-  commit against the whole series, made once rather than once per correction in flight.
-  `METHODS.md`'s marked numbers are refreshed by the `tables` step as always; two percentages
-  in it lie outside the markers and now round differently -- "96% of the 3,216" and "92% of the
-  3,369" read 97% and 93% on 3,133 entries -- and are left, a total not being a correction's to
-  edit by hand.
+  **Three test literals in `tests/python` read the old floor's numbers, and are reconciled
+  here in a commit of their own.** A correction run may not touch `tests/`, so the reconciliation
+  is not part of the correction above; it is made once, against the whole re-cut series, and
+  each literal keeps the running note that says what moved it.
+  `test_leaders.test_the_tips_land_where_the_atlas_says_they_do` read (170, 33, 37) and reads
+  **(195, 35, 10)**; the series alone, with plate 1 left as `origin/main` has it, gives
+  (196, 33, 11). Twenty-six of the twenty-eight rows that move are tips that fell in no region
+  and now fall in the one they name, every one of them on a plate whose inputs are untouched --
+  `Mi` on 4 and 7, `dlo` on 5 and 8, `lo` on 6, both `aci` lines on 8 and on 9, `GlA` on 10,
+  `E` and `OV` on 12, `ICj` and `LSD` on 19, `E` and `ICj` on 22, both `eml` lines on 28,
+  `VMHSh` on 29, `alv` on 31, `MVPO` on 47, `DCMo` on 48, `7DM` and `PPy` on 50, `Bo` on 52 and
+  `IB` on 57 -- fourteen of which had no entry on their plate at all. The other two are plate 1's
+  own: the right `Mi` tip, now in the `EPl` ring rather than in the bite its seed took out of the
+  band, and the right `aci` tip, now in the re-seeded granule core rather than in an unassigned
+  face. Both are superseded rows, so the test's `superseded_by` list gains `(1, 'Mi')` and a
+  second `(1, 'aci')` -- not `(1, 'GrO')`, whose tip is in the ventricle slit and stays in no
+  region either way. `test_leaders.test_filters` read 70 odd rows and reads **45**, the same
+  count from the other side. `test_data.test_volumes_consistent` read 688 meshes and reads
+  **691**: `CC` on plate 60, `PaV` on 27 and `SChVM` on 26 at 324, 180 and 318 page px, all
+  three inside the band between the old cull and the new one and nowhere else.
+  `METHODS.md`'s marked numbers are refreshed by the `tables` step as always; two percentages in
+  it lie outside the markers and are corrected by hand with the literals -- "96% of the 3,216"
+  and "92% of the 3,369" now read **97%** and **93%**, the denominators being `label_positions`
+  and the published index, neither of which a re-cut touches.
 
 - **A plate that asks for nothing is an answer, and the run that says so is green.** The
   prompt has always allowed a session one stop -- "the one case for stopping is a plate that

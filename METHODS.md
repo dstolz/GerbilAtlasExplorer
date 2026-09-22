@@ -434,8 +434,8 @@ the photograph's edge (`Mi` on the bulb plates, `LNTB` on 45, `LRtPC` on 57 and 
 `label_positions` says where an abbreviation is *printed*. `region_extents` says what it
 *names*: the area of each structure on each plate, as closed polygons of `[x, y]` fractions
 of the frame-cropped image, the convention `brain_outline` uses, so the app's point-in-polygon
-test reads them unchanged. **<!-- n:region_extents.summary.structure_plate_entries -->3,133<!-- /n --> structure–plate entries carry an area**, 96% of the 3,216 the
-label pass located and 92% of the 3,369 the published index lists (both counted over the
+test reads them unchanged. **<!-- n:region_extents.summary.structure_plate_entries -->3,133<!-- /n --> structure–plate entries carry an area**, 97% of the 3,216 the
+label pass located and 93% of the 3,369 the published index lists (both counted over the
 structures that are regions), as <!-- n:region_extents.summary.polygons -->5,950<!-- /n --> polygons over <!-- n:region_extents.summary.points -->155,932<!-- /n --> points.
 Where the atlas prints two names as one label the two share an entry (step 8). Twenty of the
 724 names have no entry anywhere and never could: they name no region (step 7).
@@ -849,7 +849,7 @@ until the fold has been revisited, and what reaches it meanwhile is `F` among th
 | its area there | the parts' areas summed |
 | its label center and spread | its own labels pooled with its parts' on the plates the atlas draws them for it: `Cl`'s 10 with `DCl`'s 22 and `VCl`'s 22 |
 | its dots in the label cloud | its parts' on those plates, picked out with its own |
-| its mesh | its own and its parts', drawn together; the volume is theirs summed, exact because no voxel of the label volume carries two ids — `Cl`: 0.7296 + 0.256 + 0.64 = 1.6256 mm³ |
+| its mesh | its own and its parts', drawn together; the volume is theirs summed, exact because no voxel of the label volume carries two ids — `Cl`: 0.7294 + 0.2545 + 0.6391 = 1.6230 mm³ |
 | the structures CSV | five columns after the others — `folded_label_AP_bregma_mm`, `folded_label_ML_abs_mm`, `folded_label_DV_mm`, `folded_n_labels`, `folded_parts` — filled for the nine and blank elsewhere; the columns before them are read off the atlas's own labels whether or not the fold is on |
 | a track plan | aimed at the pooled labels; the notes say *folded: DCl, VCl* |
 
