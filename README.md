@@ -55,55 +55,11 @@ lines, not from a published segmentation, and the 3D views interpolate between s
 350 µm apart. [CAVEATS.md](CAVEATS.md) has the full list, with numbers;
 [METHODS.md](METHODS.md) says how everything was derived.
 
-## Correcting a region
-
-A region drawn wrong can be marked on the plate and sent as `corrections/<id>.json` — from
-the [published fixer page](https://dstolz.github.io/GerbilAtlasExplorer/fixer.html), from
-`python3 tools/atlasfix.py <plate>` in a clone or a Codespace, or from
-`matlab/AtlasRegionFix.m`. The fix is made to the pipeline input at fault and arrives as a
-pull request. See [Correcting a Region][fix] in the wiki,
-[`tools/README.md`](tools/README.md) and [`corrections/README.md`](corrections/README.md).
-
 ## Data
 
 Everything the app shows is also in [`data/`](data/) as plain files: the full database
 (JSON), tables (CSV), per-plate outlines (GeoJSON), structure meshes and a NIfTI label
 volume. [`data/README.md`](data/README.md) describes each file.
-
-## Repository
-
-| Path | What it is |
-| --- | --- |
-| `index.html`, `gerbil_atlas_explorer.html`, `fixer.html` | The built pages: the site, the single-file build, the region fixer |
-| `src/` | The source of those pages |
-| `data/` | The database, tables, outlines, meshes and plate images |
-| `svg/` | The traced regional outlines, one SVG per plate |
-| `tools/` | The derivations, the build and the table exports — see [`tools/README.md`](tools/README.md) |
-| `tests/` | The data's invariants (`pytest`) and the built pages in a browser (Playwright) |
-| `corrections/`, `matlab/` | Region corrections, and the MATLAB tool that writes them |
-| `qc/` | Verification renders from the build — see [`qc/README.md`](qc/README.md) |
-| `METHODS.md`, `TARGETING_PLAN.md`, `PARTS_PLAN.md` | How the data was derived, and design notes |
-
-## Building and testing
-
-```
-python3 tools/build_app.py --lean       # rebuild both pages from src/ and data/
-python3 tools/build_app.py --dev        # build/dev.html, which links src/ directly
-python3 -m pytest tests/python          # the data's invariants
-npm ci && npx playwright install chromium && npm run build && npm test   # the pages in a browser
-```
-
-Each tool's `--check` says whether a committed artifact is still a fresh build of its
-inputs. CI runs these beside the tests; run them before a pull request:
-
-```
-python3 tools/check_indexes.py          # the two published indexes against the database
-python3 tools/export_tables.py --check  # the tables, the geojson, the derived fields
-python3 tools/build_groups.py --check   # the gross divisions
-python3 tools/build_region_colors.py --check
-python3 tools/build_facemaps.py --check # the face maps the static fixer page reads
-python3 tools/build_app.py --check      # the committed pages
-```
 
 ## Source and citation
 
@@ -147,4 +103,3 @@ nothing. To turn counting off, empty `CODE` in `src/app.html` and run
 [recipes]: https://github.com/dstolz/GerbilAtlasExplorer/wiki/Recipes
 [trouble]: https://github.com/dstolz/GerbilAtlasExplorer/wiki/Troubleshooting
 [faq]: https://github.com/dstolz/GerbilAtlasExplorer/wiki/FAQ
-[fix]: https://github.com/dstolz/GerbilAtlasExplorer/wiki/Correcting-a-Region
