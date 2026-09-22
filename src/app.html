@@ -395,6 +395,7 @@ document.head.appendChild(s);})();</script>
                    the same reason Bone stays with Skull. -->
               <label class="lb3" id="mcw" hidden title="How strong the wash is. The plate is underneath it at every setting."
                 >Wash <input type="range" id="mcs" min="10" max="90" step="5" value="45"><b id="mcl">45%</b></label>
+              <label class="tg" title="Where the atlas draws a structure only as its parts &mdash; the claustrum as DCl and VCl on plates 16&ndash;26 &mdash; outline, count and plot the whole as its parts together. The plate stays as printed: hovering, clicking and the colors still answer with the part."><input type="checkbox" id="ckfold">Fold parts into wholes</label>
               <label class="tg" title="Scale bar"><input type="checkbox" id="cks">Scale</label>
               <label class="tg" title="Click two points on the plate to measure between them"><input type="checkbox" id="ckm">Measure</label>
             </div></div>
@@ -644,6 +645,15 @@ document.head.appendChild(s);})();</script>
       table is <code>data/gerbil_atlas_parts.csv</code>; it is a reading of what the
       plates print, not a judgement, and it is admitted only where the published index
       puts the whole.</p>
+    <p><b>Fold parts into wholes</b>, in the plate controls, reads such a whole as its parts
+      together on those plates: the outline is the parts&rsquo; outlines with the wall
+      between them dropped, the label center and spread are the parts&rsquo; labels pooled
+      with its own, and in the 3-D view its mesh and theirs stand together &mdash; every
+      figure marked <i>folded</i>, with the reading of its own labels beside it, and the
+      structures CSV carries the folded figures as five extra columns after the others.
+      What the plate prints is left alone: hovering, clicking and the colors still answer
+      with the part, the Labels CSV still has a row per printed label, and the structure
+      list still counts the parts.</p>
 
     <h3>The section as a map</h3>
     <p><b>Color regions</b> over the plate fills every region on it, and no two regions

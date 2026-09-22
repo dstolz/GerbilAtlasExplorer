@@ -207,3 +207,41 @@ test.describe('the controls', () => {
     expect(h).not.toContain('&mc=');
   });
 });
+
+// A folded whole in the third dimension: its own mesh and its parts' standing together,
+// the way the plate outlines them together, with the volume theirs summed -- exact, since
+// no voxel of the label volume carries two names. There is no mesh of the fold as such,
+// for the reason there is none of a division: the seam between plate 15 and plate 16 is
+// where the atlas stops drawing Cl and starts drawing DCl and VCl, and no surface across
+// it was ever drawn.
+test('a folded whole draws as its own mesh and its parts\', and the note says so', async ({ page }) => {
+  test.setTimeout(240000);
+  await meshes(page, '#p20/Cl&t=v3d&mh=1&v=F');
+  const on = await page.evaluate(() => { const G = window.__gae;
+    return { fold: G.state().foldOn, list: G.meshList(), note: document.getElementById('v3n').textContent,
+             part: G.meshColor('DCl', { mcol: 'sel' }), whole: G.meshColor('Cl', { mcol: 'sel' }),
+             other: G.meshColor('CPu', { mcol: 'sel' }) }; });
+  expect(on.fold).toBe(true);
+  expect(on.list).toEqual(['Cl', 'DCl', 'VCl']);
+  expect(on.note).toContain('Cl as 3 meshes, folded: its own on plates 12–15 and 27, and DCl and VCl standing in for it on 16–26');
+  expect(on.note).toContain('1.63 mm³ in all');         // 0.7296 + 0.256 + 0.64, to the note's two places
+  expect(on.part).toEqual(on.whole);                     // in Selection colors the parts wear the whole's
+  expect(on.other).not.toEqual(on.whole);
+  // the STL writes the three as one solid, named for the whole and saying it is folded
+  const [dl] = await Promise.all([page.waitForEvent('download'), page.evaluate(() => window.__gae.meshSTL())]);
+  expect(dl.suggestedFilename()).toBe('mesh_Cl.stl');
+  const buf = require('fs').readFileSync(await dl.path());
+  expect(buf.subarray(0, 80).toString('latin1')).toContain('Cl (folded: Cl, DCl, VCl)');
+  const nfFolded = buf.readUInt32LE(80);
+  await page.evaluate(() => window.__gae.foldSet(false));
+  await page.waitForTimeout(600);
+  const off = await page.evaluate(() => { const G = window.__gae;
+    return { fold: G.state().foldOn, list: G.meshList(), note: document.getElementById('v3n').textContent }; });
+  expect(off.fold).toBe(false);
+  expect(off.list).toEqual(['Cl']);
+  expect(off.note).toContain('Cl as a mesh');
+  expect(off.note).toContain('0.73 mm³');
+  const [dl0] = await Promise.all([page.waitForEvent('download'), page.evaluate(() => window.__gae.meshSTL())]);
+  const buf0 = require('fs').readFileSync(await dl0.path());
+  expect(buf0.readUInt32LE(80)).toBeLessThan(nfFolded);
+});

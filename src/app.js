@@ -148,10 +148,10 @@ const partsOf={}, wholeOf={};
 PARTS.forEach(r=>{ partsOf[r.whole]=r; r.parts.forEach(p=>{ wholeOf[p]=r; }); });
 /* on a stand-in plate the index lists the whole and the plate prints only its parts */
 const standIn = (w,pl) => !!(partsOf[w] && partsOf[w].stand_in_plates.includes(pl));
-/* "16–26", "12–15, 27": a plate list as the runs it is made of */
+/* "16–26", "12–15 and 27": a plate list as the runs it is made of */
 const plRange = pl => { const o=[]; let a=pl[0], b=pl[0];
   for(const p of pl.slice(1)){ if(p===b+1) b=p; else { o.push(a===b?''+a:a+'–'+b); a=b=p; } }
-  o.push(a===b?''+a:a+'–'+b); return o.join(', '); };
+  o.push(a===b?''+a:a+'–'+b); return andList(o); };
 const andList = xs => xs.length<2 ? xs.join('') : xs.slice(0,-1).join(', ')+' and '+xs[xs.length-1];
 const norm = s => s.toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
 const $ = i => document.getElementById(i);
@@ -383,6 +383,24 @@ GRP.forEach(g=>{ const pl=new Set(g.plates), v=[];
   for(const a of g.members) for(const q of (ptsOf[a]||[])) if(pl.has(q.p)) v.push(q);
   if(v.length) ptsOf[g.key]=v;
 });
+/* ---- the fold: a whole's labels pooled with its parts' ----
+   Where the atlas draws a whole only as its parts -- Cl as DCl and VCl on plates 16-26 --
+   the parts' labels are the whole's labels on those plates, in exactly the sense that a
+   division's labels are its members'. Both readings are built here, once: PTSA holds the
+   whole's own labels as the atlas prints them and PTSF the pooled array, and foldSet()
+   swaps which of the two ptsOf holds under the whole's key. Every reader of ptsOf -- the
+   card, the projection, the planner, the cloud -- then reads a folded whole the way it
+   reads anything else, and atlasPts() is there for the readers that must always have the
+   atlas's own figure: the two CSVs and the card's unfolded reading. A key in either only
+   for the wholes that pool something, which is all nine in this build. */
+const PTSA={}, PTSF={};
+PARTS.forEach(r=>{
+  const pl=new Set(r.stand_in_plates.concat(r.shared_plates)), v=[...(ptsOf[r.whole]||[])], n=v.length;
+  for(const a of r.parts) for(const q of (ptsOf[a]||[])) if(pl.has(q.p)) v.push(q);
+  if(v.length>n){ PTSA[r.whole]=ptsOf[r.whole]||[]; PTSF[r.whole]=v; }
+});
+const atlasPts = a => a in PTSA ? PTSA[a] : ptsOf[a];
+let foldOn=false;                  /* the fold, off until a reader asks for it */
 
 let active = new Set(), cur = 30, sel = null, results = S;
 let zoom=1, tx=0, ty=0;                        /* view transform, applied to #pan */
@@ -604,8 +622,9 @@ function recentDraw(){
    bilaterally symmetric, so only the transformed reading can need splitting by side. */
 const med=arr=>{const s=[...arr].sort((x,y)=>x-y),h=s.length>>1;
   return s.length%2?s[h]:(s[h-1]+s[h])/2;};
-function coordsOf(a,F){
-  const v=ptsOf[a]; if(!v||!v.length) return null;
+function coordsOf(a,F){ return coordsOfPts(ptsOf[a],F); }
+function coordsOfPts(v,F){
+  if(!v||!v.length) return null;
   const T=F&&FRAME.on, at=q=>T?toFrame(q.ap,q.ml,q.dv):q;
   const cen=w=>({ap:med(w.map(q=>q.ap)),ml:med(w.map(q=>q.ml)),dv:med(w.map(q=>q.dv))});
   if(!T||bilat()){
@@ -616,8 +635,9 @@ function coordsOf(a,F){
   return {n:v.length,fold:false,L:side(-1),R:side(1)};
 }
 /* the spread of those same labels, which is what the projection plots */
-function extentOf(a,F){
-  const v=ptsOf[a]; if(!v) return null;
+function extentOf(a,F){ return extentOfPts(ptsOf[a],F); }
+function extentOfPts(v,F){
+  if(!v||!v.length) return null;
   const T=F&&FRAME.on, fold=!T||bilat();
   const w=T?v.map(q=>toFrame(q.ap,q.ml,q.dv)):v;
   const ml=w.map(q=>fold?Math.abs(q.ml):q.ml), dv=w.map(q=>q.dv);
@@ -646,6 +666,11 @@ function select(a){
   const g=r.grp?r:null;
   const c=coordsOf(a), x=extentOf(a);
   const fc=FRAME.on?coordsOf(a,1):null, fx=FRAME.on?extentOf(a,1):null;
+  /* a folded whole's figures are pooled with its parts', and the card says so and keeps
+     the reading of its own labels beside them -- the working frame's rule, applied again */
+  const fd=foldOn && a in PTSF, F1=FRAME.on?1:0;
+  const ca=fd?coordsOfPts(PTSA[a],F1):null, xa=fd?extentOfPts(PTSA[a],F1):null;
+  const fldTxt=fd?`<span class="fld" title="Fold parts into wholes is on: these are the labels printed ${esc(a)} pooled with those printed ${esc(andList(partsOf[a].parts))} on the plates the atlas draws ${esc(a)} as them">folded · ${c.n} labels, ${ca?ca.n:0} of them ${esc(a)}</span>`:'';
   D.innerHTML=`<p class="dn">${esc(r.name)}</p><span class="da${g?' dg':''}">${esc(r.abbr)}</span>
    ${g?`<p class="gnote">${esc(g.note)}</p>`
       :isFeat(a)?`<p class="gnote">${esc(featTxt(a))}. The atlas draws it no boundary of its own, so `+
@@ -656,10 +681,10 @@ function select(a){
      <dt>Bregma</dt><dd>${r.bregma_anterior.toFixed(2)} to ${r.bregma_posterior.toFixed(2)} mm</dd>
      <dt>Lambda</dt><dd>${(r.bregma_anterior+LMof('Lambda')).toFixed(2)} to ${(r.bregma_posterior+LMof('Lambda')).toFixed(2)} mm</dd>
      <dt>Interaural</dt><dd>${(r.bregma_anterior+LMof('Interaural')).toFixed(2)} to ${(r.bregma_posterior+LMof('Interaural')).toFixed(2)} mm</dd>
-     ${c?`<dt title="${g?'Median position of the printed labels of every structure in this division — a center of the division, not its centroid':"Median position of this structure's printed labels — near, but not identical to, its centroid"}">Label center</dt>
-        <dd>${ctrTxt(fc||c,fc)}${fc?`<span class="atl">atlas ${ctrTxt(c)}</span>`:''}</dd>`:''}
+     ${c?`<dt title="${g?'Median position of the printed labels of every structure in this division — a center of the division, not its centroid':fd?"Median position of this structure's printed labels pooled with its parts' — folded — near, but not identical to, its centroid":"Median position of this structure's printed labels — near, but not identical to, its centroid"}">Label center</dt>
+        <dd>${ctrTxt(fc||c,fc)}${fldTxt}${fd?`<span class="atl">unfolded ${ca?ctrTxt(ca,fc):'no located label'}</span>`:''}${fc?`<span class="atl">atlas ${ctrTxt(c)}</span>`:''}</dd>`:''}
      ${x?`<dt title="The full spread of those labels — what the projection below plots. Not the ${g?'division':'structure'}'s extent: for that, ${g?'select it on a plate':'hover or select it on a plate'}">Label spread</dt>
-        <dd>${extTxt(fx||x)}${fx?`<span class="atl">atlas ${extTxt(x)}</span>`:''}</dd>`:''}
+        <dd>${extTxt(fx||x)}${fd?`<span class="atl">unfolded ${xa?extTxt(xa):'no located label'}</span>`:''}${fx?`<span class="atl">atlas ${extTxt(x)}</span>`:''}</dd>`:''}
      ${g?`<dt title="Every atlas structure this division is made of. Divisions may overlap: a structure can be in more than one.">Structures</dt>
         <dd>${g.n_members} <span style="color:var(--muted)">(${c?c.n:0} located labels)</span>
           <button type="button" class="glist" id="glist">${gfilter===g.key?'listed below':'List them'}</button></dd>`:
@@ -730,7 +755,9 @@ function galBuild(a){
 }
 async function galThumb(d,a,tok){
   if(tok!==galTok||!d.isConnected) return;
-  const p=+d.dataset.p, key=a+'|'+p+'|'+psrc, cv=d.firstElementChild;
+  /* the key carries the fold for a whole it folds: the outline on a stand-in plate is
+     another shape under it, and a thumbnail drawn under one setting is wrong for the other */
+  const p=+d.dataset.p, key=a+'|'+p+'|'+psrc+(foldOn&&a in PTSF?'|F':''), cv=d.firstElementChild;
   const hit=GALC.get(key);
   if(hit){ cv.getContext('2d').drawImage(hit,0,0); return; }
   /* the plate on screen is decoded already; anything else has to be read in */
@@ -929,7 +956,10 @@ function markSel(){
   }).join('');
   if(rg){
     ov.innerHTML=`<path d="${regD(rg)}"${regEst(rg)?' class="est"':''}></path>`;
-    vhSay(`<b>${esc(sel)}</b> outlined${blkTxt(rg)} \u00b7 ${regTxt(rg)}`);
+    /* a folded outline is the parts' outlines with the wall between them dropped, and
+       the sentence says under which names the plate drew it */
+    vhSay(rg.fold ? `<b>${esc(sel)}</b> outlined \u00b7 ${foldTxt(rg)}`
+                  : `<b>${esc(sel)}</b> outlined${blkTxt(rg)} \u00b7 ${regTxt(rg)}`);
     /* what has to be in view is the outline, so it is the outline's center and the ends of
        the labels' lines that count: a label set outside its region with a line drawn back
        in would otherwise center the view on the paper beside the section */
@@ -958,7 +988,12 @@ function markSel(){
       const pr=partsOf[sel], by=regBuild(cur).by;
       const here=pr.parts.filter(p=>by[p]||((LB[cur]||{})[p]||[]).length);
       vhWarn(`On plate ${cur} the atlas draws <b>${esc(sel)}</b> as `+
-        andList((here.length?here:pr.parts).map(p=>`<b>${esc(p)}</b>`))+'.', 'standin:'+sel);
+        andList((here.length?here:pr.parts).map(p=>`<b>${esc(p)}</b>`))+'.'+
+        /* and offers the fold, unless it is on already and there is still nothing to
+           outline -- a stand-in plate that draws no part at all, which this build has none of */
+        (foldOn?'':`<button type="button" id="foldgo">Fold them into ${esc(sel)}</button>`),
+        'standin:'+sel);
+      if($('foldgo')) $('foldgo').onclick=()=>foldSet(true);
       return;
     }
     vhWarn(`<b>${esc(sel)}</b> is at this level, but its printed label was not located on plate ${cur}.`,
@@ -1288,6 +1323,11 @@ function regBuild(pl){
      the pointer" -- a click has to land on the structure the atlas named, not on the
      division containing it. */
   for(const g of GRP){ const o=grpRegion(g,pl,out.by); if(o) out.by[g.key]=o; }
+  /* and, with the fold on, the wholes this plate draws as their parts: the parts' entries
+     unioned, with the whole's own where it is drawn beside them. Into out.by for the same
+     reason and with the same limit -- a click on plate 20 lands on DCl or VCl, which is
+     what the atlas named there, never on Cl. */
+  if(foldOn) for(const r of PARTS){ const o=foldRegion(r,pl,out.by); if(o) out.by[r.whole]=o; }
   return REGC[pl]=out;
 }
 /* ---- a superstructure's outline: the union of its members', with the walls between
@@ -1351,6 +1391,26 @@ function grpRegion(g,pl,by){
     mm2+=p.mm2; wt+=p.mm2; tf+=p.tf*p.mm2;      /* area-weighted, as within one region */
   }
   return {ab:g.key,grp:g,gs,x0,y0,x1,y1,mm2,n:gs.length,tf:wt?tf/wt:0,parts};
+}
+/* the fold's outline of a whole on a plate the atlas draws its parts on: the parts'
+   entries and the whole's own, unioned exactly as a division's members are. Null off the
+   stand-in and shared plates, and null where the plate draws none of the parts: then
+   there is nothing to fold and the whole's own entry, if it has one, stays what it was.
+   The entry keeps which parts the plate drew, for the sentence. */
+function foldRegion(r,pl,by){
+  if(!ROK || !(r.stand_in_plates.includes(pl)||r.shared_plates.includes(pl))) return null;
+  const parts=[], seen=new Set(), drawn=[];
+  for(const a of [r.whole,...r.parts]){ const o=by[a];
+    if(o && !seen.has(o.ab)){ seen.add(o.ab); parts.push(o); if(a!==r.whole) drawn.push(a); } }
+  if(!drawn.length) return null;
+  const gs=grpRing(parts);
+  if(!gs.length) return null;
+  let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9, wt=0, tf=0, mm2=0;
+  for(const p of parts){
+    if(p.x0<x0)x0=p.x0; if(p.x1>x1)x1=p.x1; if(p.y0<y0)y0=p.y0; if(p.y1>y1)y1=p.y1;
+    mm2+=p.mm2; wt+=p.mm2; tf+=p.tf*p.mm2;      /* area-weighted, as within one region */
+  }
+  return {ab:r.whole,fold:r,drawn,own:seen.has(r.whole),gs,x0,y0,x1,y1,mm2,n:gs.length,tf:wt?tf/wt:0,parts};
 }
 /* rebuilt per plate beside labels(), and for the same reason: only one plate is on screen */
 function regIndex(){ const r=regBuild(cur); regs=r.regs; regBy=r.by; }
@@ -1437,6 +1497,14 @@ function grpTxt(o,g){
     (est?` · ${est} of them ${est>1?'have boundaries':'has a boundary'} the atlas mostly `+
          `does not print, so parts of this edge are inferred`:'');
 }
+/* and for a folded whole: what the plate drew it as, and the parts' areas summed */
+function foldTxt(o){
+  const est=o.parts.filter(regEst).length;
+  return `drawn on plate ${cur} as `+andList(o.drawn.map(p=>`<b>${esc(p)}</b>`))+
+    (o.own?' and as itself':'')+`, folded into it · ${o.mm2.toFixed(o.mm2<1?3:2)} mm² on this plate`+
+    (est?` · ${est===o.parts.length?(est>1?'their boundaries are':'its boundary is'):`${est} of their boundaries ${est>1?'are':'is'}`} `+
+         `mostly not printed by the atlas, so parts of this edge are inferred`:'');
+}
 
 /* ---------- the section as a map: a color for every region, none like its neighbor ----------
    The extents tile the plate, which makes it a map in the cartographer's sense, and a map
@@ -1518,6 +1586,23 @@ function mcSet(on){
   mcDraw(); mark(); queueHash();
 }
 $('ckmc').onchange=e=>mcSet(e.target.checked);
+/* ---- the fold's one switch ----
+   Quiet is for readHash(), which sets the state before go() and select() paint everything
+   off it. Otherwise everything that read a whole is redrawn: the plate's index (the union
+   lives in it), the mark, the card with its gallery, the projection, the cloud and the
+   planner -- which select() does for a selection, and which there is nothing of to redo
+   without one. GALC needs no clearing: a thumbnail's key carries the fold. */
+function foldSet(on,quiet){
+  on=!!on; const was=foldOn;
+  foldOn=on; $('ckfold').checked=on;
+  for(const k in PTSF) ptsOf[k] = on ? PTSF[k] : PTSA[k];
+  for(const k in REGC) delete REGC[k];
+  if(quiet||was===on) return;
+  regIndex();
+  if(sel) select(sel); else mark();
+  queueHash();
+}
+$('ckfold').onchange=e=>foldSet(e.target.checked);
 /* a build with no regional outlines, or none of the coloring solved off them, has nothing
    to color, so the control says so and goes dead rather than offering a picture it cannot
    draw -- as the Gray box does on a source that was published in gray */
@@ -2298,7 +2383,8 @@ function tgPanel(){
   }
   $('ttgt').innerHTML=`<b style="color:var(--targ)">${esc(tgName(o))}</b> · `+
     `${o.side>0?'right':'left'} · ${o.plate?'plate '+o.plate:'off the series'}`+
-    ` · ${o.T.n} label${o.T.n===1?'':'s'}${o.pick?' on it':''}`;
+    ` · ${o.T.n} label${o.T.n===1?'':'s'}${o.pick?' on it':''}`+
+    (foldOn&&o.abbr in PTSF?` · folded: ${esc(partsOf[o.abbr].parts.join(', '))}`:'');
   const F=FRAME.on?1:0, rows=[], off=tgOffOn();
   /* with an offset set the label is no longer the target, so both are printed: the plan
      is a claim about a point that nothing in the atlas is printed at, and the point it
@@ -2476,7 +2562,7 @@ function tgNotes(){
   const ln=[];
   ln.push('Gerbil Atlas Explorer — track plan');
   ln.push('');
-  ln.push(`target        ${tgName(o)}  (${r?r.name:''})`);
+  ln.push(`target        ${tgName(o)}${foldOn&&o.abbr in PTSF?` (folded: ${partsOf[o.abbr].parts.join(', ')})`:''}  (${r?r.name:''})`);
   ln.push(`hemisphere    ${o.side>0?'right':'left'}`);
   ln.push(`plate         ${o.plate||'off the series'}`);
   ln.push(`labels read   ${o.pick ? `plate ${o.pick} only, ${o.T.n} label${o.T.n===1?'':'s'}`
@@ -3033,7 +3119,12 @@ function exportCSV(){
       : ` origin=atlas pivot_AP/ML/DV=${FRAME.pap}/${FRAME.pml}/${FRAME.pdv}`)+
     ` offset_AP/ML/DV=${FRAME.dap}/${FRAME.dml}/${FRAME.ddv}`+
     ` order=yaw>pitch>roll signs=nose-down/right-ear-down/nose-right`:'';
-  const rows=results.map(r=>{ const c=coordsOf(r.abbr);
+  /* the fold is added the same way: five columns after everything else, filled for the
+     wholes it pools and blank for every other row, and the columns before them are read
+     off the atlas's own labels whether or not it is on */
+  if(foldOn) head.push('folded_label_AP_bregma_mm','folded_label_ML_abs_mm','folded_label_DV_mm',
+                       'folded_n_labels','folded_parts');
+  const rows=results.map(r=>{ const c=coordsOfPts(atlasPts(r.abbr));
     const row=[r.abbr,r.name,r.first_plate,r.last_plate,r.n_plates,r.plates.join(' '),
       r.bregma_anterior.toFixed(2),r.bregma_posterior.toFixed(2),
       (r.bregma_anterior+LMof('Lambda')).toFixed(2),(r.bregma_posterior+LMof('Lambda')).toFixed(2),
@@ -3041,9 +3132,14 @@ function exportCSV(){
       c?c.ap.toFixed(2):'', c?c.ml.toFixed(2):'', c?c.dv.toFixed(2):'', c?c.n:0,
       r.systems.join(' ')];
     if(FR){
-      const k=coordsOf(r.abbr,1);
+      const k=coordsOfPts(atlasPts(r.abbr),1);
       const t=o=>o?[o.ap.toFixed(2),o.ml.toFixed(2),o.dv.toFixed(2)]:['','',''];
       row.push(...(fold?t(k):[...t(k&&k.R),...t(k&&k.L)]), spec);
+    }
+    if(foldOn){
+      const f=r.abbr in PTSF ? coordsOfPts(PTSF[r.abbr]) : null;
+      row.push(f?f.ap.toFixed(2):'', f?f.ml.toFixed(2):'', f?f.dv.toFixed(2):'', f?f.n:'',
+               f?partsOf[r.abbr].parts.join(' '):'');
     }
     return row.map(q).join(','); });
   const csv='﻿'+[head.map(q).join(',')].concat(rows).join('\r\n')+'\r\n';
@@ -3060,7 +3156,9 @@ function exportLabelsCSV(){
   if(FR) head.push('frame_AP_mm','frame_ML_mm','frame_DV_mm','frame_spec');
   const spec=FR?`pitch=${FRAME.pitch} roll=${FRAME.roll} yaw=${FRAME.yaw} zero=${orgFull().replace(/ /g,'-')}`:'';
   const rows=[];
-  for(const r of results) for(const t of (ptsOf[r.abbr]||[])){
+  /* a row is a printed label, so the fold has no say here: a whole's rows are the labels
+     printed with its own name, whatever the card is pooling */
+  for(const r of results) for(const t of (atlasPts(r.abbr)||[])){
     const row=[t.ab,r.name,t.p,t.i,t.ap.toFixed(2),t.ml.toFixed(2),Math.abs(t.ml).toFixed(2),t.dv.toFixed(2),
                t.ld?'leader tip':'label box'];
     if(FR){ const k=toFrame(t.ap,t.ml,t.dv); row.push(k.ap.toFixed(2),k.ml.toFixed(2),k.dv.toFixed(2),spec); }
@@ -4061,9 +4159,14 @@ function v3flags(){
      the projection draws for it */
   const G = isGrp(sel) ? byAb[sel] : null;
   const gm = G ? new Set(G.members) : null, gp = G ? new Set(G.plates) : null;
+  /* and a folded whole's dots are its parts' on the plates the atlas draws them for it:
+     the same membership test, over the parts table */
+  const W = !G && foldOn && sel in PTSF ? partsOf[sel] : null;
+  const wm = W ? new Set(W.parts) : null, wp = W ? new Set(W.stand_in_plates.concat(W.shared_plates)) : null;
   for(let i=0;i<nPT;i++){
     const q=PTS[i], ab=q.ab;
-    f[i] = (G ? (gm.has(ab)&&gp.has(q.p)) : ab===sel) ? 2 : (fs&&fs.has(ab) ? 1 : 0);
+    const on = G ? (gm.has(ab)&&gp.has(q.p)) : (ab===sel || (W!==null && wm.has(ab) && wp.has(q.p)));
+    f[i] = on ? 2 : (fs&&fs.has(ab) ? 1 : 0);
   }
   gl.bindBuffer(gl.ARRAY_BUFFER,bufF);
   gl.bufferData(gl.ARRAY_BUFFER,f,gl.DYNAMIC_DRAW);
@@ -4879,6 +4982,7 @@ function meshColor(ab,Q){
   if(mode==='each') return meshHue(ab);
   if(isGrp(sel)) return v3col.cg;
   if(ab===sel||(sel&&ab===meshKey(sel))) return v3col.c2;
+  if(foldOn&&sel in PTSF&&partsOf[sel].parts.some(p=>meshKey(p)===ab)) return v3col.c2;
   return meshHue(ab);
 }
 /* Every name of a joined label -- "Au1 (A1/AAF)" -- resolves to the one the label leads
@@ -4913,9 +5017,15 @@ function meshGroup(g){
   return out.sort((a,b)=>(MESH.data[b].volume_mm3||0)-(MESH.data[a].volume_mm3||0)).slice(0,MESHMAX);
 }
 /* which meshes to show: the selection, or the current filter when it is a short list */
+/* with the fold on, a whole draws as its own mesh and its parts' together -- the plate's
+   union, lifted -- and there is no mesh of the fold as such, for the reason there is none
+   of a division: the seam between plate 15 and plate 16 is where the atlas stops drawing
+   Cl and starts drawing DCl and VCl, and no surface across it was ever drawn */
+const foldMeshes = () => MESH && foldOn && sel in PTSF ? meshGroup({members:[sel,...partsOf[sel].parts]}) : null;
 function meshList(){
   if(!MESH) return [];
   if(isGrp(sel)) return meshGroup(byAb[sel]);
+  const fm=foldMeshes(); if(fm&&fm.length) return fm;
   const out=[], add=ab=>{ const k=meshKey(ab); if(k&&!out.includes(k)) out.push(k); };
   if(sel&&meshKey(sel)) add(sel);
   else if(results.length<S.length && results.length<=40)
@@ -4968,15 +5078,16 @@ function meshDraw(Q,M){
    either file has changed, and what reaches them meanwhile is the __gae handle at the foot
    of the file. */
 function meshSTL(){
-  const keys = isGrp(sel) ? meshList() : (meshKey(sel)?[meshKey(sel)]:[]);
+  const fm=foldMeshes(), fd=!!(fm&&fm.length);
+  const keys = isGrp(sel)||fd ? meshList() : (meshKey(sel)?[meshKey(sel)]:[]);
   if(!keys.length) return;
   const parts=keys.map(k=>meshDecode(MESH.data[k].mesh));
   const nf=parts.reduce((n,d)=>n+d.nf,0);
   const buf=new ArrayBuffer(84+nf*50), v=new DataView(buf);
   /* named for the region, not for the name it was reached by: a file called A1 that holds
      Au1's boundary would be the one thing about this the reader could not check */
-  const name = isGrp(sel) ? byAb[sel].abbr : keys[0];
-  const head='Gerbil Atlas Explorer '+name+(isGrp(sel)?' ('+keys.length+' structures)':'')+
+  const name = isGrp(sel) ? byAb[sel].abbr : fd ? sel : keys[0];
+  const head='Gerbil Atlas Explorer '+name+(isGrp(sel)?' ('+keys.length+' structures)':fd?' (folded: '+keys.join(', ')+')':'')+
     ' (ML,DV,AP mm; interpolated between 350 um sections)';
   for(let i=0;i<80;i++) v.setUint8(i, i<head.length?head.charCodeAt(i):32);
   v.setUint32(80,nf,true);
@@ -5185,13 +5296,23 @@ function v3note(){
       const thru = Q.mop<MESHOP
         ? ` Drawn at ${Math.round(Q.mop*100)}% opacity, composited back to front.` : '';
       const G = isGrp(sel) ? byAb[sel] : null;
-      const vol = G && list.reduce((t,k)=>t+(MESH.data[k].volume_mm3||0),0);
+      /* a folded whole reads like a division: its meshes are its own and its parts',
+         standing together, and the volume is theirs summed -- exact, since no voxel of
+         the label volume carries two names */
+      const fm = G ? null : foldMeshes(), W = fm&&fm.length ? partsOf[sel] : null;
+      const vol = (G||W) && list.reduce((t,k)=>t+(MESH.data[k].volume_mm3||0),0);
       const cut = G && list.length<new Set(G.members.map(meshKey).filter(Boolean)).size;
       mesh = (G ? ` <b>${esc(G.name)}</b> as ${list.length} mesh${list.length===1?'':'es'}`+
                `, one per structure — there is no mesh of a division, only its members'`+
                ` standing together: ${vol.toFixed(2)} mm³ in all, of its ${G.n_members} structures`+
                (cut ? `, the ${list.length} largest of them` :
                 list.length<G.n_members ? ` (the rest the atlas draws no region for)` : '')+'.'
+             : W ? ` <b>${esc(sel)}</b> as ${list.length} mesh${list.length===1?'':'es'}, folded: `+
+               (key&&list.includes(key) ? `its own on plate${W.own_plates.length>1?'s':''} ${plRange(W.own_plates)}, and ` : '')+
+               andList(W.parts.filter(p=>list.includes(meshKey(p))).map(p=>`<b>${esc(p)}</b>`))+
+               ` standing in for it on ${plRange(W.stand_in_plates)}`+
+               (W.shared_plates.length?` and drawn beside it on ${plRange(W.shared_plates)}`:'')+
+               `: ${vol.toFixed(2)} mm³ in all, the parts' volumes and its own summed.`
              : blk ? ` <b>${esc(sel)}</b> is printed <b>${esc(blk.join('/'))}</b>, one region, so its mesh is the one filed under <b>${esc(key)}</b>: ${how}, ${e.volume_mm3.toFixed(2)} mm³.`
              : e ? ` <b>${esc(sel)}</b> as a mesh: ${how}, ${e.volume_mm3.toFixed(2)} mm³.`
              : isFeat(sel) ? ` <b>${esc(sel)}</b> has no mesh and no volume: ${featTxt(sel)}, so the atlas draws it no boundary anywhere and there is no shape to build. It is in the label cloud, where every plate that prints it puts a dot.`
@@ -5291,7 +5412,7 @@ function writeHash(){
   if(zoom>1.01 && b.width) h+=`&z=${zoom.toFixed(2)}`+
     `&c=${(((b.width/2-tx)/zoom)/b.width).toFixed(4)},${(((b.height/2-ty)/zoom)/b.height).toFixed(4)}`;
   const f=[showXY&&'r',showGrid&&'g',showSB&&'s',measMode&&'m',showSK&&'k',pjsk&&'K',
-           showLM&&'l',pjlm&&'L',pgray&&'y',tgLegs&&'T',mcOn&&'C'].filter(Boolean).join('');
+           showLM&&'l',pjlm&&'L',pgray&&'y',tgLegs&&'T',mcOn&&'C',foldOn&&'F'].filter(Boolean).join('');
   if(f) h+='&v='+f;
   /* the wash rides only where it has been moved off the value the toggle turns on at, so
      every link that only asks for the colors is the short one it has always looked like */
@@ -5424,6 +5545,8 @@ function readHash(){
   $('ckm').checked=v.includes('m'); $('rd').hidden=!showXY;
   if(showXY && !lastPt) $('rd').textContent=RDHINT;
   setMeas(v.includes('m')); drawGrid();
+  /* the fold too is set before go(), which builds the plate's index off it */
+  foldSet(v.includes('F'),true);
 
   go(k);
   let a=m[2]; try{ a=decodeURIComponent(a||''); }catch(_){}
@@ -5897,7 +6020,7 @@ function advCount(){
   return 0;
 }
 function vpanCount(){
-  if(tab==='plate') return [mcOn,showSB,measMode,showSK,showLM,cmpOn,anShow].filter(Boolean).length;
+  if(tab==='plate') return [mcOn,foldOn,showSB,measMode,showSK,showLM,cmpOn,anShow].filter(Boolean).length;
   if(tab==='proj')  return [pjsk,pjlm].filter(Boolean).length;
   const Q=v3E(); return [Q.sk,Q.lm,Q.m,Q.half,Q.ortho].filter(Boolean).length;
 }
@@ -6680,8 +6803,8 @@ window.__gae={toFrame,fromFrame,writeHash,readHash,tgSolve,tgPath,tgFootprint,pl
   v3split,v3edit,v3rects,panes:()=>V3P.map(q=>({...q})),
   v3want,v3srcs:()=>Object.keys(V3TEX).sort(),
   v3build,v3niiBuf,meshSTL,
-  GRP,isGrp,regIn,grpsOf,PARTS,partsOf,wholeOf,standIn,mcBuild,mcSet,MCPAL,meshColor,meshKey,
+  GRP,isGrp,regIn,grpsOf,PARTS,partsOf,wholeOf,standIn,foldSet,PTSA,PTSF,atlasPts,mcBuild,mcSet,MCPAL,meshColor,meshKey,
   setMax,
   welcOpen,welcSeen,
   vpan:on=>vpanOpen(on), adv:on=>advOpen(on), inf:on=>infOpen(on),
-  state:()=>({cur,sel,zoom,tab,smode,psrc,tgProbe,tgFoot,cmpOn,anShow,maxed,targSide,tgTilt,tgRoll,tgYaw,tgPlate,tgOff,fview,fvOn:fvOn(),v3two,v3ed,v3lock,mcOn,mcWash,vpanOn,advOn,infOn})};
+  state:()=>({cur,sel,zoom,tab,smode,psrc,tgProbe,tgFoot,cmpOn,anShow,maxed,targSide,tgTilt,tgRoll,tgYaw,tgPlate,tgOff,fview,fvOn:fvOn(),v3two,v3ed,v3lock,mcOn,mcWash,foldOn,vpanOn,advOn,infOn})};

@@ -239,3 +239,161 @@ test('where the atlas prints the whole itself, the plate is as it was', async ({
   expect(o.info).toContain('outlined');
   expect(o.warn).toBe(true);
 });
+
+// ---------- the fold ----------
+// Fold parts into wholes reads a whole as its parts together on the plates the atlas draws
+// it as them. Like a division, the whole then has no geometry of its own there: its outline
+// is the parts' outlines with the wall between them dropped, its labels are theirs pooled
+// with its own. What has to hold is the same thing that has to hold for a division -- that
+// what is drawn covers exactly the ground the parts do -- and that nothing the plate prints
+// is touched: a click on plate 20 still lands on DCl or VCl, and a printed label is still
+// one row of the Labels CSV.
+
+test('with the fold on, a whole outlines exactly the ground its parts cover', async ({ page }) => {
+  await page.goto(BUNDLE + '#p30&v=F');
+  await page.waitForTimeout(400);
+  const out = await page.evaluate(() => {
+    const G = window.__gae;
+    let seed = 20260921;
+    const rnd = () => ((seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
+    let drawn = 0, worst = 0, worstAt = '', missing = [], inRegs = [];
+    for (const r of G.PARTS) {
+      for (const pl of r.stand_in_plates.concat(r.shared_plates)) {
+        const b = G.regBuild(pl), rg = b.by[r.whole];
+        if (!rg || !rg.fold) { missing.push(r.whole + '/p' + pl); continue; }
+        drawn++;
+        // the union is for the selection only: what is under the pointer is still the part
+        if (r.stand_in_plates.includes(pl) && b.regs.some(o => o.ab === r.whole)) inRegs.push(r.whole + '/p' + pl);
+        let bad = 0;
+        for (let i = 0; i < 400; i++) {
+          const x = rg.x0 + rnd() * (rg.x1 - rg.x0), y = rg.y0 + rnd() * (rg.y1 - rg.y0);
+          if (G.regIn(rg, x, y) !== rg.parts.some(p => G.regIn(p, x, y))) bad++;
+        }
+        if (bad / 400 > worst) { worst = bad / 400; worstAt = r.whole + '/p' + pl; }
+      }
+    }
+    return { fold: G.state().foldOn, drawn, worst, worstAt, missing, inRegs,
+             cl20: G.regBuild(20).by['Cl'].drawn, cu55: G.regBuild(55).by['Cu'].own };
+  });
+  expect(out.fold).toBe(true);
+  expect(out.missing).toEqual([]);
+  expect(out.inRegs).toEqual([]);
+  // the 24 stand-in pairs, and the two plates a whole is drawn beside its part on (Cu on
+  // 55, La on 27), where the union takes the whole's own outline in as well
+  expect(out.drawn).toBe(26);
+  expect(out.cl20).toEqual(['DCl', 'VCl']);
+  expect(out.cu55).toBe(true);
+  expect(out.worst).toBeLessThan(0.02);          // the shared-boundary residue, as for a division
+});
+
+test('the fold rides in the link as F, and state() reports it', async ({ page }) => {
+  await page.goto(BUNDLE + '#p20/Cl&v=F');
+  await page.waitForTimeout(500);
+  const o = await page.evaluate(() => {
+    const G = window.__gae; G.writeHash();
+    return { hash: location.hash, fold: G.state().foldOn, box: document.getElementById('ckfold').checked,
+             outlined: document.querySelectorAll('#om path').length,
+             badge: document.getElementById('vctln').textContent };
+  });
+  expect(o.hash).toBe('#p20/Cl&v=F');
+  expect(o.fold).toBe(true);
+  expect(o.box).toBe(true);
+  expect(o.outlined).toBe(1);
+  expect(o.badge).toBe('1');                       // the controls button counts it as a setting
+  // and a link without the letter arriving by hashchange turns it off again
+  await page.evaluate(() => { location.hash = '#p20/Cl'; });
+  await page.waitForTimeout(500);
+  const p = await page.evaluate(() => ({ fold: window.__gae.state().foldOn,
+                                        outlined: document.querySelectorAll('#om path').length }));
+  expect(p.fold).toBe(false);
+  expect(p.outlined).toBe(0);
+});
+
+test('with the fold off the plate says what the atlas drew; with it on the whole is outlined, counted and plotted as its parts', async ({ page }) => {
+  await page.goto(BUNDLE + '#p20/Cl');
+  await page.waitForTimeout(500);
+  const off = await page.evaluate(() => {
+    const G = window.__gae;
+    return { hint: document.querySelector('#vht').textContent, offer: !!document.getElementById('foldgo'),
+             outlined: document.querySelectorAll('#om path').length, by: G.regBuild(20).by['Cl'] === undefined,
+             dots: document.querySelectorAll('#pjl circle').length, own: G.PTSA['Cl'].length,
+             card: document.querySelector('#det .kv').textContent };
+  });
+  expect(off.hint).toContain('the atlas draws Cl as DCl and VCl');
+  expect(off.offer).toBe(true);
+  expect(off.outlined).toBe(0);
+  expect(off.by).toBe(true);
+  expect(off.dots).toBe(10);                       // Cl's own labels: 12-15 and 27
+  expect(off.own).toBe(10);
+  expect(off.card).not.toContain('folded');
+  await page.click('#foldgo');
+  await page.waitForTimeout(500);
+  const on = await page.evaluate(() => {
+    const G = window.__gae; G.writeHash();
+    return { fold: G.state().foldOn, hash: location.hash, warn: document.querySelector('#vhint').hidden,
+             info: document.querySelector('#vinfo').textContent,
+             outlined: document.querySelectorAll('#om path').length,
+             dots: document.querySelectorAll('#pjl circle').length, pooled: G.ptsOf['Cl'].length,
+             card: document.querySelector('#det .kv').textContent,
+             center: G.coordsOf('Cl'),
+             notes: (G.tgSolve(), G.tgNotes().split('\n').find(l => l.startsWith('target'))),
+             // the plate is as printed: what is under the pointer on plate 20 is a part
+             regs: G.regBuild(20).regs.filter(o => ['Cl', 'DCl', 'VCl'].includes(o.ab)).map(o => o.ab).sort() };
+  });
+  expect(on.fold).toBe(true);
+  expect(on.hash).toBe('#p20/Cl&v=F');
+  expect(on.warn).toBe(true);
+  expect(on.info).toContain('Cl outlined');
+  expect(on.info).toContain('drawn on plate 20 as DCl and VCl, folded into it');
+  expect(on.info).toContain('0.256 mm² on this plate');   // DCl's and VCl's areas summed
+  expect(on.outlined).toBe(1);
+  expect(on.dots).toBe(54);                        // 10 of its own and 22 of each part's
+  expect(on.pooled).toBe(54);
+  expect(on.card).toContain('folded · 54 labels, 10 of them Cl');
+  expect(on.card).toContain('unfolded');
+  expect(on.center.n).toBe(54);
+  expect(on.notes).toBe('target        Cl (folded: DCl, VCl)  (claustrum)');
+  expect(on.regs).toEqual(['DCl', 'VCl']);
+  // the fold is the reader's ask, and taking it back puts everything back -- through the
+  // box in the plate controls, which open closed
+  await panel(page);
+  await page.click('#ckfold');
+  await page.waitForTimeout(500);
+  const back = await page.evaluate(() => ({ fold: window.__gae.state().foldOn,
+    outlined: document.querySelectorAll('#om path').length, offer: !!document.getElementById('foldgo'),
+    dots: document.querySelectorAll('#pjl circle').length, pooled: window.__gae.ptsOf['Cl'].length }));
+  expect(back).toEqual({ fold: false, outlined: 0, offer: true, dots: 10, pooled: 10 });
+});
+
+test('the structures CSV carries the fold as five columns after the others, and the Labels CSV does not carry it at all', async ({ page }) => {
+  await page.goto(BUNDLE + '#p20/Cl');
+  await page.waitForTimeout(500);
+  const grab = async id => {
+    const [dl] = await Promise.all([page.waitForEvent('download'), page.click('#' + id)]);
+    return require('fs').readFileSync(await dl.path(), 'utf8');
+  };
+  const s0 = await grab('ecsv'), l0 = await grab('elab');
+  await page.evaluate(() => window.__gae.foldSet(true));
+  await page.waitForTimeout(300);
+  const s1 = await grab('ecsv'), l1 = await grab('elab');
+  const rows0 = s0.split('\r\n'), rows1 = s1.split('\r\n');
+  expect(rows1.length).toBe(rows0.length);
+  const FOLD = ',"folded_label_AP_bregma_mm","folded_label_ML_abs_mm","folded_label_DV_mm","folded_n_labels","folded_parts"';
+  expect(rows1[0]).toBe(rows0[0] + FOLD);
+  // every row starts with exactly the row it had: the atlas columns are read off the
+  // atlas's own labels whether or not the fold is on
+  let filled = 0;
+  for (let i = 1; i < rows0.length; i++) {
+    expect(rows1[i].startsWith(rows0[i])).toBe(true);
+    const tail = rows1[i].slice(rows0[i].length);
+    if (rows0[i] && tail !== ',"","","","",""') filled++;
+  }
+  expect(filled).toBe(9);
+  const want = await page.evaluate(() => { const c = window.__gae.coordsOf('Cl');
+    return `,"${c.ap.toFixed(2)}","${c.ml.toFixed(2)}","${c.dv.toFixed(2)}","54","DCl VCl"`; });
+  const cl = rows1.find(r => r.startsWith('"Cl",')), dcl = rows1.find(r => r.startsWith('"DCl",'));
+  expect(cl.endsWith(want)).toBe(true);
+  expect(dcl.endsWith(',"","","","",""')).toBe(true);
+  // a row of the Labels CSV is a printed label, and the plate prints DCl
+  expect(l1).toBe(l0);
+});
