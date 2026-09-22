@@ -495,6 +495,43 @@ carries a `version` block naming the release its derived fields were built for.
   are what carry the other two and a plain mesh link carries none.
 
 ### Fixed
+- **A structure too flat to hull is given the box its voxels fill, not `"mesh": null`.**
+  `build_volumes.py` grades a structure the series barely samples `slab` and hands each of its
+  connected components to `volume.hull()`, which claims the ground the component stands on
+  rather than its shape. A component one voxel wide on any axis puts every voxel center on a
+  common plane, and a plane has no volume for qhull to hull, so it was refused -- as was any
+  component of three voxels or fewer, having too few points to be a solid at all. Refused, it
+  contributed nothing, and a structure whose only component was refused was published with a
+  volume and **no mesh at all**. `hull()` now takes `pad`, half the width of the voxel a center
+  stands for, and hulls a refused cloud again over those voxels' own eight corners: the ground
+  the voxels occupy rather than the plane through their middles, which is the claim the grade
+  makes in the first place. A cloud that hulled before hulls byte-identically, pad or no pad --
+  the corners are a fallback, never a dilation.
+
+  **`mlx` is what found it.** It is drawn on plate 56 alone, and the re-cut at a `MIN_FACE_PX`
+  of 100 leaves it 0.0146 mm² there -- 40 voxels spanning z 4, y 12 and **x 1**, one voxel
+  across in ML -- so every center was coplanar and the only structure in the atlas with a
+  volume and no mesh was born. It now carries a 14-vertex, 24-triangle box of 0.0054 mm³
+  against the 0.0050 mm³ its voxels hold, which is the right side of the voxels for an
+  enclosing volume. Size was never the matter: `CC` (54 voxels, x 2), `SChVM` (65, x 7), `PaV`
+  (69, x 4) and `Obex` (77, x 6) all hulled fine, and any structure one voxel thick would have
+  hit this at any size.
+
+  **Four more entries move, each by one box**: `10n` on plate 52, `DMD` on 31, `MedL` on 49-50
+  and `VNLL` on 40 each had a component too small to hull that contributed nothing and now
+  contributes its own voxels, +8 vertices and +12 triangles apiece and 0.0001 to 0.0002 mm³ of
+  mesh volume. Five of 691 entries change and no other byte of the file does: `volume_mm3` is
+  the voxels' and is untouched throughout, `grid`, `grades`, `validation` and the brain
+  `surface` are identical, `region_triangles` goes 1,584,984 -> **1,585,056** (the +72 those
+  five boxes are), and `data/gerbil_atlas_labels.nii.gz` is byte-identical, the label volume
+  never having been read off a mesh. `pipeline.py check --no-tests` is clean on all seven.
+
+  `tests/python/test_volume.py` is new and holds the mechanism rather than the symptom: that a
+  solid cloud is the same hull with the pad and without, that a flat one has no hull without it
+  and the box of its voxels with it, that one voxel is a cube rather than nothing, and that a
+  padded hull never encloses less than its voxels hold. `test_data.test_volumes_consistent` is
+  what caught it in the first place, by requiring every published entry to carry a mesh.
+
 - **The olfactory bulb of plate 1 comes out in rings: `EPl` whole on the right, `Mi` closed
   on the left, and the granule core back under `GrO`.** Three corrections sent together --
   `20260922T135037Z-p01-EPl`, `-p01-Mi` and `-p01-GrO` -- carrying one reading between them:

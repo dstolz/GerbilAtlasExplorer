@@ -269,19 +269,19 @@ def cluster(v, f, cell):
     return nv[used], nf.reshape(-1, 3).astype(np.int64)
 
 
-def hull(points):
-    """The convex hull of a point cloud, as a triangle mesh.
+# the eight corners of a voxel, as offsets from its center in units of the half-width
+CORNERS = np.array([(x, y, z) for x in (-1, 1) for y in (-1, 1) for z in (-1, 1)], float)
 
-    What a structure the series barely samples gets instead of a surface: an enclosing
-    volume, which is a claim about where the thing is and not about what shape it is."""
+
+def _qhull(p):
+    """The hull of a cloud as (v, f), or None where qhull will not take the cloud."""
     from scipy.spatial import ConvexHull, QhullError
-    p = np.unique(np.asarray(points, float), axis=0)
     if len(p) < 4:
-        return np.zeros((0, 3)), np.zeros((0, 3), np.int64)
+        return None
     try:
         h = ConvexHull(p)
     except QhullError:                     # fewer than four points off a common plane
-        return np.zeros((0, 3)), np.zeros((0, 3), np.int64)
+        return None
     # qhull does not promise a consistent winding, and a mesh wound both ways encloses
     # nothing, so each facet is turned to agree with its own outward plane normal
     tri = h.simplices.copy()
@@ -290,6 +290,29 @@ def hull(points):
     tri[back] = tri[back][:, ::-1]
     used, f = np.unique(tri, return_inverse=True)
     return p[used], f.reshape(-1, 3).astype(np.int64)
+
+
+def hull(points, pad=0.0):
+    """The convex hull of a point cloud, as a triangle mesh.
+
+    What a structure the series barely samples gets instead of a surface: an enclosing
+    volume, which is a claim about where the thing is and not about what shape it is.
+
+    A cloud of voxel centers can carry no volume for qhull to hull. A structure one voxel
+    wide on any axis puts every center on a common plane, and one of three voxels or
+    fewer has too few points to be a solid at all; either way the cloud is refused and
+    the structure came out with no mesh, however much of the brain its voxels hold. `pad`
+    is the half-width of the voxel a center stands for: given it, a refused cloud is
+    hulled again over those voxels' own eight corners, which encloses the ground the
+    voxels occupy rather than the plane through their middles -- the claim the grade
+    makes in the first place. Left at zero, or if the corners are refused too, the cloud
+    gets no mesh, as before.
+    """
+    p = np.unique(np.asarray(points, float), axis=0)
+    m = _qhull(p)
+    if m is None and pad > 0:
+        m = _qhull(np.unique((p[:, None, :] + CORNERS * float(pad)).reshape(-1, 3), axis=0))
+    return m if m is not None else (np.zeros((0, 3)), np.zeros((0, 3), np.int64))
 
 
 def merge(meshes):
