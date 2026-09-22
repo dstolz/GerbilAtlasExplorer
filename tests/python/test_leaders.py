@@ -131,13 +131,32 @@ def test_the_tips_land_where_the_atlas_says_they_do(rows, db):
     in the region they name, because each was holding the granule core it stopped in;
     the right aci's used to fall in the seam between GrA and GrO there, which no polygon
     covered. All three now sit in the GrO the drawing gives that core.
+
+    195 in their own rather than 170, 35 in a neighbor rather than 33 and 10 in none
+    rather than 37, with the series re-cut at a `MIN_FACE_PX` of 100. The floor came down
+    from 400 with the atlas deliberately not re-cut, so the plates took it on the next
+    rebuild a correction ran over them (20260922T135037Z). Twenty-six tips that fell in no
+    region now fall in the one they name, and every one of them is on a plate no input of
+    this repository touched -- Mi on 4 and 7, dlo on 5 and 8, lo on 6, both aci lines on 8
+    and on 9, GlA on 10, E and OV on 12, ICj and LSD on 19, E and ICj on 22, both eml lines
+    on 28, VMHSh on 29, alv on 31, MVPO on 47, DCMo on 48, 7DM and PPy on 50, Bo on 52 and
+    IB on 57 -- so the floor is what moved them. Fourteen of those names had no entry on
+    that plate at all before; the other twelve had one that did not reach the tip.
+
+    The remaining two moves are plate 1's own fix. The right Mi tip lands in EPl rather
+    than in Mi: it used to sit in the bite Mi's seed took out of the external plexiform
+    band, and that bite is what the correction gave back, closing EPl into a ring. The
+    right aci tip lands in GrO rather than in no region: it used to sit in an unassigned
+    face inside the granule core, which is the core's again now that GrO is seeded on its
+    printed word. Both rows are superseded, so the list below gains (1, 'Mi') and a second
+    (1, 'aci').
     """
     where = {k: [r for r in rows if L.lands(r) == k] for k in ('own', 'other', 'none')}
-    assert (len(where['own']), len(where['other']), len(where['none'])) == (170, 33, 37)
+    assert (len(where['own']), len(where['other']), len(where['none'])) == (195, 35, 10)
     for r in where['other']:
         assert r['feature'] or r['superseded_by'], (r['plate'], r['abbr'], r['index'])
     assert sorted((r['plate'], r['abbr']) for r in where['other'] if r['superseded_by']) == \
-        [(1, 'IPl'), (1, 'IPl'), (1, 'aci'), (2, 'aci'),
+        [(1, 'IPl'), (1, 'IPl'), (1, 'Mi'), (1, 'aci'), (1, 'aci'), (2, 'aci'),
          (3, 'GrA'), (3, 'aci'), (3, 'aci'), (5, 'EPlA'), (6, 'EPlA'),
          (7, 'E'), (7, 'E'), (7, 'OV'), (7, 'OV'), (8, 'EPlA'), (9, 'E'), (9, 'OV'),
          (14, 'E'), (14, 'E'), (14, 'OV'), (14, 'OV'),
@@ -170,7 +189,7 @@ def test_filters(db, rows):
     a.shared = True
     assert len(L.select(rows, a, db)) == 42            # 21 lines, two names each
     a.shared, a.odd = False, True
-    assert len(L.select(rows, a, db)) == 70            # 33 in a neighbor, 37 in none
+    assert len(L.select(rows, a, db)) == 45            # 35 in a neighbor, 10 in none
     a.odd, a.abbr = False, 'VMHSh'
     assert {r['abbr'] for r in L.select(rows, a, db)} == {'VMHSh'}
     a.abbr = 'auditory cortex'                         # an alias resolves to its members

@@ -595,20 +595,30 @@ carries a `version` block naming the release its derived fields were built for.
   `E/OV` and the box is in the core -- and because left `GrO`, which draws no line at all,
   seeds its own box and holds its core.
 
-  **Three test literals in `tests/python` now read the old floor's numbers, and a correction
-  run may not touch them.** `test_leaders.test_the_tips_land_where_the_atlas_says_they_do`
-  reads (170, 33, 37) and the re-cut series gives **(196, 33, 11)** before this plate is
-  fixed and **(195, 35, 10)** after -- 27 tips that used to sit in a face too small to publish
-  now land in the region they name; its `superseded_by` list gains `(1, 'GrO')` and `(1, 'Mi')`,
-  which is what that list is for. `test_leaders.test_filters` reads 70 odd rows where there are
-  now **45**, the same count from the other side. `test_data.test_volumes_consistent` reads 688
-  meshes where there are now **691**. All three are the series re-cut, not this plate: with
-  plate 1 left as `origin/main` has it the first still reads (196, 33, 11). They want one
-  commit against the whole series, made once rather than once per correction in flight.
-  `METHODS.md`'s marked numbers are refreshed by the `tables` step as always; two percentages
-  in it lie outside the markers and now round differently -- "96% of the 3,216" and "92% of the
-  3,369" read 97% and 93% on 3,133 entries -- and are left, a total not being a correction's to
-  edit by hand.
+  **Three test literals in `tests/python` read the old floor's numbers, and are reconciled
+  here in a commit of their own.** A correction run may not touch `tests/`, so the reconciliation
+  is not part of the correction above; it is made once, against the whole re-cut series, and
+  each literal keeps the running note that says what moved it.
+  `test_leaders.test_the_tips_land_where_the_atlas_says_they_do` read (170, 33, 37) and reads
+  **(195, 35, 10)**; the series alone, with plate 1 left as `origin/main` has it, gives
+  (196, 33, 11). Twenty-six of the twenty-eight rows that move are tips that fell in no region
+  and now fall in the one they name, every one of them on a plate whose inputs are untouched --
+  `Mi` on 4 and 7, `dlo` on 5 and 8, `lo` on 6, both `aci` lines on 8 and on 9, `GlA` on 10,
+  `E` and `OV` on 12, `ICj` and `LSD` on 19, `E` and `ICj` on 22, both `eml` lines on 28,
+  `VMHSh` on 29, `alv` on 31, `MVPO` on 47, `DCMo` on 48, `7DM` and `PPy` on 50, `Bo` on 52 and
+  `IB` on 57 -- fourteen of which had no entry on their plate at all. The other two are plate 1's
+  own: the right `Mi` tip, now in the `EPl` ring rather than in the bite its seed took out of the
+  band, and the right `aci` tip, now in the re-seeded granule core rather than in an unassigned
+  face. Both are superseded rows, so the test's `superseded_by` list gains `(1, 'Mi')` and a
+  second `(1, 'aci')` -- not `(1, 'GrO')`, whose tip is in the ventricle slit and stays in no
+  region either way. `test_leaders.test_filters` read 70 odd rows and reads **45**, the same
+  count from the other side. `test_data.test_volumes_consistent` read 688 meshes and reads
+  **691**: `CC` on plate 60, `PaV` on 27 and `SChVM` on 26 at 324, 180 and 318 page px, all
+  three inside the band between the old cull and the new one and nowhere else.
+  `METHODS.md`'s marked numbers are refreshed by the `tables` step as always; two percentages in
+  it lie outside the markers and are corrected by hand with the literals -- "96% of the 3,216"
+  and "92% of the 3,369" now read **97%** and **93%**, the denominators being `label_positions`
+  and the published index, neither of which a re-cut touches.
 
 - **A plate that asks for nothing is an answer, and the run that says so is green.** The
   prompt has always allowed a session one stop -- "the one case for stopping is a plate that
