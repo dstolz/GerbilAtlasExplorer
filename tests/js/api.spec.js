@@ -193,3 +193,49 @@ test('listing a division filters the structure list to its members', async ({ pa
   // plates 22-25 and neither printed index lists it. See known_source_discrepancies.
   await expect(page.locator('#cnt')).toContainText('724 of 724');
 });
+
+test('a whole says what the atlas draws it as, and a part says whose part it is', async ({ page }) => {
+  // plate 20 prints DCl and VCl and no Cl, and the index lists Cl there
+  await page.goto(BUNDLE + '#p20/Cl');
+  await page.waitForTimeout(400);
+  const o = await page.evaluate(() => {
+    const G = window.__gae;
+    return { nine: G.PARTS.length,
+             drawnAs: [...document.querySelectorAll('#det .pp')].map(b => b.dataset.a),
+             standIn: G.partsOf['Cl'].stand_in_plates,
+             whole: G.wholeOf['DCl'].whole,
+             hint: document.querySelector('#vht').textContent,
+             outlined: document.querySelectorAll('#om path').length };
+  });
+  expect(o.nine).toBe(9);
+  expect(o.drawnAs).toEqual(['DCl', 'VCl']);
+  expect(o.standIn).toEqual([16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26]);
+  expect(o.whole).toBe('Cl');
+  // not "its printed label was not located": the atlas printed the parts instead
+  expect(o.hint).toContain('the atlas draws Cl as DCl and VCl');
+  expect(o.hint).not.toContain('not located');
+  expect(o.outlined).toBe(0);                       // and with no fold, nothing is outlined
+  // the part's card has one Part of button; it selects the whole and stays on the plate
+  await page.click('#det .pp[data-a="DCl"]');
+  await page.waitForTimeout(200);
+  const p = await page.evaluate(() => ({ ...window.__gae.state(),
+    partOf: [...document.querySelectorAll('#det .pp')].map(b => b.dataset.a) }));
+  expect(p.sel).toBe('DCl'); expect(p.cur).toBe(20); expect(p.partOf).toEqual(['Cl']);
+  await page.click('#det .pp[data-a="Cl"]');
+  await page.waitForTimeout(200);
+  expect(await page.evaluate(() => window.__gae.state().sel)).toBe('Cl');
+});
+
+test('where the atlas prints the whole itself, the plate is as it was', async ({ page }) => {
+  // plate 13 prints Cl and draws its boundary whole: outlined in blue, as before, with the
+  // parts' names nowhere on it (12 prints it too, but circled: its labels sit inside a
+  // boundary the atlas draws round more than one name, which is another sentence)
+  await page.goto(BUNDLE + '#p13/Cl');
+  await page.waitForTimeout(400);
+  const o = await page.evaluate(() => ({ outlined: document.querySelectorAll('#om path').length,
+                                        info: document.querySelector('#vinfo').textContent,
+                                        warn: document.querySelector('#vhint').hidden }));
+  expect(o.outlined).toBe(1);
+  expect(o.info).toContain('outlined');
+  expect(o.warn).toBe(true);
+});

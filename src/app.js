@@ -137,6 +137,22 @@ const markF = (a,o) => (markC(a)===MARKG?'rgba(0,151,167,':'rgba(10,92,255,')+o+
    olfactory areas and the bulb -- so this is a list and not a parent. */
 const grpsOf={};
 GRP.forEach(g=>g.members.forEach(a=>(grpsOf[a]||(grpsOf[a]=[])).push(g)));
+/* The wholes the atlas draws under their parts' names (tools/build_parts.py): the
+   claustrum is Cl on plates 12-15 and 27 and DCl and VCl, never Cl, on 16-26. A row per
+   whole, and the other way about, the whole a part stands in for. Neither changes a
+   record -- a part stays a structure with its own card, outline and mesh -- they are what
+   the card and the plate read to say so, and what the fold reads when a reader asks for
+   the parts to be folded into the whole. */
+const PARTS = DB.parts || [];
+const partsOf={}, wholeOf={};
+PARTS.forEach(r=>{ partsOf[r.whole]=r; r.parts.forEach(p=>{ wholeOf[p]=r; }); });
+/* on a stand-in plate the index lists the whole and the plate prints only its parts */
+const standIn = (w,pl) => !!(partsOf[w] && partsOf[w].stand_in_plates.includes(pl));
+/* "16–26", "12–15, 27": a plate list as the runs it is made of */
+const plRange = pl => { const o=[]; let a=pl[0], b=pl[0];
+  for(const p of pl.slice(1)){ if(p===b+1) b=p; else { o.push(a===b?''+a:a+'–'+b); a=b=p; } }
+  o.push(a===b?''+a:a+'–'+b); return o.join(', '); };
+const andList = xs => xs.length<2 ? xs.join('') : xs.slice(0,-1).join(', ')+' and '+xs[xs.length-1];
 const norm = s => s.toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
 const $ = i => document.getElementById(i);
 
@@ -651,6 +667,13 @@ function select(a){
      ${!g&&(grpsOf[a]||[]).length?`<dt title="The gross divisions this structure is part of. They overlap, so it can be in several.">Divisions</dt>
         <dd class="gin">${grpsOf[a].map(q=>
           `<button type="button" class="pbtn pg" data-g="${esc(q.key)}" title="${esc(q.note)}">${esc(q.name)}</button>`).join('')}</dd>`:''}
+     ${partsOf[a]?`<dt title="${esc(partsOf[a].note)}">Drawn as</dt>
+        <dd class="gin">${partsOf[a].parts.map(p=>
+          `<button type="button" class="pbtn pp" data-a="${esc(p)}" title="${esc((byAb[p]||{}).name||p)}">${esc(p)}</button>`).join('')}
+          <span style="color:var(--muted)">on plate${partsOf[a].stand_in_plates.length>1?'s':''} ${plRange(partsOf[a].stand_in_plates)}, where the atlas prints no ${esc(a)}</span></dd>`:''}
+     ${wholeOf[a]?`<dt title="${esc(wholeOf[a].note)}">Part of</dt>
+        <dd class="gin"><button type="button" class="pbtn pp" data-a="${esc(wholeOf[a].whole)}" title="${esc(wholeOf[a].name)}">${esc(wholeOf[a].whole)}</button>
+          <span style="color:var(--muted)">which the atlas draws as ${esc(andList(wholeOf[a].parts))} on plate${wholeOf[a].stand_in_plates.length>1?'s':''} ${plRange(wholeOf[a].stand_in_plates)}</span></dd>`:''}
    </dl>
    <div class="plines">${r.plates.map(p=>`<span class="pbtn" data-p="${p}" role="button" tabindex="0">${p}</span>`).join('')}</div>
    ${g?`<div class="gmem" id="gmem"><span>Made of</span>${g.members.map(m=>
@@ -661,8 +684,11 @@ function select(a){
     el.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); el.click(); } }; });
   [...D.querySelectorAll('.gmem .pbtn')].forEach(el=>el.onclick=()=>{
     select(el.dataset.a); if(!byAb[el.dataset.a].plates.includes(cur)) go(byAb[el.dataset.a].first_plate); });
-  [...D.querySelectorAll('.gin .pbtn')].forEach(el=>el.onclick=()=>{
+  [...D.querySelectorAll('.gin .pbtn.pg')].forEach(el=>el.onclick=()=>{
     const k=el.dataset.g; select(k); if(!byAb[k].plates.includes(cur)) go(byAb[k].first_plate); });
+  /* a part or a whole is a structure: select it, and stay on this plate if it is on it */
+  [...D.querySelectorAll('.gin .pbtn.pp')].forEach(el=>el.onclick=()=>{
+    const k=el.dataset.a; select(k); if(!byAb[k].plates.includes(cur)) go(byAb[k].first_plate); });
   if($('glist')) $('glist').onclick=()=>{
     gfilter = gfilter===g.key ? null : g.key;
     $('q').value=''; active.clear();
@@ -926,6 +952,15 @@ function markSel(){
   }
   if(!r){ vhSay(hintTxt()); return; }
   if(r.plates.includes(cur)){
+    /* the index lists it and the plate prints its parts instead: that is not a label that
+       was not located, it is the atlas drawing the whole under two other names */
+    if(standIn(sel,cur)){
+      const pr=partsOf[sel], by=regBuild(cur).by;
+      const here=pr.parts.filter(p=>by[p]||((LB[cur]||{})[p]||[]).length);
+      vhWarn(`On plate ${cur} the atlas draws <b>${esc(sel)}</b> as `+
+        andList((here.length?here:pr.parts).map(p=>`<b>${esc(p)}</b>`))+'.', 'standin:'+sel);
+      return;
+    }
     vhWarn(`<b>${esc(sel)}</b> is at this level, but its printed label was not located on plate ${cur}.`,
       'unplaced:'+sel);
     return;
@@ -1556,7 +1591,8 @@ function tipBody(ab,extra){
     `<span class="tn">${esc(r?r.name:'not in the published index')}</span>`+
     (r?`<span class="tx">plates ${r.first_plate===r.last_plate?r.first_plate:r.first_plate+'–'+r.last_plate}`+
        ` · bregma ${r.bregma_anterior.toFixed(2)} to ${r.bregma_posterior.toFixed(2)} mm</span>`:'')+
-    (extra?`<span class="tx">${esc(extra)}</span>`:'');
+    (extra?`<span class="tx">${esc(extra)}</span>`:'')+
+    (wholeOf[ab]&&standIn(wholeOf[ab].whole,cur)?`<span class="tx">part of ${esc(wholeOf[ab].whole)}</span>`:'');
   TIP.hidden=false; IW.classList.add('hot');
 }
 /* hovering the area rather than the printed name: outline what is under the pointer, and
@@ -6644,7 +6680,7 @@ window.__gae={toFrame,fromFrame,writeHash,readHash,tgSolve,tgPath,tgFootprint,pl
   v3split,v3edit,v3rects,panes:()=>V3P.map(q=>({...q})),
   v3want,v3srcs:()=>Object.keys(V3TEX).sort(),
   v3build,v3niiBuf,meshSTL,
-  GRP,isGrp,regIn,grpsOf,mcBuild,mcSet,MCPAL,meshColor,meshKey,
+  GRP,isGrp,regIn,grpsOf,PARTS,partsOf,wholeOf,standIn,mcBuild,mcSet,MCPAL,meshColor,meshKey,
   setMax,
   welcOpen,welcSeen,
   vpan:on=>vpanOpen(on), adv:on=>advOpen(on), inf:on=>infOpen(on),

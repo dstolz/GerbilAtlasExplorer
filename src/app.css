@@ -138,6 +138,8 @@ input[type=search]:focus{border-color:var(--accent)}
 .gin{display:flex;flex-wrap:wrap;gap:4px}
 .pbtn.pg{border:0;font-family:inherit;font-size:11px;color:var(--markg);background:var(--chip)}
 .pbtn.pg:hover{background:var(--markg);color:#fff}
+.pbtn.pp{border:0;font-family:ui-monospace,Menlo,monospace;font-size:11px;color:var(--ink);background:var(--chip)}
+.pbtn.pp:hover{background:var(--accent);color:#fff}
 .glist{border:0;background:none;padding:0 0 0 6px;font:inherit;font-size:11px;
   color:var(--markg);cursor:pointer;text-decoration:underline}
 .unf{border:0;background:none;padding:0 0 0 4px;font:inherit;font-size:11px;
