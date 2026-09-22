@@ -293,13 +293,17 @@ test('the fold rides in the link as F, and state() reports it', async ({ page })
     const G = window.__gae; G.writeHash();
     return { hash: location.hash, fold: G.state().foldOn, box: document.getElementById('ckfold').checked,
              outlined: document.querySelectorAll('#om path').length,
-             badge: document.getElementById('vctln').textContent };
+             badge: document.getElementById('vctln').hidden,
+             // the control is withheld from the page for now: built, reachable by the link
+             // and the handle, not offered
+             offered: !document.getElementById('ckfold').closest('label').hidden };
   });
   expect(o.hash).toBe('#p20/Cl&v=F');
   expect(o.fold).toBe(true);
   expect(o.box).toBe(true);
   expect(o.outlined).toBe(1);
-  expect(o.badge).toBe('1');                       // the controls button counts it as a setting
+  expect(o.badge).toBe(true);                      // and the badge counts nothing the panel does not show
+  expect(o.offered).toBe(false);
   // and a link without the letter arriving by hashchange turns it off again
   await page.evaluate(() => { location.hash = '#p20/Cl'; });
   await page.waitForTimeout(500);
@@ -320,13 +324,13 @@ test('with the fold off the plate says what the atlas drew; with it on the whole
              card: document.querySelector('#det .kv').textContent };
   });
   expect(off.hint).toContain('the atlas draws Cl as DCl and VCl');
-  expect(off.offer).toBe(true);
+  expect(off.offer).toBe(false);                   // no offer on the plate while the control is withheld
   expect(off.outlined).toBe(0);
   expect(off.by).toBe(true);
   expect(off.dots).toBe(10);                       // Cl's own labels: 12-15 and 27
   expect(off.own).toBe(10);
   expect(off.card).not.toContain('folded');
-  await page.click('#foldgo');
+  await page.evaluate(() => window.__gae.foldSet(true));
   await page.waitForTimeout(500);
   const on = await page.evaluate(() => {
     const G = window.__gae; G.writeHash();
@@ -354,15 +358,14 @@ test('with the fold off the plate says what the atlas drew; with it on the whole
   expect(on.center.n).toBe(54);
   expect(on.notes).toBe('target        Cl (folded: DCl, VCl)  (claustrum)');
   expect(on.regs).toEqual(['DCl', 'VCl']);
-  // the fold is the reader's ask, and taking it back puts everything back -- through the
-  // box in the plate controls, which open closed
-  await panel(page);
-  await page.click('#ckfold');
+  // and taking it back puts everything back. Through the handle: the box in the plate
+  // controls is hidden while the fold is withheld from the page
+  await page.evaluate(() => window.__gae.foldSet(false));
   await page.waitForTimeout(500);
   const back = await page.evaluate(() => ({ fold: window.__gae.state().foldOn,
     outlined: document.querySelectorAll('#om path').length, offer: !!document.getElementById('foldgo'),
     dots: document.querySelectorAll('#pjl circle').length, pooled: window.__gae.ptsOf['Cl'].length }));
-  expect(back).toEqual({ fold: false, outlined: 0, offer: true, dots: 10, pooled: 10 });
+  expect(back).toEqual({ fold: false, outlined: 0, offer: false, dots: 10, pooled: 10 });
 });
 
 test('the structures CSV carries the fold as five columns after the others, and the Labels CSV does not carry it at all', async ({ page }) => {

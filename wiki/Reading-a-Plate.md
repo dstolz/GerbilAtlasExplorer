@@ -89,7 +89,6 @@ opens it, <kbd>Esc</kbd> closes it, and a badge on the button counts what is on.
 | **Coords** *(toolbar)* | The bregma / ML / DV readout under the pointer |
 | **Grid** *(toolbar)* | A 1 mm stereotaxic grid over the section |
 | **Color regions** | Fills every region so that no two that touch are the same colour, at a wash you set. The colours name nothing — they only tell neighbours apart |
-| **Fold parts into wholes** | Where the atlas draws a structure only as its parts — the claustrum as `DCl` and `VCl` on plates 16–26 — outlines, counts and plots the whole as the parts together, every figure marked *folded*. The plate stays as printed: hovering, clicking and the colours still answer with the part. Rides in the link as `F` |
 | **Scale** | A scale bar |
 | **Measure** | Click two points for distance and approach angle — see [Measuring](Measuring) |
 | **Skull** \* | The CT skull's cut through this coronal plane *(experimental)* |

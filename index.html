@@ -1341,7 +1341,10 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
                    the same reason Bone stays with Skull. -->
               <label class="lb3" id="mcw" hidden title="How strong the wash is. The plate is underneath it at every setting."
                 >Wash <input type="range" id="mcs" min="10" max="90" step="5" value="45"><b id="mcl">45%</b></label>
-              <label class="tg" title="Where the atlas draws a structure only as its parts &mdash; the claustrum as DCl and VCl on plates 16&ndash;26 &mdash; outline, count and plot the whole as its parts together. The plate stays as printed: hovering, clicking and the colors still answer with the part."><input type="checkbox" id="ckfold">Fold parts into wholes</label>
+              <!-- The fold is built and stays reachable -- F among the link's v= flags, foldSet() on
+                   the test handle -- but the control is withheld from the page for now: it is to be
+                   revisited before it is offered. Dropping the hidden attribute puts it back. -->
+              <label class="tg" hidden title="Where the atlas draws a structure only as its parts &mdash; the claustrum as DCl and VCl on plates 16&ndash;26 &mdash; outline, count and plot the whole as its parts together. The plate stays as printed: hovering, clicking and the colors still answer with the part."><input type="checkbox" id="ckfold">Fold parts into wholes</label>
               <label class="tg" title="Scale bar"><input type="checkbox" id="cks">Scale</label>
               <label class="tg" title="Click two points on the plate to measure between them"><input type="checkbox" id="ckm">Measure</label>
             </div></div>
@@ -1591,15 +1594,6 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
       table is <code>data/gerbil_atlas_parts.csv</code>; it is a reading of what the
       plates print, not a judgement, and it is admitted only where the published index
       puts the whole.</p>
-    <p><b>Fold parts into wholes</b>, in the plate controls, reads such a whole as its parts
-      together on those plates: the outline is the parts&rsquo; outlines with the wall
-      between them dropped, the label center and spread are the parts&rsquo; labels pooled
-      with its own, and in the 3-D view its mesh and theirs stand together &mdash; every
-      figure marked <i>folded</i>, with the reading of its own labels beside it, and the
-      structures CSV carries the folded figures as five extra columns after the others.
-      What the plate prints is left alone: hovering, clicking and the colors still answer
-      with the part, the Labels CSV still has a row per printed label, and the structure
-      list still counts the parts.</p>
 
     <h3>The section as a map</h3>
     <p><b>Color regions</b> over the plate fills every region on it, and no two regions
@@ -3050,13 +3044,10 @@ function markSel(){
     if(standIn(sel,cur)){
       const pr=partsOf[sel], by=regBuild(cur).by;
       const here=pr.parts.filter(p=>by[p]||((LB[cur]||{})[p]||[]).length);
+      /* the fold is not offered here while its control is withheld from the page (see
+         #ckfold in app.html); the sentence stands on its own */
       vhWarn(`On plate ${cur} the atlas draws <b>${esc(sel)}</b> as `+
-        andList((here.length?here:pr.parts).map(p=>`<b>${esc(p)}</b>`))+'.'+
-        /* and offers the fold, unless it is on already and there is still nothing to
-           outline -- a stand-in plate that draws no part at all, which this build has none of */
-        (foldOn?'':`<button type="button" id="foldgo">Fold them into ${esc(sel)}</button>`),
-        'standin:'+sel);
-      if($('foldgo')) $('foldgo').onclick=()=>foldSet(true);
+        andList((here.length?here:pr.parts).map(p=>`<b>${esc(p)}</b>`))+'.', 'standin:'+sel);
       return;
     }
     vhWarn(`<b>${esc(sel)}</b> is at this level, but its printed label was not located on plate ${cur}.`,
@@ -3654,10 +3645,12 @@ $('ckmc').onchange=e=>mcSet(e.target.checked);
    off it. Otherwise everything that read a whole is redrawn: the plate's index (the union
    lives in it), the mark, the card with its gallery, the projection, the cloud and the
    planner -- which select() does for a selection, and which there is nothing of to redo
-   without one. GALC needs no clearing: a thumbnail's key carries the fold. */
+   without one. GALC needs no clearing: a thumbnail's key carries the fold.
+   The box it is wired to is withheld from the page for now (hidden in app.html): what
+   reaches this meanwhile is F among the link's v= flags and the __gae handle. */
 function foldSet(on,quiet){
   on=!!on; const was=foldOn;
-  foldOn=on; $('ckfold').checked=on;
+  foldOn=on; if($('ckfold')) $('ckfold').checked=on;
   for(const k in PTSF) ptsOf[k] = on ? PTSF[k] : PTSA[k];
   for(const k in REGC) delete REGC[k];
   if(quiet||was===on) return;
@@ -8083,7 +8076,9 @@ function advCount(){
   return 0;
 }
 function vpanCount(){
-  if(tab==='plate') return [mcOn,foldOn,showSB,measMode,showSK,showLM,cmpOn,anShow].filter(Boolean).length;
+  /* foldOn is left out while its control is withheld: the badge counts what is set in
+     the panel, and a setting with no control there would be a count of nothing to find */
+  if(tab==='plate') return [mcOn,showSB,measMode,showSK,showLM,cmpOn,anShow].filter(Boolean).length;
   if(tab==='proj')  return [pjsk,pjlm].filter(Boolean).length;
   const Q=v3E(); return [Q.sk,Q.lm,Q.m,Q.half,Q.ortho].filter(Boolean).length;
 }
