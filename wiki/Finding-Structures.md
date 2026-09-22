@@ -85,6 +85,8 @@ Selecting a structure opens a card under the list:
 | **Label spread** | The full ML and DV spread of those labels |
 | **Systems** | The tags it carries |
 | **Divisions** | The anatomical divisions it is filed under — click one to list its siblings |
+| **Drawn as** | For a whole the atlas draws under its parts' names — `Cl` as `DCl` and `VCl` on plates 16–26 — the parts, as buttons, and the plates. With **Fold parts into wholes** on (in the plate controls), the whole is outlined, counted and plotted as the parts together, and *Label center* and *Label spread* say *folded*, with the reading of its own labels beside them |
+| **Part of** | For such a part, its whole — a button |
 
 Under that is a row of **plate-number buttons** — click any one to jump straight to that
 level.

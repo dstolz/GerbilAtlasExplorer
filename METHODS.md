@@ -795,6 +795,77 @@ The divisions are **not part of the published atlas**, exactly as the system tag
 `data/gerbil_atlas_groups.csv` writes every member of every division out flat, and CI runs
 `tools/build_groups.py --check` so the committed block is always what the rules produce.
 
+## Wholes and their parts
+
+The atlas draws some structures under their parts' names: the claustrum is `Cl` on plates
+12–15 and 27 and `DCl` and `VCl` — never `Cl` — on 16–26, though the index lists `Cl` for
+12–27 throughout. On such a plate the whole has no printed label and no extent, and a reader
+who selected it was told its label "was not located", which is the wrong sentence: the atlas
+printed the parts instead. `tools/build_parts.py` reads that off the data and writes it into
+the `parts` block and `data/gerbil_atlas_parts.csv`.
+
+**The rule, and nothing else.** A part is a structure whose name reads "*x* part of *whole*"
+or "*whole*, *x* part"; its whole is the longest comma-prefix of that name that is itself a
+structure. 163 structures are named that way: 77 name a whole the atlas has (39 wholes) and
+86 name one it does not — `BL` for `BLA`, `BLP` and `BLV` — and those are left alone, because
+a whole the atlas never names is a division, not a part. Of the 39, a whole is **admitted**
+where, on a plate the index lists it for, it has no located label and no extent and a part
+has an extent: nine, over 24 structure–plate pairs. It is **refused** where a part is printed
+on a plate the index does not give the whole — 23, `ZI` among them, whose `ZID`, `ZIV`, `ZIR`
+and `ZIC` run from plate 26 to 35 against an index range of 28–29 — because every plate range
+in this database is the index's (`tools/check_indexes.py` holds it to that), and folding
+those would carry a structure past it. Seven are **moot**: the parts are printed only beside
+the whole, so nothing stands in for anything. The classification is a reading of what the
+plates print, not a judgement; `--report` prints it, `--check` exits non-zero if the
+committed block is stale, and `tests/python/test_data.py` holds the counts.
+
+| whole | drawn as | on plates | and as itself on |
+| --- | --- | --- | --- |
+| `Cl` | `DCl`, `VCl` | 16–26 | 12–15, 27 |
+| `Cu` | `CuR` | 56, and beside it on 55 | 52–55, 57–62 |
+| `DM` | `DMC`, `DMD`, `DMV` | 31 | 29–30, 32 |
+| `LDTg` | `LDTgV` | 43 | 42, 44 |
+| `LHb` | `LHbL`, `LHbM` | 29–30 | 28, 31 |
+| `La` | `LaD`, `LaV` | 28–30, and beside it on 27 | 26–27, 31 |
+| `MPB` | `MPBE` | 44 | 43, 45 |
+| `VG` | `VGMC`, `VGPC` | 31–32 | 29–30, 33–34 |
+| `VMH` | `VMHC`, `VMHDM`, `VMHVL` | 29–30 | 28, 31 |
+
+**What the app does with it, always.** A whole's card says what it is drawn as and where; a
+part's card says whose part it is; on a stand-in plate the whole is not "not located" — the
+plate says the atlas draws it as its parts there — and a hovered part says *part of* its
+whole. None of that changes a record: a part stays a structure with its own card, outline,
+labels and mesh, and the structure list still counts 724.
+
+**What the fold does, at the reader's option.** *Fold parts into wholes*, in the plate
+controls (`F` among the link's `v=` flags), reads a whole as its parts together on those
+plates, exactly as a division is read from its members:
+
+| what it shows | where it comes from |
+| --- | --- |
+| its outline on a stand-in plate | its parts' outlines with the boundary they share dropped — the edge cancellation a division uses, so no line the atlas does not draw; where the whole is drawn beside a part (`Cu` on 55, `La` on 27) its own outline is taken in as well |
+| its area there | the parts' areas summed |
+| its label center and spread | its own labels pooled with its parts' on the plates the atlas draws them for it: `Cl`'s 10 with `DCl`'s 22 and `VCl`'s 22 |
+| its dots in the label cloud | its parts' on those plates, picked out with its own |
+| its mesh | its own and its parts', drawn together; the volume is theirs summed, exact because no voxel of the label volume carries two ids — `Cl`: 0.7296 + 0.256 + 0.64 = 1.6256 mm³ |
+| the structures CSV | five columns after the others — `folded_label_AP_bregma_mm`, `folded_label_ML_abs_mm`, `folded_label_DV_mm`, `folded_n_labels`, `folded_parts` — filled for the nine and blank elsewhere; the columns before them are read off the atlas's own labels whether or not the fold is on |
+| a track plan | aimed at the pooled labels; the notes say *folded: DCl, VCl* |
+
+Every folded figure on the card is marked *folded*, with the reading of the whole's own
+labels beside it. What the plate prints is left alone in every reading: hovering and
+clicking on plate 20 answer `DCl` or `VCl`, with *part of Cl* appended, never `Cl`; the map
+coloring colors the regions the plate draws; the Labels CSV and the label cloud have a row
+or a dot per printed label; and the NIfTI, the LUT, the GeoJSON and the face maps carry the
+parts' ids. A reader who wants a folded label volume remaps `DCl` and `VCl` to `Cl`'s id
+with the parts CSV; none is shipped, because the plates do not print one.
+
+There is no mesh of the fold as such, for the reason there is none of a division: between
+plates 15 and 16 the atlas stops drawing `Cl` and starts drawing `DCl` and `VCl`, and
+`tools/build_volumes.py` tapers each field to nothing over half a section step beyond its
+last plate, so the three meshes stand a fraction of a step apart where the index asserts one
+continuous structure. Interpolating across that seam would be new derived geometry, and is a
+separate decision (`PARTS_PLAN.md`, *The third dimension*).
+
 ## The third dimension
 
 > **Experimental.** These volumes interpolate across the section gap, which every other
