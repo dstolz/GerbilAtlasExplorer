@@ -100,8 +100,33 @@ main{flex:1 1 auto;display:grid;grid-template-columns:352px minmax(0,1fr);min-he
 .row .ar{margin-left:auto;flex:none;color:var(--muted);font-size:11px}
 .row.off .ab{color:var(--muted);font-weight:500}
 
+/* the six tools, each wearing the glyph its mark is drawn with on the plate */
+.tools{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+.tools button{position:relative;font:inherit;font-size:12px;display:flex;align-items:center;gap:6px;
+  padding:6px 7px;border:1px solid var(--line);border-radius:8px;background:var(--panel);
+  color:var(--ink);cursor:pointer;min-width:0;text-align:left}
+.tools button:hover{background:var(--chip)}
+.tools button svg{width:18px;height:18px;flex:none}
+.tools button span{flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* the key that picks it, in the corner, where it costs the name no room */
+.tools button kbd{position:absolute;top:2px;right:4px;font:9px/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  color:var(--muted)}
+.tools button.on{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink);background:var(--chip);
+  font-weight:600}
+
+/* what the chosen tool's mark says, and what the pipeline does with it */
+.toolhelp{border-left:3px solid var(--tc,var(--line));background:var(--panel);border-radius:0 8px 8px 0;
+  padding:6px 9px;display:flex;flex-direction:column;gap:3px;font-size:12px}
+.toolhelp .says{font-weight:600}
+.toolhelp .says em{font-style:normal;color:var(--muted);font-weight:500}
+.toolhelp p{margin:0;color:var(--muted);font-size:11.5px}
+.toolhelp p b{color:var(--ink);font-weight:600}
+.toolhelp code{font-size:10.5px}
+
 /* the tool's own options: a row of them, then whatever the tool lists under it */
 .opts{display:flex;flex-direction:column;gap:7px}
+.opts:empty{display:none}
+.hint{border:1px dashed var(--line);border-radius:8px;padding:6px 8px;background:var(--panel)}
 
 /* the rings of the chosen region, under the extent tool: what the extraction cut,
    each with what can be said about it */
@@ -112,16 +137,30 @@ main{flex:1 1 auto;display:grid;grid-template-columns:352px minmax(0,1fr);min-he
 .rings .ring .b{font-size:11.5px;padding:3px 7px}
 .rings .fact{margin:0}
 
+/* the labels of the chosen region, under the leader tool */
+.leads{display:flex;flex-direction:column;gap:4px;width:100%}
+.leads .lead{display:flex;gap:6px;align-items:center;font-size:11.5px}
+.leads .lead .who{flex:1 1 auto;min-width:0;color:var(--muted);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.leads .lead .who b{color:var(--ink);font-weight:600}
+.leads .lead.on .who b{color:var(--accent)}
+.leads .lead .b{font-size:11.5px;padding:3px 7px}
+.leads .fact{margin:0}
+
 /* ---------- the draft ---------- */
 .marks{display:flex;flex-direction:column;gap:4px}
 .mark{display:flex;gap:7px;align-items:flex-start;font-size:12px;padding:4px 6px;
   border:1px solid var(--line);border-radius:8px;background:var(--panel)}
 .mark .sw{width:9px;height:9px;border-radius:50%;flex:none;margin-top:4px}
+.mark svg.sw{width:16px;height:16px;border-radius:0;margin-top:1px}
 .mark .txt{min-width:0;flex:1 1 auto}
 .mark .txt em{color:var(--muted);font-style:normal;display:block;font-size:11px}
-.mark .x{border:0;background:none;color:var(--muted);cursor:pointer;font-size:14px;
+.mark .txt em .bad{color:var(--unseed)}
+.mark .x,.mark .ed{border:0;background:none;color:var(--muted);cursor:pointer;font-size:14px;
   line-height:1;padding:2px 3px;flex:none}
-.mark .x:hover{color:var(--accent)}
+.mark .ed{font-size:11.5px;text-decoration:underline;text-underline-offset:2px}
+.mark .x:hover,.mark .ed:hover{color:var(--accent)}
+.mark.hi{border-color:var(--accent)}
 .mark.empty{border-style:dashed;color:var(--muted);justify-content:center;padding:7px}
 .report{margin:0;max-height:280px;overflow:auto;white-space:pre-wrap;word-break:break-word;
   font:11.5px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
@@ -132,28 +171,56 @@ main{flex:1 1 auto;display:grid;grid-template-columns:352px minmax(0,1fr);min-he
 /* ---------- the plate ---------- */
 .stage{position:relative;min-width:0;min-height:0;display:flex;flex-direction:column;
   background:var(--bg)}
-/* flex-basis 0 with min-height 0: a canvas is a replaced element, so its own width
-   and height attributes would otherwise set the floor and push the status bar off the
-   bottom of a phone. The bitmap size is set from the box in resize(), not the reverse. */
-#cv{flex:1 1 0;min-height:0;width:100%;display:block;touch-action:none;cursor:crosshair}
+/* flex-basis 0 with min-height 0, and the canvas laid over the box rather than in its
+   flow: a canvas is a replaced element, so its own width and height attributes would
+   otherwise set the floor and push the status bar off the bottom of a phone. The bitmap
+   size is set from the box in resize(), not the reverse. */
+.platebox{position:relative;flex:1 1 0;min-height:0}
+#cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:crosshair}
+#cv[data-cur="move"]{cursor:move}
+#cv[data-cur="copy"]{cursor:copy}
+#cv[data-cur="grab"]{cursor:grab}
+#cv[data-cur="pointer"]{cursor:pointer}
+#cv[data-cur="cell"]{cursor:cell}
 .stage.pan #cv{cursor:grabbing}
 .over{position:absolute;inset:0;pointer-events:none}
 .over > *{pointer-events:auto}
+
+/* the key: what every line, box and dot on the plate is */
+.legend{position:absolute;left:10px;top:10px;max-width:min(290px,calc(100% - 70px));
+  border:1px solid var(--line);border-radius:10px;background:var(--panel);
+  box-shadow:var(--shadow);font-size:11.5px;overflow:hidden}
+.legbar{display:flex;align-items:center;gap:6px;width:100%;border:0;background:none;
+  color:var(--ink);font:inherit;font-size:11.5px;font-weight:650;padding:5px 9px;cursor:pointer;
+  text-align:left}
+.legbar .chev{margin-left:auto;color:var(--muted);transition:transform .15s}
+.legend.shut .legbar .chev{transform:rotate(180deg)}
+.legend.shut .legbody{display:none}
+.legbody{padding:0 9px 7px;max-height:calc(100vh - 220px);overflow:auto}
+.legbody .lh{margin:4px 0 2px;font-size:10px;font-weight:700;letter-spacing:.07em;
+  text-transform:uppercase;color:var(--muted)}
+.legbody .lr{display:flex;align-items:center;gap:7px;line-height:1.35;padding:1px 0;color:var(--ink)}
+.legbody .lr svg{width:24px;height:12px;flex:none}
 .zoomers{position:absolute;top:10px;right:10px;display:flex;flex-direction:column;gap:5px}
 .rb{width:34px;height:34px;font:600 17px/1 ui-sans-serif,system-ui,sans-serif;
   border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--ink);
   cursor:pointer;box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center}
 .rb:hover{background:var(--chip)}
+/* max-content, capped: placed at the middle, a box's shrink-to-fit width is the half of
+   the plate to its right, and a bar of six buttons would stack into a column */
 .drawbar{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);
   display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:center;
-  max-width:calc(100% - 20px);padding:6px 8px;border:1px solid var(--line);
+  width:max-content;max-width:calc(100% - 20px);padding:6px 8px;border:1px solid var(--line);
   border-radius:11px;background:var(--panel);box-shadow:var(--shadow)}
-.drawbar[hidden]{display:none}
+.drawbar[hidden],.drawbar [hidden]{display:none}
 .drawbar #drawcount{color:var(--muted);padding:0 4px}
-.statusbar{flex:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+/* one row: a long region name under the pointer is cut short rather than wrapping the bar,
+   which would take the row out of the plate and move it under the pointer as it goes */
+.statusbar{flex:none;display:flex;align-items:center;gap:10px;flex-wrap:nowrap;
   padding:5px 10px;border-top:1px solid var(--line);background:var(--panel);
-  font-size:11.5px;color:var(--muted)}
-.statusbar #under{color:var(--ink)}
+  font-size:11.5px;color:var(--muted);white-space:nowrap}
+.statusbar > *{flex:none}
+.statusbar #under{color:var(--ink);flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}
 
 /* The plates in order. It is held to one slim row: everything above it is chrome and
    the plate is what the page is for, so the bar costs the canvas as little as a
@@ -227,6 +294,8 @@ main{flex:1 1 auto;display:grid;grid-template-columns:352px minmax(0,1fr);min-he
   .statusbar > *{flex:0 0 auto;white-space:nowrap}
   .statusbar::-webkit-scrollbar{display:none}
   .drawbar{bottom:8px}
+  .tools button{padding:8px 8px}
+  .tools button kbd{display:none}
 }
 @media (max-width:620px){
   header{gap:5px 8px;padding:5px 8px}
@@ -291,13 +360,32 @@ main{flex:1 1 auto;display:grid;grid-template-columns:352px minmax(0,1fr);min-he
 
     <section class="box">
       <h2>Mark what is wrong</h2>
-      <div class="seg full" id="toolseg">
-        <button type="button" class="on" data-t="pick" title="Read what is under the pointer (1)">Pick</button>
-        <button type="button" data-t="seed" title="A point that is inside the region (2)">Seed +</button>
-        <button type="button" data-t="unseed" title="A point that is not inside it (3)">Seed &minus;</button>
-        <button type="button" data-t="boundary" title="A run of boundary the tracing missed (4)">Boundary</button>
-        <button type="button" data-t="extent" title="The outline the region should have (5)">Extent</button>
+      <!-- each tool wears the glyph its mark is drawn with on the plate, so the button,
+           the mark and the key under the plate are one picture -->
+      <div class="tools" id="toolseg" role="toolbar" aria-label="Marking tools">
+        <button type="button" class="on" data-t="pick" title="Read what is under the pointer; adds nothing (1)">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="5.5" fill="none" stroke="var(--pick)" stroke-width="1.8"/><path d="M10 1.5v5M10 13.5v5M1.5 10h5M13.5 10h5" stroke="var(--pick)" stroke-width="1.8"/></svg>
+          <span>Pick</span><kbd>1</kbd></button>
+        <button type="button" data-t="seed" title="A point the region is at (2)">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="5.5" fill="var(--seed)" stroke="#fff" stroke-width="1.6"/></svg>
+          <span>Seed +</span><kbd>2</kbd></button>
+        <button type="button" data-t="unseed" title="A point the region is not at (3)">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4.5 4.5l11 11M4.5 15.5l11-11" stroke="var(--unseed)" stroke-width="2.6" stroke-linecap="round"/></svg>
+          <span>Seed &minus;</span><kbd>3</kbd></button>
+        <button type="button" data-t="boundary" title="A run of line the tracing missed (4)">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M2.5 15.5L8 6.5l4.5 6 5-8" fill="none" stroke="var(--bound)" stroke-width="2.4" stroke-linejoin="round"/><circle cx="2.5" cy="15.5" r="2" fill="var(--bound)"/><circle cx="17.5" cy="4.5" r="2" fill="var(--bound)"/></svg>
+          <span>Boundary</span><kbd>4</kbd></button>
+        <button type="button" data-t="extent" title="The outline the region should have, or area it should not (5)">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 7l6-4.5 8 3.5-1.5 9L7 17.5z" fill="var(--ext)" fill-opacity=".18" stroke="var(--ext)" stroke-width="2" stroke-linejoin="round"/></svg>
+          <span>Extent</span><kbd>5</kbd></button>
+        <button type="button" data-t="leader" title="Move where a printed label seeds: the end of its line (6)">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><rect x="1.5" y="2.5" width="8" height="5.5" rx="1" fill="none" stroke="var(--box)" stroke-width="1.6"/><path d="M8 7.5l6.5 7" stroke="var(--seed)" stroke-width="1.8"/><circle cx="14.5" cy="14.5" r="3.2" fill="var(--seed)" stroke="#fff" stroke-width="1.3"/></svg>
+          <span>Leader</span><kbd>6</kbd></button>
       </div>
+      <!-- what the chosen tool's mark says, what the pipeline does with it, and when it is
+           the right one: the difference between the six is the thing a first-time reader
+           cannot guess -->
+      <div class="toolhelp" id="toolhelp" aria-live="polite"></div>
       <div class="opts" id="opts"></div>
       <p class="hint" id="hint">Click the plate to read what the extraction has there.</p>
     </section>
@@ -329,20 +417,49 @@ The <a href="https://github.com/dstolz/GerbilAtlasExplorer/wiki/Correcting-a-Reg
   </aside>
 
   <section class="stage">
-    <canvas id="cv"></canvas>
-    <div class="over" id="over">
-      <div class="zoomers">
-        <button class="rb" id="zin" type="button" title="Zoom in" aria-label="Zoom in">+</button>
-        <button class="rb" id="zout" type="button" title="Zoom out" aria-label="Zoom out">&minus;</button>
-        <button class="rb" id="zfit" type="button" title="Fit the plate (F)" aria-label="Fit the plate">&#10530;</button>
-      </div>
-      <!-- a phone has no Enter key and no double-click, so a shape being drawn says
-           how to finish it on the plate itself -->
-      <div class="drawbar" id="drawbar" hidden>
-        <span id="drawcount" class="mono"></span>
-        <button class="b" id="dundo" type="button">Undo point</button>
-        <button class="b" id="dcancel" type="button">Cancel</button>
-        <button class="b go" id="dfinish" type="button">Finish</button>
+    <!-- the plate and what floats over it, in a box of their own so the bars below the
+         plate are never under a control -->
+    <div class="platebox">
+      <canvas id="cv"></canvas>
+      <div class="over" id="over">
+        <div class="zoomers">
+          <button class="rb" id="zin" type="button" title="Zoom in" aria-label="Zoom in">+</button>
+          <button class="rb" id="zout" type="button" title="Zoom out" aria-label="Zoom out">&minus;</button>
+          <button class="rb" id="zfit" type="button" title="Fit the plate (F)" aria-label="Fit the plate">&#10530;</button>
+        </div>
+        <!-- what every line, box and dot on the plate is -->
+        <div class="legend shut" id="legend">
+          <button class="legbar" id="legbar" type="button" aria-expanded="false" aria-controls="legbody"
+                  title="What each thing drawn on the plate is (K)">Key<span class="chev" aria-hidden="true">&#9662;</span></button>
+          <div class="legbody" id="legbody">
+            <p class="lh">The plate</p>
+            <div class="lr"><svg viewBox="0 0 24 12"><path d="M1 8C6 2 12 10 23 4" fill="none" stroke="var(--trace)" stroke-width="1.6"/></svg>traced line</div>
+            <div class="lr"><svg viewBox="0 0 24 12"><path d="M1 8C6 2 12 10 23 4" fill="none" stroke="var(--bound)" stroke-width="2.2"/></svg>line a correction added</div>
+            <div class="lr"><svg viewBox="0 0 24 12"><rect x="1.5" y="1.5" width="21" height="9" rx="2" fill="none" stroke="var(--regi)" stroke-opacity=".6" stroke-width="1"/></svg>region, as extracted</div>
+            <div class="lr"><svg viewBox="0 0 24 12"><rect x="1.5" y="1.5" width="21" height="9" rx="2" fill="var(--sel)" fill-opacity=".25" stroke="var(--sel)" stroke-width="2"/></svg>the chosen region</div>
+            <div class="lr"><svg viewBox="0 0 24 12"><rect x="1.5" y="1.5" width="21" height="9" rx="2" fill="var(--ext)" fill-opacity=".15" stroke="var(--ext)" stroke-width="1.6"/></svg>moved by the recut</div>
+            <div class="lr"><svg viewBox="0 0 24 12"><rect x="1" y="2" width="9" height="7" fill="none" stroke="var(--box)" stroke-width="1.3"/><path d="M10 6l9 3" stroke="var(--box)" stroke-width="1"/><circle cx="19.5" cy="9" r="2.3" fill="var(--box)"/></svg>printed label, its line and where it seeds</div>
+            <div class="lr"><svg viewBox="0 0 24 12"><rect x="1" y="2" width="9" height="7" fill="none" stroke="var(--box)" stroke-width="1.3"/><path d="M10 6l9 3" stroke="var(--box)" stroke-width="1"/><circle cx="19.5" cy="9" r="2.3" fill="var(--seed)"/></svg>&hellip; moved by an earlier correction</div>
+            <p class="lh">Your marks</p>
+            <div class="lr"><svg viewBox="0 0 24 12"><circle cx="12" cy="6" r="4" fill="var(--seed)" stroke="#fff" stroke-width="1.3"/></svg>Seed + &middot; the region is here</div>
+            <div class="lr"><svg viewBox="0 0 24 12"><path d="M8 2l8 8M8 10l8-8" stroke="var(--unseed)" stroke-width="2.2"/></svg>Seed &minus; &middot; it is not here</div>
+            <div class="lr"><svg viewBox="0 0 24 12"><path d="M2 9L9 3l6 6 7-6" fill="none" stroke="var(--bound)" stroke-width="2.6"/></svg>Boundary &middot; a line the tracing missed</div>
+            <div class="lr"><svg viewBox="0 0 24 12"><path d="M2 4l8-2.5 12 2-2 7H4z" fill="var(--ext)" fill-opacity=".15" stroke="var(--ext)" stroke-width="1.8"/></svg>Extent + &middot; the outline it should have</div>
+            <div class="lr"><svg viewBox="0 0 24 12"><path d="M2 4l8-2.5 12 2-2 7H4z" fill="none" stroke="var(--ext)" stroke-width="1.8"/><path d="M4 1.5l16 9M4 10.5l16-9" stroke="var(--unseed)" stroke-width="1.6"/></svg>Extent &minus; &middot; area it should not have</div>
+            <div class="lr"><svg viewBox="0 0 24 12"><rect x="1" y="2" width="8" height="6" fill="none" stroke="var(--box)" stroke-width="1.3"/><circle cx="13" cy="4" r="2" fill="none" stroke="var(--box)" stroke-width="1" stroke-dasharray="1.5 1"/><path d="M9 5l10 4" stroke="var(--seed)" stroke-width="1.5"/><circle cx="19.5" cy="9" r="2.5" fill="var(--seed)" stroke="#fff" stroke-width="1"/></svg>Leader &middot; a label's line, moved</div>
+          </div>
+        </div>
+        <!-- a phone has no Enter key and no double-click, so a shape being drawn says
+             how to finish it on the plate itself -->
+        <div class="drawbar" id="drawbar" hidden>
+          <span id="drawcount" class="mono"></span>
+          <button class="b" id="dredraw" type="button" title="Replace a stretch of the outline with a line you draw (D)">Redraw a stretch</button>
+          <button class="b" id="dflip" type="button" title="Replace the other side of the outline instead (Tab)">Other side</button>
+          <button class="b warn" id="ddel" type="button" title="Delete the chosen point (Delete)">Delete point</button>
+          <button class="b" id="dundo" type="button" title="Take back the last step (Z)">Undo point</button>
+          <button class="b" id="dcancel" type="button" title="Leave it as it was (Esc)">Cancel</button>
+          <button class="b go" id="dfinish" type="button" title="Keep it (Enter)">Finish</button>
+        </div>
       </div>
     </div>
     <div class="statusbar">
@@ -404,7 +521,14 @@ The <a href="https://github.com/dstolz/GerbilAtlasExplorer/wiki/Correcting-a-Reg
    should have, negative says it has none of the area drawn round -- the hole in a
    ring-like region, or a ring the extraction gave it and the atlas does not. Nothing
    here edits region_extents; a correction is one edit to a pipeline input, and the
-   extents are re-cut from it. */
+   extents are re-cut from it.
+
+   A leader is the fourth: where a printed label seeds. The atlas prints a label that
+   will not fit inside its region outside it, with a line drawn back in, and the region
+   is seeded at the end of that line. Moving the end is a seed carrying the label's
+   `label_index` -- the same entry tools/corrections.py has always read as standing in
+   for that printed box -- so the leader tool writes nothing the schema did not already
+   say. */
 'use strict';
 
 const $ = (id) => document.getElementById(id);
@@ -420,10 +544,16 @@ const S = {
   abbr: '', tool: 'pick', view: {k: 1, x: 0, y: 0}, rot: [1, 0, 0, 1, 0, 0],
   at: null, pending: null,
   drag: null, cut: null, busy: 0, fitted: false,
-  opts: {style: 'solid', closed: false, replaces: null, hemi: '', extkind: 'positive'},
+  opts: {style: 'solid', closed: false, hemi: '', extkind: 'positive', snap: true},
   show: {ink: true, ext: true, lab: true, una: false, cut: false},
   draft: blankDraft(0),
   drafts: new Map(),                    // plate -> the draft made on it, kept while it is away
+  hist: new Map(),                      // plate -> its draft's marks before each change, for Undo
+  ink: null,                            // the plate's traced ink, indexed for snapping
+  hover: null,                          // what a press where the pointer is would take hold of
+  snapAt: null,                         // where the next point would land, when it snaps
+  lead: null,                           // the label chosen under the leader tool
+  hi: null,                             // the mark whose row the pointer is over
 };
 
 /* ------------------------------------------------------------------ frames */
@@ -729,7 +859,9 @@ const Static = {
       page: [W, H], m, im,
       frame: frameOf(pf),
       mm_per_px: Math.sqrt(mm2), mm2_per_px: mm2,
-      bridge_px: 20, min_face_px: 400, support_px: 3,
+      // the floor under a face is the face map's own (probe reports it); a copy of the
+      // constant here went stale when the pipeline's came down from 400 to 100
+      bridge_px: 20, min_face_px: null, support_px: 3,
       paths,
       outline: (DB.brain_outline.data[p] || []).map((g) => g.map(([x, y]) => toPage(x, y))),
       regions,
@@ -786,7 +918,7 @@ const Static = {
       face: fid, face_px: fid ? F.sizes[fid] : 0,
       face_mm2: fid ? Math.round(F.sizes[fid] * F.mm2 * 1e4) / 1e4 : 0,
       names, owner: reg ? reg.abbr : null,
-      ink_px: Math.round(Math.sqrt(best) * 10) / 10};
+      ink_px: Math.round(Math.sqrt(best) * 10) / 10, min_face_px: F.min};
   },
 
   document: async (draft) => { const doc = buildDoc(draft); return {doc, text: renderDoc(doc)}; },
@@ -1145,12 +1277,12 @@ async function loadPlate(n) {
   const d = await SRC.plate(n);
   if (mine !== ASK) return;                 // the plate was changed again while this loaded
   S.plate = n; S.d = d; S.cut = null; S.pending = null;
+  S.ink = null; S.hover = null; S.snapAt = null; S.lead = null; S.hi = null;
   S.rot = quarterTurn(d.m, d.page[0], d.page[1]);
   S.show.cut = false; $('v-cut').checked = false; $('v-cut').disabled = true;
   S.draft = S.drafts.get(n) || blankDraft(n);
   if (!S.draft.abbr) S.draft.abbr = S.abbr;
   S.abbr = S.draft.abbr;
-  S.opts.replaces = null;                   // a label index is one plate's box, not another's
   $('problem').value = S.draft.problem || '';
   S.paths = d.paths.map((p) => ({p: new Path2D(p.d), d: p.d, style: p.style, corr: p.corr}));
   syncPlate(n);
@@ -1190,6 +1322,85 @@ function layerSeg() {
     b.onclick = () => { S.layer = k; layerSeg(); loadImage(); };
     seg.appendChild(b);
   }
+}
+
+/* ------------------------------------------------------------------- the ink
+ *
+ * The traced ink of the plate on screen -- every path of its tracing, cut into the points
+ * flattenD makes of it, and the section outline -- in a grid, so the pointer can ask for
+ * the nearest point of ink as it moves. Those are the points the pipeline's own bridging
+ * measures to: build_region_extents puts every vertex of every flattened polyline in one
+ * k-d tree and bridges an open end to the nearest one within BRIDGE_PX. So a point snapped
+ * onto one is on the ink by the pipeline's measure, and the gap said at a boundary's end is
+ * the gap the bridge would see. The draft's own boundaries are ink too once they are
+ * applied, and are measured along their length, which is how they will be written. */
+
+const INK_CELL = 32;                    // page px
+
+function inkIndex() {
+  if (S.ink) return S.ink;
+  const grid = new Map();
+  const put = (q) => {
+    const k = Math.floor(q[0] / INK_CELL) + ',' + Math.floor(q[1] / INK_CELL);
+    const c = grid.get(k);
+    if (c) c.push(q); else grid.set(k, [q]);
+  };
+  for (const p of S.paths) {
+    if (!p.pts) p.pts = flattenD(p.d);
+    for (const q of p.pts) put(q);
+  }
+  for (const o of S.d.outline) for (const q of o) put(q);
+  S.ink = {grid};
+  return S.ink;
+}
+
+function closestOnSeg(a, b, at) {
+  const vx = b[0] - a[0], vy = b[1] - a[1], L2 = vx * vx + vy * vy;
+  const t = L2 ? Math.max(0, Math.min(1, ((at[0] - a[0]) * vx + (at[1] - a[1]) * vy) / L2)) : 0;
+  return [a[0] + t * vx, a[1] + t * vy];
+}
+
+/* The nearest ink to `at` within r page px -- the tracing, the outline, and the draft's
+   boundaries but the one numbered `skip` -- as {pt, d}, or null. */
+function nearInk(at, r, skip) {
+  const I = inkIndex();
+  let best = null, bd = r * r;
+  const x0 = Math.floor((at[0] - r) / INK_CELL), x1 = Math.floor((at[0] + r) / INK_CELL);
+  const y0 = Math.floor((at[1] - r) / INK_CELL), y1 = Math.floor((at[1] + r) / INK_CELL);
+  for (let cx = x0; cx <= x1; cx++) {
+    for (let cy = y0; cy <= y1; cy++) {
+      const c = I.grid.get(cx + ',' + cy);
+      if (!c) continue;
+      for (const q of c) {
+        const dd = (q[0] - at[0]) * (q[0] - at[0]) + (q[1] - at[1]) * (q[1] - at[1]);
+        if (dd <= bd) { bd = dd; best = q; }
+      }
+    }
+  }
+  S.draft.boundaries.forEach((b, i) => {
+    if (i === skip) return;
+    const pts = b.closed ? b.page_px.concat([b.page_px[0]]) : b.page_px;
+    for (let j = 0; j + 1 < pts.length; j++) {
+      const q = closestOnSeg(pts[j], pts[j + 1], at);
+      const dd = (q[0] - at[0]) * (q[0] - at[0]) + (q[1] - at[1]) * (q[1] - at[1]);
+      if (dd <= bd) { bd = dd; best = q; }
+    }
+  });
+  return best ? {pt: best, d: Math.sqrt(bd)} : null;
+}
+
+const SNAP_PX = 10;                     // screen px: how near the ink a point snaps onto it
+// the boundary being redrawn is not ink to itself
+const skipOf = (p) => (p && p.src && p.src.key === 'boundaries' ? p.src.i : -1);
+function snapPt(at, p) {
+  if (!S.opts.snap) return at;
+  const n = nearInk(at, W(SNAP_PX), skipOf(p));
+  return n ? n.pt.slice() : at;
+}
+// how far a boundary's end is from the ink it has to reach: Infinity past 400 px
+function gapAt(q, skip) {
+  const n = nearInk(q, 400, skip);
+  return n || {pt: null, d: Infinity};
 }
 
 /* ------------------------------------------------------------------ drawing */
@@ -1245,10 +1456,22 @@ function poly(pts, close) {
   for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
   if (close) ctx.closePath();
 }
-function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+// the palette, read once a frame rather than once a path: a theme change is the next frame's
+let CSSV = new Map();
+function css(name) {
+  if (!CSSV.has(name)) CSSV.set(name, getComputedStyle(document.documentElement).getPropertyValue(name).trim());
+  return CSSV.get(name);
+}
+// a frame asked for from the pointer, drawn once however many moves arrive before it
+let FRAME = 0;
+function redraw() {
+  if (FRAME) return;
+  FRAME = requestAnimationFrame(() => { FRAME = 0; draw(); });
+}
 
 function draw() {
   if (!S.d) return;
+  CSSV = new Map();
   const r = cv.getBoundingClientRect();
   screen();
   ctx.clearRect(0, 0, r.width, r.height);
@@ -1301,69 +1524,151 @@ function draw() {
     ctx.setLineDash([]);
   }
 
-  // the printed labels: the box, and where it seeds
-  if (S.show.lab) {
-    for (const L of S.d.labels) {
-      const on = L.abbr === S.abbr;
-      poly(L.box, true);
-      ctx.strokeStyle = on ? css('--accent') : css('--box');
-      ctx.lineWidth = W(on ? 1.6 : 0.9); ctx.stroke();
-      if (L.led) {
-        const c = [(L.box[0][0] + L.box[2][0]) / 2, (L.box[0][1] + L.box[2][1]) / 2];
-        ctx.beginPath(); ctx.moveTo(c[0], c[1]); ctx.lineTo(L.at[0], L.at[1]);
-        ctx.strokeStyle = css('--box'); ctx.lineWidth = W(0.9); ctx.stroke();
-        ctx.beginPath(); ctx.arc(L.at[0], L.at[1], W(3.5), 0, 7);
-        ctx.fillStyle = L.byhand ? css('--seed') : css('--box'); ctx.fill();
-      }
-    }
-  }
+  // the printed labels: the box, and where it seeds -- always, under the leader tool
+  if (S.show.lab || S.tool === 'leader') drawLabels();
 
   drawMarks();
   if (S.pending) drawPending();
+  drawSnap();
   screen();
-  if (S.show.lab) labelText();
+  if (S.show.lab || S.tool === 'leader') labelText();
+  markTags();
   $('zoom').textContent = (S.view.k * 100).toFixed(0) + '%  ·  '
     + (1 / (S.view.k) * S.d.mm_per_px * 1000).toFixed(0) + ' µm/px';
 }
 
+/* Every printed label: its box, and where it seeds. A label on a line seeds at the line's
+   end, drawn as a dot -- blue where an earlier correction moved it -- and a label printed
+   in place seeds at the word, which the leader tool marks with a ring to take hold of.
+   Where the draft moves one, the end it had is left as a dashed ghost, and drawMarks
+   draws the new one. */
+function drawLabels() {
+  const leading = S.tool === 'leader';
+  const hov = S.hover && S.hover.kind === 'label' ? S.hover.L : null;
+  for (const L of S.d.labels) {
+    const on = L.abbr === S.abbr, chosen = S.lead === L;
+    const big = leading && (L === hov || chosen);
+    ctx.globalAlpha = leading && isFeature(L.abbr) ? 0.4 : 1;
+    poly(L.box, true);
+    ctx.strokeStyle = chosen || on ? css('--accent') : css('--box');
+    ctx.lineWidth = W(chosen ? 2.4 : on ? 1.6 : 0.9); ctx.stroke();
+    const moved = leaderSeed(L) >= 0;
+    const c = boxMid(L);
+    if (L.led) {
+      ctx.beginPath(); ctx.moveTo(c[0], c[1]); ctx.lineTo(L.at[0], L.at[1]);
+      ctx.strokeStyle = css('--box'); ctx.lineWidth = W(big ? 1.6 : 0.9);
+      if (moved) ctx.setLineDash([W(3), W(3)]);
+      ctx.stroke(); ctx.setLineDash([]);
+    }
+    if (moved) {                                  // where it ended before the draft moved it
+      ctx.beginPath(); ctx.arc(L.at[0], L.at[1], W(4.5), 0, 7);
+      ctx.setLineDash([W(2), W(2)]);
+      ctx.strokeStyle = css('--box'); ctx.lineWidth = W(1.3); ctx.stroke();
+      ctx.setLineDash([]);
+    } else if (L.led) {
+      ctx.beginPath(); ctx.arc(L.at[0], L.at[1], W(big ? 6.5 : leading ? 4.5 : 3.5), 0, 7);
+      ctx.fillStyle = L.byhand ? css('--seed') : css('--box'); ctx.fill();
+      if (leading) { ctx.strokeStyle = '#fff'; ctx.lineWidth = W(1.3); ctx.stroke(); }
+    } else if (leading) {
+      ctx.beginPath(); ctx.arc(c[0], c[1], W(big ? 6.5 : 4.5), 0, 7);
+      ctx.fillStyle = '#fff'; ctx.fill();
+      ctx.strokeStyle = css('--box'); ctx.lineWidth = W(big ? 2.4 : 1.8); ctx.stroke();
+    }
+  }
+  ctx.globalAlpha = 1;
+}
+
+// text with a pale halo, so it reads on the plate under it
+function tagAt(text, x, y, color) {
+  ctx.lineJoin = 'round';
+  ctx.strokeStyle = 'rgba(255,255,255,.92)'; ctx.lineWidth = 3.5; ctx.strokeText(text, x, y);
+  ctx.fillStyle = color; ctx.fillText(text, x, y);
+}
+
 function labelText() {
-  if (!S.abbr) return;
   const V = viewM();
   ctx.font = '600 11px ui-sans-serif,system-ui,sans-serif';
-  ctx.fillStyle = css('--accent');
+  const hov = S.tool === 'leader' && S.hover && S.hover.kind === 'label' ? S.hover.L : null;
   for (const L of S.d.labels) {
-    if (L.abbr !== S.abbr) continue;
+    if (L.abbr !== S.abbr && L !== hov && L !== S.lead) continue;
     // the box's top-left on screen, which on a turned page is not its first corner
     let x = Infinity, y = Infinity;
     for (const q of L.box) {
       const at = xf(V, q[0], q[1]);
       x = Math.min(x, at[0]); y = Math.min(y, at[1]);
     }
-    ctx.fillText(L.abbr + '[' + L.index + ']', x, y - 3);
+    let t = L.abbr + '[' + L.index + ']';
+    if (L === hov && isFeature(L.abbr)) t += ' · a feature, not a region';
+    tagAt(t, x, y - 3, css('--accent'));
   }
 }
 
+/* What each mark says, beside it: a dot alone does not say which region it is for. */
+function markTags() {
+  const V = viewM(), D = S.draft, p = S.pending;
+  ctx.font = '600 10.5px ui-sans-serif,system-ui,sans-serif';
+  for (const s of D.seeds) {
+    const at = xf(V, s.page_px[0], s.page_px[1]);
+    const t = isLead(s) ? s.abbr + '[' + s.label_index + ']' : (s.kind === 'negative' ? 'not ' : '') + s.abbr;
+    tagAt(t, at[0] + 9, at[1] - 7, s.kind === 'negative' ? css('--unseed') : css('--seed'));
+  }
+  D.extents.forEach((e, i) => {
+    if (p && p.src && p.src.key === 'extents' && p.src.i === i) return;
+    let top = null;
+    for (const q of e.page_px) {
+      const at = xf(V, q[0], q[1]);
+      if (!top || at[1] < top[1]) top = at;
+    }
+    if (top) tagAt((e.kind === 'negative' ? 'not ' : '') + e.abbr, top[0] + 4, top[1] - 6, css('--ext'));
+  });
+}
+
 function drawMarks() {
-  const D = S.draft;
-  for (const e of D.extents) {
+  const D = S.draft, p = S.pending;
+  const editing = (key, i) => p && p.src && p.src.key === key && p.src.i === i;
+  const lit = (key, i) => S.hi && S.hi.key === key && S.hi.i === i;
+  const glow = () => {                     // the mark whose row the pointer is over
+    ctx.save(); ctx.strokeStyle = 'rgba(255,190,0,.55)'; ctx.lineWidth = W(10);
+    ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.stroke(); ctx.restore();
+  };
+  D.extents.forEach((e, i) => {
+    if (editing('extents', i)) return;
     const neg = e.kind === 'negative';
     poly(e.page_px, true);
+    if (lit('extents', i)) glow();
     if (!neg) { ctx.fillStyle = 'rgba(196,0,196,.12)'; ctx.fill(); }
     ctx.strokeStyle = css('--ext'); ctx.lineWidth = W(2); ctx.stroke();
     if (neg) crossOut(e.page_px);
-  }
-  for (const b of D.boundaries) {
+  });
+  D.boundaries.forEach((b, i) => {
+    if (editing('boundaries', i)) return;
     poly(b.page_px, !!b.closed);
+    if (lit('boundaries', i)) glow();
     ctx.strokeStyle = css('--bound'); ctx.lineWidth = W(2.5);
     ctx.setLineDash(b.style === 'dashed' ? [W(8), W(5)] : []);
     ctx.stroke(); ctx.setLineDash([]);
-    for (const q of [b.page_px[0], b.page_px[b.page_px.length - 1]]) {
-      ctx.beginPath(); ctx.arc(q[0], q[1], W(4), 0, 7);
-      ctx.strokeStyle = css('--bound'); ctx.lineWidth = W(1.5); ctx.stroke();
-    }
+    if (!b.closed) endMarks(b.page_px, i, false);
+  });
+  // the point of a finished shape a press would open it at
+  if (!p && S.hover && S.hover.kind === 'mark') {
+    const q = D[S.hover.key][S.hover.m].page_px[S.hover.i];
+    ctx.beginPath(); ctx.arc(q[0], q[1], W(6.5), 0, 7);
+    ctx.fillStyle = '#fff'; ctx.fill();
+    ctx.strokeStyle = S.hover.key === 'extents' ? css('--ext') : css('--bound');
+    ctx.lineWidth = W(2); ctx.stroke();
   }
-  for (const s of D.seeds) {
+  D.seeds.forEach((s, i) => {
     const [x, y] = s.page_px, neg = s.kind === 'negative';
+    const L = isLead(s) ? labelOf(s.abbr, s.label_index) : null;
+    if (lit('seeds', i)) {
+      ctx.beginPath(); ctx.arc(x, y, W(12), 0, 7);
+      ctx.fillStyle = 'rgba(255,190,0,.5)'; ctx.fill();
+    }
+    if (L) {                               // a label's line, moved: from its box to here
+      const c = boxMid(L);
+      ctx.beginPath(); ctx.moveTo(c[0], c[1]); ctx.lineTo(x, y);
+      ctx.strokeStyle = css('--seed'); ctx.lineWidth = W(1.8); ctx.stroke();
+    }
     if (neg) {
       ctx.strokeStyle = css('--unseed'); ctx.lineWidth = W(2.5);
       ctx.beginPath();
@@ -1375,28 +1680,118 @@ function drawMarks() {
       ctx.fillStyle = css('--seed'); ctx.fill();
       ctx.strokeStyle = '#fff'; ctx.lineWidth = W(1.6); ctx.stroke();
     }
+  });
+}
+
+/* A boundary's two ends, each ringed in the colour of what the pipeline will do with it:
+   on the ink or near enough to be bridged, or too far -- with a dashed line to the ink it
+   would have to reach, and while it is being drawn, how far that is. */
+function endMarks(pts, skip, say) {
+  const bridge = S.d.bridge_px;
+  for (const q of [pts[0], pts[pts.length - 1]]) {
+    const g = gapAt(q, skip);
+    const ok = g.d <= bridge;
+    if (!ok && g.pt) {
+      ctx.beginPath(); ctx.moveTo(q[0], q[1]); ctx.lineTo(g.pt[0], g.pt[1]);
+      ctx.setLineDash([W(3), W(3)]); ctx.strokeStyle = css('--unseed'); ctx.lineWidth = W(1.3);
+      ctx.stroke(); ctx.setLineDash([]);
+    }
+    ctx.beginPath(); ctx.arc(q[0], q[1], W(5), 0, 7);
+    ctx.strokeStyle = ok ? css('--bound') : css('--unseed'); ctx.lineWidth = W(ok ? 1.5 : 2.2);
+    ctx.stroke();
+    if (say && g.d > 0.5) {
+      const at = xf(viewM(), q[0], q[1]);
+      screen();
+      ctx.font = '600 10.5px ui-sans-serif,system-ui,sans-serif';
+      tagAt(isFinite(g.d) ? g.d.toFixed(0) + ' px to the ink' + (ok ? ', bridged' : ': not bridged') : 'far from the ink',
+        at[0] + 8, at[1] + 14, ok ? css('--bound') : css('--unseed'));
+      page();
+    }
   }
 }
 
 function drawPending() {
   const p = S.pending, pts = p.pts;
   if (!pts.length) return;
-  const neg = p.kind === 'extent' && p.ekind === 'negative';
-  const live = S.at && !p.edit ? pts.concat([S.at]) : pts;
-  poly(live, p.kind === 'extent');
-  ctx.strokeStyle = p.kind === 'extent' ? css('--ext') : css('--bound');
-  ctx.lineWidth = W(2.5);
-  ctx.setLineDash(p.kind === 'boundary' && S.opts.style === 'dashed' ? [W(8), W(5)] : []);
-  ctx.stroke(); ctx.setLineDash([]);
-  if (p.kind === 'extent' && pts.length > 2 && !neg) { ctx.fillStyle = 'rgba(196,0,196,.10)'; ctx.fill(); }
-  if (neg && pts.length > 2) crossOut(live);
-  for (let i = 0; i < pts.length; i++) {
-    ctx.beginPath(); ctx.arc(pts[i][0], pts[i][1], W(i === p.hover ? 6 : 4), 0, 7);
-    ctx.fillStyle = i === p.hover ? '#fff' : (p.kind === 'extent' ? css('--ext') : css('--bound'));
-    ctx.fill();
-    ctx.strokeStyle = p.kind === 'extent' ? css('--ext') : css('--bound');
-    ctx.lineWidth = W(1.5); ctx.stroke();
+  const ext = p.kind === 'extent', neg = ext && p.ekind === 'negative';
+  const col = ext ? css('--ext') : css('--bound');
+  const closed = ext || !!p.closed;
+  const drawing = !p.edit;
+  const nxt = drawing && S.at && !PTR.size ? (S.snapAt || S.at) : null;
+  let shape = nxt ? pts.concat([nxt]) : pts;
+  let gone = null;
+  if (p.redraw) {
+    const r = redrawn(p, false);
+    if (r) { shape = r.pts; gone = r.gone; }
   }
+  if (gone) {                                    // the stretch the new line replaces
+    poly(gone, false);
+    ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.lineWidth = W(6); ctx.stroke();
+    ctx.strokeStyle = css('--unseed'); ctx.lineWidth = W(3); ctx.setLineDash([W(6), W(4)]);
+    ctx.stroke(); ctx.setLineDash([]);
+  }
+  poly(shape, closed && shape.length > 2);
+  if (ext && shape.length > 2 && !neg) { ctx.fillStyle = 'rgba(196,0,196,.10)'; ctx.fill(); }
+  ctx.strokeStyle = col; ctx.lineWidth = W(2.5);
+  ctx.setLineDash(p.kind === 'boundary' && p.style === 'dashed' ? [W(8), W(5)] : []);
+  ctx.stroke(); ctx.setLineDash([]);
+  if (neg && shape.length > 2) crossOut(shape);
+
+  if (p.redraw) {                                // the new line, and where it leaves the shape
+    const rp = p.redraw.pts;
+    if (rp.length) {
+      const live = S.at && !PTR.size ? rp.concat([S.snapAt || S.at]) : rp;
+      poly(live, false);
+      ctx.strokeStyle = css('--accent'); ctx.lineWidth = W(1.5); ctx.stroke();
+      for (const q of rp) {
+        ctx.beginPath(); ctx.arc(q[0], q[1], W(4), 0, 7);
+        ctx.fillStyle = css('--accent'); ctx.fill();
+      }
+    }
+    return;
+  }
+
+  // the points: hollow where the pointer is over one, ringed where one is chosen
+  const hv = S.hover && S.hover.kind === 'vertex' ? S.hover.i : -1;
+  const r0 = pts.length > 60 ? 3 : 4;
+  for (let i = 0; i < pts.length; i++) {
+    const on = i === hv || i === G_VERTEX(), sel = i === p.sel;
+    const first = drawing && ext && i === 0 && pts.length >= 3;
+    ctx.beginPath(); ctx.arc(pts[i][0], pts[i][1], W(on || first ? 6.5 : sel ? 5.5 : r0), 0, 7);
+    ctx.fillStyle = on || first ? '#fff' : col;
+    ctx.fill();
+    ctx.strokeStyle = col; ctx.lineWidth = W(1.5); ctx.stroke();
+    if (sel) {
+      ctx.beginPath(); ctx.arc(pts[i][0], pts[i][1], W(9), 0, 7);
+      ctx.strokeStyle = css('--accent'); ctx.lineWidth = W(2); ctx.stroke();
+    }
+  }
+  // where a press on an edge would put a new point
+  if (p.edit && S.hover && S.hover.kind === 'edge') {
+    const q = S.hover.pt;
+    ctx.beginPath(); ctx.arc(q[0], q[1], W(6), 0, 7);
+    ctx.fillStyle = '#fff'; ctx.fill();
+    ctx.strokeStyle = col; ctx.lineWidth = W(1.5); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(q[0] - W(3.5), q[1]); ctx.lineTo(q[0] + W(3.5), q[1]);
+    ctx.moveTo(q[0], q[1] - W(3.5)); ctx.lineTo(q[0], q[1] + W(3.5));
+    ctx.stroke();
+  }
+  if (p.kind === 'boundary' && !closed && pts.length >= (drawing ? 1 : 2)) {
+    endMarks(drawing && nxt ? [pts[0], nxt] : [pts[0], pts[pts.length - 1]], skipOf(p), true);
+  }
+}
+// the point being dragged, which is drawn as the pointer's
+const G_VERTEX = () => (G && G.kind === 'vertex' ? G.i : -1);
+
+// where the next point would snap to: a ring on the ink
+function drawSnap() {
+  if (!S.snapAt) return;
+  const q = S.snapAt;
+  ctx.beginPath(); ctx.arc(q[0], q[1], W(8), 0, 7);
+  ctx.strokeStyle = css('--bound'); ctx.lineWidth = W(1.6); ctx.stroke();
+  ctx.beginPath(); ctx.arc(q[0], q[1], W(2), 0, 7);
+  ctx.fillStyle = css('--bound'); ctx.fill();
 }
 
 /* An extent that says the region is not there, crossed over the box of what it
@@ -1413,15 +1808,239 @@ function crossOut(pts) {
   ctx.strokeStyle = css('--unseed'); ctx.lineWidth = W(2.5); ctx.stroke();
 }
 
+/* ------------------------------------------------------------------ leaders */
+
+// A feature of the drawing -- a fissure, a vessel -- is printed and seeded like a region,
+// but a correction names regions only, so its line is not one to move from here.
+function isFeature(ab) {
+  const f = S.boot.features;
+  return Array.isArray(f) ? f.includes(ab) : !!(f && f[ab]);
+}
+const labelOf = (ab, i) => S.d.labels.find((L) => L.abbr === ab && L.index === i);
+const boxMid = (L) => [(L.box[0][0] + L.box[2][0]) / 2, (L.box[0][1] + L.box[2][1]) / 2];
+// a seed standing in for a printed label: positive, with the label's index -- what
+// tools/corrections.py apply writes over that label's seed
+const isLead = (s) => s.label_index !== undefined && s.label_index !== null
+  && (s.kind || 'positive') === 'positive';
+// the draft's seed standing in for label L, or -1
+const leaderSeed = (L) => S.draft.seeds.findIndex((s) => isLead(s) && s.abbr === L.abbr
+  && s.label_index === L.index);
+// where label L seeds: where the draft has moved it, else where the plate has it
+const endOf = (L) => { const k = leaderSeed(L); return k >= 0 ? S.draft.seeds[k].page_px : L.at; };
+
+/* The label a press takes hold of, and by what: the one whose end is nearest, within
+   reach -- which a drag moves -- else the box it is inside, which a click chooses and a
+   drag pans across. While a label is chosen only ends count, so a click inside another
+   label's box puts the chosen one's end down there: the face a line should end in is as
+   likely as any to have a word printed in it. */
+function labelAt(q, endsOnly) {
+  let best = null, bd = W(HIT_PX + 3);
+  for (const L of S.d.labels) {
+    const e = endOf(L), d = Math.hypot(e[0] - q[0], e[1] - q[1]);
+    if (d < bd) { bd = d; best = L; }
+  }
+  if (best) return {L: best, end: true};
+  if (endsOnly) return null;
+  for (const L of S.d.labels) if (pip(L.box, q[0], q[1])) return {L, end: false};
+  return null;
+}
+
+// Label L's line, to end at `at`: the seed standing in for it, made or moved.
+function leaderTo(L, at) {
+  const mm = toMm(at[0], at[1]);
+  const pg = [round2(at[0]), round2(at[1])], m3 = [round3(mm[0]), round3(mm[1])];
+  const k = leaderSeed(L);
+  if (k >= 0) { S.draft.seeds[k].page_px = pg; S.draft.seeds[k].mm = m3; }
+  else {
+    S.draft.seeds.push({abbr: L.abbr, kind: 'positive', page_px: pg, mm: m3, note: '',
+      label_index: L.index});
+  }
+  marked();
+}
+
+/* A move of L's line is over. Brought back to where it ended, it is no move at all; else
+   the region it names is the one being worked on now, and the face it lands in is read. */
+function leaderDone(L) {
+  const k = leaderSeed(L);
+  S.lead = null;
+  if (k >= 0) {
+    const q = S.draft.seeds[k].page_px;
+    if (Math.hypot(q[0] - L.at[0], q[1] - L.at[1]) < W(4)) {
+      S.draft.seeds.splice(k, 1);
+      toast('The line of ' + L.abbr + '[' + L.index + '] is back where it was: no move');
+    }
+  }
+  if (L.abbr !== S.abbr) select(L.abbr);
+  renderMarks(); renderOpts(); draw();
+  const at = leaderSeed(L) >= 0 ? S.draft.seeds[leaderSeed(L)].page_px : null;
+  if (!at) return;
+  // what build_region_extents does with the end: seeds the face it is in, where that face
+  // is one a seed may hold; else the largest such face in reach of it, or nothing
+  const who = L.abbr + '[' + L.index + ']';
+  probe(at, (r) => {
+    const min = r.min_face_px || S.d.min_face_px;
+    const others = r.names.filter((n) => n !== L.abbr);
+    return r.face && r.face_px >= min
+      ? '\n  -> the line of ' + who + ' ends here now: the label’s own seed withdraws, and '
+        + 'this face is seeded as ' + L.abbr + (others.length ? ' beside ' + others.join(', ')
+        + ', which seed it today, and the watershed splits it between them' : '') + '.'
+      : '\n  -> the line of ' + who + ' ends here now, ' + (r.face
+        ? 'in a face of ' + r.face_px + ' px, under the ' + min + ' px a seed needs'
+        : 'on a traced line or outside the section')
+        + ': the pipeline seeds the largest face in reach of it instead, or none. '
+        + 'Put the end inside the face the label means.';
+  });
+}
+
+function chooseLabel(L) {
+  if (isFeature(L.abbr)) {
+    toast(L.abbr + ' is a feature of the drawing, not a region: a correction cannot move its line', true);
+    return;
+  }
+  S.lead = S.lead === L ? null : L;
+  renderOpts(); draw();
+}
+
+/* --------------------------------------------------------- reshaping a shape */
+
+/* The nearest point of a polyline, or of a ring, to `at`: the edge it is on, how far
+   along, and where. */
+function onShape(pts, closed, at) {
+  const n = pts.length, m = closed ? n : n - 1;
+  let best = null;
+  for (let i = 0; i < m; i++) {
+    const a = pts[i], b = pts[(i + 1) % n];
+    const vx = b[0] - a[0], vy = b[1] - a[1], L2 = vx * vx + vy * vy;
+    const t = L2 ? Math.max(0, Math.min(1, ((at[0] - a[0]) * vx + (at[1] - a[1]) * vy) / L2)) : 0;
+    const q = [a[0] + t * vx, a[1] + t * vy], d = Math.hypot(q[0] - at[0], q[1] - at[1]);
+    if (!best || d < best.d) best = {i, t, pt: q, d};
+  }
+  return best;
+}
+
+// consecutive points closer than a hundredth of a pixel are one point
+function dedupe(pts, closed) {
+  const out = [];
+  for (const q of pts) {
+    const l = out[out.length - 1];
+    if (!l || Math.hypot(q[0] - l[0], q[1] - l[1]) > 0.01) out.push(q);
+  }
+  while (closed && out.length > 1 && Math.hypot(out[0][0] - out[out.length - 1][0],
+    out[0][1] - out[out.length - 1][1]) <= 0.01) out.pop();
+  return out;
+}
+
+/* The shape with a stretch of it replaced by `route`. The route's first and last points are
+   put on the shape -- they are where the new line leaves it and where it rejoins -- and
+   what lies between them is dropped: on a line, the run between the two; on a ring, the
+   shorter of its two sides, or the longer one where `flip` says so. Returns the new points
+   and the stretch they replace, or null where the route does not make a shape. */
+function splice(pts, closed, route, flip) {
+  if (route.length < 2 || pts.length < 2) return null;
+  let A = onShape(pts, closed, route[0]), B = onShape(pts, closed, route[route.length - 1]);
+  let mid = route.slice(1, -1);
+  const n = pts.length;
+  if (!closed) {
+    if (A.i + A.t > B.i + B.t) { [A, B] = [B, A]; mid = mid.slice().reverse(); }
+    const out = dedupe(pts.slice(0, A.i + 1).concat([A.pt], mid, [B.pt], pts.slice(B.i + 1)), false);
+    return out.length >= 2
+      ? {pts: out, gone: [A.pt].concat(pts.slice(A.i + 1, B.i + 1), [B.pt])} : null;
+  }
+  const seg = (i) => Math.hypot(pts[(i + 1) % n][0] - pts[i][0], pts[(i + 1) % n][1] - pts[i][1]);
+  const cum = [0];
+  for (let i = 0; i < n; i++) cum.push(cum[i] + seg(i));
+  const per = cum[n];
+  const sA = cum[A.i] + A.t * seg(A.i), sB = cum[B.i] + B.t * seg(B.i);
+  const ahead = (s0, s1) => (((s1 - s0) % per) + per) % per;
+  const lenAB = ahead(sA, sB);
+  if (lenAB < 1e-6 || per - lenAB < 1e-6) return null;
+  // the vertices strictly between two places on the ring, going forward from the first
+  const between = (P0, s0, len) => {
+    const out = [];
+    for (let k = 1; k <= n; k++) {
+      const v = (P0.i + k) % n, d = ahead(s0, cum[v]);
+      if (d >= len - 1e-9) break;
+      if (d > 1e-9) out.push(pts[v]);
+    }
+    return out;
+  };
+  const ab = between(A, sA, lenAB), ba = between(B, sB, per - lenAB);
+  const dropAB = (lenAB <= per - lenAB) !== !!flip;
+  const head = [A.pt].concat(mid, [B.pt]);
+  const out = dedupe(dropAB ? head.concat(ba) : head.concat(ab.slice().reverse()), true);
+  if (out.length < 3) return null;
+  return {pts: out, gone: dropAB ? [A.pt].concat(ab, [B.pt]) : [B.pt].concat(ba, [A.pt])};
+}
+
+// the redraw in hand, with the pointer as its last point while it is still being drawn
+function redrawn(p, final) {
+  const rp = p.redraw.pts;
+  const route = !final && S.at && !PTR.size ? rp.concat([S.snapAt || S.at]) : rp;
+  return splice(p.pts, p.kind === 'extent' || !!p.closed, route, p.redraw.flip);
+}
+
+function openEditor(key, i) {
+  const m = S.draft[key][i];
+  S.pending = {kind: key === 'extents' ? 'extent' : 'boundary', edit: true,
+    pts: m.page_px.map((q) => q.slice()), abbr: m.abbr, ekind: m.kind, ring: m.ring,
+    closed: key === 'extents' || !!m.closed, style: m.style || 'solid',
+    src: {key, i}, hist: [], sel: -1, redraw: null, opened: performance.now()};
+  if (key === 'boundaries') { S.opts.style = S.pending.style; S.opts.closed = S.pending.closed; }
+  renderOpts(); draw();
+}
+
+// the editor's own undo: the points as they were before each step
+function stepPending() {
+  const p = S.pending;
+  p.hist.push(p.pts.map((q) => q.slice()));
+  if (p.hist.length > 300) p.hist.shift();
+}
+
+function deleteVertex(i) {
+  const p = S.pending, ring = p.kind === 'extent' || p.closed;
+  if (p.pts.length <= (ring ? 3 : 2)) {
+    toast(ring ? 'An outline keeps three points at least' : 'A line keeps two points at least', true);
+    return;
+  }
+  stepPending();
+  p.pts.splice(i, 1);
+  p.sel = -1;
+  draw(); hintFor();
+}
+
+function startRedraw() {
+  const p = S.pending;
+  if (!p || !p.edit) return;
+  p.redraw = p.redraw ? null : {pts: [], flip: false};
+  p.sel = -1;
+  draw(); hintFor();
+}
+
+function applyRedraw() {
+  const p = S.pending, r = redrawn(p, true);
+  if (!r) {
+    toast(p.redraw.pts.length < 2 ? 'The new line needs a point where it leaves the shape and one where it rejoins'
+      : 'That line does not make a shape: it leaves and rejoins at one place', true);
+    return;
+  }
+  stepPending();
+  p.pts = r.pts;
+  p.redraw = null;
+  draw(); hintFor();
+}
+
 /* ------------------------------------------------------------------ pointer */
 
 /* One gesture model for a mouse and for fingers, which is what makes the page work on
-   a phone: a tap acts, a drag pans, two fingers pinch, and in the extent editor a drag
-   that starts on a vertex moves that vertex instead. A press that never travels further
-   than TAP_PX is a tap however it was made, so the same code answers a click and a
-   fingertip, and the tool acts on release rather than on press -- which is also what
+   a phone: a tap acts, a drag pans, two fingers pinch -- and a drag that starts on
+   something that can be moved moves it instead: a point of a shape, an edge of one (which
+   puts a point there), a seed, the end of a label's line. A press that never travels
+   further than TAP_PX is a tap however it was made, so the same code answers a click and
+   a fingertip, and the tool acts on release rather than on press -- which is also what
    lets a drag out of a mis-aimed press be taken back. */
 const TAP_PX = 6;
+const TOUCH = matchMedia('(pointer: coarse)').matches;
+const HIT_PX = TOUCH ? 16 : 9;         // screen px: how near a press has to be to take hold
 const PTR = new Map();                 // the pointers down, in canvas-local px
 let G = null;                          // the gesture in progress
 
@@ -1437,9 +2056,65 @@ function twoPointers() {
 }
 function setPan(on) { document.querySelector('.stage').classList.toggle('pan', !!on); }
 
+function nearVertex(pts, at) {
+  let best = -1, bd = W(HIT_PX);
+  for (let i = 0; i < pts.length; i++) {
+    const d = Math.hypot(pts[i][0] - at[0], pts[i][1] - at[1]);
+    if (d < bd) { bd = d; best = i; }
+  }
+  return best;
+}
+function nearEdge(pts, at, closed) {
+  const q = pts.length > 1 ? onShape(pts, closed, at) : null;
+  return q && q.d < W(HIT_PX * 0.8) ? q : null;
+}
+function nearSeed(at) {
+  let best = -1, bd = W(HIT_PX);
+  S.draft.seeds.forEach((s, i) => {
+    if (isLead(s)) return;
+    const d = Math.hypot(s.page_px[0] - at[0], s.page_px[1] - at[1]);
+    if (d < bd) { bd = d; best = i; }
+  });
+  return best;
+}
+
+/* What a press at page point `q` would take hold of, for the tool in hand. */
+function grabAt(q) {
+  const p = S.pending;
+  if (p) {
+    if (!p.edit || p.redraw) return null;
+    const i = nearVertex(p.pts, q);
+    if (i >= 0) return {kind: 'vertex', i};
+    const e = nearEdge(p.pts, q, p.kind === 'extent' || !!p.closed);
+    return e ? {kind: 'edge', e: e.i, pt: e.pt} : null;
+  }
+  if (S.tool === 'boundary' || S.tool === 'extent') {
+    // a point of a shape already drawn: the press opens it, and moves the point
+    const key = S.tool === 'extent' ? 'extents' : 'boundaries', L = S.draft[key];
+    for (let m = L.length - 1; m >= 0; m--) {
+      const i = nearVertex(L[m].page_px, q);
+      if (i >= 0) return {kind: 'mark', key, m, i};
+    }
+    return null;
+  }
+  if (S.tool === 'seed' || S.tool === 'unseed') {
+    const i = nearSeed(q);
+    return i >= 0 ? {kind: 'seed', i} : null;
+  }
+  if (S.tool === 'leader') {
+    const hit = labelAt(q, !!S.lead);
+    return hit ? {kind: 'label', L: hit.L, end: hit.end} : null;
+  }
+  return null;
+}
+
 cv.addEventListener('pointerdown', (ev) => {
   if (!S.d) return;
   ev.preventDefault();
+  // which also keeps the focus from moving, so it is moved here: a key pressed next is for
+  // the plate, not for the box that was ticked or the field that was typed in before it
+  const had = document.activeElement;
+  if (had && had !== document.body && had.blur) had.blur();
   try { cv.setPointerCapture(ev.pointerId); } catch (e) { /* a synthetic pointer */ }
   const at = local(ev);
   PTR.set(ev.pointerId, {at, from: at});
@@ -1450,14 +2125,20 @@ cv.addEventListener('pointerdown', (ev) => {
     return;
   }
   if (PTR.size > 2 || ev.button > 0 && ev.button !== 1 && ev.button !== 2) return;
-  const p = S.pending;
-  if (p && p.edit && ev.button === 0 && !ev.shiftKey) {   // the editor takes the drag
-    const page = pageOf(at);
-    const i = nearVertex(p.pts, page);
-    if (i >= 0 && ev.altKey) { if (p.pts.length > 3) p.pts.splice(i, 1); draw(); return; }
-    if (i >= 0) { G = {kind: 'vertex', i}; return; }
-    const e = nearEdge(p.pts, page);
-    if (e >= 0) { p.pts.splice(e + 1, 0, page); G = {kind: 'vertex', i: e + 1}; draw(); return; }
+  const q = pageOf(at);
+  const g = ev.button === 0 && !ev.shiftKey ? grabAt(q) : null;
+  if (g) {
+    if (g.kind === 'vertex' && ev.altKey) { deleteVertex(g.i); return; }
+    if (g.kind === 'mark') {
+      openEditor(g.key, g.m);
+      G = {kind: 'vertex', i: g.i, from: at, moved: false};
+    } else {
+      G = Object.assign(g, {from: at, moved: false});
+    }
+    if (G.kind === 'vertex') S.pending.sel = G.i;
+    S.hover = null;
+    draw(); drawbar();
+    return;
   }
   G = {kind: 'pan', from: at, v0: Object.assign({}, S.view), travelled: 0,
     tap: ev.button === 0 && !ev.shiftKey};
@@ -1473,7 +2154,16 @@ cv.addEventListener('pointermove', (ev) => {
     const k = Math.max(0.02, Math.min(40, G.v0.k * t.d / G.d0));
     S.fitted = false;
     S.view = {k, x: t.mid[0] - G.p0[0] * k, y: t.mid[1] - G.p0[1] * k};
-    draw();
+    redraw();
+    return;
+  }
+  const q = pageOf(at);
+  S.at = q;
+  if (G && G.kind !== 'pan' && G.kind !== 'pinch' && held) {
+    // half a tap's travel before anything moves, so a click that trembles moves nothing
+    if (!G.moved && Math.hypot(at[0] - G.from[0], at[1] - G.from[1]) <= TAP_PX / 2) return;
+    dragTo(G, q);
+    readout(q);
     return;
   }
   if (G && G.kind === 'pan' && held) {
@@ -1483,46 +2173,132 @@ cv.addEventListener('pointermove', (ev) => {
       S.fitted = false;
       setPan(true);
       S.view = {k: G.v0.k, x: G.v0.x + at[0] - G.from[0], y: G.v0.y + at[1] - G.from[1]};
-      draw();
+      redraw();
       return;
     }
   }
-  const page = pageOf(at);
-  S.at = page;
-  if (G && G.kind === 'vertex') { S.pending.pts[G.i] = page; draw(); return; }
-  if (S.pending && S.pending.edit) {
-    const i = nearVertex(S.pending.pts, page);
-    if (i !== S.pending.hover) { S.pending.hover = i; draw(); }
-  }
-  readout(page);
-  if (S.pending && !S.pending.edit && !PTR.size) draw();     // the line to the pointer
+  hoverAt(q);
+  readout(q);
 });
+
+function dragTo(g, q) {
+  if (g.kind === 'label' && isFeature(g.L.abbr)) return;   // on release, it says why
+  if (g.kind === 'label' && !g.end) {              // a drag from a word pans
+    G = {kind: 'pan', from: g.from, v0: Object.assign({}, S.view), travelled: TAP_PX + 1, tap: false};
+    setPan(true);
+    return;
+  }
+  const first = !g.moved;
+  g.moved = true;
+  const p = S.pending;
+  if (g.kind === 'edge') {                         // bending an edge puts a point on it
+    stepPending();
+    p.pts.splice(g.e + 1, 0, q);
+    g.kind = 'vertex'; g.i = g.e + 1;
+  } else if (g.kind === 'vertex' && first) stepPending();
+  if (g.kind === 'vertex') {
+    const s = snapPt(q, p);
+    S.snapAt = s === q ? null : s;
+    p.pts[g.i] = s;
+    p.sel = g.i;
+  } else if (g.kind === 'seed') {
+    if (first) remember();
+    const s = S.draft.seeds[g.i], mm = toMm(q[0], q[1]);
+    s.page_px = [round2(q[0]), round2(q[1])]; s.mm = [round3(mm[0]), round3(mm[1])];
+    marked();
+  } else if (g.kind === 'label') {
+    if (first) remember();
+    leaderTo(g.L, q);
+  }
+  redraw();
+}
+
+const hoverKey = (h) => (!h ? '' : h.kind === 'label' ? 'label ' + h.L.abbr + '[' + h.L.index + ']' + h.end
+  : h.kind === 'mark' ? 'mark ' + h.key + h.m + ':' + h.i : h.kind + ' ' + (h.kind === 'edge' ? h.e : h.i));
+
+/* What the pointer is over: the cursor says what a press would do, the plate shows the
+   point it would take, and a drawing tool shows where on the ink a point would snap to. */
+function hoverAt(q) {
+  const p = S.pending;
+  let h = null, cur = 'crosshair';
+  if (!PTR.size) {
+    h = grabAt(q);
+    if (h) {
+      cur = h.kind === 'edge' ? 'copy' : h.kind === 'label'
+        ? (isFeature(h.L.abbr) ? 'not-allowed' : h.end ? 'grab' : 'pointer') : 'move';
+    }
+  }
+  const snaps = S.opts.snap && !h && (p ? (!p.edit || (p.redraw && p.redraw.pts.length > 0))
+    : S.tool === 'boundary' || (S.tool === 'extent' && !!S.abbr));
+  let to = snaps ? (nearInk(q, W(SNAP_PX), skipOf(p)) || {}).pt || null : null;
+  // a new line's first point goes on the shape it leaves: show where
+  if (p && p.redraw && !p.redraw.pts.length) to = onShape(p.pts, p.kind === 'extent' || !!p.closed, q).pt;
+  const was = hoverKey(S.hover) + '|' + S.snapAt;
+  S.hover = h;
+  S.snapAt = to;
+  if (cur === 'not-allowed') cv.style.cursor = 'not-allowed'; else cv.style.cursor = '';
+  cv.dataset.cur = cur;
+  const now = hoverKey(h) + '|' + S.snapAt;
+  // a shape being drawn follows the pointer; anything else redraws only when it changes
+  if (now !== was || (h && h.kind === 'edge') || (p && (!p.edit || p.redraw))) redraw();
+}
 
 function done(ev) {
   const held = PTR.get(ev.pointerId);
   PTR.delete(ev.pointerId);
   if (!G) return;
-  if (G.kind === 'pan' && G.tap && held && ev.type === 'pointerup') {
+  const g = G, up = ev.type === 'pointerup';
+  if (g.kind === 'pan' && g.tap && held && up) {
     const at = pageOf(held.at);
     S.at = at;
     readout(at);
-    if (S.pending && !S.pending.edit) { S.pending.pts.push(at); draw(); hintFor(); }
-    else if (!S.pending) click(at, ev);
+    tap(at, ev);
+  } else if (g.kind === 'edge' && !g.moved && up) {
+    stepPending();                                 // a tap on an edge: a point there
+    S.pending.pts.splice(g.e + 1, 0, g.pt);
+    S.pending.sel = g.e + 1;
+    draw(); hintFor();
+  } else if (g.kind === 'vertex') {
+    S.snapAt = null;
+    draw(); hintFor();
+  } else if (g.kind === 'seed') {
+    if (g.moved) { renderMarks(); probe(S.draft.seeds[g.i].page_px); }
+    else if (held && up) probe(pageOf(held.at));
+  } else if (g.kind === 'label') {
+    if (g.moved) leaderDone(g.L);
+    else if (up) chooseLabel(g.L);
   }
   if (PTR.size === 0) { G = null; setPan(false); }
-  else if (G.kind === 'pinch' && PTR.size === 1) {     // a finger lifted: carry on panning
+  else if (g.kind === 'pinch' && PTR.size === 1) {     // a finger lifted: carry on panning
     const rest = [...PTR.values()][0];
     G = {kind: 'pan', from: rest.at, v0: Object.assign({}, S.view), travelled: 99, tap: false};
   }
 }
 cv.addEventListener('pointerup', done);
 cv.addEventListener('pointercancel', done);
-cv.addEventListener('dblclick', (ev) => { ev.preventDefault(); if (S.pending) finish(); });
+cv.addEventListener('pointerleave', () => {
+  if (PTR.size) return;
+  S.hover = null; S.snapAt = null;
+  redraw();
+});
+cv.addEventListener('dblclick', (ev) => {
+  ev.preventDefault();
+  const p = S.pending;
+  if (!p) return;
+  if (p.edit && !p.redraw) {                    // a double click on a point takes it out,
+    // unless it was that double click's first press that opened the shape
+    if (p.opened && performance.now() - p.opened < 800) return;
+    const i = nearVertex(p.pts, pageOf(local(ev)));
+    if (i >= 0) deleteVertex(i);
+    return;
+  }
+  finish();
+});
 cv.addEventListener('contextmenu', (ev) => ev.preventDefault());
 cv.addEventListener('wheel', (ev) => {
   if (!S.d) return;
   ev.preventDefault();
-  const v = S.view, at = local(ev);
+  const at = local(ev);
   const f = Math.exp(-ev.deltaY * (ev.deltaMode === 1 ? 0.05 : 0.0015));
   zoomBy(f, at);
 }, {passive: false});
@@ -1536,30 +2312,51 @@ function zoomBy(f, about) {
   draw();
 }
 
-function readout(page) {
-  const mm = toMm(page[0], page[1]);
+function readout(q) {
+  const mm = toMm(q[0], q[1]);
   $('at').textContent = 'ML ' + fmt(mm[0]) + '  DV ' + fmt(mm[1]) + ' mm   ·   page '
-    + page[0].toFixed(0) + ', ' + page[1].toFixed(0);
-  const reg = regionAt(page[0], page[1]);
+    + q[0].toFixed(0) + ', ' + q[1].toFixed(0);
+  const reg = regionAt(q[0], q[1]);
   $('under').textContent = reg ? reg.abbr + ' — ' + reg.name : '';
 }
 
-function nearVertex(pts, at) {
-  const r = W(9);
-  for (let i = 0; i < pts.length; i++) {
-    if (Math.hypot(pts[i][0] - at[0], pts[i][1] - at[1]) < r) return i;
+// how near, in screen px, a press has to be to a point already put down to be taken as
+// that point again: a double press on the last one ends a line, a press on the first one
+// closes an outline. Held small, and smaller than a finger's reach for anything else, so
+// the next point of a line drawn at a distant zoom can still go down close to the last.
+const SAME_PX = 4, CLOSE_PX = 10;
+const near = (a, b, px) => Math.hypot(a[0] - b[0], a[1] - b[1]) < W(px);
+
+/* A tap that took hold of nothing: a point of the shape being drawn or of a new line
+   being routed, a mark, or a reading of the plate. */
+function tap(at, ev) {
+  const p = S.pending;
+  if (p && p.redraw) {
+    const rp = p.redraw.pts;
+    // the first point of the new line is where it leaves the shape, so it goes on it
+    const q = rp.length ? snapPt(at, p) : onShape(p.pts, p.kind === 'extent' || !!p.closed, at).pt;
+    if (rp.length >= 2 && near(q, rp[rp.length - 1], SAME_PX)) { applyRedraw(); return; }
+    if (rp.length && near(q, rp[rp.length - 1], SAME_PX)) return;
+    rp.push(q);
+    draw(); hintFor();
+    return;
   }
-  return -1;
+  if (p && p.edit) { p.sel = -1; draw(); hintFor(); return; }   // let go of the chosen point
+  if (p) { addPoint(at); return; }
+  click(at, ev);
 }
-function nearEdge(pts, at) {
-  const r = W(7);
-  for (let i = 0; i < pts.length; i++) {
-    const a = pts[i], b = pts[(i + 1) % pts.length];
-    const vx = b[0] - a[0], vy = b[1] - a[1], L2 = vx * vx + vy * vy;
-    const t = L2 ? Math.max(0, Math.min(1, ((at[0] - a[0]) * vx + (at[1] - a[1]) * vy) / L2)) : 0;
-    if (Math.hypot(a[0] + t * vx - at[0], a[1] + t * vy - at[1]) < r) return i;
+
+function addPoint(at) {
+  const p = S.pending, q = snapPt(at, p), n = p.pts.length;
+  // the first point again closes an outline, and the last point again ends a line
+  if (p.kind === 'extent' && n >= 3 && (near(q, p.pts[0], CLOSE_PX) || near(q, p.pts[n - 1], SAME_PX))) {
+    finish(); return;
   }
-  return -1;
+  if (p.kind === 'boundary' && n >= 2 && near(q, p.pts[n - 1], SAME_PX)) { finish(); return; }
+  if (n && near(q, p.pts[n - 1], SAME_PX)) return;   // a double click's second press
+  p.pts.push(q);
+  S.snapAt = null;
+  draw(); hintFor();
 }
 
 async function click(at, ev) {
@@ -1572,18 +2369,37 @@ async function click(at, ev) {
   if (S.tool === 'seed' || S.tool === 'unseed') {
     if (!S.abbr) { toast('Choose the region first', true); return; }
     const mm = toMm(at[0], at[1]);
-    const s = {abbr: S.abbr, kind: S.tool === 'seed' ? 'positive' : 'negative',
-      page_px: [round2(at[0]), round2(at[1])], mm: [round3(mm[0]), round3(mm[1])], note: ''};
-    if (S.tool === 'seed' && S.opts.replaces !== null) s.label_index = S.opts.replaces;
-    S.draft.seeds.push(s);
+    remember();
+    S.draft.seeds.push({abbr: S.abbr, kind: S.tool === 'seed' ? 'positive' : 'negative',
+      page_px: [round2(at[0]), round2(at[1])], mm: [round3(mm[0]), round3(mm[1])], note: ''});
     marked();
     renderMarks(); draw();
     await probe(at);
     return;
   }
-  if (S.tool === 'boundary') { S.pending = {kind: 'boundary', pts: [at], abbr: S.abbr}; draw(); hintFor(); return; }
+  if (S.tool === 'leader') {
+    if (S.lead) {                                  // the chosen label's line, to end here
+      const L = S.lead;
+      remember();
+      leaderTo(L, at);
+      leaderDone(L);
+      return;
+    }
+    await probe(at);
+    return;
+  }
+  if (S.tool === 'boundary') {
+    S.pending = {kind: 'boundary', pts: [snapPt(at, null)], abbr: S.abbr, style: S.opts.style,
+      closed: S.opts.closed, hist: [], sel: -1, redraw: null};
+    S.snapAt = null;
+    draw(); hintFor();
+    return;
+  }
   if (S.tool === 'extent') {
-    S.pending = {kind: 'extent', pts: [at], abbr: S.abbr, ekind: S.opts.extkind};
+    if (!S.abbr) { toast('Choose the region first', true); return; }
+    S.pending = {kind: 'extent', pts: [snapPt(at, null)], abbr: S.abbr, ekind: S.opts.extkind,
+      hist: [], sel: -1, redraw: null};
+    S.snapAt = null;
     draw(); hintFor();
   }
 }
@@ -1594,7 +2410,20 @@ const round3 = (v) => Math.round(v * 1000) / 1000;
 // A mark was added or taken away: whatever Recut showed no longer describes the draft.
 function marked() { S.draft.preview = null; }
 
-async function probe(at) {
+/* The draft's marks as they stand, put by before a change, so Undo takes back the last
+   change whatever it was -- a seed, a line, a move, a drop -- rather than the last of
+   whichever kind happens to be listed first. A note is not a mark, and taking one back
+   leaves what Recut showed standing. */
+function remember(note) {
+  const D = S.draft;
+  const h = S.hist.get(D.plate) || [];
+  h.push({note: !!note, marks: JSON.stringify({seeds: D.seeds, boundaries: D.boundaries,
+    extents: D.extents, notes: D.notes})});
+  if (h.length > 200) h.shift();
+  S.hist.set(D.plate, h);
+}
+
+async function probe(at, more) {
   try {
     const r = await SRC.probe(S.plate, [at[0], at[1]], S.draft);
     const face = r.face
@@ -1608,26 +2437,39 @@ async function probe(at) {
       + (r.face && r.names.length === 1 && r.names[0] !== S.abbr && S.abbr
         ? '\n  -> the atlas letters this face ' + r.names[0] + ' alone: a seed here would split it.'
           + ' Look for a boundary the tracing missed.' : '')
-      + (r.face && !r.names.length ? '\n  -> an unlettered face: a seed names it.' : ''));
+      + (r.face && !r.names.length ? '\n  -> an unlettered face: a seed names it.' : '')
+      + (typeof more === 'function' ? more(r) : more || ''));
   } catch (e) { report(String(e.message), true); }
 }
 
 function finish() {
   const p = S.pending;
   if (!p) return;
-  if (p.kind === 'boundary') {
-    if (p.pts.length < 2) { S.pending = null; draw(); return; }
+  if (p.redraw) { applyRedraw(); return; }
+  if (p.pts.length < (p.kind === 'extent' ? 3 : 2)) {
+    if (!p.edit) { S.pending = null; draw(); hintFor(); }
+    return;
+  }
+  if (p.src && !p.hist.length && (p.kind !== 'boundary' || (S.draft.boundaries[p.src.i].style === p.style
+    && !!S.draft.boundaries[p.src.i].closed === !!p.closed))) {
+    S.pending = null; draw(); hintFor();              // opened and left as it was
+    return;
+  }
+  const pg = p.pts.map((q) => [round2(q[0]), round2(q[1])]);
+  const mm = p.pts.map((q) => toMm(q[0], q[1]).map(round3));
+  remember();
+  if (p.src) {
+    const m = S.draft[p.src.key][p.src.i];
+    m.page_px = pg; m.mm = mm;
+    if (p.kind === 'boundary') { m.style = p.style; m.closed = !!p.closed; }
+  } else if (p.kind === 'boundary') {
     // a boundary is a run of the tracing and names no region, but it is sent with the
     // region that was chosen when it was drawn, so a plate marked for two goes as two
-    S.draft.boundaries.push({abbr: p.abbr || S.abbr, style: S.opts.style, closed: S.opts.closed,
-      page_px: p.pts.map((q) => [round2(q[0]), round2(q[1])]),
-      mm: p.pts.map((q) => toMm(q[0], q[1]).map(round3)), note: ''});
+    S.draft.boundaries.push({abbr: p.abbr || S.abbr, style: p.style, closed: !!p.closed,
+      page_px: pg, mm, note: ''});
   } else {
-    if (p.pts.length < 3) { S.pending = null; draw(); return; }
     S.draft.extents.push({abbr: p.abbr || S.abbr, kind: p.ekind || 'positive',
-      page_px: p.pts.map((q) => [round2(q[0]), round2(q[1])]),
-      mm: p.pts.map((q) => toMm(q[0], q[1]).map(round3)), note: '',
-      ring: p.ring === undefined ? null : p.ring});
+      page_px: pg, mm, note: '', ring: p.ring === undefined ? null : p.ring});
   }
   S.pending = null;
   marked();
@@ -1689,44 +2531,53 @@ function selectFacts() {
   }
 }
 
+const SNAPBOX = '<label class="chk" title="A point put down near traced ink goes on the ink itself, '
+  + 'which is where the pipeline needs a line to start and end (G)"><input type="checkbox" '
+  + 'id="o-snap"> snap to the ink</label>';
+
 function renderOpts() {
   const el = $('opts');
   el.innerHTML = '';
   const add = (html) => { const d = document.createElement('div'); d.className = 'grp wrap'; d.innerHTML = html; el.appendChild(d); return d; };
+  const snapbox = (d) => {
+    const c = d.querySelector('#o-snap');
+    c.checked = S.opts.snap;
+    c.onchange = () => { S.opts.snap = c.checked; S.snapAt = null; draw(); hintFor(); };
+  };
   if (S.tool === 'boundary') {
     const d = add('<div class="seg"><button type="button" data-s="solid">solid</button>'
       + '<button type="button" data-s="dashed">dashed</button></div>'
-      + '<label class="chk"><input type="checkbox" id="o-closed"> a ring</label>');
+      + '<label class="chk"><input type="checkbox" id="o-closed"> a ring</label>' + SNAPBOX);
     for (const b of d.querySelectorAll('[data-s]')) {
       b.className = b.dataset.s === S.opts.style ? 'on' : '';
-      b.onclick = () => { S.opts.style = b.dataset.s; renderOpts(); draw(); };
+      b.onclick = () => {
+        S.opts.style = b.dataset.s;
+        if (S.pending && S.pending.kind === 'boundary') S.pending.style = S.opts.style;
+        renderOpts(); draw();
+      };
     }
     const c = d.querySelector('#o-closed');
     c.checked = S.opts.closed;
-    c.onchange = () => { S.opts.closed = c.checked; draw(); };
-  } else if (S.tool === 'seed') {
-    const boxes = S.d ? S.d.labels.filter((L) => L.abbr === S.abbr) : [];
-    let html = '<label class="chk" style="gap:6px">stands in for <select id="o-rep" style="width:auto">'
-      + '<option value="">no box — a seed of its own</option>';
-    for (const L of boxes) html += '<option value="' + L.index + '">' + S.abbr + '[' + L.index + ']</option>';
-    html += '</select></label>';
-    const d = add(html);
-    const sel = d.querySelector('#o-rep');
-    sel.value = S.opts.replaces === null ? '' : String(S.opts.replaces);
-    sel.onchange = () => { S.opts.replaces = sel.value === '' ? null : Number(sel.value); };
+    c.onchange = () => {
+      S.opts.closed = c.checked;
+      if (S.pending && S.pending.kind === 'boundary') S.pending.closed = c.checked;
+      draw(); hintFor();
+    };
+    snapbox(d);
   } else if (S.tool === 'extent') {
     // an outline the region should have, or one it should not: a hole in a ring-like
     // region, or a ring the extraction gave it and the atlas does not draw
     const d = add('<div class="seg full" id="o-ekind">'
-      + '<button type="button" data-k="positive" title="The outline the region should have">'
+      + '<button type="button" data-k="positive" title="Extent +: the outline the region should have">'
       + 'the region is here</button>'
-      + '<button type="button" data-k="negative" title="The region has no area inside this: '
+      + '<button type="button" data-k="negative" title="Extent −: the region has no area inside this: '
       + 'the hole in a ring-like region, or a piece the extraction gave it">'
       + 'it is not here</button></div>');
     for (const b of d.querySelectorAll('[data-k]')) {
       b.className = b.dataset.k === S.opts.extkind ? 'on' : '';
       b.onclick = () => { S.opts.extkind = b.dataset.k; cancelPending(); renderOpts(); draw(); };
     }
+    snapbox(add(SNAPBOX));
     const rings = document.createElement('div');
     rings.className = 'rings';
     el.appendChild(rings);
@@ -1736,7 +2587,21 @@ function renderOpts() {
       rings.innerHTML = '<p class="fact">' + esc(S.abbr) + ' has no area on this plate: '
         + TAPPED.toLowerCase() + ' the plate to draw the outline it should have.</p>';
     } else r.rings.forEach((g, i) => rings.appendChild(ringRow(g, i)));
+  } else if (S.tool === 'leader') {
+    const box = document.createElement('div');
+    box.className = 'leads';
+    el.appendChild(box);
+    const Ls = S.d && S.abbr ? S.d.labels.filter((L) => L.abbr === S.abbr) : [];
+    if (!S.abbr) box.innerHTML = '<p class="fact">Choose a region to list its labels here, or take hold of any label on the plate.</p>';
+    else if (isFeature(S.abbr)) {
+      box.innerHTML = '<p class="fact">' + esc(S.abbr) + ' is a feature of the drawing, not a region: '
+        + 'a correction cannot move its line.</p>';
+    } else if (!Ls.length) {
+      box.innerHTML = '<p class="fact">The plate prints no ' + esc(S.abbr) + ' label to move. '
+        + '<b>Seed +</b> seeds it without one.</p>';
+    } else Ls.forEach((L) => box.appendChild(leadRow(L)));
   }
+  renderHelp();
   hintFor();
 }
 
@@ -1744,8 +2609,9 @@ function renderOpts() {
    be said about it: pull it into shape, or drop it. Dropping writes the ring's own
    vertices as a negative extent -- the piece the cut made, not a hand-drawn guess at
    it -- and the same button takes the drop back, which is the only thing that removes
-   it besides the mark's own x. A region is as many rings as the atlas draws it places;
-   another one is drawn on the plate. */
+   it besides the mark's own x. A ring already pulled into shape opens that shape again
+   rather than starting a second one from the cut. A region is as many rings as the atlas
+   draws it places; another one is drawn on the plate. */
 function ringRow(ring, i) {
   const row = document.createElement('div');
   row.className = 'ring';
@@ -1754,10 +2620,13 @@ function ringRow(ring, i) {
   const c = g.reduce((a, q) => [a[0] + q[0] / g.length, a[1] + q[1] / g.length], [0, 0]);
   const area = Math.abs(ringArea(g)) * S.d.mm2_per_px;
   const at = S.draft.extents.findIndex((e) => e.kind === 'negative' && e.ring === i);
-  const pulled = S.draft.extents.some((e) => e.kind !== 'negative' && e.ring === i);
+  const pulled = S.draft.extents.findIndex((e) => e.kind !== 'negative' && e.ring === i);
   row.children[0].textContent = 'ring ' + (i + 1) + ' · ' + (toMm(c[0], c[1])[0] < 0 ? 'left' : 'right')
     + ' · ' + area.toFixed(4) + ' mm²'
-    + (at >= 0 ? ' · dropped' : pulled ? ' · pulled into shape' : '');
+    + (at >= 0 ? ' · dropped' : pulled >= 0 ? ' · pulled into shape' : '');
+  row.children[0].title = 'Zoom to ring ' + (i + 1);
+  row.children[0].style.cursor = 'zoom-in';
+  row.children[0].onclick = () => zoomTo(g);
   const btn = (label, title, cls, fn) => {
     const b = document.createElement('button');
     b.type = 'button'; b.className = 'b' + (cls ? ' ' + cls : ''); b.textContent = label;
@@ -1766,25 +2635,69 @@ function ringRow(ring, i) {
   };
   if (at >= 0) {
     btn('Keep', 'Take back the drop: leave ring ' + (i + 1) + ' as the extraction cut it',
-      '', () => { S.draft.extents.splice(at, 1); marked(); renderMarks(); renderOpts(); draw(); });
+      '', () => {
+        remember();
+        S.draft.extents.splice(at, 1); marked(); renderMarks(); renderOpts(); draw();
+      });
     return row;
   }
-  btn('Pull into shape', 'Drag its vertices into the outline the region should have', '', () => {
-    S.pending = {kind: 'extent', pts: g.map((q) => q.slice()), edit: true, abbr: S.abbr,
-      ekind: 'positive', ring: i};
-    zoomTo(g); hintFor();
-  });
+  if (pulled >= 0) {
+    btn('Edit the shape', 'Open the outline ring ' + (i + 1) + ' was pulled into, and go on with it', '', () => {
+      cancelPending();
+      openEditor('extents', pulled);
+      zoomTo(S.draft.extents[pulled].page_px);
+    });
+  } else {
+    btn('Pull into shape', 'Drag its points, or redraw a stretch of it, into the outline the region should have', '', () => {
+      cancelPending();
+      S.pending = {kind: 'extent', pts: g.map((q) => q.slice()), edit: true, abbr: S.abbr,
+        ekind: 'positive', ring: i, closed: true, hist: [], sel: -1, redraw: null};
+      zoomTo(g); hintFor();
+    });
+  }
   // the two readings of a ring contradict each other, so the second is not offered
   // while the first stands: drop the mark that holds it and the button comes back
-  btn('Drop', pulled ? 'Ring ' + (i + 1) + ' is already pulled into shape; drop that mark '
+  btn('Drop', pulled >= 0 ? 'Ring ' + (i + 1) + ' is already pulled into shape; drop that mark '
     + 'first' : 'The region should have no area here: ring ' + (i + 1) + ' goes in as an '
-    + 'extent that says so', 'warn', pulled ? null : () => {
+    + 'extent that says so', 'warn', pulled >= 0 ? null : () => {
+    cancelPending();
+    remember();
     S.draft.extents.push({abbr: S.abbr, kind: 'negative', ring: i,
       page_px: g.map((q) => [round2(q[0]), round2(q[1])]),
       mm: g.map((q) => toMm(q[0], q[1]).map(round3)), note: ''});
     marked(); renderMarks(); renderOpts(); draw();
     toast('ring ' + (i + 1) + ' of ' + S.abbr + ': marked as area it should not have');
   });
+  return row;
+}
+
+/* One printed label of the chosen region, what its line does, and what can be done with
+   it: find it, choose it to put its end down by a tap, or take back a move. */
+function leadRow(L) {
+  const row = document.createElement('div');
+  const k = leaderSeed(L);
+  row.className = 'lead' + (S.lead === L ? ' on' : '');
+  const how = k >= 0 ? 'moved in this draft' : L.byhand ? 'moved by an earlier correction'
+    : L.led ? 'on a line' : 'seeds at the word';
+  row.innerHTML = '<span class="who"><b></b> · <span></span></span>';
+  row.querySelector('b').textContent = L.abbr + '[' + L.index + ']';
+  row.querySelector('.who span').textContent = how;
+  const btn = (label, title, fn, cls) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'b' + (cls ? ' ' + cls : ''); b.textContent = label; b.title = title;
+    b.onclick = fn;
+    row.appendChild(b);
+  };
+  btn('Show', 'Zoom to the label and where it seeds', () => zoomTo(L.box.concat([endOf(L), L.at]), 120));
+  btn(S.lead === L ? 'Choosing…' : 'Move', S.lead === L ? 'Let it go (Esc)'
+    : 'Choose it, then ' + TAPPED.toLowerCase() + ' the plate where its line should end', () => chooseLabel(L));
+  if (k >= 0) {
+    btn('Reset', 'Take back the move: the line ends where the plate has it', () => {
+      remember();
+      S.draft.seeds.splice(leaderSeed(L), 1);
+      marked(); renderMarks(); renderOpts(); draw();
+    }, 'warn');
+  }
   return row;
 }
 
@@ -1805,28 +2718,89 @@ function ringArea(g) {
   return a / 2;
 }
 
-const TOUCH = matchMedia('(pointer: coarse)').matches;
+/* What each mark says, what the pipeline does with it, and when it is the one to use.
+   The six are easy to confuse -- a seed and a leader both seed, a boundary and an extent
+   both draw a line -- and the difference is what the pipeline does with each, so that is
+   what is said. Every claim here is tools/corrections.py's: `apply` writes positive
+   seeds into seed_overrides, boundaries and the off-ink runs of a positive extent into
+   the plate's SVG, and nothing else; a negative seed or extent is read by `inspect` and
+   by the session, never written. */
+const TOOLS = {
+  pick: {name: 'Pick', color: '--pick', says: 'nothing: it reads the plate, and adds no mark.',
+    does: 'Says which <b>face</b> the point is in (an area the traced ink closes off), which printed labels seed that face, and which region holds the point today.',
+    when: 'Start here, to see why a region comes out wrong before marking it.'},
+  seed: {name: 'Seed +', color: '--seed', says: '<b>{a}</b> is here.',
+    does: 'Becomes a seed of its own: the face it lands in is cut as {a}.',
+    when: 'A face the atlas draws for {a} that no label seeds. A face lettered for another region alone would be split by it: look for a missing boundary. To move where a printed label seeds, use <b>Leader</b>.'},
+  unseed: {name: 'Seed −', color: '--unseed', says: '<b>{a}</b> is not here.',
+    does: 'Points the session that applies the correction at area {a} should not hold. The pipeline does not act on it.',
+    when: 'Area {a} holds wrongly: the session looks for the seed or the gap that lets it in.'},
+  boundary: {name: 'Boundary', color: '--bound', says: 'a line the tracing missed runs here.',
+    does: 'Added to the plate’s tracing as new ink, which splits the face it crosses. An end more than {b} page px from the ink is not bridged, and closes nothing.',
+    when: 'Two regions share one face because a line is missing. Solid or dashed, as the atlas draws it.'},
+  extent: {name: 'Extent +', color: '--ext', says: 'this is the outline <b>{a}</b> should have.',
+    does: 'The runs of it that leave the traced ink are added to the tracing as new boundary; the whole outline tells the session the shape to reach.',
+    when: 'The shape of {a} is wrong. One extent for each place the atlas draws it: pull an extracted ring into shape, or draw one where it has none.'},
+  unextent: {name: 'Extent −', color: '--ext', says: '<b>{a}</b> has no area inside this.',
+    does: 'Read, never inked: the session finds which seed or missing line lets {a} in.',
+    when: 'The hole in a ring-shaped region, or a piece the extraction gave {a} that the atlas does not draw.'},
+  leader: {name: 'Leader', color: '--seed', says: 'this label means the region its line ends in.',
+    does: 'Written as a seed standing in for that printed label (<code>label_index</code>): the label’s own seed is withdrawn, and the face the new end is in is seeded instead.',
+    when: 'A label’s line ends in the wrong face, or short of the region it points into. A label printed without a line seeds at the word; moving it gives it one.'},
+};
+const toolKey = () => (S.tool === 'extent' && S.opts.extkind === 'negative' ? 'unextent' : S.tool);
+function fill(t) {
+  return t.replace(/\{T\}/g, TAPPED).replace(/\{t\}/g, TAPPED.toLowerCase())
+    .replace(/\{a\}/g, S.abbr ? esc(S.abbr) : 'the region')
+    .replace(/\{b\}/g, S.d ? S.d.bridge_px : 20);
+}
+function renderHelp() {
+  const t = TOOLS[toolKey()];
+  const el = $('toolhelp');
+  el.style.setProperty('--tc', 'var(' + t.color + ')');
+  el.innerHTML = '<div class="says">' + t.name + ' <em>says</em> ' + fill(t.says) + '</div>'
+    + '<p><b>What it does.</b> ' + fill(t.does) + '</p>'
+    + '<p><b>Use it for:</b> ' + fill(t.when) + '</p>';
+}
+
 const TAPPED = TOUCH ? 'Tap' : 'Click';
 const HINTS = {
-  pick: '{T} the plate to read what the extraction has there — the face, what seeds it, and which region holds the point today.',
-  seed: '{T} where <b>{a}</b> is. Without a box named above it is a seed of its own; with one, that printed box withdraws and this stands in for it.',
-  unseed: '{T} where <b>{a}</b> is <b>not</b>. A negative seed is for the reader, not the pipeline.',
-  boundary: '{T} along the run of boundary the tracing missed, then <b>Finish</b>. Put its ends on the traced ink — the pipeline only bridges {b} page px.',
-  extent: 'Pull a ring of <b>{a}</b> into shape, or {t} the plate to draw another — a region carries one extent for each place it is drawn. <b>Drop</b> a ring it should not have, or draw where it is not: the hole in a ring-like region.',
+  pick: '{T} the plate to read what the extraction has there.',
+  seed: '{T} where <b>{a}</b> is. Drag a seed to move it.',
+  unseed: '{T} where <b>{a}</b> is <b>not</b>. Drag a mark to move it.',
+  boundary: '{T} where the missing line leaves the traced ink, then along it, and {t} the last point '
+    + 'again (or <b>Finish</b>) where it rejoins. Drag a point of a line already drawn to adjust it.',
+  extent: 'Pull a ring of <b>{a}</b> into shape, or {t} the plate to draw an outline point by point '
+    + 'and {t} its first point to close it. Drag a point of an outline already drawn to adjust it.',
+  leader: 'Drag the dot at the end of a label’s line to the face the label means — a label '
+    + 'printed without a line has a ring on the word to drag. Or {t} a label, then {t} where its line should end.',
 };
 function hintFor() {
   let t = HINTS[S.tool] || '';
-  if (S.pending) {
-    const neg = S.pending.ekind === 'negative';
-    t = S.pending.edit
-      ? 'Drag the vertices into place; {t} an edge to add one'
-        + (TOUCH ? '' : ', alt-click one to delete it') + '. <b>Accept</b> keeps it.'
-      : (S.pending.pts.length + ' vertex' + (S.pending.pts.length === 1 ? '' : 'es') + ' so far. '
-        + '<b>Finish</b> when the ' + (S.pending.kind === 'extent' ? 'outline' : 'run') + ' is drawn'
-        + (neg ? ', and it goes in as area <b>{a}</b> should not have' : '') + '.');
+  const p = S.pending;
+  if (p && p.redraw) {
+    t = p.redraw.pts.length
+      ? '{T} along the new line, then {t} where it rejoins the shape and <b>Apply</b>. '
+        + 'The dashed red stretch is what it replaces' + (p.kind === 'extent' || p.closed
+        ? '; <b>Other side</b> swaps it for the rest of the ring.' : '.')
+      : '{T} the shape where the new line leaves it.';
+  } else if (p && p.edit) {
+    t = 'Drag a point to move it, or an edge to bend it. ' + (TOUCH
+      ? 'Tap a point and <b>Delete point</b> to take it out.'
+      : 'Click a point and press Delete, or double-click it, to take it out.')
+      + ' <b>Redraw a stretch</b> replaces a run of it with a line you {t}. <b>Accept</b> keeps it.';
+  } else if (p) {
+    const n = p.pts.length, neg = p.ekind === 'negative';
+    t = n + (n === 1 ? ' point' : ' points') + ' so far. ' + (p.kind === 'extent'
+      ? '{T} the first point, or <b>Finish</b>, to close the outline'
+        + (neg ? '; it goes in as area <b>{a}</b> should not have.' : '.')
+      : '{T} the last point again, or <b>Finish</b>, where the line rejoins the ink.');
+  } else if (S.tool === 'leader' && S.lead) {
+    t = '<b>' + esc(S.lead.abbr + '[' + S.lead.index + ']') + '</b> is chosen: {t} the plate where '
+      + 'its line should end, or press Esc.';
   }
-  $('hint').innerHTML = t.replace(/\{T\}/g, TAPPED).replace(/\{t\}/g, TAPPED.toLowerCase())
-    .replace('{a}', S.abbr || 'the region').replace('{b}', S.d ? S.d.bridge_px : 20);
+  if (p && !p.edit && S.opts.snap) t += ' A point near the ink snaps onto it.';
+  $('hint').innerHTML = fill(t);
   drawbar();
   sheetLabel();
 }
@@ -1837,7 +2811,7 @@ function sheetLabel() {
   const D = S.draft;
   const n = D.seeds.length + D.boundaries.length + D.extents.length;
   const tool = {pick: 'Pick', seed: 'Seed +', unseed: 'Seed −', boundary: 'Boundary',
-    extent: 'Extent ' + (S.opts.extkind === 'negative' ? '−' : '+')}[S.tool];
+    extent: 'Extent ' + (S.opts.extkind === 'negative' ? '−' : '+'), leader: 'Leader'}[S.tool];
   $('sheetwhat').textContent = (S.abbr || 'no region') + ' · ' + tool
     + (n ? ' · ' + n + ' mark' + (n === 1 ? '' : 's') : '') + ' · the tools';
 }
@@ -1848,48 +2822,96 @@ function drawbar() {
   const p = S.pending;
   $('drawbar').hidden = !p;
   if (!p) return;
-  const n = p.pts.length;
-  $('drawcount').textContent = p.edit ? n + ' vertices'
-    : n + (n === 1 ? ' point' : ' points');
-  $('dundo').hidden = !!p.edit;
-  $('dfinish').textContent = p.edit ? 'Accept' : 'Finish';
-  $('dfinish').disabled = n < (p.kind === 'extent' ? 3 : 2);
+  const n = p.pts.length, rd = p.redraw, ring = p.kind === 'extent' || !!p.closed;
+  $('drawcount').textContent = rd ? 'new line: ' + rd.pts.length + (rd.pts.length === 1 ? ' point' : ' points')
+    : p.edit ? n + ' vertices' : n + (n === 1 ? ' point' : ' points');
+  $('dredraw').hidden = !p.edit || !!rd;
+  $('dflip').hidden = !rd || !ring;
+  $('ddel').hidden = !p.edit || !!rd || !(p.sel >= 0);
+  $('dundo').textContent = p.edit && !rd ? 'Undo' : 'Undo point';
+  $('dundo').disabled = p.edit && !rd ? !p.hist.length : false;
+  $('dcancel').textContent = rd ? 'Stop redrawing' : 'Cancel';
+  $('dfinish').textContent = rd ? 'Apply' : p.edit ? 'Accept' : 'Finish';
+  $('dfinish').disabled = rd ? rd.pts.length < 2 : n < (p.kind === 'extent' ? 3 : 2);
+}
+
+/* The glyph each mark is drawn with on the plate, for its row in the list. */
+const GLYPH = {
+  seed: '<svg class="sw" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="5" fill="var(--seed)" stroke="#fff" stroke-width="1.4"/></svg>',
+  unseed: '<svg class="sw" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 3.5l9 9M3.5 12.5l9-9" stroke="var(--unseed)" stroke-width="2.4" stroke-linecap="round"/></svg>',
+  leader: '<svg class="sw" viewBox="0 0 16 16" aria-hidden="true"><rect x="1" y="1.5" width="7" height="5" fill="none" stroke="var(--box)" stroke-width="1.4"/><path d="M6.5 6l5 5" stroke="var(--seed)" stroke-width="1.6"/><circle cx="11.5" cy="11.5" r="3" fill="var(--seed)" stroke="#fff" stroke-width="1.2"/></svg>',
+  boundary: '<svg class="sw" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 12.5L6.5 5l3.5 5 4-7" fill="none" stroke="var(--bound)" stroke-width="2.2" stroke-linejoin="round"/></svg>',
+  extent: '<svg class="sw" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 5.5l5-3.5 6.5 3-1.5 7.5-7 1.5z" fill="var(--ext)" fill-opacity=".18" stroke="var(--ext)" stroke-width="1.8" stroke-linejoin="round"/></svg>',
+  unextent: '<svg class="sw" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 5.5l5-3.5 6.5 3-1.5 7.5-7 1.5z" fill="none" stroke="var(--ext)" stroke-width="1.6" stroke-linejoin="round"/><path d="M2.5 2.5l11 11M2.5 13.5l11-11" stroke="var(--unseed)" stroke-width="1.6"/></svg>',
+  note: '<span class="sw" style="background:var(--muted)"></span>',
+};
+
+/* A boundary's ends as the pipeline will take them. */
+function endsSaid(b, i) {
+  if (b.closed) return {text: 'a ring: no ends to bridge', bad: false};
+  const bridge = S.d.bridge_px;
+  const say = (d) => (d <= 0.5 ? 'on the ink' : isFinite(d)
+    ? d.toFixed(0) + ' px off, ' + (d <= bridge ? 'bridged' : 'not bridged') : 'far from the ink');
+  const ds = [b.page_px[0], b.page_px[b.page_px.length - 1]].map((q) => gapAt(q, i).d);
+  const bad = ds.some((d) => d > bridge);
+  return {text: ds[0] <= 0.5 && ds[1] <= 0.5 ? 'both ends on the ink'
+    : 'ends: ' + say(ds[0]) + ' · ' + say(ds[1]), bad};
 }
 
 function renderMarks() {
   const D = S.draft, el = $('marks');
   el.innerHTML = '';
-  const add = (color, head, sub, drop, go) => {
+  const add = (glyph, head, sub, o) => {
     const d = document.createElement('div');
     d.className = 'mark';
-    d.innerHTML = '<span class="sw"></span><span class="txt"><span></span><em></em></span>'
-      + '<button class="x" type="button" title="Drop this mark">×</button>';
-    d.children[0].style.background = color;
-    d.children[1].children[0].textContent = head;
-    d.children[1].children[1].textContent = sub;
-    d.children[2].onclick = drop;
-    if (go) d.children[1].onclick = go;
-    if (go) d.children[1].style.cursor = 'zoom-in';
+    d.innerHTML = glyph + '<span class="txt"><span></span><em></em></span>'
+      + (o.edit ? '<button class="ed" type="button" title="Open it, to move its points or redraw a stretch">Edit</button>' : '')
+      + '<button class="x" type="button" title="Drop this mark" aria-label="Drop this mark">×</button>';
+    const txt = d.querySelector('.txt');
+    txt.children[0].textContent = head;
+    txt.children[1].textContent = sub.text || sub;
+    if (sub.bad) txt.children[1].classList.add('bad');
+    d.querySelector('.x').onclick = () => {
+      if (S.pending && S.pending.src) cancelPending();
+      remember(!o.key);
+      o.drop();
+      if (o.key) marked();
+      renderMarks(); renderOpts(); draw();
+    };
+    if (o.edit) d.querySelector('.ed').onclick = o.edit;
+    if (o.go) { txt.onclick = o.go; txt.style.cursor = 'zoom-in'; }
+    if (o.key) {
+      d.onmouseenter = () => { S.hi = {key: o.key, i: o.i}; draw(); };
+      d.onmouseleave = () => { S.hi = null; draw(); };
+    }
     el.appendChild(d);
   };
-  D.seeds.forEach((s, i) => add(s.kind === 'negative' ? css('--unseed') : css('--seed'),
-    s.abbr + ' ' + s.kind + (s.label_index !== undefined ? ' (for box ' + s.label_index + ')' : ''),
-    'ML ' + fmt(s.mm[0], 3) + '  DV ' + fmt(s.mm[1], 3) + (s.note ? ' — ' + s.note : ''),
-    () => { D.seeds.splice(i, 1); marked(); renderMarks(); draw(); },
-    () => zoomTo([s.page_px], 200)));
-  D.boundaries.forEach((b, i) => add(css('--bound'),
-    b.style + ' boundary' + (b.closed ? ', a ring' : ''),
-    b.page_px.length + ' points' + (b.note ? ' — ' + b.note : ''),
-    () => { D.boundaries.splice(i, 1); marked(); renderMarks(); draw(); },
-    () => zoomTo(b.page_px)));
-  D.extents.forEach((e, i) => add(e.kind === 'negative' ? css('--unseed') : css('--ext'),
-    e.abbr + (e.kind === 'negative' ? ' has no area here' : ' extent')
-      + (e.ring === undefined || e.ring === null ? '' : ' (ring ' + (e.ring + 1) + ')'),
-    e.page_px.length + ' vertices' + (e.note ? ' — ' + e.note : ''),
-    () => { D.extents.splice(i, 1); marked(); renderMarks(); renderOpts(); draw(); },
-    () => zoomTo(e.page_px)));
-  D.notes.forEach((n, i) => add(css('--muted'), 'note', n,
-    () => { D.notes.splice(i, 1); renderMarks(); }));
+  const where = (mm) => 'ML ' + fmt(mm[0], 3) + '  DV ' + fmt(mm[1], 3);
+  D.seeds.forEach((s, i) => {
+    const led = isLead(s);
+    const neg = s.kind === 'negative';
+    add(led ? GLYPH.leader : neg ? GLYPH.unseed : GLYPH.seed,
+      led ? s.abbr + '[' + s.label_index + ']: its line ends here'
+        : s.abbr + (neg ? ' is not here' : ' is here'),
+      (led ? 'Leader' : neg ? 'Seed −' : 'Seed +') + ' · ' + where(s.mm) + (s.note ? ' — ' + s.note : ''),
+      {key: 'seeds', i, drop: () => D.seeds.splice(i, 1), go: () => zoomTo([s.page_px], 200)});
+  });
+  D.boundaries.forEach((b, i) => add(GLYPH.boundary,
+    'Missing ' + (b.style || 'solid') + ' line' + (b.closed ? ', a ring' : ''),
+    (() => { const e = endsSaid(b, i); return {text: 'Boundary · ' + b.page_px.length + ' points · ' + e.text
+      + (b.note ? ' — ' + b.note : ''), bad: e.bad}; })(),
+    {key: 'boundaries', i, drop: () => D.boundaries.splice(i, 1), go: () => zoomTo(b.page_px),
+      edit: () => editMark('boundaries', i)}));
+  D.extents.forEach((e, i) => {
+    const neg = e.kind === 'negative';
+    const ring = e.ring === undefined || e.ring === null ? '' : ' (ring ' + (e.ring + 1) + ')';
+    add(neg ? GLYPH.unextent : GLYPH.extent,
+      neg ? e.abbr + ' has no area here' + ring : 'The outline of ' + e.abbr + ring,
+      (neg ? 'Extent −' : 'Extent +') + ' · ' + e.page_px.length + ' vertices' + (e.note ? ' — ' + e.note : ''),
+      {key: 'extents', i, drop: () => D.extents.splice(i, 1), go: () => zoomTo(e.page_px),
+        edit: () => editMark('extents', i)});
+  });
+  D.notes.forEach((n, i) => add(GLYPH.note, 'Note', n, {drop: () => D.notes.splice(i, 1)}));
   if (!marksIn(D) && !D.notes.length) {
     const d = document.createElement('div');
     d.className = 'mark empty';
@@ -1907,6 +2929,16 @@ function renderMarks() {
   $('commitb').disabled = !markedPlates().length;
   renderPips();
   sheetLabel();
+}
+
+// A mark's Edit: the tool it was drawn with, and the mark open in the editor.
+function editMark(key, i) {
+  cancelPending();
+  const t = key === 'extents' ? 'extent' : 'boundary';
+  if (key === 'extents') S.opts.extkind = S.draft.extents[i].kind === 'negative' ? 'negative' : 'positive';
+  if (S.tool !== t) setTool(t);
+  openEditor(key, i);
+  renderOpts();
 }
 
 /* The plates that hold marks, under the slider. A draft that is not on the plate in
@@ -1973,12 +3005,16 @@ const closeSheet = () => { $('modal').hidden = true; };
    page walks there and back, which is what you would do to look at it. */
 async function snapshots(plates) {
   const out = new Map(), home = S.plate;
+  // the picture is of the marks, not of where the pointer happened to be
+  const keep = [S.hover, S.snapAt, S.hi];
+  S.hover = S.snapAt = S.hi = null;
   for (const n of plates) {
     if (n !== S.plate) { toast('a picture of plate ' + n); await loadPlate(n); }
     draw();
     out.set(n, cv.toDataURL('image/png'));
   }
   if (S.plate !== home) await loadPlate(home);
+  else [S.hover, S.snapAt, S.hi] = keep;
   return out;
 }
 
@@ -2010,7 +3046,7 @@ async function commit() {
       const ids = r.ids || [r.id];
       if (r.dry) { toast('wrote ' + (r.paths || [r.path]).join(', ')); return; }
       // sent: nothing waits on those plates now
-      for (const n of plates) S.drafts.delete(n);
+      for (const n of plates) { S.drafts.delete(n); S.hist.delete(n); }
       if (plates.includes(S.plate)) { S.draft = blankDraft(S.plate); S.draft.abbr = S.abbr; $('problem').value = ''; }
       renderMarks(); draw();
       sheet('Pushed ' + counted(ids.length, 'correction'),
@@ -2090,17 +3126,20 @@ async function useDraft(d) {
   S.draft.plate = n;
   for (const k of ['seeds', 'boundaries', 'extents', 'notes']) S.draft[k] = S.draft[k] || [];
   S.drafts.set(n, S.draft);
+  S.hist.delete(n);                     // a draft read in is where Undo starts from
   $('problem').value = S.draft.problem || '';
   if (S.draft.abbr) select(S.draft.abbr);
   renderMarks();
   draw();
 }
 
+
 /* -------------------------------------------------------------------- wiring */
 
 function cancelPending() {
   if (!S.pending) return;
   S.pending = null;
+  S.snapAt = null;
   draw();
   hintFor();
 }
@@ -2125,8 +3164,29 @@ function goPlate(n) {
 function setTool(t) {
   cancelPending();
   S.tool = t;
+  S.lead = null; S.hover = null; S.snapAt = null;
   for (const b of $('toolseg').children) b.classList.toggle('on', b.dataset.t === t);
+  cv.dataset.cur = 'crosshair';
   renderOpts();
+  draw();
+}
+
+// The key to the plate, open or shut. It starts shut: at the fitted view the section fills
+// the plate to its corners, and an open key would sit on part of it. Open, it stays open.
+const KEYKEY = 'atlasfix.key';
+function legend(open) {
+  $('legend').classList.toggle('shut', !open);
+  $('legbar').setAttribute('aria-expanded', String(!!open));
+  try { localStorage.setItem(KEYKEY, open ? '1' : '0'); } catch (e) { /* private mode */ }
+}
+
+function toggleSnap() {
+  S.opts.snap = !S.opts.snap;
+  const c = $('o-snap');
+  if (c) c.checked = S.opts.snap;
+  S.snapAt = null;
+  toast(S.opts.snap ? 'Points near the ink snap onto it' : 'Points go where they are put: no snapping');
+  draw(); hintFor();
 }
 
 function wire() {
@@ -2149,8 +3209,15 @@ function wire() {
   $('zout').onclick = () => zoomBy(1 / 1.5);
   $('zfit').onclick = fit;
   $('dfinish').onclick = finish;
-  $('dcancel').onclick = cancelPending;
+  $('dcancel').onclick = () => {
+    if (S.pending && S.pending.redraw) { S.pending.redraw = null; draw(); hintFor(); }
+    else cancelPending();
+  };
   $('dundo').onclick = undo;
+  $('dredraw').onclick = startRedraw;
+  $('dflip').onclick = flip;
+  $('ddel').onclick = () => { if (S.pending && S.pending.sel >= 0) deleteVertex(S.pending.sel); };
+  $('legbar').onclick = () => legend($('legend').classList.contains('shut'));
   $('inspectb').onclick = () => inspect(false);
   $('qcb').onclick = () => inspect(true);
   $('recutb').onclick = recut;
@@ -2159,14 +3226,17 @@ function wire() {
   $('commitb').onclick = () => commit();
   $('undob').onclick = undo;
   $('clearb').onclick = () => {
+    if (!marksIn(S.draft)) return;
+    remember();
     S.draft.seeds = []; S.draft.boundaries = []; S.draft.extents = []; marked();
     S.pending = null; renderMarks(); renderOpts(); draw();
+    toast('The marks on this plate are cleared: Undo brings them back');
   };
   $('noteb').onclick = () => sheet('A note on this correction',
     '<p>Anything else worth saying to whoever applies it.</p><textarea id="m-note" rows="3"></textarea>',
     [['Cancel', closeSheet], ['Add', () => {
       const t = $('m-note').value.trim(); closeSheet();
-      if (t) { S.draft.notes.push(t); renderMarks(); }
+      if (t) { remember(true); S.draft.notes.push(t); renderMarks(); }
     }, 'go']]);
   for (const [id, key] of [['v-ink', 'ink'], ['v-ext', 'ext'], ['v-lab', 'lab'],
     ['v-una', 'una'], ['v-cut', 'cut']]) {
@@ -2175,6 +3245,10 @@ function wire() {
   $('modal').onclick = (ev) => { if (ev.target === $('modal')) closeSheet(); };
   $('sheetbar').onclick = () => sheet_(!document.body.classList.contains('shut'));
   window.addEventListener('resize', resize);
+  // the plate's box changes with more than the window -- the panel shutting on a phone, a
+  // bar below it taking another row -- and a canvas whose bitmap is not the size of its box
+  // is drawn stretched, under a pointer that is read unstretched
+  if (window.ResizeObserver) new ResizeObserver(() => resize()).observe(document.querySelector('.platebox'));
   document.addEventListener('keydown', key);
 }
 
@@ -2209,33 +3283,75 @@ function offline() {
     + 'happens after you send it.');
 }
 
+
+/* Undo takes back the last step of whatever is in hand: a point of a shape being drawn or
+   of a new line being routed, a move in the editor -- and with nothing in hand, the last
+   change to the draft. */
 function undo() {
-  const D = S.draft;
-  if (S.pending && S.pending.pts.length > 1 && !S.pending.edit) { S.pending.pts.pop(); draw(); hintFor(); return; }
-  if (S.pending) { cancelPending(); return; }
-  for (const k of ['extents', 'boundaries', 'seeds', 'notes']) {
-    if (!D[k].length) continue;
-    D[k].pop();
-    if (k !== 'notes') marked();        // a note is not a mark: the recut still describes the draft
-    renderMarks(); renderOpts(); draw();
+  const p = S.pending;
+  if (p && p.redraw) {
+    if (p.redraw.pts.length) p.redraw.pts.pop(); else p.redraw = null;
+    draw(); hintFor();
     return;
   }
+  if (p && p.edit) {
+    if (p.hist.length) { p.pts = p.hist.pop(); p.sel = -1; draw(); hintFor(); }
+    else toast('Nothing to take back here: Cancel leaves it as it was');
+    return;
+  }
+  if (p) {
+    if (p.pts.length > 1) { p.pts.pop(); draw(); hintFor(); } else cancelPending();
+    return;
+  }
+  const h = S.hist.get(S.draft.plate);
+  if (!h || !h.length) { toast('Nothing to undo on this plate'); return; }
+  const was = h.pop();
+  Object.assign(S.draft, JSON.parse(was.marks));
+  if (!was.note) marked();              // a note is not a mark: the recut still describes the draft
+  S.lead = null;
+  renderMarks(); renderOpts(); draw();
+}
+
+function flip() {
+  const p = S.pending;
+  if (!p || !p.redraw) return;
+  p.redraw.flip = !p.redraw.flip;
+  draw();
 }
 
 function key(ev) {
-  if (ev.target.matches('input,textarea,select')) {
+  // a field being typed in keeps its keys; a ticked box or the slider does not need them
+  if (ev.target.matches('textarea,select,input:not([type="checkbox"]):not([type="range"])')) {
     if (ev.key === 'Escape') ev.target.blur();
     return;
   }
-  const k = ev.key;
-  if (k === 'Escape') { if (!$('modal').hidden) closeSheet(); else cancelPending(); return; }
+  const k = ev.key, p = S.pending;
+  if (k === 'Escape') {
+    if (!$('modal').hidden) closeSheet();
+    else if (p && p.redraw) { p.redraw = null; draw(); hintFor(); }
+    else if (p) cancelPending();
+    else if (S.lead) { S.lead = null; renderOpts(); draw(); }
+    return;
+  }
   if (!$('modal').hidden) return;
+  // the browser's own shortcuts are left alone, but for Undo, which is this page's too
+  if (ev.ctrlKey || ev.metaKey) {
+    if (k === 'z' || k === 'Z') { ev.preventDefault(); undo(); }
+    return;
+  }
   if (k === 'Enter') { finish(); return; }
+  if (p && p.edit && !p.redraw && p.sel >= 0 && (k === 'Delete' || k === 'Backspace')) {
+    ev.preventDefault(); deleteVertex(p.sel); return;
+  }
   if (k === 'Backspace') { ev.preventDefault(); undo(); return; }
-  const tools = {1: 'pick', 2: 'seed', 3: 'unseed', 4: 'boundary', 5: 'extent'};
+  if (k === 'Tab' && p && p.redraw) { ev.preventDefault(); flip(); return; }
+  const tools = {1: 'pick', 2: 'seed', 3: 'unseed', 4: 'boundary', 5: 'extent', 6: 'leader'};
   if (tools[k]) { setTool(tools[k]); return; }
   if (k === 'f') fit();
   else if (k === 'z') undo();
+  else if (k === 'd') startRedraw();
+  else if (k === 'g') toggleSnap();
+  else if (k === 'k') legend($('legend').classList.contains('shut'));
   else if (k === 'i') inspect(false);
   else if (k === 'r') recut();
   else if (k === 's') save();
@@ -2261,7 +3377,11 @@ function sheet_(shut) {
   try {
     S.boot = await pickBackend();
     wire();
-    if (matchMedia('(max-width: 860px)').matches) sheet_(true);
+    const phone = matchMedia('(max-width: 860px)').matches;
+    if (phone) sheet_(true);
+    let keyOpen = false;
+    try { const v = localStorage.getItem(KEYKEY); if (v !== null) keyOpen = v === '1'; } catch (e) { /* private mode */ }
+    legend(keyOpen);
     const st = S.boot.start;
     S.layer = st.layer || 'drawing';
     await loadPlate(st.plate);

@@ -48,13 +48,32 @@
 
     <section class="box">
       <h2>Mark what is wrong</h2>
-      <div class="seg full" id="toolseg">
-        <button type="button" class="on" data-t="pick" title="Read what is under the pointer (1)">Pick</button>
-        <button type="button" data-t="seed" title="A point that is inside the region (2)">Seed +</button>
-        <button type="button" data-t="unseed" title="A point that is not inside it (3)">Seed &minus;</button>
-        <button type="button" data-t="boundary" title="A run of boundary the tracing missed (4)">Boundary</button>
-        <button type="button" data-t="extent" title="The outline the region should have (5)">Extent</button>
+      <!-- each tool wears the glyph its mark is drawn with on the plate, so the button,
+           the mark and the key under the plate are one picture -->
+      <div class="tools" id="toolseg" role="toolbar" aria-label="Marking tools">
+        <button type="button" class="on" data-t="pick" title="Read what is under the pointer; adds nothing (1)">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="5.5" fill="none" stroke="var(--pick)" stroke-width="1.8"/><path d="M10 1.5v5M10 13.5v5M1.5 10h5M13.5 10h5" stroke="var(--pick)" stroke-width="1.8"/></svg>
+          <span>Pick</span><kbd>1</kbd></button>
+        <button type="button" data-t="seed" title="A point the region is at (2)">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="5.5" fill="var(--seed)" stroke="#fff" stroke-width="1.6"/></svg>
+          <span>Seed +</span><kbd>2</kbd></button>
+        <button type="button" data-t="unseed" title="A point the region is not at (3)">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4.5 4.5l11 11M4.5 15.5l11-11" stroke="var(--unseed)" stroke-width="2.6" stroke-linecap="round"/></svg>
+          <span>Seed &minus;</span><kbd>3</kbd></button>
+        <button type="button" data-t="boundary" title="A run of line the tracing missed (4)">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M2.5 15.5L8 6.5l4.5 6 5-8" fill="none" stroke="var(--bound)" stroke-width="2.4" stroke-linejoin="round"/><circle cx="2.5" cy="15.5" r="2" fill="var(--bound)"/><circle cx="17.5" cy="4.5" r="2" fill="var(--bound)"/></svg>
+          <span>Boundary</span><kbd>4</kbd></button>
+        <button type="button" data-t="extent" title="The outline the region should have, or area it should not (5)">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 7l6-4.5 8 3.5-1.5 9L7 17.5z" fill="var(--ext)" fill-opacity=".18" stroke="var(--ext)" stroke-width="2" stroke-linejoin="round"/></svg>
+          <span>Extent</span><kbd>5</kbd></button>
+        <button type="button" data-t="leader" title="Move where a printed label seeds: the end of its line (6)">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><rect x="1.5" y="2.5" width="8" height="5.5" rx="1" fill="none" stroke="var(--box)" stroke-width="1.6"/><path d="M8 7.5l6.5 7" stroke="var(--seed)" stroke-width="1.8"/><circle cx="14.5" cy="14.5" r="3.2" fill="var(--seed)" stroke="#fff" stroke-width="1.3"/></svg>
+          <span>Leader</span><kbd>6</kbd></button>
       </div>
+      <!-- what the chosen tool's mark says, what the pipeline does with it, and when it is
+           the right one: the difference between the six is the thing a first-time reader
+           cannot guess -->
+      <div class="toolhelp" id="toolhelp" aria-live="polite"></div>
       <div class="opts" id="opts"></div>
       <p class="hint" id="hint">Click the plate to read what the extraction has there.</p>
     </section>
@@ -86,20 +105,49 @@ The <a href="https://github.com/dstolz/GerbilAtlasExplorer/wiki/Correcting-a-Reg
   </aside>
 
   <section class="stage">
-    <canvas id="cv"></canvas>
-    <div class="over" id="over">
-      <div class="zoomers">
-        <button class="rb" id="zin" type="button" title="Zoom in" aria-label="Zoom in">+</button>
-        <button class="rb" id="zout" type="button" title="Zoom out" aria-label="Zoom out">&minus;</button>
-        <button class="rb" id="zfit" type="button" title="Fit the plate (F)" aria-label="Fit the plate">&#10530;</button>
-      </div>
-      <!-- a phone has no Enter key and no double-click, so a shape being drawn says
-           how to finish it on the plate itself -->
-      <div class="drawbar" id="drawbar" hidden>
-        <span id="drawcount" class="mono"></span>
-        <button class="b" id="dundo" type="button">Undo point</button>
-        <button class="b" id="dcancel" type="button">Cancel</button>
-        <button class="b go" id="dfinish" type="button">Finish</button>
+    <!-- the plate and what floats over it, in a box of their own so the bars below the
+         plate are never under a control -->
+    <div class="platebox">
+      <canvas id="cv"></canvas>
+      <div class="over" id="over">
+        <div class="zoomers">
+          <button class="rb" id="zin" type="button" title="Zoom in" aria-label="Zoom in">+</button>
+          <button class="rb" id="zout" type="button" title="Zoom out" aria-label="Zoom out">&minus;</button>
+          <button class="rb" id="zfit" type="button" title="Fit the plate (F)" aria-label="Fit the plate">&#10530;</button>
+        </div>
+        <!-- what every line, box and dot on the plate is -->
+        <div class="legend shut" id="legend">
+          <button class="legbar" id="legbar" type="button" aria-expanded="false" aria-controls="legbody"
+                  title="What each thing drawn on the plate is (K)">Key<span class="chev" aria-hidden="true">&#9662;</span></button>
+          <div class="legbody" id="legbody">
+            <p class="lh">The plate</p>
+            <div class="lr"><svg viewBox="0 0 24 12"><path d="M1 8C6 2 12 10 23 4" fill="none" stroke="var(--trace)" stroke-width="1.6"/></svg>traced line</div>
+            <div class="lr"><svg viewBox="0 0 24 12"><path d="M1 8C6 2 12 10 23 4" fill="none" stroke="var(--bound)" stroke-width="2.2"/></svg>line a correction added</div>
+            <div class="lr"><svg viewBox="0 0 24 12"><rect x="1.5" y="1.5" width="21" height="9" rx="2" fill="none" stroke="var(--regi)" stroke-opacity=".6" stroke-width="1"/></svg>region, as extracted</div>
+            <div class="lr"><svg viewBox="0 0 24 12"><rect x="1.5" y="1.5" width="21" height="9" rx="2" fill="var(--sel)" fill-opacity=".25" stroke="var(--sel)" stroke-width="2"/></svg>the chosen region</div>
+            <div class="lr"><svg viewBox="0 0 24 12"><rect x="1.5" y="1.5" width="21" height="9" rx="2" fill="var(--ext)" fill-opacity=".15" stroke="var(--ext)" stroke-width="1.6"/></svg>moved by the recut</div>
+            <div class="lr"><svg viewBox="0 0 24 12"><rect x="1" y="2" width="9" height="7" fill="none" stroke="var(--box)" stroke-width="1.3"/><path d="M10 6l9 3" stroke="var(--box)" stroke-width="1"/><circle cx="19.5" cy="9" r="2.3" fill="var(--box)"/></svg>printed label, its line and where it seeds</div>
+            <div class="lr"><svg viewBox="0 0 24 12"><rect x="1" y="2" width="9" height="7" fill="none" stroke="var(--box)" stroke-width="1.3"/><path d="M10 6l9 3" stroke="var(--box)" stroke-width="1"/><circle cx="19.5" cy="9" r="2.3" fill="var(--seed)"/></svg>&hellip; moved by an earlier correction</div>
+            <p class="lh">Your marks</p>
+            <div class="lr"><svg viewBox="0 0 24 12"><circle cx="12" cy="6" r="4" fill="var(--seed)" stroke="#fff" stroke-width="1.3"/></svg>Seed + &middot; the region is here</div>
+            <div class="lr"><svg viewBox="0 0 24 12"><path d="M8 2l8 8M8 10l8-8" stroke="var(--unseed)" stroke-width="2.2"/></svg>Seed &minus; &middot; it is not here</div>
+            <div class="lr"><svg viewBox="0 0 24 12"><path d="M2 9L9 3l6 6 7-6" fill="none" stroke="var(--bound)" stroke-width="2.6"/></svg>Boundary &middot; a line the tracing missed</div>
+            <div class="lr"><svg viewBox="0 0 24 12"><path d="M2 4l8-2.5 12 2-2 7H4z" fill="var(--ext)" fill-opacity=".15" stroke="var(--ext)" stroke-width="1.8"/></svg>Extent + &middot; the outline it should have</div>
+            <div class="lr"><svg viewBox="0 0 24 12"><path d="M2 4l8-2.5 12 2-2 7H4z" fill="none" stroke="var(--ext)" stroke-width="1.8"/><path d="M4 1.5l16 9M4 10.5l16-9" stroke="var(--unseed)" stroke-width="1.6"/></svg>Extent &minus; &middot; area it should not have</div>
+            <div class="lr"><svg viewBox="0 0 24 12"><rect x="1" y="2" width="8" height="6" fill="none" stroke="var(--box)" stroke-width="1.3"/><circle cx="13" cy="4" r="2" fill="none" stroke="var(--box)" stroke-width="1" stroke-dasharray="1.5 1"/><path d="M9 5l10 4" stroke="var(--seed)" stroke-width="1.5"/><circle cx="19.5" cy="9" r="2.5" fill="var(--seed)" stroke="#fff" stroke-width="1"/></svg>Leader &middot; a label's line, moved</div>
+          </div>
+        </div>
+        <!-- a phone has no Enter key and no double-click, so a shape being drawn says
+             how to finish it on the plate itself -->
+        <div class="drawbar" id="drawbar" hidden>
+          <span id="drawcount" class="mono"></span>
+          <button class="b" id="dredraw" type="button" title="Replace a stretch of the outline with a line you draw (D)">Redraw a stretch</button>
+          <button class="b" id="dflip" type="button" title="Replace the other side of the outline instead (Tab)">Other side</button>
+          <button class="b warn" id="ddel" type="button" title="Delete the chosen point (Delete)">Delete point</button>
+          <button class="b" id="dundo" type="button" title="Take back the last step (Z)">Undo point</button>
+          <button class="b" id="dcancel" type="button" title="Leave it as it was (Esc)">Cancel</button>
+          <button class="b go" id="dfinish" type="button" title="Keep it (Enter)">Finish</button>
+        </div>
       </div>
     </div>
     <div class="statusbar">

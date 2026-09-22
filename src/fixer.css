@@ -90,8 +90,33 @@ main{flex:1 1 auto;display:grid;grid-template-columns:352px minmax(0,1fr);min-he
 .row .ar{margin-left:auto;flex:none;color:var(--muted);font-size:11px}
 .row.off .ab{color:var(--muted);font-weight:500}
 
+/* the six tools, each wearing the glyph its mark is drawn with on the plate */
+.tools{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+.tools button{position:relative;font:inherit;font-size:12px;display:flex;align-items:center;gap:6px;
+  padding:6px 7px;border:1px solid var(--line);border-radius:8px;background:var(--panel);
+  color:var(--ink);cursor:pointer;min-width:0;text-align:left}
+.tools button:hover{background:var(--chip)}
+.tools button svg{width:18px;height:18px;flex:none}
+.tools button span{flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* the key that picks it, in the corner, where it costs the name no room */
+.tools button kbd{position:absolute;top:2px;right:4px;font:9px/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  color:var(--muted)}
+.tools button.on{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink);background:var(--chip);
+  font-weight:600}
+
+/* what the chosen tool's mark says, and what the pipeline does with it */
+.toolhelp{border-left:3px solid var(--tc,var(--line));background:var(--panel);border-radius:0 8px 8px 0;
+  padding:6px 9px;display:flex;flex-direction:column;gap:3px;font-size:12px}
+.toolhelp .says{font-weight:600}
+.toolhelp .says em{font-style:normal;color:var(--muted);font-weight:500}
+.toolhelp p{margin:0;color:var(--muted);font-size:11.5px}
+.toolhelp p b{color:var(--ink);font-weight:600}
+.toolhelp code{font-size:10.5px}
+
 /* the tool's own options: a row of them, then whatever the tool lists under it */
 .opts{display:flex;flex-direction:column;gap:7px}
+.opts:empty{display:none}
+.hint{border:1px dashed var(--line);border-radius:8px;padding:6px 8px;background:var(--panel)}
 
 /* the rings of the chosen region, under the extent tool: what the extraction cut,
    each with what can be said about it */
@@ -102,16 +127,30 @@ main{flex:1 1 auto;display:grid;grid-template-columns:352px minmax(0,1fr);min-he
 .rings .ring .b{font-size:11.5px;padding:3px 7px}
 .rings .fact{margin:0}
 
+/* the labels of the chosen region, under the leader tool */
+.leads{display:flex;flex-direction:column;gap:4px;width:100%}
+.leads .lead{display:flex;gap:6px;align-items:center;font-size:11.5px}
+.leads .lead .who{flex:1 1 auto;min-width:0;color:var(--muted);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.leads .lead .who b{color:var(--ink);font-weight:600}
+.leads .lead.on .who b{color:var(--accent)}
+.leads .lead .b{font-size:11.5px;padding:3px 7px}
+.leads .fact{margin:0}
+
 /* ---------- the draft ---------- */
 .marks{display:flex;flex-direction:column;gap:4px}
 .mark{display:flex;gap:7px;align-items:flex-start;font-size:12px;padding:4px 6px;
   border:1px solid var(--line);border-radius:8px;background:var(--panel)}
 .mark .sw{width:9px;height:9px;border-radius:50%;flex:none;margin-top:4px}
+.mark svg.sw{width:16px;height:16px;border-radius:0;margin-top:1px}
 .mark .txt{min-width:0;flex:1 1 auto}
 .mark .txt em{color:var(--muted);font-style:normal;display:block;font-size:11px}
-.mark .x{border:0;background:none;color:var(--muted);cursor:pointer;font-size:14px;
+.mark .txt em .bad{color:var(--unseed)}
+.mark .x,.mark .ed{border:0;background:none;color:var(--muted);cursor:pointer;font-size:14px;
   line-height:1;padding:2px 3px;flex:none}
-.mark .x:hover{color:var(--accent)}
+.mark .ed{font-size:11.5px;text-decoration:underline;text-underline-offset:2px}
+.mark .x:hover,.mark .ed:hover{color:var(--accent)}
+.mark.hi{border-color:var(--accent)}
 .mark.empty{border-style:dashed;color:var(--muted);justify-content:center;padding:7px}
 .report{margin:0;max-height:280px;overflow:auto;white-space:pre-wrap;word-break:break-word;
   font:11.5px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
@@ -122,28 +161,56 @@ main{flex:1 1 auto;display:grid;grid-template-columns:352px minmax(0,1fr);min-he
 /* ---------- the plate ---------- */
 .stage{position:relative;min-width:0;min-height:0;display:flex;flex-direction:column;
   background:var(--bg)}
-/* flex-basis 0 with min-height 0: a canvas is a replaced element, so its own width
-   and height attributes would otherwise set the floor and push the status bar off the
-   bottom of a phone. The bitmap size is set from the box in resize(), not the reverse. */
-#cv{flex:1 1 0;min-height:0;width:100%;display:block;touch-action:none;cursor:crosshair}
+/* flex-basis 0 with min-height 0, and the canvas laid over the box rather than in its
+   flow: a canvas is a replaced element, so its own width and height attributes would
+   otherwise set the floor and push the status bar off the bottom of a phone. The bitmap
+   size is set from the box in resize(), not the reverse. */
+.platebox{position:relative;flex:1 1 0;min-height:0}
+#cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:crosshair}
+#cv[data-cur="move"]{cursor:move}
+#cv[data-cur="copy"]{cursor:copy}
+#cv[data-cur="grab"]{cursor:grab}
+#cv[data-cur="pointer"]{cursor:pointer}
+#cv[data-cur="cell"]{cursor:cell}
 .stage.pan #cv{cursor:grabbing}
 .over{position:absolute;inset:0;pointer-events:none}
 .over > *{pointer-events:auto}
+
+/* the key: what every line, box and dot on the plate is */
+.legend{position:absolute;left:10px;top:10px;max-width:min(290px,calc(100% - 70px));
+  border:1px solid var(--line);border-radius:10px;background:var(--panel);
+  box-shadow:var(--shadow);font-size:11.5px;overflow:hidden}
+.legbar{display:flex;align-items:center;gap:6px;width:100%;border:0;background:none;
+  color:var(--ink);font:inherit;font-size:11.5px;font-weight:650;padding:5px 9px;cursor:pointer;
+  text-align:left}
+.legbar .chev{margin-left:auto;color:var(--muted);transition:transform .15s}
+.legend.shut .legbar .chev{transform:rotate(180deg)}
+.legend.shut .legbody{display:none}
+.legbody{padding:0 9px 7px;max-height:calc(100vh - 220px);overflow:auto}
+.legbody .lh{margin:4px 0 2px;font-size:10px;font-weight:700;letter-spacing:.07em;
+  text-transform:uppercase;color:var(--muted)}
+.legbody .lr{display:flex;align-items:center;gap:7px;line-height:1.35;padding:1px 0;color:var(--ink)}
+.legbody .lr svg{width:24px;height:12px;flex:none}
 .zoomers{position:absolute;top:10px;right:10px;display:flex;flex-direction:column;gap:5px}
 .rb{width:34px;height:34px;font:600 17px/1 ui-sans-serif,system-ui,sans-serif;
   border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--ink);
   cursor:pointer;box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center}
 .rb:hover{background:var(--chip)}
+/* max-content, capped: placed at the middle, a box's shrink-to-fit width is the half of
+   the plate to its right, and a bar of six buttons would stack into a column */
 .drawbar{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);
   display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:center;
-  max-width:calc(100% - 20px);padding:6px 8px;border:1px solid var(--line);
+  width:max-content;max-width:calc(100% - 20px);padding:6px 8px;border:1px solid var(--line);
   border-radius:11px;background:var(--panel);box-shadow:var(--shadow)}
-.drawbar[hidden]{display:none}
+.drawbar[hidden],.drawbar [hidden]{display:none}
 .drawbar #drawcount{color:var(--muted);padding:0 4px}
-.statusbar{flex:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+/* one row: a long region name under the pointer is cut short rather than wrapping the bar,
+   which would take the row out of the plate and move it under the pointer as it goes */
+.statusbar{flex:none;display:flex;align-items:center;gap:10px;flex-wrap:nowrap;
   padding:5px 10px;border-top:1px solid var(--line);background:var(--panel);
-  font-size:11.5px;color:var(--muted)}
-.statusbar #under{color:var(--ink)}
+  font-size:11.5px;color:var(--muted);white-space:nowrap}
+.statusbar > *{flex:none}
+.statusbar #under{color:var(--ink);flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}
 
 /* The plates in order. It is held to one slim row: everything above it is chrome and
    the plate is what the page is for, so the bar costs the canvas as little as a
@@ -217,6 +284,8 @@ main{flex:1 1 auto;display:grid;grid-template-columns:352px minmax(0,1fr);min-he
   .statusbar > *{flex:0 0 auto;white-space:nowrap}
   .statusbar::-webkit-scrollbar{display:none}
   .drawbar{bottom:8px}
+  .tools button{padding:8px 8px}
+  .tools button kbd{display:none}
 }
 @media (max-width:620px){
   header{gap:5px 8px;padding:5px 8px}

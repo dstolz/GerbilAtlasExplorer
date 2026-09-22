@@ -26,13 +26,25 @@ async function open(page) {
 // page px -> a click on the canvas, through the view the page is holding -- which is
 // the zoom and pan after the turn that sets the page upright, so the page's own
 // composed matrix is what converts, not S.view alone
+const screenOf = (page, pt) => page.evaluate(([x, y]) => {
+  const r = document.getElementById('cv').getBoundingClientRect();
+  const at = xf(viewM(), x, y);
+  return [r.left + at[0], r.top + at[1]];
+}, pt);
+
 async function clickAt(page, pt) {
-  const box = await page.evaluate(([x, y]) => {
-    const r = document.getElementById('cv').getBoundingClientRect();
-    const at = xf(viewM(), x, y);
-    return [r.left + at[0], r.top + at[1]];
-  }, pt);
+  const box = await screenOf(page, pt);
   await page.mouse.click(box[0], box[1]);
+}
+
+// a press at one page point, carried to another and let go there
+async function dragAt(page, from, to) {
+  const a = await screenOf(page, from), b = await screenOf(page, to);
+  await page.mouse.move(a[0], a[1]);
+  await page.mouse.down();
+  await page.mouse.move((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, {steps: 4});
+  await page.mouse.move(b[0], b[1], {steps: 4});
+  await page.mouse.up();
 }
 
 test('the plate comes up as it was asked for, with the region chosen', async ({ page }) => {
@@ -65,8 +77,8 @@ test('a seed and a boundary become the correction, in the page frame with mm bes
     await clickAt(page, GAP[1]);
     await page.keyboard.press('Enter');
     await expect(page.locator('#marks .mark')).toHaveCount(2);
-    await expect(page.locator('#marks')).toContainText('S1DZ positive');
-    await expect(page.locator('#marks')).toContainText('solid boundary');
+    await expect(page.locator('#marks')).toContainText('S1DZ is here');
+    await expect(page.locator('#marks')).toContainText('Missing solid line');
 
     const doc = await page.evaluate(async () => {
       const r = await fetch('/api/document', {
@@ -279,6 +291,244 @@ test('an extent drawn where the region is not carries that, and one drawn where 
     expect(page.errors).toEqual([]);
   });
 
+// ---------------------------------------------------------------- the six marks
+//
+// A seed and a leader both seed, a boundary and an extent both draw a line, and the
+// difference between them is what the pipeline does with each. So the panel says, for
+// the tool in hand, what its mark says and what becomes of it, and the key under the
+// plate says what every line, box and dot drawn there is.
+
+test('each tool says what its mark means and what the pipeline does with it',
+  async ({ page }) => {
+    await open(page);
+    const help = page.locator('#toolhelp');
+    await expect(help).toContainText('Pick says nothing');
+    await page.click('[data-t="seed"]');
+    await expect(help).toContainText('Seed + says S1DZ is here.');
+    await expect(help).toContainText('a seed of its own');
+    await page.click('[data-t="unseed"]');
+    await expect(help).toContainText('S1DZ is not here');
+    await expect(help).toContainText('The pipeline does not act on it');
+    await page.click('[data-t="boundary"]');
+    await expect(help).toContainText('more than 20 page px from the ink is not bridged');
+    await page.click('[data-t="extent"]');
+    await expect(help).toContainText('Extent + says this is the outline S1DZ should have');
+    await page.click('#opts [data-k="negative"]');
+    await expect(help).toContainText('Extent − says S1DZ has no area inside this');
+    await expect(help).toContainText('never inked');
+    await page.keyboard.press('6');
+    await expect(page.locator('[data-t="leader"]')).toHaveClass(/\bon\b/);
+    await expect(help).toContainText('label_index');
+
+    // the key to the plate: shut, so it sits on none of the section, until it is asked for
+    await expect(page.locator('#legbody')).toBeHidden();
+    await page.click('#legbar');
+    await expect(page.locator('#legbody')).toBeVisible();
+    await expect(page.locator('#legbody')).toContainText('Extent − · area it should not have');
+    await expect(page.locator('#legbody')).toContainText('Leader · a label\'s line, moved');
+    expect(page.errors).toEqual([]);
+  });
+
+// A label printed outside its region has a line drawn back in, and the region is seeded
+// at the end of it. ICj[0] on plate 19 is one. Moving that end is a seed carrying the
+// label's index -- the entry tools/corrections.py reads as standing in for the box.
+const leaderOf = (page, abbr, index) => page.evaluate(([a, i]) => {
+  const L = S.d.labels.find((q) => q.abbr === a && q.index === i);
+  zoomTo(L.box.concat([L.at]), 150);
+  return {at: L.at, led: L.led};
+}, [abbr, index]);
+
+test('a label\'s line is moved by dragging its end, and goes in as a seed standing in for it',
+  async ({ page }) => {
+    await open(page);
+    await page.click('[data-t="leader"]');
+    const L = await leaderOf(page, 'ICj', 0);
+    expect(L.led).toBe(true);
+    const to = [L.at[0] + 25, L.at[1] + 15];
+    await dragAt(page, L.at, to);
+    await expect(page.locator('#marks')).toContainText('ICj[0]: its line ends here');
+    await expect(page.locator('#regions .row.on .ab')).toHaveText('ICj');    // the region it names
+    await expect(page.locator('#opts .leads')).toContainText('moved in this draft');
+    await expect(page.locator('#report')).toContainText('the line of ICj[0] ends here now',
+      {timeout: 20000});
+
+    const doc = await page.evaluate(async () => (await SRC.document(S.draft)).doc);
+    expect(doc.abbr).toBe('ICj');
+    expect(doc.seeds).toHaveLength(1);
+    expect(doc.seeds[0].abbr).toBe('ICj');
+    expect(doc.seeds[0].kind).toBe('positive');
+    expect(doc.seeds[0].label_index).toBe(0);
+    expect(doc.seeds[0].page_px[0]).toBeCloseTo(to[0], 0);
+    expect(doc.seeds[0].page_px[1]).toBeCloseTo(to[1], 0);
+
+    // brought back to where it ended, it is no move at all
+    await dragAt(page, to, L.at);
+    expect(await page.evaluate(() => S.draft.seeds.length)).toBe(0);
+
+    // or chosen, and put down with a click -- which is how a finger does it
+    await page.locator('#opts .leads .lead').first().getByRole('button', {name: 'Move'}).click();
+    await expect(page.locator('#hint')).toContainText('ICj[0] is chosen');
+    await clickAt(page, to);
+    const seeds = await page.evaluate(() => S.draft.seeds);
+    expect(seeds).toHaveLength(1);
+    expect(seeds[0].label_index).toBe(0);
+    await page.keyboard.press('z');                     // and Undo takes it back
+    expect(await page.evaluate(() => S.draft.seeds.length)).toBe(0);
+
+    // while one is chosen, a click inside another label's box puts the chosen one's end
+    // down there -- the face a line should end in may well have a word printed in it
+    const inBox = await page.evaluate(() => {
+      const me = S.d.labels.find((q) => q.abbr === 'ICj' && q.index === 0);
+      const far = (L) => Math.hypot(boxMid(L)[0] - me.at[0], boxMid(L)[1] - me.at[1]);
+      const B = S.d.labels.filter((q) => q !== me && !q.led).sort((a, b) => far(a) - far(b))[0];
+      const q = [B.box[0][0] * 0.85 + B.box[2][0] * 0.15, B.box[0][1] * 0.8 + B.box[2][1] * 0.2];
+      zoomTo(me.box.concat([me.at, q]), 150);
+      return {q, inside: pip(B.box, q[0], q[1]), free: !labelAt(q, true)};
+    });
+    expect(inBox.inside).toBe(true);
+    expect(inBox.free).toBe(true);                      // off every line's end
+    await page.locator('#opts .leads .lead').first().getByRole('button', {name: 'Move'}).click();
+    await clickAt(page, inBox.q);
+    const put = await page.evaluate(() => S.draft.seeds);
+    expect(put).toHaveLength(1);
+    expect([put[0].abbr, put[0].label_index]).toEqual(['ICj', 0]);
+    expect(put[0].page_px[0]).toBeCloseTo(inBox.q[0], 0);
+    expect(put[0].page_px[1]).toBeCloseTo(inBox.q[1], 0);
+    expect(page.errors).toEqual([]);
+  });
+
+test('a boundary\'s points go onto the ink they are put down near, unless snapping is off',
+  async ({ page }) => {
+    await open(page);
+    await page.click('[data-t="boundary"]');
+    await expect(page.locator('#o-snap')).toBeChecked();
+    // the two ends of the gap are points of the tracing; a click a few px off each, and
+    // the nearest ink to it by the pipeline's own measure
+    const off = GAP.map(([x, y]) => [x + 4, y - 3]);
+    const ink = await page.evaluate((qs) => qs.map((q) => nearInk(q, W(SNAP_PX), -1).pt), off);
+    for (let i = 0; i < 2; i++) expect(Math.hypot(ink[i][0] - off[i][0], ink[i][1] - off[i][1])).toBeGreaterThan(1);
+    await clickAt(page, off[0]);
+    await clickAt(page, off[1]);
+    await page.keyboard.press('Enter');
+    const b = await page.evaluate(() => S.draft.boundaries[0].page_px);
+    for (let i = 0; i < 2; i++) {
+      expect(b[i][0]).toBeCloseTo(ink[i][0], 1);
+      expect(b[i][1]).toBeCloseTo(ink[i][1], 1);
+    }
+    await expect(page.locator('#marks')).toContainText('both ends on the ink');
+
+    // and off, a point goes where it is put. Not on the line just drawn: a press on a point
+    // of a line already drawn opens that line
+    await page.uncheck('#o-snap');
+    const put = [[1250, 1150], [1300, 1200]];
+    const near = await page.evaluate((qs) => qs.map((q) => nearInk(q, W(SNAP_PX), -1)), put);
+    expect(near.some(Boolean)).toBe(true);              // ink within reach, which would have snapped
+    await clickAt(page, put[0]);
+    await clickAt(page, put[1]);
+    await page.keyboard.press('Enter');                 // for the plate, not the box just unticked
+    const c = await page.evaluate(() => S.draft.boundaries[1].page_px);
+    for (let i = 0; i < 2; i++) {
+      expect(c[i][0]).toBeCloseTo(put[i][0], 1);
+      expect(c[i][1]).toBeCloseTo(put[i][1], 1);
+    }
+    expect(page.errors).toEqual([]);
+  });
+
+test('an outline is reshaped in place: a point dragged, one taken out, a stretch redrawn',
+  async ({ page }) => {
+    await open(page);
+    await page.click('[data-t="extent"]');
+    await page.uncheck('#o-snap');                      // exact, so the numbers can be checked
+    await rings(page).nth(1).locator('.b').first().click();    // ring 2: Pull into shape
+    await expect(page.locator('#dfinish')).toHaveText('Accept');
+    const pts0 = await page.evaluate(() => S.pending.pts.map((q) => q.slice()));
+    const n0 = pts0.length;
+
+    const v = pts0[5], to = [v[0] + 14, v[1] - 8];
+    await dragAt(page, v, to);
+    let at = await page.evaluate(() => S.pending.pts[5]);
+    expect(at[0]).toBeCloseTo(to[0], 0);
+    expect(at[1]).toBeCloseTo(to[1], 0);
+    await page.click('#dundo');                         // the editor's undo: the step, not the edit
+    expect(await page.evaluate(() => S.pending.pts[5])).toEqual(v);
+    await expect(page.locator('#drawbar')).toBeVisible();
+
+    await clickAt(page, pts0[10]);                      // a point chosen, and taken out
+    await expect(page.locator('#ddel')).toBeVisible();
+    await page.click('#ddel');
+    expect(await page.evaluate(() => S.pending.pts.length)).toBe(n0 - 1);
+    await page.click('#dundo');
+    expect(await page.evaluate(() => S.pending.pts.length)).toBe(n0);
+
+    // leave the ring at one point, run out to the side, rejoin it at another: what lay
+    // between goes, and the new line takes its place
+    await page.click('#dredraw');
+    await expect(page.locator('#dfinish')).toHaveText('Apply');
+    const out = [(pts0[4][0] + pts0[6][0]) / 2 + 25, (pts0[4][1] + pts0[6][1]) / 2 - 25];
+    await clickAt(page, pts0[2]);
+    await clickAt(page, out);
+    await clickAt(page, pts0[8]);
+    await page.click('#dfinish');
+    const pts1 = await page.evaluate(() => S.pending.pts);
+    expect(pts1).toHaveLength(n0 - 4);                  // five points gone, one new
+    const has = (q) => pts1.some((r) => Math.hypot(r[0] - q[0], r[1] - q[1]) < 0.01);
+    expect(has(out)).toBe(true);
+    for (const k of [3, 4, 5, 6, 7]) expect(has(pts0[k])).toBe(false);
+    for (const k of [2, 8, 9, 20]) expect(has(pts0[k])).toBe(true);
+
+    await page.click('#dfinish');                       // Accept
+    await expect(page.locator('#marks')).toContainText('The outline of S1DZ (ring 2)');
+    expect(await page.evaluate(() => S.draft.extents.map((e) => [e.kind, e.ring, e.page_px.length])))
+      .toEqual([['positive', 1, n0 - 4]]);
+    // the ring opens the shape it was pulled into, and does not start a second one
+    await rings(page).nth(1).getByRole('button', {name: 'Edit the shape'}).click();
+    expect(await page.evaluate(() => S.pending.pts.length)).toBe(n0 - 4);
+    await page.keyboard.press('Enter');
+    expect(await page.evaluate(() => S.draft.extents.length)).toBe(1);
+    expect(page.errors).toEqual([]);
+  });
+
+test('a line already drawn is adjusted by dragging its point, and stays one mark',
+  async ({ page }) => {
+    await open(page);
+    await page.click('[data-t="boundary"]');
+    await page.uncheck('#o-snap');
+    await clickAt(page, GAP[0]);
+    await clickAt(page, GAP[1]);
+    await page.keyboard.press('Enter');
+    const to = [GAP[1][0] + 24, GAP[1][1] + 14];
+    await dragAt(page, GAP[1], to);                     // the line opens under the press
+    await expect(page.locator('#dfinish')).toHaveText('Accept');
+    await page.keyboard.press('Enter');
+    let b = await page.evaluate(() => S.draft.boundaries);
+    expect(b).toHaveLength(1);
+    expect(b[0].page_px[1][0]).toBeCloseTo(to[0], 0);
+    expect(b[0].page_px[1][1]).toBeCloseTo(to[1], 0);
+    const mm = await page.evaluate((q) => toMm(q[0], q[1]), b[0].page_px[1]);
+    expect(b[0].mm[1][0]).toBeCloseTo(mm[0], 3);       // and its mm moved with it
+    await page.keyboard.press('z');                     // Undo takes back the move, not the line
+    b = await page.evaluate(() => S.draft.boundaries);
+    expect(b).toHaveLength(1);
+    expect(b[0].page_px[1][0]).toBeCloseTo(GAP[1][0], 0);
+    expect(page.errors).toEqual([]);
+  });
+
+test('undo takes back the last change, whatever kind of mark it was', async ({ page }) => {
+  await open(page);
+  await page.click('[data-t="extent"]');
+  await rings(page).nth(0).locator('.b.warn').click();          // an extent first
+  await page.click('[data-t="seed"]');
+  await clickAt(page, SEED);                                     // then a seed
+  await expect(page.locator('#marks .mark')).toHaveCount(2);
+  await page.keyboard.press('z');
+  expect(await page.evaluate(() => [S.draft.seeds.length, S.draft.extents.length])).toEqual([0, 1]);
+  await page.click('#clearb');
+  expect(await page.evaluate(() => S.draft.extents.length)).toBe(0);
+  await page.keyboard.press('z');                                // a clear is a change too
+  expect(await page.evaluate(() => S.draft.extents.length)).toBe(1);
+  expect(page.errors).toEqual([]);
+});
+
 test('a plate with no correction on it still draws, and the plate can be changed',
   async ({ page }) => {
     await open(page);
@@ -315,7 +565,7 @@ test('marks stay on the plate they were made on', async ({ page }) => {
   await page.click('#prev');                              // and back: the mark is there
   await expect(page.locator('#where')).toContainText('plate 19, bregma');
   await expect(page.locator('#marks .mark')).toHaveCount(1);
-  await expect(page.locator('#marks')).toContainText('S1DZ positive');
+  await expect(page.locator('#marks')).toContainText('S1DZ is here');
   await expect(page.locator('#problem')).toHaveValue('S1DZ on the left is a scrap.');
   const doc = await page.evaluate(async () => (await SRC.document(S.draft)).doc);
   expect(doc.plate).toBe(19);                             // one plate's marks, not two
@@ -602,6 +852,30 @@ test('the two backends write one correction, extents and all', async ({ page }) 
   expect(there.extents.map((e) => e.kind)).toEqual(['negative', 'negative']);
   expect(there.extents[0].page_px.length).toBeGreaterThan(3);   // the ring the cut made
   expect(there.extents[1].page_px).toHaveLength(3);             // and the one drawn by hand
+  expect(page.errors).toEqual([]);
+});
+
+// A moved leader is a seed with an index in it, and the index is the one field of a seed
+// the other tests do not drive through both writers.
+test('the two backends write one correction, a leader moved', async ({ page }) => {
+  const mark = async (p) => {
+    await p.click('[data-t="leader"]');
+    const L = await leaderOf(p, 'ICj', 0);
+    await dragAt(p, L.at, [L.at[0] + 25, L.at[1] + 15]);
+    await expect(p.locator('#marks')).toContainText('ICj[0]: its line ends here');
+  };
+  await published(page);
+  await mark(page);
+  const there = await documentOf(page);
+
+  const local = await page.context().newPage();
+  await open(local);
+  await mark(local);
+  const here = await documentOf(local);
+  await local.close();
+
+  expect(there).toEqual(here);
+  expect(there.seeds[0].label_index).toBe(0);
   expect(page.errors).toEqual([]);
 });
 
