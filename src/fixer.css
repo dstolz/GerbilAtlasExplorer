@@ -90,6 +90,18 @@ main{flex:1 1 auto;display:grid;grid-template-columns:352px minmax(0,1fr);min-he
 .row .ar{margin-left:auto;flex:none;color:var(--muted);font-size:11px}
 .row.off .ab{color:var(--muted);font-weight:500}
 
+/* the tool's own options: a row of them, then whatever the tool lists under it */
+.opts{display:flex;flex-direction:column;gap:7px}
+
+/* the rings of the chosen region, under the extent tool: what the extraction cut,
+   each with what can be said about it */
+.rings{display:flex;flex-direction:column;gap:4px;width:100%}
+.rings .ring{display:flex;gap:6px;align-items:center;font-size:11.5px}
+.rings .ring .who{flex:1 1 auto;min-width:0;color:var(--muted);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rings .ring .b{font-size:11.5px;padding:3px 7px}
+.rings .fact{margin:0}
+
 /* ---------- the draft ---------- */
 .marks{display:flex;flex-direction:column;gap:4px}
 .mark{display:flex;gap:7px;align-items:flex-start;font-size:12px;padding:4px 6px;
@@ -185,6 +197,11 @@ main{flex:1 1 auto;display:grid;grid-template-columns:352px minmax(0,1fr);min-he
   .rb{width:40px;height:40px}
   .b{padding:8px 12px}
   .seg button{padding:8px 10px}
+  /* a ring's label takes the row and its buttons the next one, so a finger has
+     something to hit rather than the small pair a wide panel has room for */
+  .rings .ring{flex-wrap:wrap}
+  .rings .ring .who{flex:1 0 100%}
+  .rings .ring .b{padding:8px 10px}
   .list{max-height:150px}
   .sheetbar{display:flex;align-items:center;gap:8px;position:sticky;top:0;z-index:2;
     margin:0 -10px;padding:9px 12px;border:0;border-bottom:1px solid var(--line);

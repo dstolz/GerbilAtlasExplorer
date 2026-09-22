@@ -426,6 +426,13 @@ where its boundary runs. `tools/atlasfix.py` lets you say it on the plate, in mi
 -- a seed inside the region, the run of boundary the tracing missed, the outline it should
 have -- and **Commit** pushes it as `corrections/<id>.json` on a branch `correction/<id>`.
 
+A region is one extent for each place the atlas draws it, and the **Extent** tool lists
+the rings the extraction cut: pull one into shape, draw another where the cut gave none,
+or **Drop** one the region should not have -- which writes that ring, as it was cut, as an
+extent saying the region has no area there. Drawing that way round marks the hole in a
+ring-like region. Nothing of such an extent is traced; it is read, and what it says is
+which input gave the region area it should not have.
+
 ```
 pip install -r tools/requirements.txt
 python3 tools/atlasfix.py 19 --abbr S1DZ     # opens the plate in a browser

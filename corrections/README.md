@@ -43,8 +43,18 @@ Schema `gerbil-atlas-correction/1`:
 - A **boundary** is a polyline of a run the tracing missed, `solid` or `dashed` as the
   atlas prints it, `closed` for a ring. `apply` writes it into the plate's SVG as cubics
   with `data-correction="<id>"`.
-- An **extent** is a ring of where a region's outline should run. Only the parts of it off
-  the traced ink are traced; the region is then re-cut, never copied.
+- An **extent** is a ring, and a region carries one for each place the atlas draws it.
+  `"kind": "positive"` is where the region's outline should run: only the parts of it off
+  the traced ink are traced, and the region is then re-cut, never copied.
+  `"kind": "negative"` is the other thing a plate can say -- the region has none of the
+  area drawn round, which is the hole in a ring-like region or a ring the extraction gave
+  it and the atlas does not. The page writes one from a fresh outline, or from the
+  vertices of a ring already cut when a reader drops it. Nothing of a negative extent is
+  traced: wherever a ring was cut, the line round it is drawn already, so it is read --
+  `inspect` says how much of the region lies inside it and whether a printed box of the
+  name sits there, which tells a seed to withdraw from a boundary to add. A file naming no
+  kind, which is every one written before the kind and every one MATLAB writes, is read as
+  positive.
 - A **preview** (`null` unless the reader ran **Recut**) is what the recut showed before they
   sent it: `{"area_mm2_before": 0.0669, "area_mm2": 0.1008, "changed": ["E", "GrA", "GrO"]}`.
   `corrections.py report` compares the applied fix with it. The published page cannot recut

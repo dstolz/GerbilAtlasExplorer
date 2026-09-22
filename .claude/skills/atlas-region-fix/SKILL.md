@@ -47,6 +47,18 @@ of it that lie more than 3 px off the ink already traced, and the extents are re
 the drawing has a line the atlas does not (the tracer's stray), take that `<path>` out by
 hand and say which and why in the commit.
 
+An extent carries a **kind**, and one that says `negative` is the opposite claim: the
+region has none of the area drawn round -- the hole in a ring-like region, or a ring the
+extraction gave it and the atlas does not draw. The page writes one either from a fresh
+outline or, where the reader dropped a ring already cut, from that ring's own vertices.
+Nothing of it is inked, so `apply` adds no path for it; it is a statement about area, and
+the cause is still one of the four above. `inspect` narrows it: a box of the name printed
+inside it means that box is the seed giving the region the area, so the fix is a
+`seed_overrides` row withdrawing it (`label_index`) or the boundary it should stop at; no
+box of the name inside it means the area reached in through a face the tracing leaves open,
+so the fix is the missing run of boundary. An extent naming no kind means `positive` --
+every file written before the kind, and every one `matlab/AtlasRegionFix.m` writes.
+
 A file with a **`preview`** block was sent after the reader ran **Recut** in
 `tools/atlasfix.py`: it says what area the reader saw the fix give and accepted. `report`
 compares the re-cut to it. Agreement is confirmation that the fix applied is the one the
