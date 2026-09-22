@@ -29,6 +29,7 @@ PY = sys.executable
 REBUILD = [
     ('outline', ['build_brain_outline.py'], 'brain_outline'),
     ('extents', ['build_region_extents.py'], 'region_extents, features'),
+    ('parts', ['build_parts.py'], 'parts -- refuses, rather than writes, a whole the re-cut newly admits'),
     ('volumes', ['build_volumes.py', '--nifti', 'data/gerbil_atlas_labels.nii.gz'],
      'gerbil_atlas_volumes.json, the NIfTI label volume and its LUT'),
     ('colors', ['build_region_colors.py'], 'region_colors'),
@@ -43,6 +44,7 @@ CHECK = [
     ('indexes', ['check_indexes.py']),
     ('tables', ['export_tables.py', '--check']),
     ('groups', ['build_groups.py', '--check']),
+    ('parts', ['build_parts.py', '--check']),
     ('colors', ['build_region_colors.py', '--check']),
     ('facemaps', ['build_facemaps.py', '--check']),
     ('pages', ['build_app.py', '--check']),

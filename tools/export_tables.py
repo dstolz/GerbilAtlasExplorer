@@ -13,6 +13,7 @@ again: CI runs `--check` and fails if a committed table is not what the JSON say
     data/gerbil_atlas_structure_table.csv  one row per structure with its label center,
                                          areas, and the volume and center from the meshes
     data/gerbil_atlas_groups.csv         one row per gross division, with its members
+    data/gerbil_atlas_parts.csv          one row per whole the atlas draws under its parts' names
     data/geojson/plate_NN.geojson        the region extents of one plate, in millimeters
 
 `--refresh-db` also recomputes the counts the database carries -- per plate
@@ -41,6 +42,7 @@ FILES = {
     'labels': os.path.join(A.DATA, 'gerbil_atlas_labels.csv'),
     'table': os.path.join(A.DATA, 'gerbil_atlas_structure_table.csv'),
     'groups': os.path.join(A.DATA, 'gerbil_atlas_groups.csv'),
+    'parts': os.path.join(A.DATA, 'gerbil_atlas_parts.csv'),
 }
 VERSION = '0.9.0'
 SCHEMA = '1.0'
@@ -135,6 +137,23 @@ def groups_csv(db):
                      g['last_plate'], g['n_plates'], str(float(g['bregma_anterior'])),
                      str(float(g['bregma_posterior'])), ';'.join(g.get('alias', [])),
                      ' '.join(g['members']), ' '.join(map(str, g['plates'])), g['note']])
+    return csv_text(rows, header)
+
+
+def parts_csv(db):
+    """The wholes the atlas draws under their parts' names, one row each.
+
+    Flat so the fold can be reproduced without the app: a reader who wants a folded label
+    volume remaps each part's id to its whole's with this file and the LUT.
+    """
+    header = ['whole', 'whole_name', 'parts', 'part_names', 'first_plate', 'last_plate',
+              'own_plates', 'stand_in_plates', 'shared_plates', 'note']
+    rows = []
+    for r in db.get('parts', {}).get('data', []):
+        rows.append([r['whole'], r['name'], ' '.join(r['parts']), ';'.join(r['part_names']),
+                     r['first_plate'], r['last_plate'],
+                     ' '.join(map(str, r['own_plates'])), ' '.join(map(str, r['stand_in_plates'])),
+                     ' '.join(map(str, r['shared_plates'])), r['note']])
     return csv_text(rows, header)
 
 
@@ -339,6 +358,7 @@ def outputs(db):
         'labels': (FILES['labels'], labels_csv(db)),
         'table': (FILES['table'], table_csv(db)),
         'groups': (FILES['groups'], groups_csv(db)),
+        'parts': (FILES['parts'], parts_csv(db)),
     }
     for p in range(1, A.N_PLATES + 1):
         out['geojson %02d' % p] = (os.path.join(GEO, 'plate_%02d.geojson' % p), geojson_text(db, p))

@@ -46,6 +46,7 @@ DERIVED_PATHS = (                          # repository paths the pipeline write
     'data/gerbil_atlas_labels_lut.csv', 'data/gerbil_atlas_structures.csv',
     'data/gerbil_atlas_plates.csv', 'data/gerbil_atlas_labels.csv',
     'data/gerbil_atlas_structure_table.csv', 'data/gerbil_atlas_groups.csv',
+    'data/gerbil_atlas_parts.csv',
     'data/index_published.csv', 'data/geojson/*', 'data/facemaps/*',
     'index.html', 'gerbil_atlas_explorer.html', 'fixer.html')
 
@@ -497,6 +498,7 @@ def atlas_payload(db):
         'plates': [{k: p[k] for k in _ATLAS_PLATE} for p in db['plates']],
         'structures': [{k: s[k] for k in _ATLAS_STRUCT} for s in db['structures']],
         'groups': db.get('groups', {}).get('data', []),
+        'parts': db.get('parts', {}).get('data', []),
         'features': f.get('data', {}),
         'feature_kinds': f.get('kinds', {}),
         'version': db.get('version', {}),
