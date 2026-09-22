@@ -495,6 +495,121 @@ carries a `version` block naming the release its derived fields were built for.
   are what carry the other two and a plain mesh link carries none.
 
 ### Fixed
+- **The olfactory bulb of plate 1 comes out in rings: `EPl` whole on the right, `Mi` closed
+  on the left, and the granule core back under `GrO`.** Three corrections sent together --
+  `20260922T135037Z-p01-EPl`, `-p01-Mi` and `-p01-GrO` -- carrying one reading between them:
+  "Right: MI was occupying EPI. Boundary redrawn; EPI should be a continuous ring similar to
+  EPI left; Fixed GrO boundary. Left: MI boundary should be a continuous ring; Fixed GrO
+  boundary." Eight rings drawn over the three files, and `inspect` finds all but eleven short
+  runs of them on ink the tracing already carries -- none of the eleven over 25 page px
+  (0.18 mm): four are the necks the reader drew to close a band into one stroke, six are short
+  chords where a hand-drawn line leaves the ink it is following, and one, 9 px at ML −0.97,
+  DV −5.54, is the reader carrying the left mitral band's edge straight across the point at
+  which it is severed. Nothing is added to `svg/` here and no boundary is applied: what was
+  wrong is two seeds and one scrap of ink.
+
+  **Right `Mi`, which is why `EPl` was not a ring.** The atlas prints `Mi` above the bulb and
+  draws a line down into the laminae. The recorded tip, `(0.5070, 0.5105)`, stops two page px
+  short of the wall under the external plexiform band and so lands *in* the 15,822 px band --
+  the face `20260917T210251Z-p01-EPl` closed and held for `EPl` with thirteen marks. The
+  watershed between those marks and the tip gave `Mi` a 614 px bite out of the band at its
+  dorsum, which is the break in the ring the reader drew round. A `seed_overrides` row for
+  box 1 puts the seed where the line reaches four page px on: the 1,061 px strip the drawing
+  runs the mitral and inner plexiform laminae together in, which `IPl` is seeded in at its
+  ventral reach. **`EPl` on the right goes 0.8026 → 0.8329 mm² and from one polygon to two** --
+  a ring and its hole, both traced 1.00 where the band was 0.97 -- and `Mi`'s right-hand arc
+  goes 0.0314 → 0.0167 mm² in the lamina instead of in `EPl`, `IPl` 0.0608 → 0.0445 as the
+  strip is split between the two names the drawing runs together there.
+
+  **Left `Mi`, which is one scrap of ink.** `M 1526 1338 C 1525 1339 1524 1340 1523 1341`,
+  4.2 page px of it (0.03 mm), sits in the middle of the mitral lamina at ML −1.00, DV −5.57
+  with its ends 1.1 and 1.2 px from the lamina's outer line and from the granule layer's own
+  closed contour. `BRIDGE_PX` welds a dangling end to the nearest point on another path within
+  20 px, so both ends are welded and the scrap is a staple across a band 6 px wide: `Mi`'s
+  band was cut there, a C rather than a ring, with 121 px of it left as two unnamed crumbs of
+  77 and 44 px, under the face floor. It is the ninth of the seventeen single-cubic scraps
+  `20260921T142343Z-p01-E` counted on this tracing and the first outside the two ventricle
+  slits, the other eight having gone with that correction. Out it comes, and **`Mi` on the
+  left closes into a ring, 0.2476 → 0.2501 mm²**, traced 1.00.
+
+  **Right `GrO`, which the face floor had just taken.** The word `GrO` is printed inside the
+  granule core -- its box, `(0.5126, 0.5452)`, is in the 14,971 px core face -- and the atlas
+  draws a line from it down into the olfactory ventricle, whose slit is a 151 px face. While
+  `MIN_FACE_PX` stood at 400 that face could not be seeded and the seed snapped back into the
+  core, which is the plate as published. At 100 it can be, so on the next re-cut the seed left
+  the core for the slit and the core was named by no printed word at all; the mirrors of the
+  left `GrO`, `E` and `aci` were then kept in it, since a mirror is kept exactly where it lands
+  in a sealed face no printed abbreviation names, and **`E` took 4,791 px and `aci` 288 px of
+  the granule layer** between them. A `seed_overrides` row for box 0 puts the seed back on the
+  word's own box, the core is a printed name's again and no mirror is kept on the plate.
+  **`GrO` on the plate goes 1.5713 → 1.5931 mm², all four polygons traced 1.00** where two
+  were 0.93 and 0.82, and `E` and `aci` keep their own slits and nothing else: `E` 0.0527 →
+  0.0683 mm², which is the right-hand slit becoming a face a seed can land in, and `aci`
+  no area → 0.0347, which is both of its lenses.
+
+  **What the floor would have done to this plate on its own**, since this is the first
+  correction run to re-cut the series since it moved, and the three columns are worth reading
+  together:
+
+  | plate 1 | published, floor 400 | re-cut, floor 100, no fix | this branch |
+  | --- | --- | --- | --- |
+  | `EPl` | 1.7288 | 1.7285 | **1.7605** |
+  | `GrO` | 1.5713 | 1.3404 | **1.5931** |
+  | `Mi` | 0.2790 | 0.2790 | **0.2668** |
+  | `IPl` | 0.1063 | 0.1062 | **0.0901** |
+  | `E` | 0.0527 | 0.3166 | **0.0683** |
+  | `aci` | no area | 0.0488 | **0.0347** |
+  | `Gl` | 1.4408 | 1.4408 | **1.4404** |
+
+  **The series is re-cut with it, which is the floor's backlog rather than this correction's
+  doing.** `MIN_FACE_PX` came down from 400 to 100 with the atlas deliberately not re-cut
+  ("each plate takes the new floor when something next re-cuts it"), and `pipeline.py rebuild`
+  is step 5 of any correction. So **356 entries on 44 other plates move and 42 of them have an
+  area where they had none** -- `ICj` at 0.0208 mm² and `IG` at 0.0063 on plate 19 among them,
+  which are to four decimals the two figures that entry read in the browser and published as
+  what a re-cut would give; `structure_plate_entries` 3,090 → **3,133**, `polygons` 5,839 → **5,950**,
+  `points` 155,171 → **155,932**, `labels_relocated` 281 → **224** (the 57 seeds that no longer
+  snap), `label_inside_its_own_region` 0.9719 → **0.9785**, `section_covered_mean` 0.9715 →
+  **0.9725**, meshes 688 → **691** (`CC` on plate 60, `PaV` on 27, `SChVM` on 26 each take a
+  first extent anywhere), and 457 volumes move with the boundaries. **`boundary_edges_shared_exactly`
+  stays 1.0**, and no input outside plate 1 is touched: the extraction is plate-local, so
+  every one of those entries is the tool meeting inputs it had not been run against.
+
+  **The readings taken, and the ones not.** The scrap: taken as the tracer's, as its eight
+  fellows in the ventricle slits were; not taken, that the atlas prints a tick there and the
+  lamina really is divided. What would tell them apart is the page at tracing resolution --
+  the plate image this session can read is 1,100 × 703, where 4.2 page px is under two pixels.
+  Three things argue for the reading taken: the scrap separates no two named structures, it is
+  0.03 mm long where the atlas's own laminar lines run the length of the bulb, and the reader,
+  reading the printed plate, drew the band continuous through it. Right `Mi`: taken into the
+  1,061 px strip against the external plexiform band, because that is the lamina the left
+  hemisphere letters `Mi` -- there the band the atlas names `Mi` is the one that touches `EPl`,
+  and this strip shares 748 px of its border with the band against 88 for the 239 px fragment
+  behind it -- and because the `Mi` line's own bearing enters it first, three page px past the
+  recorded tip. Not taken: the 239 and 168 px fragments deeper in, which the reader's own
+  8-point stroke covers more of (157 and 151 px of it against 72) and which by the same
+  adjacency are `IPl`'s lamina rather than `Mi`'s. What would tell them apart is the reader
+  saying which of the two strips the printed plate puts the mitral layer in; the cost of the
+  wrong one is `Mi`'s right-hand arc sitting one lamina out, 0.0167 mm². Right `GrO`: taken on
+  the printed box, not on the leader tip, because the tip is in the slit the atlas letters
+  `E/OV` and the box is in the core -- and because left `GrO`, which draws no line at all,
+  seeds its own box and holds its core.
+
+  **Three test literals in `tests/python` now read the old floor's numbers, and a correction
+  run may not touch them.** `test_leaders.test_the_tips_land_where_the_atlas_says_they_do`
+  reads (170, 33, 37) and the re-cut series gives **(196, 33, 11)** before this plate is
+  fixed and **(195, 35, 10)** after -- 27 tips that used to sit in a face too small to publish
+  now land in the region they name; its `superseded_by` list gains `(1, 'GrO')` and `(1, 'Mi')`,
+  which is what that list is for. `test_leaders.test_filters` reads 70 odd rows where there are
+  now **45**, the same count from the other side. `test_data.test_volumes_consistent` reads 688
+  meshes where there are now **691**. All three are the series re-cut, not this plate: with
+  plate 1 left as `origin/main` has it the first still reads (196, 33, 11). They want one
+  commit against the whole series, made once rather than once per correction in flight.
+  `METHODS.md`'s marked numbers are refreshed by the `tables` step as always; two percentages
+  in it lie outside the markers and now round differently -- "96% of the 3,216" and "92% of the
+  3,369" read 97% and 93% on 3,133 entries -- and are left, a total not being a correction's to
+  edit by hand.
+
 - **A plate that asks for nothing is an answer, and the run that says so is green.** The
   prompt has always allowed a session one stop -- "the one case for stopping is a plate that
   supports none of the four causes" -- and the workflow then marked it exactly as it marks a
