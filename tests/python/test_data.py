@@ -402,7 +402,16 @@ def test_volumes_consistent(db):
     # the word it held a slab of AHC's face; seeded where the line goes, its ground is
     # the strip, which the atlas draws at 0.02 mm2 -- under MIN_AREA_PX -- so it is no
     # longer published anywhere (20260911T140555Z-p27-AHC).
-    assert V['summary']['structures'] == len(V['data']) == 688
+    # 691 rather than 688: CC on plate 60, PaV on 27 and SChVM on 26, each of which takes
+    # its first extent anywhere when the series is re-cut at a MIN_FACE_PX of 100. The
+    # floor came down from 400 with the atlas deliberately not re-cut, so the plates took
+    # it on the next rebuild a correction ran over them (20260922T135037Z), and
+    # MIN_AREA_PX came down with it, the two being equal by intent. All three are in the
+    # band the move opened and nowhere else: 324, 180 and 318 page px -- 0.0160, 0.0089
+    # and 0.0157 mm2 on plates the frame gives 4.93131e-05 mm2 a pixel -- where the old
+    # cull published nothing under 400. PaV is the entry the line above withdrew, back
+    # with the ground the lower cull lets the strip keep.
+    assert V['summary']['structures'] == len(V['data']) == 691
     assert not (have & set(db['features']['data']))
     assert 'little-endian' in V['note']
     for ab, e in V['data'].items():

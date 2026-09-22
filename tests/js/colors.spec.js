@@ -41,7 +41,12 @@ test('every region on every plate carries a color, and one color only', async ({
   // strip it names. Seeded where the line goes rather than on the word, its ground is the
   // strip, which the atlas draws at 0.02 mm2 -- under MIN_AREA_PX -- so it is no longer
   // published anywhere (20260911T140555Z-p27-AHC).
-  expect(out.named).toBe(688);
+  // 691 rather than 688: CC on plate 60, PaV on 27 and SChVM on 26, each taking its first
+  // extent anywhere when the series is re-cut at a MIN_FACE_PX of 100 -- 324, 180 and 318
+  // page px, all three in the band between the old cull and the new one. PaV is the entry
+  // the line above withdrew (20260922T135037Z). This is the same count as
+  // test_data.test_volumes_consistent's, read off the page rather than off the file.
+  expect(out.named).toBe(691);
   // eight is what a color that holds across the atlas costs, and no plate asks for more
   expect(out.pal).toBe(8);
   expect(Math.max(...out.counts)).toBeLessThanOrEqual(out.pal);
