@@ -16,10 +16,13 @@
    for each region marked on it, as one commit on one branch, so a reader who walks
    the atlas marking what is wrong presses the button once.
 
-   The marks are the MATLAB class's marks and no others: a seed for the name a face
-   should carry, a run of boundary the tracing missed, the outline a region should
-   have. Nothing here edits region_extents; a correction is one edit to a pipeline
-   input, and the extents are re-cut from it. */
+   The marks are a seed for the name a face should carry, a run of boundary the tracing
+   missed, and the outline a region should have. A region is one extent for each place
+   the atlas draws it, and an extent carries a kind: positive is an outline the region
+   should have, negative says it has none of the area drawn round -- the hole in a
+   ring-like region, or a ring the extraction gave it and the atlas does not. Nothing
+   here edits region_extents; a correction is one edit to a pipeline input, and the
+   extents are re-cut from it. */
 'use strict';
 
 const $ = (id) => document.getElementById(id);
@@ -35,7 +38,7 @@ const S = {
   abbr: '', tool: 'pick', view: {k: 1, x: 0, y: 0}, rot: [1, 0, 0, 1, 0, 0],
   at: null, pending: null,
   drag: null, cut: null, busy: 0, fitted: false,
-  opts: {style: 'solid', closed: false, replaces: null, hemi: ''},
+  opts: {style: 'solid', closed: false, replaces: null, hemi: '', extkind: 'positive'},
   show: {ink: true, ext: true, lab: true, una: false, cut: false},
   draft: blankDraft(0),
   drafts: new Map(),                    // plate -> the draft made on it, kept while it is away
@@ -613,8 +616,8 @@ function buildDoc(draft, when) {
     if (pts.length > 3 && Math.hypot(pts[0][0] - pts[pts.length - 1][0],
       pts[0][1] - pts[pts.length - 1][1]) < 1e-9) pts.pop();
     const q = pts.map(pt);
-    doc.extents.push({abbr: e.abbr || ab, page_px: q.map((z) => z[0]), mm: q.map((z) => z[1]),
-      note: (e.note || '').trim()});
+    doc.extents.push({abbr: e.abbr || ab, kind: (e.kind || 'positive').toLowerCase(),
+      page_px: q.map((z) => z[0]), mm: q.map((z) => z[1]), note: (e.note || '').trim()});
   }
   doc.hemisphere = draft.hemisphere || hemisphereOf(doc);
   return doc;
@@ -961,9 +964,11 @@ function labelText() {
 function drawMarks() {
   const D = S.draft;
   for (const e of D.extents) {
+    const neg = e.kind === 'negative';
     poly(e.page_px, true);
-    ctx.fillStyle = 'rgba(196,0,196,.12)'; ctx.fill();
+    if (!neg) { ctx.fillStyle = 'rgba(196,0,196,.12)'; ctx.fill(); }
     ctx.strokeStyle = css('--ext'); ctx.lineWidth = W(2); ctx.stroke();
+    if (neg) crossOut(e.page_px);
   }
   for (const b of D.boundaries) {
     poly(b.page_px, !!b.closed);
@@ -994,13 +999,15 @@ function drawMarks() {
 function drawPending() {
   const p = S.pending, pts = p.pts;
   if (!pts.length) return;
+  const neg = p.kind === 'extent' && p.ekind === 'negative';
   const live = S.at && !p.edit ? pts.concat([S.at]) : pts;
   poly(live, p.kind === 'extent');
   ctx.strokeStyle = p.kind === 'extent' ? css('--ext') : css('--bound');
   ctx.lineWidth = W(2.5);
   ctx.setLineDash(p.kind === 'boundary' && S.opts.style === 'dashed' ? [W(8), W(5)] : []);
   ctx.stroke(); ctx.setLineDash([]);
-  if (p.kind === 'extent' && pts.length > 2) { ctx.fillStyle = 'rgba(196,0,196,.10)'; ctx.fill(); }
+  if (p.kind === 'extent' && pts.length > 2 && !neg) { ctx.fillStyle = 'rgba(196,0,196,.10)'; ctx.fill(); }
+  if (neg && pts.length > 2) crossOut(live);
   for (let i = 0; i < pts.length; i++) {
     ctx.beginPath(); ctx.arc(pts[i][0], pts[i][1], W(i === p.hover ? 6 : 4), 0, 7);
     ctx.fillStyle = i === p.hover ? '#fff' : (p.kind === 'extent' ? css('--ext') : css('--bound'));
@@ -1008,6 +1015,20 @@ function drawPending() {
     ctx.strokeStyle = p.kind === 'extent' ? css('--ext') : css('--bound');
     ctx.lineWidth = W(1.5); ctx.stroke();
   }
+}
+
+/* An extent that says the region is not there, crossed over the box of what it
+   encloses -- the mark tools/corrections.py draws in qc/chk_corr_<id>.png, so a
+   negative extent reads the same on the plate and in the picture the session writes. */
+function crossOut(pts) {
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for (const [x, y] of pts) {
+    x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y);
+  }
+  ctx.beginPath();
+  ctx.moveTo(x0, y0); ctx.lineTo(x1, y1);
+  ctx.moveTo(x0, y1); ctx.lineTo(x1, y0);
+  ctx.strokeStyle = css('--unseed'); ctx.lineWidth = W(2.5); ctx.stroke();
 }
 
 /* ------------------------------------------------------------------ pointer */
@@ -1179,7 +1200,10 @@ async function click(at, ev) {
     return;
   }
   if (S.tool === 'boundary') { S.pending = {kind: 'boundary', pts: [at], abbr: S.abbr}; draw(); hintFor(); return; }
-  if (S.tool === 'extent') { S.pending = {kind: 'extent', pts: [at], abbr: S.abbr}; draw(); hintFor(); }
+  if (S.tool === 'extent') {
+    S.pending = {kind: 'extent', pts: [at], abbr: S.abbr, ekind: S.opts.extkind};
+    draw(); hintFor();
+  }
 }
 
 const round2 = (v) => Math.round(v * 100) / 100;
@@ -1218,13 +1242,14 @@ function finish() {
       mm: p.pts.map((q) => toMm(q[0], q[1]).map(round3)), note: ''});
   } else {
     if (p.pts.length < 3) { S.pending = null; draw(); return; }
-    S.draft.extents.push({abbr: p.abbr || S.abbr,
+    S.draft.extents.push({abbr: p.abbr || S.abbr, kind: p.ekind || 'positive',
       page_px: p.pts.map((q) => [round2(q[0]), round2(q[1])]),
-      mm: p.pts.map((q) => toMm(q[0], q[1]).map(round3)), note: ''});
+      mm: p.pts.map((q) => toMm(q[0], q[1]).map(round3)), note: '',
+      ring: p.ring === undefined ? null : p.ring});
   }
   S.pending = null;
   marked();
-  renderMarks(); draw(); hintFor();
+  renderMarks(); renderOpts(); draw(); hintFor();      // and the ring list, which says what is marked
 }
 
 /* --------------------------------------------------------------------- side */
@@ -1308,24 +1333,94 @@ function renderOpts() {
     sel.value = S.opts.replaces === null ? '' : String(S.opts.replaces);
     sel.onchange = () => { S.opts.replaces = sel.value === '' ? null : Number(sel.value); };
   } else if (S.tool === 'extent') {
-    const r = S.d ? S.d.regions.find((x) => x.abbr === S.abbr) : null;
-    if (r) {
-      const d = add('');
-      r.rings.forEach((g, i) => {
-        const b = document.createElement('button');
-        b.className = 'b';
-        const c = g.reduce((a, q) => [a[0] + q[0] / g.length, a[1] + q[1] / g.length], [0, 0]);
-        const ml = toMm(c[0], c[1])[0];
-        b.textContent = 'Pull ring ' + (i + 1) + ' into shape (' + (ml < 0 ? 'left' : 'right') + ')';
-        b.onclick = () => {
-          S.pending = {kind: 'extent', pts: g.map((q) => q.slice()), edit: true, abbr: S.abbr};
-          zoomTo(g); hintFor();
-        };
-        d.appendChild(b);
-      });
+    // an outline the region should have, or one it should not: a hole in a ring-like
+    // region, or a ring the extraction gave it and the atlas does not draw
+    const d = add('<div class="seg full" id="o-ekind">'
+      + '<button type="button" data-k="positive" title="The outline the region should have">'
+      + 'the region is here</button>'
+      + '<button type="button" data-k="negative" title="The region has no area inside this: '
+      + 'the hole in a ring-like region, or a piece the extraction gave it">'
+      + 'it is not here</button></div>');
+    for (const b of d.querySelectorAll('[data-k]')) {
+      b.className = b.dataset.k === S.opts.extkind ? 'on' : '';
+      b.onclick = () => { S.opts.extkind = b.dataset.k; cancelPending(); renderOpts(); draw(); };
     }
+    const rings = document.createElement('div');
+    rings.className = 'rings';
+    el.appendChild(rings);
+    const r = S.d && S.abbr ? S.d.regions.find((x) => x.abbr === S.abbr) : null;
+    if (!S.abbr) rings.innerHTML = '<p class="fact">Choose the region first.</p>';
+    else if (!r) {
+      rings.innerHTML = '<p class="fact">' + esc(S.abbr) + ' has no area on this plate: '
+        + TAPPED.toLowerCase() + ' the plate to draw the outline it should have.</p>';
+    } else r.rings.forEach((g, i) => rings.appendChild(ringRow(g, i)));
   }
   hintFor();
+}
+
+/* One ring of the chosen region as the extraction cut it, and the two things that can
+   be said about it: pull it into shape, or drop it. Dropping writes the ring's own
+   vertices as a negative extent -- the piece the cut made, not a hand-drawn guess at
+   it -- and the same button takes the drop back, which is the only thing that removes
+   it besides the mark's own x. A region is as many rings as the atlas draws it places;
+   another one is drawn on the plate. */
+function ringRow(ring, i) {
+  const row = document.createElement('div');
+  row.className = 'ring';
+  row.innerHTML = '<span class="who"></span>';
+  const g = openRing(ring);
+  const c = g.reduce((a, q) => [a[0] + q[0] / g.length, a[1] + q[1] / g.length], [0, 0]);
+  const area = Math.abs(ringArea(g)) * S.d.mm2_per_px;
+  const at = S.draft.extents.findIndex((e) => e.kind === 'negative' && e.ring === i);
+  const pulled = S.draft.extents.some((e) => e.kind !== 'negative' && e.ring === i);
+  row.children[0].textContent = 'ring ' + (i + 1) + ' · ' + (toMm(c[0], c[1])[0] < 0 ? 'left' : 'right')
+    + ' · ' + area.toFixed(4) + ' mm²'
+    + (at >= 0 ? ' · dropped' : pulled ? ' · pulled into shape' : '');
+  const btn = (label, title, cls, fn) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'b' + (cls ? ' ' + cls : ''); b.textContent = label;
+    b.title = title; b.disabled = !fn; b.onclick = fn || null;
+    row.appendChild(b);
+  };
+  if (at >= 0) {
+    btn('Keep', 'Take back the drop: leave ring ' + (i + 1) + ' as the extraction cut it',
+      '', () => { S.draft.extents.splice(at, 1); marked(); renderMarks(); renderOpts(); draw(); });
+    return row;
+  }
+  btn('Pull into shape', 'Drag its vertices into the outline the region should have', '', () => {
+    S.pending = {kind: 'extent', pts: g.map((q) => q.slice()), edit: true, abbr: S.abbr,
+      ekind: 'positive', ring: i};
+    zoomTo(g); hintFor();
+  });
+  // the two readings of a ring contradict each other, so the second is not offered
+  // while the first stands: drop the mark that holds it and the button comes back
+  btn('Drop', pulled ? 'Ring ' + (i + 1) + ' is already pulled into shape; drop that mark '
+    + 'first' : 'The region should have no area here: ring ' + (i + 1) + ' goes in as an '
+    + 'extent that says so', 'warn', pulled ? null : () => {
+    S.draft.extents.push({abbr: S.abbr, kind: 'negative', ring: i,
+      page_px: g.map((q) => [round2(q[0]), round2(q[1])]),
+      mm: g.map((q) => toMm(q[0], q[1]).map(round3)), note: ''});
+    marked(); renderMarks(); renderOpts(); draw();
+    toast('ring ' + (i + 1) + ' of ' + S.abbr + ': marked as area it should not have');
+  });
+  return row;
+}
+
+/* A ring with the point that closes it dropped, which is how a mark carries one: the
+   extraction writes the first vertex again at the end, and an extent in a correction
+   does not -- so this is the same ring, said the way the file says it. */
+function openRing(g) {
+  const n = g.length;
+  return n > 3 && g[0][0] === g[n - 1][0] && g[0][1] === g[n - 1][1] ? g.slice(0, -1) : g;
+}
+
+// shoelace, in page px; the sign carries the ring's orientation, so a hole reads negative
+function ringArea(g) {
+  let a = 0;
+  for (let i = 0, j = g.length - 1; i < g.length; j = i++) {
+    a += (g[j][0] + g[i][0]) * (g[j][1] - g[i][1]);
+  }
+  return a / 2;
 }
 
 const TOUCH = matchMedia('(pointer: coarse)').matches;
@@ -1335,16 +1430,18 @@ const HINTS = {
   seed: '{T} where <b>{a}</b> is. Without a box named above it is a seed of its own; with one, that printed box withdraws and this stands in for it.',
   unseed: '{T} where <b>{a}</b> is <b>not</b>. A negative seed is for the reader, not the pipeline.',
   boundary: '{T} along the run of boundary the tracing missed, then <b>Finish</b>. Put its ends on the traced ink — the pipeline only bridges {b} page px.',
-  extent: 'Pull the region’s own ring into shape, or {t} a fresh outline. Drag a vertex, {t} an edge to add one, then <b>Accept</b>.',
+  extent: 'Pull a ring of <b>{a}</b> into shape, or {t} the plate to draw another — a region carries one extent for each place it is drawn. <b>Drop</b> a ring it should not have, or draw where it is not: the hole in a ring-like region.',
 };
 function hintFor() {
   let t = HINTS[S.tool] || '';
   if (S.pending) {
+    const neg = S.pending.ekind === 'negative';
     t = S.pending.edit
       ? 'Drag the vertices into place; {t} an edge to add one'
         + (TOUCH ? '' : ', alt-click one to delete it') + '. <b>Accept</b> keeps it.'
       : (S.pending.pts.length + ' vertex' + (S.pending.pts.length === 1 ? '' : 'es') + ' so far. '
-        + '<b>Finish</b> when the run is drawn.');
+        + '<b>Finish</b> when the ' + (S.pending.kind === 'extent' ? 'outline' : 'run') + ' is drawn'
+        + (neg ? ', and it goes in as area <b>{a}</b> should not have' : '') + '.');
   }
   $('hint').innerHTML = t.replace(/\{T\}/g, TAPPED).replace(/\{t\}/g, TAPPED.toLowerCase())
     .replace('{a}', S.abbr || 'the region').replace('{b}', S.d ? S.d.bridge_px : 20);
@@ -1358,7 +1455,7 @@ function sheetLabel() {
   const D = S.draft;
   const n = D.seeds.length + D.boundaries.length + D.extents.length;
   const tool = {pick: 'Pick', seed: 'Seed +', unseed: 'Seed −', boundary: 'Boundary',
-    extent: 'Extent'}[S.tool];
+    extent: 'Extent ' + (S.opts.extkind === 'negative' ? '−' : '+')}[S.tool];
   $('sheetwhat').textContent = (S.abbr || 'no region') + ' · ' + tool
     + (n ? ' · ' + n + ' mark' + (n === 1 ? '' : 's') : '') + ' · the tools';
 }
@@ -1403,9 +1500,11 @@ function renderMarks() {
     b.page_px.length + ' points' + (b.note ? ' — ' + b.note : ''),
     () => { D.boundaries.splice(i, 1); marked(); renderMarks(); draw(); },
     () => zoomTo(b.page_px)));
-  D.extents.forEach((e, i) => add(css('--ext'),
-    e.abbr + ' extent', e.page_px.length + ' vertices' + (e.note ? ' — ' + e.note : ''),
-    () => { D.extents.splice(i, 1); marked(); renderMarks(); draw(); },
+  D.extents.forEach((e, i) => add(e.kind === 'negative' ? css('--unseed') : css('--ext'),
+    e.abbr + (e.kind === 'negative' ? ' has no area here' : ' extent')
+      + (e.ring === undefined || e.ring === null ? '' : ' (ring ' + (e.ring + 1) + ')'),
+    e.page_px.length + ' vertices' + (e.note ? ' — ' + e.note : ''),
+    () => { D.extents.splice(i, 1); marked(); renderMarks(); renderOpts(); draw(); },
     () => zoomTo(e.page_px)));
   D.notes.forEach((n, i) => add(css('--muted'), 'note', n,
     () => { D.notes.splice(i, 1); renderMarks(); }));
@@ -1679,7 +1778,7 @@ function wire() {
   $('undob').onclick = undo;
   $('clearb').onclick = () => {
     S.draft.seeds = []; S.draft.boundaries = []; S.draft.extents = []; marked();
-    S.pending = null; renderMarks(); draw();
+    S.pending = null; renderMarks(); renderOpts(); draw();
   };
   $('noteb').onclick = () => sheet('A note on this correction',
     '<p>Anything else worth saying to whoever applies it.</p><textarea id="m-note" rows="3"></textarea>',
@@ -1733,7 +1832,11 @@ function undo() {
   if (S.pending && S.pending.pts.length > 1 && !S.pending.edit) { S.pending.pts.pop(); draw(); hintFor(); return; }
   if (S.pending) { cancelPending(); return; }
   for (const k of ['extents', 'boundaries', 'seeds', 'notes']) {
-    if (D[k].length) { D[k].pop(); renderMarks(); draw(); return; }
+    if (!D[k].length) continue;
+    D[k].pop();
+    if (k !== 'notes') marked();        // a note is not a mark: the recut still describes the draft
+    renderMarks(); renderOpts(); draw();
+    return;
   }
 }
 

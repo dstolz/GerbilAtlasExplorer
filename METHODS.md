@@ -635,6 +635,19 @@ of cubics with collinear control points, the one grammar the reader accepts, car
 `data-correction` with the id it came from. A corrected outline is evidence rather than
 input: only the runs of it further than 3 px from ink already traced are added.
 
+An extent carries a kind, since a region is one extent for each place the atlas draws it.
+A *positive* extent is an outline the region should have, and is the one just described. A
+*negative* extent is the other thing a reader can say from the plate -- that the region has
+none of the area drawn round: the hole in a ring-like region, or a ring the extraction gave
+it and the atlas does not draw. The page writes one either from a fresh outline or, for a
+ring already cut, from that ring's own vertices, so the file carries the piece the cut made
+rather than a hand-drawn guess at it. Nothing of a negative extent is inked -- wherever a
+ring was cut, the line round it is drawn already -- so it is read rather than applied:
+`inspect` says how much of the region lies inside it and whether a printed box of the name
+sits there, which is the difference between a seed to withdraw and a boundary to add. A
+file naming no kind, which is every one written before this and every one MATLAB writes,
+is read as positive.
+
 ### Coloring the section
 
 The extents tile the plate, so the app can color it the way a map is colored: every region

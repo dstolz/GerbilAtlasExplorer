@@ -29,8 +29,11 @@ runs*. This class lets you say it on the plate, in millimetres, and sends it.
 3. You mark what is wrong. `addSeed` is a point that is (or, `'Kind', 'negative'`, is not)
    inside a region. `addBoundary` is a run of boundary the tracing missed, clicked or drawn
    freehand; its ends snap to the traced ink so the pipeline can seal it. `addExtent` puts
-   the region's own outline up as an editable polygon to pull into shape. `problem` and
-   `note` say why.
+   the region's own outline up as an editable polygon to pull into shape; what it writes is
+   a *positive* extent, an outline the region should have. (The browser fixer also writes
+   *negative* ones -- the hole in a ring-like region, or a ring it should not have at all;
+   an extent from here names no kind, and `tools/corrections.py` reads that as positive.)
+   `problem` and `note` say why.
 4. `preview` cuts the plate into faces the way the pipeline does -- ink, bridged ends,
    section interior -- and says for each seed which face it lands in, how big it is, which
    printed labels seed the same face, and who owns the point today. It paints the face on

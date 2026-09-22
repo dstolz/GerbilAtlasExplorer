@@ -6,6 +6,46 @@ carries a `version` block naming the release its derived fields were built for.
 ## [Unreleased]
 
 ### Added
+- **A region can be said to have area in several places, and to have area where it should
+  not.** The fixer's **Extent** tool offered one thing: the region's own rings, each to be
+  pulled into shape. A region drawn as a ring -- an outer boundary with a hole the atlas
+  does not letter -- and a region the extraction gave a piece the atlas does not draw had
+  no way of being said at all. The tool now lists the rings the extraction cut with the
+  side and area of each, and each row carries both readings: **Pull into shape** as before,
+  and **Drop**, which sends that ring -- its own vertices, as the cut made them, not a
+  hand-drawn guess at them -- as an extent saying the region has no area there. **Keep**
+  takes the drop back, and the mark's own × still drops it. Clicking the plate draws
+  another extent, in whichever of the two the segmented control is set to, so the hole in a
+  ring-like region is drawn as *it is not here* and a second location as *the region is
+  here*.
+
+  In the file, an extent now carries `kind`, as a seed does: `positive` is the outline the
+  region should have and is what every extent meant before, `negative` that it has none of
+  the area drawn round. Both writers of the schema write it -- the page's and
+  `tools/atlasfix.py`'s, which a test drives against one draft and diffs -- and
+  `tools/corrections.py` validates it, reports each kind in its own words, and inks
+  nothing of a negative extent: wherever a ring was cut the line round it is drawn already,
+  so what it carries is a statement about area rather than about ink. `inspect` turns that
+  into the diagnosis the session wants -- a printed box of the name inside it means that
+  box seeds the area (withdraw it with `label_index`, or seal the face it should stop at),
+  no box inside it means the area reached in through a face the tracing leaves open, and
+  the missing run of boundary is the fix. Where such a ring's outline lies off the traced
+  ink, `inspect` now also says which of those runs follow the section outline, since a
+  region is cut inside `brain_outline` and that follows the tissue edge wherever the atlas
+  draws no line -- off the ink there is where the ring belongs, not a line the tracing
+  missed. The QC image crosses a negative extent as it crosses a negative seed, and the
+  plate draws it the same way. A file naming no kind -- every correction written before
+  this, and every one `matlab/AtlasRegionFix.m` writes -- is read as positive, which is
+  what it meant. Four browser tests and four Python tests hold it, and
+  `.claude/skills/atlas-region-fix` tells the applying session what to do with one.
+
+  Three smaller things in the same page: pulling a ring into shape no longer brings its
+  closing vertex up as a second point stacked on the first; the ring list refreshes when a
+  mark is added or dropped, so it says what is marked; and **Undo** now drops the recut
+  preview as every other way of taking a mark back already did, since a preview that
+  described a draft with one more mark in it would have been compared against the fix as
+  though the reader had accepted it.
+
 - **A structure the atlas draws under its parts' names is read as such, and can be folded
   back into one.** The claustrum is `Cl` on plates 12–15 and 27 and `DCl` and `VCl` — never
   `Cl` — on 16–26, though the index lists `Cl` for 12–27 throughout; a reader who selected it

@@ -122,6 +122,93 @@ def test_inspect_reads_the_seed_against_the_extraction():
     assert any('already traced' in ln for ln in rep['lines'])
 
 
+PLATE, ABBR = 19, 'S1DZ'
+
+
+def _ring_page(DB, plate=PLATE, abbr=ABBR, ring=0):
+    """One ring of a region as the extraction cut it, in page px -- what the page's
+    Drop writes: the piece the cut made, not a hand-drawn guess at it."""
+    P = C.Plate(DB, A.vec_matrices(), plate)
+    g = DB['region_extents']['data'][str(plate)][abbr]['g'][ring]
+    return P, [[round(v, 2) for v in C.xf(P.im, fx * P.NW, fy * P.NH)] for fx, fy in g[:-1]]
+
+
+def _extent_doc(P, page, kind, plate=PLATE, abbr=ABBR):
+    """A correction carrying one extent of that kind, with the mm the page writes
+    beside the page px -- which is what check_frames holds it to."""
+    return {'schema': C.SCHEMA, 'id': 'test-%s-%s' % (kind, abbr), 'plate': plate,
+            'abbr': abbr, 'problem': 'a test of the %s kind.' % kind,
+            'seeds': [], 'boundaries': [], 'notes': [],
+            'extents': [{'abbr': abbr, 'kind': kind, 'page_px': page,
+                         'mm': [[round(v, 3) for v in P.page_to_mm(*q)] for q in page],
+                         'note': ''}]}
+
+
+def _pulled_in(page, px=40.0):
+    """The same ring pulled in towards its middle, so its outline is off the traced ink."""
+    cx = sum(q[0] for q in page) / len(page)
+    cy = sum(q[1] for q in page) / len(page)
+    out = []
+    for x, y in page:
+        d = max(1e-9, math.dist((x, y), (cx, cy)))
+        t = max(0.05, (d - px) / d)
+        out.append([round(cx + (x - cx) * t, 2), round(cy + (y - cy) * t, 2)])
+    return out
+
+
+def test_a_negative_extent_reads_and_is_never_traced():
+    """A ring dropped in the page says the region has no area there. It validates like
+    any extent, inspect says what holds it and what put it there, and apply traces
+    nothing of it -- where the same outline drawn positive would be inked wherever it
+    lies off the tracing."""
+    DB = A.load_db()
+    VECM = A.vec_matrices()
+    P, page = _ring_page(DB)
+    c = _extent_doc(P, page, 'negative')
+    C.validate(c, DB, VECM)
+    assert C.extent_kind(c['extents'][0]) == 'negative'
+    assert C.extent_kind({}) == 'positive'                  # a file from before the kind
+
+    _P, paths, rows = C.plan(c, DB, VECM)
+    assert paths == [] and rows == []                       # nothing inked, nothing seeded
+    off = _pulled_in(page)                                  # an outline off the ink
+    _P, drawn, _r = C.plan(_extent_doc(P, off, 'positive'), DB, VECM)
+    assert drawn and all(n.startswith('extent of S1DZ') for _g, _d, n in drawn)
+    _P, drawn_neg, _r = C.plan(_extent_doc(P, off, 'negative'), DB, VECM)
+    assert drawn_neg == []                                  # the same outline, never inked
+
+    rep = C.inspect(c, DB, VECM, quiet=True)
+    (e,) = rep['extents']
+    assert e['kind'] == 'negative' and e['abbr'] == ABBR
+    assert e['share_held'] > 0.9                            # the ring is S1DZ's own today
+    assert 0.3 < e['share_of_region'] < 0.8                 # one of its two rings
+    assert any('S1DZ negative' in ln for ln in rep['lines'])
+    assert any('seeds this' in ln or 'reached in' in ln for ln in rep['lines'])
+
+
+def test_a_ring_off_the_ink_along_the_section_edge_is_said_to_be_so():
+    """A ring is cut inside `brain_outline`, which follows the tissue edge wherever the
+    atlas draws no line along it, so part of a ring can lie well off the traced ink and
+    still be exactly where the extraction put it. `inspect` says which runs those are,
+    rather than leaving a reader to read every one as a line the tracing missed."""
+    DB = A.load_db()
+    P, page = _ring_page(DB, abbr='Cg1')            # its dorsal edge on plate 19
+    rep = C.inspect(_extent_doc(P, page, 'negative', abbr='Cg1'), DB, A.vec_matrices(),
+                    quiet=True, before=None)
+    said = [ln for ln in rep['lines'] if 'off the traced ink' in ln]
+    assert len(said) == 1 and 'along the section outline' in said[0]
+    assert rep['extents'][0]['runs']                # and the runs are still reported
+
+
+def test_an_extent_of_no_known_kind_is_refused():
+    import pytest
+    DB = A.load_db()
+    P, page = _ring_page(DB)
+    c = _extent_doc(P, page, 'maybe')
+    with pytest.raises(SystemExit):
+        C.validate(c, DB, A.vec_matrices())
+
+
 def test_qc_draws_the_site_before_and_after(tmp_path, monkeypatch):
     """--qc writes the plate and the site: two panels when the ref reads, one when it
     does not, and the plate picture the same either way."""

@@ -137,6 +137,26 @@ def test_the_two_frames_are_written_from_one_transform():
     assert doc['hemisphere'] == 'left'          # read off the marks, both being ML < 0
 
 
+def test_an_extent_carries_its_kind():
+    """A region is one extent for each place the atlas draws it, and each says which
+    way it is meant: positive is an outline the region should have, negative that it
+    has none of the area drawn round -- the hole in a ring-like region, or a ring the
+    extraction gave it. A draft written before extents had a kind means positive."""
+    S = session()
+    ring = [[1060, 940], [1100, 940], [1100, 980], [1060, 980]]
+    hole = [[1070, 950], [1090, 950], [1090, 970], [1070, 970]]
+    doc = F.document({'plate': PLATE, 'abbr': 'S1DZ', 'extents': [
+        {'abbr': 'S1DZ', 'page_px': ring},                          # no kind: positive
+        {'abbr': 'S1DZ', 'kind': 'negative', 'page_px': hole}]}, S)
+    assert [e['kind'] for e in doc['extents']] == ['positive', 'negative']
+    assert list(doc['extents'][0]) == ['abbr', 'kind', 'page_px', 'mm', 'note']
+    C.validate(doc, S.DB, S.VECM)                   # and the file reads back
+    assert [C.extent_kind(e) for e in doc['extents']] == ['positive', 'negative']
+    text = F.render(doc)
+    assert '"kind": "negative"' in text
+    assert json.loads(text)['extents'][1]['page_px'] == hole
+
+
 def test_hemisphere_is_read_off_the_marks():
     assert F.hemisphere_of({'seeds': [{'mm': [-1, 0]}, {'mm': [-3, 0]}]}) == 'left'
     assert F.hemisphere_of({'seeds': [{'mm': [1, 0]}]}) == 'right'

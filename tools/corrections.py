@@ -20,13 +20,23 @@ the tracings are in, and this reads it back against the extraction.
                         REF (origin/main) beside the region as it stands here,
                         which after a fix is the picture of what the fix did.
   apply FILE [--dry-run]
-                        Boundaries, and the off-ink runs of an extent, go into
-                        the plate's SVG as paths a reader can diff, in the group
-                        the style names; positive seeds go into seed_overrides.
+                        Boundaries, and the off-ink runs of a positive extent,
+                        go into the plate's SVG as paths a reader can diff, in
+                        the group the style names; positive seeds go into
+                        seed_overrides.
                         Nothing is removed: a line the tracing draws and the
                         atlas does not is taken out by hand, with the reason in
                         the commit. Then build_region_extents.py and the rest of
                         the pipeline, in the order tools/README.md gives.
+
+An extent carries a `kind`, as a seed does: `positive` is the outline the region
+should have, and `negative` says the region has no area there -- the hole in a
+ring-like region, or a piece the extraction gave it that the atlas does not draw.
+A region is several extents where the atlas draws it in several places, one entry
+each. Only a positive extent is traced: a negative one is read, never inked, since
+the line round it is already drawn wherever the extraction cut that piece. A file
+that names no kind -- every one written before this, and matlab/AtlasRegionFix.m --
+is read as positive, which is what it meant.
 
 A seed becomes a row of `seed_overrides`: a seed of its own, beside the printed
 ones, unless the entry carries `label_index`, in which case it stands in for that
@@ -69,6 +79,7 @@ OFF_INK_PX = B.SUPPORT_PX   # page px: a boundary further than this from traced 
 MIN_RUN_PX = 6              # a run off the ink shorter than this is the tracer's own error
 DEC = 4                     # override fractions, as label_leaders has them
 GROUPS = {'solid': 'outlines-solid', 'dashed': 'outlines-dashed'}
+EXTENT_KINDS = ('positive', 'negative')   # the outline a region should have, or should not
 DASH = '12.0 7.0'           # the dasharray a hand-added dashed run is drawn with
 FRAME_TOL_MM = 0.02         # page px and mm in one entry must agree to this
 
@@ -126,6 +137,7 @@ class Plate:
         allp = [p for pts, _c in self.polys for p in pts] + [p for pp in self.outline for p in pp]
         self.tree = cKDTree(np.asarray(allp, float))
         self._dist = None
+        self._edge = None
         det = abs(self.m[0] * self.m[3] - self.m[1] * self.m[2])
         self.mm2_per_px = det / (self.fr.mlpx * self.fr.dvpx)       # one page pixel, in mm2
         self.mm_per_px = math.sqrt(self.mm2_per_px)
@@ -136,6 +148,25 @@ class Plate:
         if self._dist is None:
             self._dist = ndimage.distance_transform_edt(~self.traced)
         return self._dist
+
+    @property
+    def edge_dist(self):
+        """Distance from every page pixel to the section outline. A region is cut inside
+        `brain_outline`, which follows the tissue edge wherever the atlas draws no line
+        along it -- so a ring's outline can run well off the traced ink and still be
+        exactly where the extraction put it, with no line missing anywhere."""
+        if self._edge is None:
+            edge = np.zeros((self.H, self.W), bool)
+            for pp in self.outline:
+                B.rasterize(edge, pp, self.W, self.H)
+            self._edge = ndimage.distance_transform_edt(~edge)
+        return self._edge
+
+    def on_edge(self, pt):
+        xi, yi = int(round(pt[0])), int(round(pt[1]))
+        if not (0 <= xi < self.W and 0 <= yi < self.H):
+            return False
+        return bool(self.edge_dist[yi, xi] <= OFF_INK_PX)
 
     def page_to_mm(self, x, y):
         px, py = xf(self.m, x, y)
@@ -217,6 +248,9 @@ def validate(c, DB, VECM):
     for e in c['extents']:
         if len(entry_points(e, P)) < 3:
             raise SystemExit('%s: an extent needs three points at least' % c['id'])
+        if extent_kind(e) not in EXTENT_KINDS:
+            raise SystemExit('%s: an extent is %r; %s' % (c['id'], e.get('kind'),
+                                                         ' or '.join(EXTENT_KINDS)))
     check_frames(c, P)
     return P
 
@@ -244,6 +278,14 @@ def entry_points(entry, P):
     return pts
 
 
+def extent_kind(entry):
+    """An extent's kind: what it says about the region. `positive` is the outline
+    the region should have, `negative` that it has no area there -- the hole in a
+    ring-like region, or a piece the extraction gave it. A file that names none was
+    written before extents had a kind, and meant positive."""
+    return (entry.get('kind') or 'positive').lower()
+
+
 def ring_of(entry, P):
     """An extent as a closed ring: first point repeated last, once."""
     pts = entry_points(entry, P)
@@ -262,6 +304,14 @@ def sample(pts, step=1.0):
             t = k / n
             out.append((x0 + (x1 - x0) * t, y0 + (y1 - y0) * t))
     return out
+
+
+def on_edge_share(P, pts):
+    """The share of a polyline's length lying on the section outline."""
+    if not P.outline:
+        return 0.0
+    s = sample(pts)
+    return sum(1 if P.on_edge(q) else 0 for q in s) / len(s)
 
 
 def on_ink_share(P, pts):
@@ -478,6 +528,7 @@ def inspect(c, DB, VECM, want_qc=False, quiet=False, before='origin/main'):
         eab = e.get('abbr') or ab
         if eab not in S:
             raise SystemExit('extent %d names no structure: %r' % (k + 1, eab))
+        kind = extent_kind(e)
         ring = ring_of(e, P)
         area = abs(A.poly_area(ring[:-1])) * P.mm2_per_px
         mask = np.zeros((H, W), bool)
@@ -491,13 +542,44 @@ def inspect(c, DB, VECM, want_qc=False, quiet=False, before='origin/main'):
         names = sorted({pr[0] for pr in printed
                         if 0 <= int(round(pr[1][0] * P.NW)) and
                         _inside(mask, xf(P.im, pr[1][0] * P.NW, pr[1][1] * P.NH), W, H)})
-        rep['extents'].append(dict(abbr=eab, area_mm2=area, share_held=held / max(inside, 1),
+        rep['extents'].append(dict(abbr=eab, kind=kind, area_mm2=area,
+                                   share_held=held / max(inside, 1),
                                    share_of_region=held / max(own, 1), runs=runs,
                                    names_inside=names))
-        lines.append('  extent %d %s: %d points, %.4f mm2; %s holds %.0f%% of it today and '
+        lines.append('  extent %d %s %s: %d points, %.4f mm2; %s holds %.0f%% of it today and '
                      '%.0f%% of %s lies inside it; printed inside it: %s'
-                     % (k + 1, eab, len(ring) - 1, area, eab, 100 * held / max(inside, 1),
-                        100 * held / max(own, 1), eab, ', '.join(names) or 'nothing'))
+                     % (k + 1, eab, kind, len(ring) - 1, area, eab,
+                        100 * held / max(inside, 1), 100 * held / max(own, 1), eab,
+                        ', '.join(names) or 'nothing'))
+        if kind == 'negative':
+            # what the piece is to be taken away from, and what put it there: a box of the
+            # name printed inside it seeds it, and anything else reached in through a gap
+            if not held:
+                lines.append('    -> %s has no area inside it today: there is nothing here to '
+                             'take away' % eab)
+            elif eab in names:
+                lines.append('    -> a box of %s is printed inside it, so that box is what '
+                             'seeds this: withdraw it with a seed carrying its label_index, or '
+                             'close the face it should stop at' % eab)
+            else:
+                lines.append('    -> no box of %s is printed inside it, so the area reached in '
+                             'from a face the tracing leaves open: the boundary that should '
+                             'close it is what is missing' % eab)
+            if runs:
+                Lr = sum(sum(math.dist(a, q) for a, q in zip(run, run[1:])) for run in runs)
+                # a ring is cut inside brain_outline, which follows the tissue edge
+                # wherever the atlas draws no line: off the ink there is where it belongs
+                edge = sum(1 for run in runs if on_edge_share(P, run) > 0.5)
+                where = ('' if not edge else
+                         ', all of it along the section outline where the atlas draws no line'
+                         if edge == len(runs) else
+                         ', %d of them along the section outline where the atlas draws no line'
+                         % edge)
+                lines.append('    -> its outline lies off the traced ink over %d run%s, %.0f px '
+                             'in all%s. Nothing of a negative extent is traced; where the atlas '
+                             'does draw a line that should close this, mark it with a boundary'
+                             % (len(runs), '' if len(runs) == 1 else 's', Lr, where))
+            continue
         if not runs:
             lines.append('    -> every part of its outline is on traced ink: the boundary is '
                          'drawn, so the seed is what is wrong')
@@ -566,7 +648,8 @@ def region_on(ref, plate, VECM):
 def _draw_marks(dr, c, P, DB, out, S, at):
     """The correction over one plate image: tracings red, the region as `out` has it
     green, the printed boxes of its name yellow, seeds blue (a negative one crossed),
-    boundaries cyan, extents magenta. `at` maps a page point onto the image."""
+    boundaries cyan, extents magenta (a negative one crossed too). `at` maps a page
+    point onto the image."""
     p, ab = c['plate'], c['abbr']
     NW, NH = P.NW, P.NH
     for pts, _c in P.polys:
@@ -581,9 +664,14 @@ def _draw_marks(dr, c, P, DB, out, S, at):
                       (cx + bw / 2) * NW * S, (cy + bh / 2) * NH * S],
                      outline=(230, 190, 0, 255), width=2)
     for e in c['extents']:
-        ring = ring_of(e, P)
-        dr.polygon([at(q) for q in ring[:-1]], fill=(200, 0, 200, 30),
+        ring = [at(q) for q in ring_of(e, P)[:-1]]
+        neg = extent_kind(e) == 'negative'
+        dr.polygon(ring, fill=(200, 0, 200, 0 if neg else 30),
                    outline=(200, 0, 200, 255), width=2)
+        if neg:                                   # crossed, as a negative seed is
+            xs, ys = zip(*ring)
+            dr.line([min(xs), min(ys), max(xs), max(ys)], fill=(220, 30, 30, 255), width=3)
+            dr.line([min(xs), max(ys), max(xs), min(ys)], fill=(220, 30, 30, 255), width=3)
     for b in c['boundaries']:
         pts = entry_points(b, P)
         if b.get('closed'):
@@ -605,7 +693,8 @@ def _draw_marks(dr, c, P, DB, out, S, at):
 def write_qc(c, P, DB, out, printed):
     """The correction over the plate: tracings red, the region as it stands green,
     the printed boxes of its name yellow, seeds blue (a negative one crossed),
-    boundaries cyan, extents magenta. Twice the plate's size, for the eye."""
+    boundaries cyan, extents magenta (a negative one crossed too). Twice the plate's
+    size, for the eye."""
     from PIL import Image, ImageDraw
     S = 2
     p, ab = c['plate'], c['abbr']
@@ -620,7 +709,8 @@ def write_qc(c, P, DB, out, printed):
     _draw_marks(dr, c, P, DB, out, S, at)
     dr.rectangle([0, NH * S - 22, NW * S, NH * S], fill=(255, 255, 255, 200))
     dr.text((8, NH * S - 18), '%s  plate %d  %s: red tracing, green %s today, yellow its boxes, '
-            'blue seeds, cyan boundaries, magenta extents' % (c['id'], p, ab, ab), fill=(0, 0, 0))
+            'blue seeds, cyan boundaries, magenta extents (a negative seed or extent crossed)'
+            % (c['id'], p, ab, ab), fill=(0, 0, 0))
     os.makedirs(A.QCDIR, exist_ok=True)
     path = os.path.join(A.QCDIR, 'chk_corr_%s.png' % c['id'])
     img.save(path)
@@ -721,8 +811,8 @@ def write_site(c, P, DB, out, before, ref):
         sheet.paste(im, (x, cap))
         x += im.width + gap
     dr.text((6, H - foot + 3), '%s  plate %d: red tracing, green %s, yellow its boxes, blue seeds '
-            '(a negative one crossed), cyan boundaries, magenta extents' % (c['id'], p, ab),
-            fill=(0, 0, 0), font=font)
+            '(a negative one crossed), cyan boundaries, magenta extents (a negative one '
+            'crossed too)' % (c['id'], p, ab), fill=(0, 0, 0), font=font)
     os.makedirs(A.QCDIR, exist_ok=True)
     path = os.path.join(A.QCDIR, 'chk_corr_%s_site.png' % c['id'])
     sheet.save(path)
@@ -742,6 +832,10 @@ def plan(c, DB, VECM):
         paths.append((group_of(b.get('style')), path_d(pts, bool(b.get('closed'))),
                       b.get('note') or 'boundary'))
     for e in c['extents']:
+        # a negative extent says where the region is not; the line round it is drawn
+        # already wherever the extraction cut that piece, so nothing of it is traced
+        if extent_kind(e) != 'positive':
+            continue
         eab = e.get('abbr') or ab
         for run in off_ink_runs(P, ring_of(e, P)):
             paths.append((GROUPS['solid'], path_d(run), 'extent of %s, off the ink' % eab))

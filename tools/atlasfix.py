@@ -25,9 +25,13 @@ millimetres, and sends it.
     python3 tools/atlasfix.py 19 --no-browser       # just serve; open the URL yourself
 
 In the page: choose the region, then drop a **Seed** where the region is, draw the
-**Boundary** the tracing missed, or pull its **Extent** into shape. A word on what is
-wrong goes with the plate and is what the session that applies it reads first; it is
-optional, and the marks are the correction either way.
+**Boundary** the tracing missed, or pull its **Extent** into shape. A region carries
+as many extents as the atlas draws it places: pull each ring into shape, draw another
+where the extraction gave it none, mark the hole in a ring-like one, and drop a ring
+it should not have at all -- a dropped or hand-drawn *negative* extent says the region
+has no area there, and is read rather than traced. A word on what is wrong goes with
+the plate and is what the session that applies it reads first; it is optional, and the
+marks are the correction either way.
 **Pick** reads what the extraction has under the pointer, **Inspect** reads the whole
 draft against it, **Recut** builds the plate again with the draft applied, and
 **Commit** writes every plate's marks -- a file for each region marked on each plate
@@ -351,8 +355,10 @@ def document(draft, S, when=None, commit=None):
         if len(pts) > 3 and math.dist(pts[0], pts[-1]) < 1e-9:
             pts = pts[:-1]
         pgs, mms = zip(*[pt(q) for q in pts])
-        out['extents'].append({'abbr': e.get('abbr') or ab, 'page_px': list(pgs),
-                               'mm': list(mms), 'note': (e.get('note') or '').strip()})
+        out['extents'].append({'abbr': e.get('abbr') or ab,
+                               'kind': (e.get('kind') or 'positive').lower(),
+                               'page_px': list(pgs), 'mm': list(mms),
+                               'note': (e.get('note') or '').strip()})
     # off the millimetres this made, not the draft's: the page sends page px, and a
     # draft written by hand may carry nothing else
     out['hemisphere'] = draft.get('hemisphere') or hemisphere_of(out)

@@ -198,6 +198,87 @@ test('one Commit sends every marked plate, one file for each region marked on it
     expect(page.errors).toEqual([]);
   });
 
+// ------------------------------------------------------------------- the extents
+//
+// A region is one extent for each place the atlas draws it: two rings on plate 19 where
+// S1DZ is drawn in both hemispheres, and an inner one where a structure is drawn as a
+// ring. The extent tool lists what the extraction cut and lets either thing be said
+// about each ring -- pull it into shape, or drop it, which is the region saying it
+// should have no area there -- and another is drawn on the plate.
+
+const rings = (page) => page.locator('#opts .rings .ring');
+
+test('the extent tool lists the rings the extraction cut', async ({ page }) => {
+  await open(page);
+  await page.click('[data-t="extent"]');
+  await expect(rings(page)).toHaveCount(2);                  // S1DZ, on both sides
+  await expect(rings(page).nth(0)).toContainText('ring 1 · right · 0.3763 mm²');
+  await expect(rings(page).nth(1)).toContainText('ring 2 · left · 0.2379 mm²');
+  await expect(rings(page).nth(0).locator('.b')).toHaveText(['Pull into shape', 'Drop']);
+  await page.evaluate(() => select('Crus2'));                // no area here, and it says so
+  await expect(rings(page)).toHaveCount(0);
+  await expect(page.locator('#opts .rings')).toContainText('no area on this plate');
+
+  // the two readings of one ring contradict each other, so only one is offered at a time
+  await page.evaluate(() => select('S1DZ'));
+  await rings(page).nth(0).locator('.b').first().click();    // Pull into shape
+  await page.click('#dfinish');                              // Accept it as it came up
+  await expect(rings(page).nth(0)).toContainText('pulled into shape');
+  await expect(rings(page).nth(0).locator('.b.warn')).toBeDisabled();
+  await page.keyboard.press('z');                            // and undo puts it back
+  await expect(rings(page).nth(0).locator('.b.warn')).toBeEnabled();
+  expect(page.errors).toEqual([]);
+});
+
+test('a ring dropped is the ring itself, as the area the region should not have',
+  async ({ page }) => {
+    await open(page);
+    await page.click('[data-t="extent"]');
+    await rings(page).nth(0).locator('.b.warn').click();      // Drop
+    await expect(rings(page).nth(0)).toContainText('dropped');
+    await expect(rings(page).nth(0).locator('.b')).toHaveText(['Keep']);
+    await expect(page.locator('#marks')).toContainText('S1DZ has no area here (ring 1)');
+
+    const [doc, ring] = await page.evaluate(async () => [
+      (await SRC.document(S.draft)).doc,
+      S.d.regions.find((r) => r.abbr === 'S1DZ').rings[0],
+    ]);
+    expect(doc.extents).toHaveLength(1);
+    expect(doc.extents[0].kind).toBe('negative');
+    expect(doc.extents[0].abbr).toBe('S1DZ');
+    // the ring the pipeline cut, vertex for vertex, and not a redrawing of it
+    expect(doc.extents[0].page_px).toHaveLength(ring.length - 1);   // the ring is closed
+    expect(doc.extents[0].page_px[0]).toEqual([Math.round(ring[0][0] * 100) / 100,
+      Math.round(ring[0][1] * 100) / 100]);
+
+    await rings(page).nth(0).locator('.b').click();           // Keep: the drop goes back
+    await expect(rings(page).nth(0).locator('.b')).toHaveText(['Pull into shape', 'Drop']);
+    await expect(page.locator('#marks')).toContainText('Nothing marked on this plate');
+    expect(page.errors).toEqual([]);
+  });
+
+test('an extent drawn where the region is not carries that, and one drawn where it is',
+  async ({ page }) => {
+    await open(page);
+    await page.click('[data-t="extent"]');
+    await page.click('#opts [data-k="negative"]');
+    await expect(page.locator('#opts [data-k="negative"]')).toHaveClass('on');
+    await expect(page.locator('#sheetwhat')).toContainText('Extent −');
+    for (const q of [[1070, 950], [1100, 950], [1100, 980]]) await clickAt(page, q);
+    await expect(page.locator('#drawcount')).toHaveText('3 points');
+    await page.keyboard.press('Enter');
+    await page.click('#opts [data-k="positive"]');            // the other way, on the same plate
+    for (const q of [[1160, 1040], [1200, 1040], [1200, 1080]]) await clickAt(page, q);
+    await page.keyboard.press('Enter');
+    await expect(page.locator('#marks .mark')).toHaveCount(2);
+
+    const doc = await page.evaluate(async () => (await SRC.document(S.draft)).doc);
+    expect(doc.extents.map((e) => e.kind)).toEqual(['negative', 'positive']);
+    expect(doc.extents[0].abbr).toBe('S1DZ');
+    expect(doc.extents[0].page_px).toHaveLength(3);
+    expect(page.errors).toEqual([]);
+  });
+
 test('a plate with no correction on it still draws, and the plate can be changed',
   async ({ page }) => {
     await open(page);
@@ -494,6 +575,34 @@ test('the two backends write one correction', async ({ page }) => {
   expect(there.seeds[0].page_px).toEqual([1079, 955]);
   expect(there.boundaries[0].style).toBe('dashed');
   expect(there.hemisphere).toBe('left');
+});
+
+// The extents are the mark with the most in them -- a kind, a ring taken from the cut
+// rather than drawn, and as many of them as the atlas draws the region places -- so the
+// two writers are driven over all of it, not just the seed and the boundary.
+test('the two backends write one correction, extents and all', async ({ page }) => {
+  const mark = async (p) => {
+    await p.click('[data-t="extent"]');
+    await p.locator('#opts .rings .ring').nth(1).locator('.b.warn').click();   // Drop ring 2
+    await p.click('#opts [data-k="negative"]');
+    for (const q of [[1070, 950], [1100, 950], [1100, 980]]) await clickAt(p, q);
+    await p.keyboard.press('Enter');
+  };
+  await published(page);
+  await mark(page);
+  const there = await documentOf(page);
+
+  const local = await page.context().newPage();
+  await open(local);
+  await mark(local);
+  const here = await documentOf(local);
+  await local.close();
+
+  expect(there).toEqual(here);
+  expect(there.extents.map((e) => e.kind)).toEqual(['negative', 'negative']);
+  expect(there.extents[0].page_px.length).toBeGreaterThan(3);   // the ring the cut made
+  expect(there.extents[1].page_px).toHaveLength(3);             // and the one drawn by hand
+  expect(page.errors).toEqual([]);
 });
 
 // A file is written when Commit is pressed, from whichever plate the reader is on by
