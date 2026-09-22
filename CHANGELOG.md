@@ -532,6 +532,17 @@ carries a `version` block naming the release its derived fields were built for.
   padded hull never encloses less than its voxels hold. `test_data.test_volumes_consistent` is
   what caught it in the first place, by requiring every published entry to carry a mesh.
 
+  **Two browser literals go with the three Python ones, and for the same reason.** `browser-tests`
+  declares `needs: python-checks`, so while the Python suite was red the browser suite never ran
+  at all -- it was reported *skipped*, not passing -- and the first green Python run is the first
+  time 129 browser tests have been put to the re-cut series. Two of them read the old floor's
+  numbers: `colors.spec.js` counts 691 named regions off the page rather than 688, which is
+  `test_data.test_volumes_consistent`'s count read from the other side, and `mesh3d.spec.js` reads
+  the folded claustrum's note at **1.62 mm³** rather than 1.63, `Cl` + `DCl` + `VCl` having gone
+  0.7296 + 0.2560 + 0.6400 = 1.6256 to 0.7294 + 0.2545 + 0.6391 = **1.6230** with the re-cut.
+  `METHODS.md`'s copy of that sum is corrected with it. Neither is the hull's doing: both read the
+  same before the hull fix and after, the hull changing no `volume_mm3` anywhere.
+
 - **The olfactory bulb of plate 1 comes out in rings: `EPl` whole on the right, `Mi` closed
   on the left, and the granule core back under `GrO`.** Three corrections sent together --
   `20260922T135037Z-p01-EPl`, `-p01-Mi` and `-p01-GrO` -- carrying one reading between them:
