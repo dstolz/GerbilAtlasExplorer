@@ -32,7 +32,12 @@ carries a `version` block naming the release its derived fields were built for.
   structures the rule reads 163, 77 and 86, and so does a plain search for the word, so the
   plan's figures could not be reproduced and the block's are the ones `tests/python` holds.
   Six browser tests (five in `api.spec.js`, the meshes' in `mesh3d.spec.js`, since meshes
-  need the served page) and three Python tests hold the rest.
+  need the served page) and three Python tests hold the rest. **The fold's control is
+  withheld from the page for now**: the box is hidden in the plate controls and the plate
+  no longer offers to fold, the fold being not ready to be offered as it stands and due to
+  be revisited. The capability is intact — `F` in the link, `foldSet()` on the handle, the
+  six tests driving it that way — and the badge on the Controls button does not count a
+  setting the panel does not show.
 
 - **One press of Commit sends every plate and every region a reader marked.** The fixer
   kept a draft per plate and sent the plate on screen, so a reader who walked the atlas

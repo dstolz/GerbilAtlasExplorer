@@ -121,13 +121,10 @@ the whole atlas (all 186 plate images) lives inside it, 22 MB, most of that the 
   some of the plates the index lists them for: the claustrum is `Cl` on plates 12–15 and 27
   and `DCl` and `VCl` — never `Cl` — on 16–26. The whole's card says which parts it is drawn
   as and where, a part's card says whose part it is, and on such a plate the whole is not
-  "not located": the plate says the atlas draws it as its parts there. **Fold parts into
-  wholes**, in the plate controls, then reads the whole as its parts together — outlined as
-  their union, its labels pooled with theirs, its mesh and theirs standing together, every
-  figure marked *folded* with the atlas's own beside it — and leaves the plate as printed:
-  hovering, clicking and the colors still answer with the part.
+  "not located": the plate says the atlas draws it as its parts there.
   `data/gerbil_atlas_parts.csv` is the table, admitted only where the published index puts
-  the whole; Methods says how it was read.
+  the whole; Methods says how it was read. A fold that reads the whole as its parts together
+  is built behind it but not yet offered in the page — it is to be revisited first.
 - **At a coordinate** — go the other way: type bregma / ML / DV and get the structures
   nearest that point. Or hit **Pick on the plate** and just click where you're aiming.
 - Step through the 62 plates and pan around them. **Pinch** to zoom on a touch screen — the
@@ -392,7 +389,7 @@ plate range is malformed, and which are printed on one plate more than it gives 
 | `src/` | The app's source: `app.html`, `app.css`, `app.js`. `python3 tools/build_app.py --dev` writes `build/dev.html`, which links these directly, so code edits need no rebuild. `fixer.html`, `fixer.css` and `fixer.js` beside them are the region fixer's page, which `tools/atlasfix.py` serves as three files and `build_app.py` inlines into the site's `fixer.html`. |
 | `METHODS.md` | How everything here was derived, and what its accuracy is. |
 | `TARGETING_PLAN.md` | The design behind the track planner. |
-| `PARTS_PLAN.md` | The design for folding a structure's named parts back into it (`DCl` and `VCl` into `Cl`), at the reader's option. Built, through its step 4; the folded run in `tools/build_volumes.py` it leaves for later is still a separate decision. |
+| `PARTS_PLAN.md` | The design for folding a structure's named parts back into it (`DCl` and `VCl` into `Cl`), at the reader's option. Built, through its step 4, with the fold's control withheld from the page until it is revisited; the folded run in `tools/build_volumes.py` it leaves for later is still a separate decision. |
 | `data/gerbil_atlas.json` | Full database: structures, coordinates, label positions, brain outlines, region extents, the page-to-plate registration, calibration, a version stamp. |
 | `data/gerbil_atlas_structures.csv` | One row per structure: abbreviation, name, plate and bregma range, tags. |
 | `data/gerbil_atlas_groups.csv` | One row per gross division: its members spelled out, the plates it is on, its other names, and a note saying what it holds and what it deliberately does not. Written by `tools/build_groups.py`; added here, not published with the atlas. |

@@ -837,9 +837,11 @@ plate says the atlas draws it as its parts there — and a hovered part says *pa
 whole. None of that changes a record: a part stays a structure with its own card, outline,
 labels and mesh, and the structure list still counts 724.
 
-**What the fold does, at the reader's option.** *Fold parts into wholes*, in the plate
-controls (`F` among the link's `v=` flags), reads a whole as its parts together on those
-plates, exactly as a division is read from its members:
+**What the fold does, at the reader's option.** *Fold parts into wholes* reads a whole as
+its parts together on those plates, exactly as a division is read from its members. It is
+built, and **withheld from the page for now**: the control is hidden in the plate controls
+until the fold has been revisited, and what reaches it meanwhile is `F` among the link's
+`v=` flags and `foldSet()` on the test handle, which is how its tests drive it.
 
 | what it shows | where it comes from |
 | --- | --- |

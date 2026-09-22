@@ -987,13 +987,10 @@ function markSel(){
     if(standIn(sel,cur)){
       const pr=partsOf[sel], by=regBuild(cur).by;
       const here=pr.parts.filter(p=>by[p]||((LB[cur]||{})[p]||[]).length);
+      /* the fold is not offered here while its control is withheld from the page (see
+         #ckfold in app.html); the sentence stands on its own */
       vhWarn(`On plate ${cur} the atlas draws <b>${esc(sel)}</b> as `+
-        andList((here.length?here:pr.parts).map(p=>`<b>${esc(p)}</b>`))+'.'+
-        /* and offers the fold, unless it is on already and there is still nothing to
-           outline -- a stand-in plate that draws no part at all, which this build has none of */
-        (foldOn?'':`<button type="button" id="foldgo">Fold them into ${esc(sel)}</button>`),
-        'standin:'+sel);
-      if($('foldgo')) $('foldgo').onclick=()=>foldSet(true);
+        andList((here.length?here:pr.parts).map(p=>`<b>${esc(p)}</b>`))+'.', 'standin:'+sel);
       return;
     }
     vhWarn(`<b>${esc(sel)}</b> is at this level, but its printed label was not located on plate ${cur}.`,
@@ -1591,10 +1588,12 @@ $('ckmc').onchange=e=>mcSet(e.target.checked);
    off it. Otherwise everything that read a whole is redrawn: the plate's index (the union
    lives in it), the mark, the card with its gallery, the projection, the cloud and the
    planner -- which select() does for a selection, and which there is nothing of to redo
-   without one. GALC needs no clearing: a thumbnail's key carries the fold. */
+   without one. GALC needs no clearing: a thumbnail's key carries the fold.
+   The box it is wired to is withheld from the page for now (hidden in app.html): what
+   reaches this meanwhile is F among the link's v= flags and the __gae handle. */
 function foldSet(on,quiet){
   on=!!on; const was=foldOn;
-  foldOn=on; $('ckfold').checked=on;
+  foldOn=on; if($('ckfold')) $('ckfold').checked=on;
   for(const k in PTSF) ptsOf[k] = on ? PTSF[k] : PTSA[k];
   for(const k in REGC) delete REGC[k];
   if(quiet||was===on) return;
@@ -6020,7 +6019,9 @@ function advCount(){
   return 0;
 }
 function vpanCount(){
-  if(tab==='plate') return [mcOn,foldOn,showSB,measMode,showSK,showLM,cmpOn,anShow].filter(Boolean).length;
+  /* foldOn is left out while its control is withheld: the badge counts what is set in
+     the panel, and a setting with no control there would be a count of nothing to find */
+  if(tab==='plate') return [mcOn,showSB,measMode,showSK,showLM,cmpOn,anShow].filter(Boolean).length;
   if(tab==='proj')  return [pjsk,pjlm].filter(Boolean).length;
   const Q=v3E(); return [Q.sk,Q.lm,Q.m,Q.half,Q.ortho].filter(Boolean).length;
 }
