@@ -510,11 +510,54 @@ def test_groups_cover_the_atlas(db):
         assert set(g['plates']) <= member_plates, g['id']
 
 
+def _rings_close(entries, where):
+    """Drop every boundary the entries share with each other; the survivors must stitch
+    into closed rings, which is the outline the app draws for their union. Returns how
+    many rings. Rests on the tiling checked by test_shared_edges_recomputed."""
+    import collections
+    count = collections.Counter()
+    for e in entries:
+        for ring in e['g']:
+            pts = ring[:-1] if ring[0] == ring[-1] else ring
+            for i in range(len(pts)):
+                a, b = tuple(pts[i]), tuple(pts[(i + 1) % len(pts)])
+                if a != b:
+                    count[(a, b) if a < b else (b, a)] += 1
+    keep = [e for e, n in count.items() if n % 2]
+    assert keep, where
+    adj = collections.defaultdict(list)
+    for i, (a, b) in enumerate(keep):
+        adj[a].append(i)
+        adj[b].append(i)
+    # every vertex of a region boundary has even degree, so every walk closes
+    assert all(len(v) % 2 == 0 for v in adj.values()), where
+    used = [False] * len(keep)
+    rings = 0
+    for i in range(len(keep)):
+        if used[i]:
+            continue
+        used[i] = True
+        start, cur = keep[i]
+        n = 1
+        while cur != start:
+            nxt = None
+            for j in adj[cur]:
+                if not used[j]:
+                    used[j] = True
+                    x, y = keep[j]
+                    nxt = y if x == cur else x
+                    break
+            assert nxt is not None, ('open ring',) + tuple(where)
+            cur, n = nxt, n + 1
+        assert n >= 3, where
+        rings += 1
+    return rings
+
+
 def test_group_outlines_close(db):
     """The one geometric promise a division makes: drop every boundary its members share
     with each other and the survivors still stitch into closed rings, which is the outline
-    the app draws. Rests on the tiling checked by test_shared_edges_recomputed."""
-    import collections
+    the app draws."""
     R = db['region_extents']['data']
     checked = rings = 0
     for g in db['groups']['data']:
@@ -523,40 +566,73 @@ def test_group_outlines_close(db):
             parts = [here[a] for a in g['members'] if a in here]
             if not parts:
                 continue
-            count = collections.Counter()
-            for e in parts:
-                for ring in e['g']:
-                    pts = ring[:-1] if ring[0] == ring[-1] else ring
-                    for i in range(len(pts)):
-                        a, b = tuple(pts[i]), tuple(pts[(i + 1) % len(pts)])
-                        if a != b:
-                            count[(a, b) if a < b else (b, a)] += 1
-            keep = [e for e, n in count.items() if n % 2]
-            assert keep, (g['id'], pl)
-            adj = collections.defaultdict(list)
-            for i, (a, b) in enumerate(keep):
-                adj[a].append(i)
-                adj[b].append(i)
-            # every vertex of a region boundary has even degree, so every walk closes
-            assert all(len(v) % 2 == 0 for v in adj.values()), (g['id'], pl)
-            used = [False] * len(keep)
-            for i in range(len(keep)):
-                if used[i]:
-                    continue
-                used[i] = True
-                start, cur = keep[i]
-                n = 1
-                while cur != start:
-                    nxt = None
-                    for j in adj[cur]:
-                        if not used[j]:
-                            used[j] = True
-                            x, y = keep[j]
-                            nxt = y if x == cur else x
-                            break
-                    assert nxt is not None, ('open ring', g['id'], pl)
-                    cur, n = nxt, n + 1
-                assert n >= 3, (g['id'], pl)
-                rings += 1
+            rings += _rings_close(parts, (g['id'], pl))
             checked += 1
     assert checked >= 400 and rings >= checked
+
+
+def test_parts_are_well_formed(db):
+    """A row folds a whole only where the index puts it and the plate prints only its
+    parts: every stand-in plate is in the whole's index range, carries no label and no
+    extent for the whole, and carries an extent for at least one part. The three plate
+    lists are disjoint but for the shared ones, which are own plates by definition, and
+    every one of them is inside the range."""
+    P = db['parts']['data']
+    S = {s['abbr']: s for s in db['structures']}
+    LP, RE = db['label_positions']['data'], db['region_extents']['data']
+    assert len(P) == 9
+    assert [r['whole'] for r in P] == sorted({r['whole'] for r in P})   # as the report lists them
+    for r in P:
+        w = r['whole']
+        assert w in S and set(r['parts']) <= set(S), w
+        assert r['name'] == S[w]['name'] and r['part_names'] == [S[p]['name'] for p in r['parts']]
+        assert (r['first_plate'], r['last_plate']) == (S[w]['first_plate'], S[w]['last_plate'])
+        rng = set(S[w]['plates'])
+        for p in r['parts']:
+            assert set(S[p]['plates']) <= rng, (w, p)     # nothing folds past the index
+        stand, own, shared = r['stand_in_plates'], r['own_plates'], r['shared_plates']
+        assert stand and stand == sorted(set(stand)) and set(stand) <= rng, w
+        assert own == sorted(set(own)) and set(own) <= rng, w
+        assert not set(stand) & set(own), w
+        assert set(shared) <= set(own), w
+        for pl in stand:
+            here, lab = RE.get(str(pl), {}), LP.get(str(pl), {})
+            assert w not in lab and w not in here, (w, pl)
+            assert any(p in here for p in r['parts']), (w, pl)
+        for pl in own:
+            assert w in RE.get(str(pl), {}), (w, pl)
+            assert (pl in shared) == any(p in RE.get(str(pl), {}) for p in r['parts']), (w, pl)
+        assert r['note']
+    assert sum(len(r['stand_in_plates']) for r in P) == 24
+
+
+def test_part_outlines_close(db):
+    """On every plate a whole is folded on, dropping the boundaries its parts share with
+    each other (and with the whole, where both are drawn) leaves closed rings."""
+    R = db['region_extents']['data']
+    rings = 0
+    for r in db['parts']['data']:
+        for pl in r['stand_in_plates'] + r['shared_plates']:
+            here = R.get(str(pl), {})
+            parts = [here[a] for a in [r['whole']] + r['parts'] if a in here]
+            assert parts, (r['whole'], pl)
+            rings += _rings_close(parts, (r['whole'], pl))
+    assert rings
+
+
+def test_parts_report_is_complete(db):
+    """The block records every candidate the name rule finds and how it was filed, and
+    that filing is what the rule gives over the committed data -- so a re-cut cannot
+    silently admit a whole, or lose one, without the check saying so."""
+    import build_parts as BP
+    cand, _unnamed = BP.candidates(db)
+    rep = db['parts']['report']
+    for kind, key in (('admitted', 'admitted'), ('outside', 'outside_index'), ('moot', 'moot')):
+        assert rep[key] == sorted(w for w, c in cand.items() if c['kind'] == kind), key
+    assert (len(rep['admitted']), len(rep['outside_index']), len(rep['moot'])) == (9, 23, 7)
+    assert rep['admitted'] == [r['whole'] for r in db['parts']['data']]
+    assert db['parts']['rule'] == BP.RULE
+    # every part the rule finds for an admitted whole is in its row, and no other
+    for r in db['parts']['data']:
+        assert r['parts'] == cand[r['whole']]['parts'], r['whole']
+        assert r['stand_in_plates'] == cand[r['whole']]['stand_in'], r['whole']

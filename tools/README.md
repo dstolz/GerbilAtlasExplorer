@@ -13,6 +13,7 @@ anyone check any of them, so they are here as code, in the order they run.
 | `build_app.py` | Builds `gerbil_atlas_explorer.html` and the lean `index.html` from `src/` and `data/`, stamps the commit, date and time into the page, and with `--check` exits non-zero when a committed page is not a fresh build. `--site DIR` writes everything GitHub Pages serves; `--dev` writes `build/dev.html`, which links `src/app.css` and `src/app.js` so code edits need no rebuild. |
 | `export_tables.py` | The flat files, all from the JSON: the two CSVs that used to be kept by hand, a per-label coordinate table, a per-structure table with areas, volumes and centers, and GeoJSON extents per plate. `--refresh-db` also recomputes the counts the database carries — per plate, and the two totals in `verification` — and the `plate_registration` block; `--check` exits non-zero if any committed table is stale. |
 | `build_groups.py` | The twenty-one gross divisions — cortex, hippocampal formation, parahippocampal region, thalamus, pons, brainstem and the rest — as named lists of the atlas's own abbreviations, written into the `groups` block. Declarative rules rather than a hand list, so the taxonomy can be read and argued with; `--report` prints every division with its members and the residue, `--check` exits non-zero if the committed block is stale. It adds no geometry: a division's outline, area, coordinate and mesh are all derived in the app from its members'. Stdlib only. |
+| `build_parts.py` | The wholes the atlas draws under their parts' names — `Cl` as `DCl` and `VCl` on plates 16–26 — read off the names, the index and the plates by one stated rule and written into the `parts` block. Admitted only where the published index lists the whole; `--report` prints the admitted, refused and moot wholes with their plates, `--check` exits non-zero if the committed block is stale. It adds no geometry: the fold in the app derives a whole's outline, figures and meshes from its parts' the way a division's are derived from its members'. Stdlib only. |
 | `check_indexes.py` | Reads the atlas's two published indexes against each other and against the database. No inputs beyond the repository. It is what says the 723 transcribed entries are intact, and it is where the seven malformed plate ranges are enumerated. It also writes the comparison out as `data/index_published.csv` (`--write`) and verifies the committed copy on every plain run. |
 | `find_missing_labels.py` | Finds printed labels the label pass missed, by cutting the word from a plate that carries it and matching it back on one that does not. Extends `label_positions`. Needs the source PDF. |
 | `find_unlettered.py` | Finds the printed labels no plate carries a located copy of, which is the case `find_missing_labels.py` structurally cannot reach: it cuts the word from a plate that has it, and these have none. Composes the word instead, letter by letter, from glyphs cut out of located labels on neighboring plates, then matches it the same way. Extends `label_positions`. Needs the source PDF. |
@@ -65,6 +66,8 @@ python3 tools/build_volumes.py --stl out/              # the same meshes as STL
 python3 tools/build_volumes.py --nifti data/gerbil_atlas_labels.nii.gz   # the label volume as NIfTI
 python3 tools/build_groups.py --report                 # the divisions and their members
 python3 tools/build_groups.py                          # writes the `groups` block
+python3 tools/build_parts.py --report                  # the wholes drawn as their parts, and the refused
+python3 tools/build_parts.py                           # writes the `parts` block
 python3 tools/build_region_colors.py                   # writes the `region_colors` block
 python3 tools/build_region_colors.py --report          # the patches, the refusals, the plates
 python3 tools/export_tables.py --refresh-db            # the CSVs, the GeoJSON, the numbers METHODS.md states
@@ -72,6 +75,7 @@ python3 tools/build_app.py --lean                      # then the pages (unstamp
 python3 tools/build_app.py --check                     # are the committed pages a fresh build
 python3 tools/export_tables.py --check                 # are the committed tables current
 python3 tools/build_groups.py --check                  # are the committed divisions current
+python3 tools/build_parts.py --check                   # are the committed parts current
 python3 tools/build_region_colors.py --check           # is the committed coloring current
 python3 -m pytest tests/python                         # the data's own promises, as tests
 ```

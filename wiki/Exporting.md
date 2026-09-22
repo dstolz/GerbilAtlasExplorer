@@ -72,6 +72,14 @@ ones, never in place of them — plus a `frame_spec` column recording the exact 
 session that made it, so the file carries both readings and says which frame produced the
 second.
 
+With **Fold parts into wholes** on, five more columns follow everything else —
+`folded_label_AP_bregma_mm`, `folded_label_ML_abs_mm`, `folded_label_DV_mm`,
+`folded_n_labels`, `folded_parts` — filled for the nine wholes the atlas draws under their
+parts' names (`Cl`'s own labels pooled with `DCl`'s and `VCl`'s) and blank on every other
+row. The columns before them are read off the atlas's own labels whether or not the fold is
+on, so they are the same bytes either way. The Labels CSV never carries the fold: a row of
+it is a printed label, and the plate prints `DCl`.
+
 UTF-8 with a BOM, CRLF line endings — opens cleanly in Excel.
 
 ---

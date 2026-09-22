@@ -117,6 +117,17 @@ the whole atlas (all 186 plate images) lives inside it, 22 MB, most of that the 
   write. Divisions overlap on purpose: the brainstem is the midbrain, pons and medulla
   together, the bulb sits inside the olfactory areas, and a structure's own card says which
   divisions it is in.
+- **Wholes and their parts** — nine structures the atlas draws under their parts' names on
+  some of the plates the index lists them for: the claustrum is `Cl` on plates 12–15 and 27
+  and `DCl` and `VCl` — never `Cl` — on 16–26. The whole's card says which parts it is drawn
+  as and where, a part's card says whose part it is, and on such a plate the whole is not
+  "not located": the plate says the atlas draws it as its parts there. **Fold parts into
+  wholes**, in the plate controls, then reads the whole as its parts together — outlined as
+  their union, its labels pooled with theirs, its mesh and theirs standing together, every
+  figure marked *folded* with the atlas's own beside it — and leaves the plate as printed:
+  hovering, clicking and the colors still answer with the part.
+  `data/gerbil_atlas_parts.csv` is the table, admitted only where the published index puts
+  the whole; Methods says how it was read.
 - **At a coordinate** — go the other way: type bregma / ML / DV and get the structures
   nearest that point. Or hit **Pick on the plate** and just click where you're aiming.
 - Step through the 62 plates and pan around them. **Pinch** to zoom on a touch screen — the
@@ -381,16 +392,17 @@ plate range is malformed, and which are printed on one plate more than it gives 
 | `src/` | The app's source: `app.html`, `app.css`, `app.js`. `python3 tools/build_app.py --dev` writes `build/dev.html`, which links these directly, so code edits need no rebuild. `fixer.html`, `fixer.css` and `fixer.js` beside them are the region fixer's page, which `tools/atlasfix.py` serves as three files and `build_app.py` inlines into the site's `fixer.html`. |
 | `METHODS.md` | How everything here was derived, and what its accuracy is. |
 | `TARGETING_PLAN.md` | The design behind the track planner. |
-| `PARTS_PLAN.md` | The design for folding a structure's named parts back into it (`DCl` and `VCl` into `Cl`), at the reader's option. Not yet built. |
+| `PARTS_PLAN.md` | The design for folding a structure's named parts back into it (`DCl` and `VCl` into `Cl`), at the reader's option. Built, through its step 4; the folded run in `tools/build_volumes.py` it leaves for later is still a separate decision. |
 | `data/gerbil_atlas.json` | Full database: structures, coordinates, label positions, brain outlines, region extents, the page-to-plate registration, calibration, a version stamp. |
 | `data/gerbil_atlas_structures.csv` | One row per structure: abbreviation, name, plate and bregma range, tags. |
 | `data/gerbil_atlas_groups.csv` | One row per gross division: its members spelled out, the plates it is on, its other names, and a note saying what it holds and what it deliberately does not. Written by `tools/build_groups.py`; added here, not published with the atlas. |
+| `data/gerbil_atlas_parts.csv` | One row per whole the atlas draws under its parts' names: the parts, the plates they stand in for it on, the plates it is drawn on itself, and a note saying what the plates print. Written by `tools/build_parts.py`; a reading of the plates by one stated rule, admitted only where the published index lists the whole. |
 | `data/gerbil_atlas_structure_table.csv` | One row per structure with its label center, areas per plate, and the volume and center of its mesh. |
 | `data/gerbil_atlas_labels.csv` | One row per printed label — 6,336 stereotaxic triplets, read at the end of the label's leader line where the atlas draws one. |
 | `data/gerbil_atlas_plates.csv` | One row per plate: bregma / lambda / interaural / occipital-crest AP. |
 | `data/geojson/plate_NN.geojson` | The regional outlines of one plate in millimeters, one feature per structure, with the unnamed faces and the section outline. |
 | `data/facemaps/plate_NN.{u16.gz,json}` | The page cut into faces, as `tools/build_region_extents.py` cuts it: the face of every page pixel, and which printed labels seed each. What the region fixer's published page answers **Pick** from, so that answer is the extraction's and not a copy of it. Written by `tools/build_facemaps.py`; CI checks it is a fresh cut. |
-| `data/gerbil_atlas_labels.nii.gz`, `data/gerbil_atlas_labels_lut.csv` | The label volume the meshes were cut from, as a NIfTI file at 50 µm: one id per voxel in RAS (x right, y anterior, z dorsal) with the atlas millimeters in its sform, and the table that names each id. Interpolated between sections 350 µm apart, like the meshes. |
+| `data/gerbil_atlas_labels.nii.gz`, `data/gerbil_atlas_labels_lut.csv` | The label volume the meshes were cut from, as a NIfTI file at 50 µm: one id per voxel in RAS (x right, y anterior, z dorsal) with the atlas millimeters in its sform, and the table that names each id. Interpolated between sections 350 µm apart, like the meshes. A folded label volume — `DCl` and `VCl` under `Cl`'s id — is a remap of this file by `data/gerbil_atlas_parts.csv`; none is shipped, because the plates do not print one. |
 | `data/plates/{drawing,nissl,myelin}/NN.jpg` | The 186 plate images, cropped to the atlas's printed coordinate box. |
 | `data/vec.json`, `data/skull.json` | The traced outlines with their per-plate registration, and the CT skull surface: the two assets no script here regenerates. |
 | `data/index_raw.txt` | The authors' Index of abbreviations as extracted. Source of truth for the rest. |

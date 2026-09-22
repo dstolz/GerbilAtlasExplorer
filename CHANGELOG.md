@@ -6,6 +6,34 @@ carries a `version` block naming the release its derived fields were built for.
 ## [Unreleased]
 
 ### Added
+- **A structure the atlas draws under its parts' names is read as such, and can be folded
+  back into one.** The claustrum is `Cl` on plates 12–15 and 27 and `DCl` and `VCl` — never
+  `Cl` — on 16–26, though the index lists `Cl` for 12–27 throughout; a reader who selected it
+  on plate 20 was told its label "was not located", which is not what happened. Nine such
+  wholes, over 24 structure–plate pairs, are now read off the names, the index and the plates
+  by one stated rule — `tools/build_parts.py`, the `parts` block, `data/gerbil_atlas_parts.csv`,
+  a pipeline check — admitted only where the published index lists the whole: 23 wholes whose
+  parts run past their index range are refused and listed as such, since every plate range
+  here is the index's. The whole's card says what it is drawn as and where, a part's card
+  says whose part it is, the plate says the atlas draws the whole as its parts there, and a
+  hovered part says *part of Cl*. **Fold parts into wholes**, in the plate controls and `F`
+  in the link, then reads the whole as its parts together, exactly as a division is read
+  from its members: outlined as their union (the shared boundary dropped, so no line the
+  atlas does not draw), its labels pooled with theirs (`Cl`'s 10 with `DCl`'s 22 and
+  `VCl`'s 22), its mesh and theirs standing together (0.7296 + 0.256 + 0.64 = 1.6256 mm³,
+  which the 3-D note prints to its two places as 1.63), the structures CSV carrying five
+  `folded_` columns after the others, and a track plan aimed at the pooled labels and saying
+  so. Every folded figure is marked *folded* with the reading of the whole's own labels
+  beside it, and what the plate prints is left alone: hovering, clicking, the colors, the
+  Labels CSV, the label cloud and the structure list still answer with the part, and no
+  folded label volume is shipped — a remap of the NIfTI by the parts CSV is one sentence in
+  the README. `PARTS_PLAN.md` is the design. Its count of names that say *part* — 165, 78
+  with a named whole, 87 without — was that plan's own pattern match; over the committed
+  structures the rule reads 163, 77 and 86, and so does a plain search for the word, so the
+  plan's figures could not be reproduced and the block's are the ones `tests/python` holds.
+  Six browser tests (five in `api.spec.js`, the meshes' in `mesh3d.spec.js`, since meshes
+  need the served page) and three Python tests hold the rest.
+
 - **One press of Commit sends every plate and every region a reader marked.** The fixer
   kept a draft per plate and sent the plate on screen, so a reader who walked the atlas
   marking `E` on plate 1, then plate 16, then plate 3, pushed one and left the rest parked
