@@ -424,14 +424,25 @@ printed labels, so a region that comes out wrong is one of those inputs being wr
 the fix is to the input. What a reader can say from the plate is where the region is and
 where its boundary runs. `tools/atlasfix.py` lets you say it on the plate, in millimetres
 -- a seed inside the region, the run of boundary the tracing missed, the outline it should
-have -- and **Commit** pushes it as `corrections/<id>.json` on a branch `correction/<id>`.
+have, where a printed label's line should end -- and **Commit** pushes it as
+`corrections/<id>.json` on a branch `correction/<id>`. The panel says, for each tool, what
+its mark says and what the pipeline does with it, and **Key** on the plate says what each
+line, box and dot there is.
 
 A region is one extent for each place the atlas draws it, and the **Extent** tool lists
 the rings the extraction cut: pull one into shape, draw another where the cut gave none,
 or **Drop** one the region should not have -- which writes that ring, as it was cut, as an
 extent saying the region has no area there. Drawing that way round marks the hole in a
 ring-like region. Nothing of such an extent is traced; it is read, and what it says is
-which input gave the region area it should not have.
+which input gave the region area it should not have. A shape already drawn, or a ring
+being pulled into shape, is reshaped in place: drag its points, or **Redraw a stretch** of
+it with a line you click. Points put down near traced ink snap onto it, and a boundary's
+ends say whether the pipeline will bridge them.
+
+The **Leader** tool moves where a printed label seeds. A label the atlas prints outside its
+region has a line drawn back in, and the region is seeded at the line's end; drag the end
+to the face the label means. It is written as a seed carrying the label's `label_index`,
+which `tools/corrections.py apply` writes over that label's seed.
 
 ```
 pip install -r tools/requirements.txt

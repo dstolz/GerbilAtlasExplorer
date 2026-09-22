@@ -25,7 +25,9 @@ millimetres, and sends it.
     python3 tools/atlasfix.py 19 --no-browser       # just serve; open the URL yourself
 
 In the page: choose the region, then drop a **Seed** where the region is, draw the
-**Boundary** the tracing missed, or pull its **Extent** into shape. A region carries
+**Boundary** the tracing missed, pull its **Extent** into shape, or drag the end of a
+printed label's line with **Leader** -- a seed carrying the label's `label_index`, which
+stands in for that label's own. A region carries
 as many extents as the atlas draws it places: pull each ring into shape, draw another
 where the extraction gave it none, mark the hole in a ring-like one, and drop a ring
 it should not have at all -- a dropped or hand-drawn *negative* extent says the region

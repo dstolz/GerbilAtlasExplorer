@@ -6,6 +6,57 @@ carries a `version` block naming the release its derived fields were built for.
 ## [Unreleased]
 
 ### Added
+- **The fixer says what each mark means, reshapes what is drawn in place, and moves where a
+  printed label seeds.** Five tools in a row of words -- *Pick*, *Seed +*, *Seed −*,
+  *Boundary*, *Extent* -- left a first-time reader to guess the difference between a seed
+  and a boundary, and a shape once pulled into shape was worked one vertex at a time, on a
+  ring the extraction writes with hundreds of them, with alt-click the only way to take one
+  out and **Z** throwing the whole edit away. In `fixer.html` now:
+  - each tool's button wears the glyph its mark is drawn with, and the panel says, for the
+    tool in hand, what the mark says, what the pipeline does with it, and when it is the one
+    to use -- every claim `tools/corrections.py`'s own: `apply` writes positive seeds into
+    `seed_overrides` and boundaries and the off-ink runs of a positive extent into the SVG,
+    and a negative seed or extent is read and never written. **Key** on the plate says what
+    every line, box and dot drawn there is; each seed and extent is labelled on the plate
+    with the region it is for, and each mark's row in the list carries its glyph and says
+    what it says;
+  - a shape being worked on shows where a press on an edge would put a point, and takes
+    points dragged, edges bent, a point chosen and deleted (**Delete**, a double click, or
+    *Delete point* on a phone). **Redraw a stretch** replaces a run of it with a line you
+    click from where it leaves the shape to where it rejoins, with the stretch it replaces
+    dashed red and **Other side** to swap which one; **Undo** takes back one step of it. A
+    line or outline already drawn opens again by dragging one of its points or by **Edit**
+    on its row, rather than having to be dropped and drawn again; a seed is dragged to move
+    it; an outline is closed by clicking its first point;
+  - a point put down near traced ink snaps onto it (*snap to the ink*, **G**), measured
+    against the points the pipeline's own bridging measures to, and each end of a boundary
+    is ringed by what the pipeline will do with it: on the ink or within `BRIDGE_PX`, or
+    too far, with a dashed line to the ink it would have to reach and the distance in its
+    row;
+  - **Undo** outside an edit takes back the last change to the draft, whatever it was --
+    before, it took back the last extent if there was one, else the last boundary, else the
+    last seed, whatever had been done last;
+  - **Leader** (**6**) moves the end of a printed label's line: drag the dot, or the ring on
+    a label printed without a line, to the face the label means, or choose the label and
+    click where its line should end. It is written as a positive seed carrying the label's
+    `label_index` -- the entry `corrections.py apply` has always written over that label's
+    seed in `seed_overrides` -- so the schema is unchanged, and *Seed +* no longer carries
+    the menu that did the same thing less visibly. The page reads the face the new end
+    lands in and says whether it is one a seed can hold, and whether it shares it with
+    another label's seed. A feature of the drawing is not offered, since a correction names
+    regions only.
+
+  Two faults found on the way are fixed with it. A key pressed after ticking a box in the
+  panel went to the box, not the plate, so **Enter** did not finish a line drawn after
+  turning snapping off. And the canvas bitmap was sized only when the window was, so the
+  status bar taking a second row -- a long region name under the pointer did it -- drew the
+  plate stretched under a pointer read unstretched; the bar is held to one row, and the
+  plate is resized whenever its box is. The published page no longer carries a stale copy
+  of the face floor (400 px where the pipeline's is 100); it reads the face map's.
+  `tests/js/fixer.spec.js` has seven new tests: what each tool says, a leader dragged and
+  chosen and put back, snapping on and off, an outline reshaped and redrawn, a line opened
+  again by its point, undo across kinds, and a moved leader written the same by both
+  backends.
 - **A region can be said to have area in several places, and to have area where it should
   not.** The fixer's **Extent** tool offered one thing: the region's own rings, each to be
   pulled into shape. A region drawn as a ring -- an outer boundary with a hole the atlas
