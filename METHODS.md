@@ -436,7 +436,7 @@ the photograph's edge (`Mi` on the bulb plates, `LNTB` on 45, `LRtPC` on 57 and 
 of the frame-cropped image, the convention `brain_outline` uses, so the app's point-in-polygon
 test reads them unchanged. **<!-- n:region_extents.summary.structure_plate_entries -->3,133<!-- /n --> structure–plate entries carry an area**, 97% of the 3,216 the
 label pass located and 93% of the 3,369 the published index lists (both counted over the
-structures that are regions), as <!-- n:region_extents.summary.polygons -->5,950<!-- /n --> polygons over <!-- n:region_extents.summary.points -->155,932<!-- /n --> points.
+structures that are regions), as <!-- n:region_extents.summary.polygons -->5,950<!-- /n --> polygons over <!-- n:region_extents.summary.points -->155,942<!-- /n --> points.
 Where the atlas prints two names as one label the two share an entry (step 8). Twenty of the
 724 names have no entry anywhere and never could: they name no region (step 7).
 
@@ -455,7 +455,7 @@ already here: the lines in `svg/`, the abbreviations in `label_positions`. The s
 3. **Close against `brain_outline`**, inverse-transformed into the page frame, and fill it
    for the section interior.
 4. **Cut the empty space into faces.** A face sealed by traced ink and holding exactly one
-   abbreviation is that structure's area *as drawn*: <!-- n:region_extents.summary.faces_named_by_one_abbreviation -->3,533<!-- /n --> faces. A label the atlas set
+   abbreviation is that structure's area *as drawn*: <!-- n:region_extents.summary.faces_named_by_one_abbreviation -->3,536<!-- /n --> faces. A label the atlas set
    outside its region is seeded at the end of the line it draws rather than on the word
    (<!-- n:region_extents.summary.labels_on_a_leader -->207<!-- /n --> labels; see [Where the name is not the place](#where-the-name-is-not-the-place)).
 5. **Letter the hemisphere the atlas did not.** Some abbreviations are set once (`S1J` on
@@ -968,11 +968,11 @@ move the plates, and that the 2-D extraction's guarantees survived into three di
 | Highest point of the surface | DV −0.06 | **DV <!-- n:vol:checks.dv_highest_mm -->-0.1<!-- /n -->** (one voxel) |
 | Lowest point of the surface | DV −9.04 | **DV <!-- n:vol:checks.dv_lowest_mm -->-9.0<!-- /n -->** |
 | Printed labels inside the surface | 0.9693 | **<!-- n:vol:checks.labels_inside_the_surface -->0.9691<!-- /n -->** |
-| Printed labels inside the region they name | <!-- n:region_extents.summary.label_inside_its_own_region -->0.9785<!-- /n --> | **<!-- n:vol:checks.labels_in_their_own_region -->0.96<!-- /n -->**: the 2-D figure is after labels were pulled to the nearest face; this one is not |
+| Printed labels inside the region they name | <!-- n:region_extents.summary.label_inside_its_own_region -->0.9785<!-- /n --> | **<!-- n:vol:checks.labels_in_their_own_region -->0.9599<!-- /n -->**: the 2-D figure is after labels were pulled to the nearest face; this one is not |
 | Brain volume | not published | **<!-- n:vol:summary.brain_volume_mm3 -->1027.821<!-- /n --> mm³** |
 
 Two costs are larger than the interpolation is likely to be: reading the distance field
-coarsely costs a mesh a median <!-- n:vol:checks.coarsening_median_rel_error -->0.0411<!-- /n --> of its volume, and an isosurface sitting half a
+coarsely costs a mesh a median <!-- n:vol:checks.coarsening_median_rel_error -->0.0413<!-- /n --> of its volume, and an isosurface sitting half a
 voxel inside the voxels it was cut from accounts for another <!-- n:vol:checks.mesh_vs_voxel_median_rel_error -->0.0499<!-- /n -->, the difference
 between a surface and a pile of cubes. And <!-- n:vol:checks.structures_in_one_or_two_pieces -->0.7815<!-- /n --> of structures arrive as the one or
 two pieces anatomy expects; where a thin sheet pinches off into more (`CA1`, the ventricle
