@@ -1,0 +1,41 @@
+{
+ "schema": "gerbil-atlas-correction/1",
+ "id": "20260923T145740Z-p01-IPl",
+ "created": "2026-09-23T14:57:40Z",
+ "author": "",
+ "plate": 1,
+ "ap_bregma_mm": 7.8,
+ "abbr": "IPl",
+ "hemisphere": "both",
+ "problem": "Fixes to aci and other leaders and region coverage",
+ "seeds": [
+  {
+   "abbr": "IPl",
+   "kind": "positive",
+   "page_px": [1541.01,1237.62],
+   "mm": [-0.897,-4.854],
+   "note": "",
+   "label_index": 1
+  },
+  {
+   "abbr": "IPl",
+   "kind": "positive",
+   "page_px": [1780.62,1230.85],
+   "mm": [0.783,-4.806],
+   "note": "",
+   "label_index": 0
+  }
+ ],
+ "boundaries": [],
+ "extents": [],
+ "notes": [],
+ "preview": null,
+ "snapshot": "corrections/20260923T145740Z-p01-aci.png",
+ "source": {
+  "commit": "",
+  "site": "https://dstolz.github.io/GerbilAtlasExplorer/",
+  "repo": "dstolz/GerbilAtlasExplorer",
+  "tool": "atlasfix (the published page) 1.0",
+  "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36"
+ }
+}

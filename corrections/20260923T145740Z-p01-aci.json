@@ -1,0 +1,63 @@
+{
+ "schema": "gerbil-atlas-correction/1",
+ "id": "20260923T145740Z-p01-aci",
+ "created": "2026-09-23T14:57:40Z",
+ "author": "",
+ "plate": 1,
+ "ap_bregma_mm": 7.8,
+ "abbr": "aci",
+ "hemisphere": "both",
+ "problem": "Fixes to aci and other leaders and region coverage",
+ "seeds": [
+  {
+   "abbr": "aci",
+   "kind": "positive",
+   "page_px": [1563.96,1302.98],
+   "mm": [-0.736,-5.313],
+   "note": "",
+   "label_index": 0
+  },
+  {
+   "abbr": "aci",
+   "kind": "positive",
+   "page_px": [1763.36,1294.89],
+   "mm": [0.662,-5.256],
+   "note": "",
+   "label_index": 1
+  },
+  {
+   "abbr": "aci",
+   "kind": "positive",
+   "page_px": [1760.7,1287.18],
+   "mm": [0.643,-5.202],
+   "note": ""
+  }
+ ],
+ "boundaries": [],
+ "extents": [
+  {
+   "abbr": "aci",
+   "kind": "positive",
+   "page_px": [[1587.92,1263.45],[1584.8,1270.74],[1576.43,1285.03],[1570.69,1300.46],[1566.9,1324.54],[1555.4,1332],[1556.23,1311.2],[1558.9,1299.1],[1561.9,1289.92],[1568.75,1277.31],[1582.44,1261.84],[1586.8,1260.6]],
+   "mm": [[-0.568,-5.035],[-0.59,-5.087],[-0.649,-5.187],[-0.689,-5.296],[-0.716,-5.465],[-0.796,-5.517],[-0.79,-5.371],[-0.772,-5.286],[-0.751,-5.221],[-0.703,-5.133],[-0.607,-5.024],[-0.576,-5.015]],
+   "note": ""
+  },
+  {
+   "abbr": "aci",
+   "kind": "positive",
+   "page_px": [[1752.7,1272.16],[1760.84,1278.99],[1767.61,1292.34],[1769.06,1306.72],[1767.03,1315.54],[1764.09,1308.32],[1763.88,1301.34],[1759.73,1294.33],[1753.4,1289],[1749.8,1280]],
+   "mm": [[0.587,-5.097],[0.644,-5.145],[0.692,-5.238],[0.702,-5.34],[0.688,-5.402],[0.667,-5.351],[0.666,-5.302],[0.636,-5.252],[0.592,-5.215],[0.567,-5.152]],
+   "note": ""
+  }
+ ],
+ "notes": [],
+ "preview": null,
+ "snapshot": "corrections/20260923T145740Z-p01-aci.png",
+ "source": {
+  "commit": "",
+  "site": "https://dstolz.github.io/GerbilAtlasExplorer/",
+  "repo": "dstolz/GerbilAtlasExplorer",
+  "tool": "atlasfix (the published page) 1.0",
+  "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36"
+ }
+}
