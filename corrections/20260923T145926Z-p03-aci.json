@@ -1,0 +1,41 @@
+{
+ "schema": "gerbil-atlas-correction/1",
+ "id": "20260923T145926Z-p03-aci",
+ "created": "2026-09-23T14:59:26Z",
+ "author": "",
+ "plate": 3,
+ "ap_bregma_mm": 7.1,
+ "abbr": "aci",
+ "hemisphere": "both",
+ "problem": "GrA label is clear on the left hemisphere of plate 3 but is unrecognized. Fixes to leaders",
+ "seeds": [
+  {
+   "abbr": "aci",
+   "kind": "positive",
+   "page_px": [1808.92,1268.36],
+   "mm": [0.987,-5.081],
+   "note": "",
+   "label_index": 0
+  },
+  {
+   "abbr": "aci",
+   "kind": "positive",
+   "page_px": [1515.7,1270.2],
+   "mm": [-1.069,-5.094],
+   "note": "",
+   "label_index": 1
+  }
+ ],
+ "boundaries": [],
+ "extents": [],
+ "notes": [],
+ "preview": null,
+ "snapshot": "corrections/20260923T145926Z-p03-IPl.png",
+ "source": {
+  "commit": "",
+  "site": "https://dstolz.github.io/GerbilAtlasExplorer/",
+  "repo": "dstolz/GerbilAtlasExplorer",
+  "tool": "atlasfix (the published page) 1.0",
+  "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36"
+ }
+}
