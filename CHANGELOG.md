@@ -684,6 +684,41 @@ carries a `version` block naming the release its derived fields were built for.
   is six plate px wide and its two halves three apiece. What would settle it is either arc
   re-traced against the source the `svg/` tracing came from, or a reader drawing the divider in
   the fixer as a boundary, which is the mark `corrections.py apply` inks.
+- **A correction run keeps its rebuild in the foreground, and moves the test literals its
+  rebuild moves.** Runs #67, #69 and #75 of `apply-correction.yml` failed, and none of them
+  in the correction. They failed in two ways.
+
+  **The session ended while its rebuild was still running.** Run #69's last message was
+  "Rebuild is running (plate 28 of 62 in the extents step). While it works, here's what the
+  diagnosis found", and the job's cleanup then terminated two orphaned `python3` processes.
+  The rebuild takes about ten minutes. A Bash call that outlives its timeout -- two minutes
+  unless the model sets one, ten at most -- is moved to the background rather than killed,
+  and under `claude -p` a background shell is killed a few seconds after the session's final
+  message. So the plate was read and three `seed_overrides` rows written in the working tree,
+  and nothing reached the branch. The `Apply them` step now sets
+  `CLAUDE_CODE_DISABLE_BACKGROUND_TASKS=1`, so nothing can be put in the background, and
+  both Bash timeouts to 45 minutes, so a long command runs to its end. The prompt and the
+  skill say why. Runs #45, #55 and #62 also ended with a session that spent its turns and
+  pushed nothing, but they ran before the session's last message went to the log (#153), so
+  whether theirs was the same cause is not on record.
+
+  **The fix was pushed, and CI was red on a literal the rebuild had moved.**
+  `tests/python/test_leaders.py` pins where each of the 240 leader tips lands, and a
+  correction that moves a seed a tip supersedes moves those counts. The skill told the
+  session both to "bump the literals, and say so" and never to edit `tests/`, and the prompt
+  said only the second. So the session kept out of `tests/`, named the literals in its
+  write-up, and its pull request went red: #161 (run #67), reconciled afterwards by #162, and
+  #167 (run #75), where `test_the_tips_land_where_the_atlas_says_they_do` reads
+  (193, 37, 10) against (195, 35, 10) and `test_filters` 47 against 45. The rule came in with
+  #114, whose stated reason is a run that fixed a tool main was fixing at the same time. The
+  skill and the prompt now say one thing: a correction moves a literal its rebuild moved,
+  with the note that says what moved it, in a commit of its own after the fix, and changes
+  nothing else under `tests/`. `correction.sh tests` holds it to that under the workflow.
+  Counting from where the branch left main, it refuses a branch that takes a test or an
+  assertion out of `tests/` or puts a skip in: the three ways a suite goes green without the
+  data agreeing with it. The literal reconciliations in #145, #146 and #161 all pass it.
+  `tests/python/test_ci_scripts.py` plays a moved literal, each of the three refusals, and a
+  test main retired while the branch waited.
 
 - **The inner plexiform layer of plate 1 takes the lamina its own line ends in, and the
   olfactory ventricle the chamber above the one it held.** Three corrections sent together --

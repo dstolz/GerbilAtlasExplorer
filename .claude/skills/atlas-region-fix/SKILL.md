@@ -95,9 +95,17 @@ in the prompt, and its pictures are under `qc/`. By hand, do them.
 5. **Rebuild.** `python3 tools/pipeline.py rebuild` -- the six steps in the order each
    reads what the one before wrote, about ten minutes. `pipeline.py steps` lists them.
    The `tables` step also rewrites the totals METHODS.md states between `<!-- n:... -->`
-   markers, so those are never edited by hand.
+   markers, so those are never edited by hand. Run it in the foreground and wait for it:
+   under the workflow the session ends at its first final message and takes anything still
+   running with it. Run #69 wrote "Rebuild is running ... While it works, here's what the
+   diagnosis found", and that was the end of the run.
 6. **Check, and read the numbers.** `python3 tools/pipeline.py check` -- every `--check`
-   and the Python tests; the browser tests run in CI on the push. Then
+   and the Python tests; the browser tests run in CI on the push. A test that fails on a
+   literal the rebuild moved -- a count of tips, rings, labels or meshes, a list of
+   superseded rows -- is reconciled here: the literal goes to what the data now gives, and
+   the note beside it says what moved it, as the notes already there do. That is the whole
+   of what a correction changes under `tests/` (see **Never**). A failure that is not a
+   literal is a finding: say what it is in the write-up. Then
    `python3 tools/corrections.py report corrections/<id>.json` (against `origin/main`):
    the region before and after, per hemisphere and over the series; every other
    (plate, region) entry that moved, on this plate and elsewhere; the volumes that moved;
@@ -128,8 +136,9 @@ in the prompt, and its pictures are under `qc/`. By hand, do them.
    `Co-authored-by: Daniel <dstolz@umd.edu>`. Commit `qc/chk_corr_<id>.png` and
    `qc/chk_corr_<id>_site.png` with the fix, both from an `inspect --qc` run after the
    rebuild: the correction file is what the reader drew, and those pictures are what it
-   did. Then open the pull request from `build/pr.md`, under the workflow and by hand
-   alike:
+   did. Reconciled test literals go in a commit of their own after the fix, titled for
+   what they reconcile, so the fix and what it moved read apart. Then open the pull
+   request from `build/pr.md`, under the workflow and by hand alike:
    ```
    gh pr create --base main --title "$(head -n 1 build/pr.md)" \
      --body "$(tail -n +2 build/pr.md | sed "s/{{SHA}}/$(git rev-parse HEAD)/g")"
@@ -151,9 +160,14 @@ in the prompt, and its pictures are under `qc/`. By hand, do them.
 - Never write `L` into an SVG path the pipeline reads; never nest a `<g>`.
 - Never touch `corrections/*.json` on the branch; never bump the pinned versions; never
   reconcile a test literal without saying in the CHANGELOG what moved it.
-- Never edit `tools/`, `src/`, `tests/` or the workflows in a correction run. A correction
-  changes pipeline inputs, the docs and `qc/`. If a tool is wrong, say so in the write-up;
-  a fix to it is its own pull request, made once, not once per correction in flight.
+- Never edit `tools/`, `src/` or the workflows in a correction run. A correction changes
+  pipeline inputs, the docs and `qc/`. If a tool is wrong, say so in the write-up; a fix
+  to it is its own pull request, made once, not once per correction in flight.
+- Never change anything under `tests/` but a literal the rebuild moved and the note that
+  says what moved it. Never a test's logic, never a test or an assertion taken out, never
+  a skip or an xfail: `correction.sh tests` refuses all three under the workflow. A literal
+  left stale is not a way of keeping out of `tests/`; it leaves CI red on the pull request
+  (#161, #167).
 - Never merge another correction branch into this one, and never merge main by hand:
   `corrections.py rebase` is the merge. A branch stacked on another conflicts with main the
   moment the other lands as a squash.
