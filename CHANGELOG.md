@@ -586,6 +586,84 @@ carries a `version` block naming the release its derived fields were built for.
   are what carry the other two and a plain mesh link carries none.
 
 ### Fixed
+- **The granule layer takes the core of plate 4's right-hand bulb, and `aci` the loop at the
+  head of the tract.** Two corrections sent together -- `20260924T134430Z-p04-GrO` and
+  `-p04-aci` -- reporting "Fixed Right hemisphere GrO", with 44 seeds between them (nine
+  positive, 35 negative) and two extents. The cause is a seed in the wrong face, twice over,
+  and no tracing missing anywhere: both extents lie on traced ink the whole way round, so
+  nothing is added to `svg/` and nothing taken out of it. The only input this branch changes
+  is `seed_overrides` on plate 4.
+
+  **The two seeds had crossed, and one printed line was read twice.** The atlas prints `GrO`
+  once in each bulb, each word inside the granule core it names. On the left the word seeds
+  that core directly -- it carries no leader line -- and the left bulb comes out right. On the
+  right, `aci` is printed clear of the section at page (1991, 1261) and its line is drawn in
+  across the top of the `GrO` word's box, passing 3 page px inside its top edge. The leader
+  march made two mistakes on that one line. It carried `aci`'s own tip 132 px in, past the
+  1,976 px loop at the head of the tract and into the 26,625 px granule core, so the core was
+  lettered `aci` alone; and, marching out from the `GrO` word, it stepped onto the same line
+  where it crosses the box and followed it outward, recording a `GrO` tip at page (1922, 1264)
+  -- 3.0 px off `aci`'s line, 87 px from the word, out in the 29,086 px face `EPl` is printed
+  in. `GrO` took 72% of that ring from the watershed and `EPl` 27%, and the granule core it is
+  printed inside of was `aci`'s.
+
+  **The marks put both back.** `-p04-GrO`'s first mark carries `label_index` 1 and puts
+  `GrO`'s seed on its own printed word, page (1844, 1296), inside the core; `-p04-aci`'s single
+  mark carries `label_index` 0 and puts `aci`'s at page (1825, 1277), in the loop -- which is
+  where `20260910T134521Z-p04-E`'s row already recorded the `aci` line as ending, "at the ring
+  above" the pinch in the ventricle. Seven further `GrO` marks carry no `label_index` and are
+  written as seeds of their own; all seven are inside that same core face, so they change
+  nothing today and hold it if the tracing is ever cut finer there. `seeds_moved_by_hand` 102 →
+  **111**.
+
+  **`GrO` on plate 4 goes 2.6274 → 2.9058 mm²** and over the series 22.737 → 23.015 mm² on the
+  same 10 plates; its four polygons are now traced 1.00 apiece where the ring's was 0.96.
+  **`aci` goes 1.5335 → 0.2635 mm²** and 3.230 → 1.960 over the series. **`EPl` goes 1.8860 →
+  2.9814 mm²**, the whole of the ring face instead of a watershed share of it. Read by
+  hemisphere -- signed polygon areas, so a ring's hole counts against it -- the right-hand
+  bulb comes back into line with the left, whose polygons are byte-identical on both refs:
+  `GrO` right 1.1897 → 1.4681 against the left's 1.4377, `EPl` right 0.4054 → 1.5008 against
+  1.4806, `aci` right 1.3734 → 0.1034 against 0.1601. `GrA` −0.0034 mm², `Gl` −0.0024 and `E`
+  −0.0005 are the width of a wall; no entry on any other plate moves. Ten meshes move with the
+  interpolation -- `EPl` 6.9368 → 7.6350 mm³ and `aci` 0.7255 → 0.5283 the largest, `Mi`
+  0.4303 → 0.4196 on 8 → 9 components -- and the label volume's `unnamed_fraction` goes 0.0197
+  → 0.0194. Over the atlas, polygons 5,950 → 5,951, points 155,942 → 155,933,
+  `faces_named_by_one_abbreviation` 3,536 → 3,537, `section_covered_mean` 0.9726 → 0.9727,
+  `label_inside_its_own_region` 0.9785 → 0.9782, and `boundary_edges_shared_exactly` stays 1.0.
+  `METHODS.md`'s marked numbers are refreshed with them, `labels_on_a_leader` 207 → **205**
+  among them: the two tips these rows supersede.
+
+  **Thirty of the 35 negative marks are met; five are not.** They are all in one 1,551 px
+  lamina on the lateral wall of the right bulb, and no seed of this branch reaches it: it is
+  held by a mirror of the left-hand `GrO` word, 93% of it reflecting into the left granule
+  core, which is the rule `build_region_extents.mirror_seeds` states. The reader is right about
+  it. In Nissl the lamina reads 195 against the granule core's 140 and the left core's 141, and
+  in myelin 145 against the core's 160 -- pale in cells and dark in fibres, the signature of
+  the unnamed 1,227 px lamina at the same place on the left, which carries no `GrO`; its own
+  continuation round the top of the same ring, 1,894 px, is unnamed here too, and escapes the
+  mirror only by reflecting 41% rather than 50%. The mirror is an artifact of the two bulbs'
+  laminae not being drawn at quite the same radius, and the lamina is not `GrO`'s. It is left
+  as it stands, because the only input that could withdraw it is a seed naming that lamina some
+  other region, which neither correction names and which the plate's own `IPl` line -- ending
+  in a different, 2,065 px face of the same ring -- does not settle. `GrO` on the right is
+  1.4681 mm² with the lamina and would be about 1.392 without; the left is 1.4377.
+
+  **Two test literals move and are left for a commit of their own**, a correction not being
+  the place to touch `tests/`. `test_leaders.test_the_tips_land_where_the_atlas_says_they_do`
+  reads (195, 35, 10) and is now (193, 37, 10), the two rows being the `GrO` and `aci` tips on
+  plate 4 that this branch supersedes -- both `superseded_by`, so the list of those gains
+  (4, `'GrO'`) and (4, `'aci'`) in plate order after the plate-3 rows; and
+  `test_leaders.test_filters` reads 45 odd rows and is now 47, the same two from the other
+  side. Every other check is clean.
+
+  **Two tool notes.** `corrections.py report`'s hemisphere rows apportion the entry's area by
+  each polygon's *unsigned* area, so a region drawn as a ring has its hole counted as ground
+  and the split is wrong: the report reads the left-hand `GrO` as 1.7842 → 1.5874 mm² on a
+  plate where the left-hand polygons do not change at all. The figures quoted above are the
+  signed ones. And `mirror_seeds` keeps a mirror on a share of reflected area alone, with no
+  test that the face it lands in is the same kind of ground as the face the seed came from,
+  which is what put `GrO` in a plexiform lamina here. Both fixes belong to `tools/` and are not
+  made here.
 - **A correction run keeps its rebuild in the foreground, and moves the test literals its
   rebuild moves.** Runs #67, #69 and #75 of `apply-correction.yml` failed, and none of them
   in the correction. They failed in two ways.

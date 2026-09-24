@@ -1,0 +1,33 @@
+{
+ "schema": "gerbil-atlas-correction/1",
+ "id": "20260924T134430Z-p04-aci",
+ "created": "2026-09-24T13:44:30Z",
+ "author": "",
+ "plate": 4,
+ "ap_bregma_mm": 6.75,
+ "abbr": "aci",
+ "hemisphere": "right",
+ "problem": "Fixed Right hemisphere GrO",
+ "seeds": [
+  {
+   "abbr": "aci",
+   "kind": "positive",
+   "page_px": [1825.01,1276.63],
+   "mm": [1.1,-5.138],
+   "note": "",
+   "label_index": 0
+  }
+ ],
+ "boundaries": [],
+ "extents": [],
+ "notes": [],
+ "preview": null,
+ "snapshot": "corrections/20260924T134430Z-p04-GrO.png",
+ "source": {
+  "commit": "",
+  "site": "https://dstolz.github.io/GerbilAtlasExplorer/",
+  "repo": "dstolz/GerbilAtlasExplorer",
+  "tool": "atlasfix (the published page) 1.0",
+  "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36"
+ }
+}
