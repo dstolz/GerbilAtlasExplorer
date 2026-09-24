@@ -110,6 +110,8 @@ input[type=search]:focus{border-color:var(--accent)}
   padding:8px 14px;border-bottom:1px solid var(--line);cursor:pointer}
 .row:hover{background:var(--panel2)}
 .row.sel{background:var(--accent-soft)}
+/* Ctrl-clicked in beside the selection: the same tint, fainter, because the card is not its */
+.row.msel{background:color-mix(in srgb,var(--accent-soft) 55%,transparent)}
 .ab{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;font-weight:600;
   color:var(--accent);word-break:break-all}
 .nm{font-size:13.5px;min-width:0;overflow-wrap:anywhere}
@@ -117,6 +119,7 @@ input[type=search]:focus{border-color:var(--accent)}
 /* ---------- the divisions, above the structures they are made of ---------- */
 .row.grp .ab{color:var(--markg)}
 .row.grp.sel{background:color-mix(in srgb,var(--markg) 12%,transparent)}
+.row.grp.msel{background:color-mix(in srgb,var(--markg) 7%,transparent)}
 .ghead{display:flex;align-items:center;gap:6px;padding:7px 14px;cursor:pointer;
   border-bottom:1px solid var(--line);background:var(--panel2);
   font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}

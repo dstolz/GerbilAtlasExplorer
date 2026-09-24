@@ -149,6 +149,8 @@ input[type=search]:focus{border-color:var(--accent)}
   padding:8px 14px;border-bottom:1px solid var(--line);cursor:pointer}
 .row:hover{background:var(--panel2)}
 .row.sel{background:var(--accent-soft)}
+/* Ctrl-clicked in beside the selection: the same tint, fainter, because the card is not its */
+.row.msel{background:color-mix(in srgb,var(--accent-soft) 55%,transparent)}
 .ab{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;font-weight:600;
   color:var(--accent);word-break:break-all}
 .nm{font-size:13.5px;min-width:0;overflow-wrap:anywhere}
@@ -156,6 +158,7 @@ input[type=search]:focus{border-color:var(--accent)}
 /* ---------- the divisions, above the structures they are made of ---------- */
 .row.grp .ab{color:var(--markg)}
 .row.grp.sel{background:color-mix(in srgb,var(--markg) 12%,transparent)}
+.row.grp.msel{background:color-mix(in srgb,var(--markg) 7%,transparent)}
 .ghead{display:flex;align-items:center;gap:6px;padding:7px 14px;cursor:pointer;
   border-bottom:1px solid var(--line);background:var(--panel2);
   font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
@@ -1842,6 +1845,9 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
       <dt><kbd>Esc</kbd></dt><dd>come back from the maximized view, drop the selection, or clear a measurement</dd>
       <dt>double-click</dt><dd>zoom into the plate at that point; drag to pan</dd>
       <dt>hover a label</dt><dd>read its full name; click it to select that structure</dd>
+      <dt><kbd>Ctrl</kbd>-click</dt><dd>add a region on the plate, or a row in the results, to
+        the selection, or take it out; <kbd>&#8984;</kbd>-click on a Mac. Each is outlined on the
+        plate, the card stays on the first</dd>
     </dl>
 
     <h3>This build</h3>
@@ -2460,6 +2466,9 @@ const atlasPts = a => a in PTSA ? PTSA[a] : ptsOf[a];
 let foldOn=false;                  /* the fold, off until a reader asks for it */
 
 let active = new Set(), cur = 30, sel = null, results = S;
+/* the regions Ctrl/Cmd-clicked in beside the selection. The card describes `sel` alone;
+   these are outlined on the plate with it, and are never empty while `sel` is null */
+const msel = new Set();
 let zoom=1, tx=0, ty=0;                        /* view transform, applied to #pan */
 let showXY=false, showGrid=false, showSB=false, measMode=false;
 let showSK=false, pjsk=false;      /* the skull outline, on the plate and the projections */
@@ -2617,7 +2626,7 @@ function draw(){
   /* a name that is no region says so on hover, because the row is otherwise identical to
      one that will outline itself on the plate and this one never will */
   const row=(r,k)=>
-    `<div class="row${r.grp?' grp':''}${sel===k?' sel':''}" data-a="${esc(k)}" role="option" tabindex="0" aria-selected="${sel===k?'true':'false'}"${isFeat(k)?` title="${esc(featTxt(k))} \u2014 no outline, no mesh"`:''}>
+    `<div class="row${r.grp?' grp':''}${sel===k?' sel':''}${msel.has(k)?' msel':''}" data-a="${esc(k)}" role="option" tabindex="0" aria-selected="${sel===k||msel.has(k)?'true':'false'}"${isFeat(k)?` title="${esc(featTxt(k))} \u2014 no outline, no mesh"`:''}>
        <span class="ab">${esc(r.abbr)}</span>
        <span class="nm">${esc(r.name)}${via[k]?` <span class="via">via ${esc(via[k])}</span>`:''}</span>
        <span class="pl">${r.grp?r.n_members+' str':
@@ -2646,8 +2655,11 @@ function draw(){
       draw(); reveal(); };
     hd.onclick=flip;
     hd.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); flip(); } }; }
-  [...L.querySelectorAll('.row')].forEach(el=>el.onclick=()=>{
-    const a=el.dataset.a; select(a);
+  [...L.querySelectorAll('.row')].forEach(el=>el.onclick=e=>{
+    const a=el.dataset.a;
+    /* Ctrl/Cmd adds the row to the selection, or takes it out, and stays on this plate */
+    if(e&&(e.ctrlKey||e.metaKey)){ selToggle(a); return; }
+    msel.clear(); select(a);
     /* a structure opens on the first plate that carries it; a division spans dozens and
        is drawn on all of them, so picking one where you already are stays where you are */
     if(!isGrp(a) || !byAb[a].plates.includes(cur)) go(byAb[a].first_plate);
@@ -2715,10 +2727,14 @@ function extTxt(x){
     : sgn(x.ml0)+(x.ml1-x.ml0<.005?'':' to '+sgn(x.ml1));
   return `ML ${ml} · DV ${sgn(x.dv0)}${x.dv1-x.dv0<.005?'':' to '+sgn(x.dv1)} mm`;
 }
-function select(a){
+function select(a,keep){
   /* picking something is the reader asking about it, so whatever notice they put away is
      let back up: otherwise selecting a structure that is on no nearby plate would answer
      with a plate that has nothing on it and no word about why */
+  /* picking something else starts the selection over; redrawing the same one, as a
+     change of setting does, keeps whatever was Ctrl-clicked in beside it */
+  if(!keep&&a!==sel) msel.clear();
+  msel.delete(a);
   sel=a; vhOff=''; const r=byAb[a]; const D=$('det'); D.hidden=false;
   const g=r.grp?r:null;
   const c=coordsOf(a), x=extentOf(a);
@@ -2858,8 +2874,22 @@ async function galThumb(d,a,tok){
 function galMark(){ const el=$('gal'); if(el) [...el.children].forEach(d=>d.classList.toggle('cur',+d.dataset.p===cur)); }
 function clear(){
   if(!sel) return;
-  sel=null; gfilter=null; $('det').hidden=true; refine();
+  sel=null; msel.clear(); gfilter=null; $('det').hidden=true; refine();
   mark(); fit(); tgSync(); queueHash();
+}
+/* Ctrl/Cmd-click: add a region to the selection, or take one out. The first becomes the
+   selection proper, whose card is shown; taking that one out hands the card to the one
+   added most recently. */
+function selToggle(a){
+  if(!byAb[a]) return;
+  if(!sel){ select(a); return; }
+  if(a===sel){
+    const nx=[...msel].pop();
+    if(nx===undefined){ clear(); return; }
+    select(nx,true); return;
+  }
+  if(msel.has(a)) msel.delete(a); else msel.add(a);
+  draw(); mark(); queueHash();
 }
 /* draw() rebuilds the list, so the selected row lands wherever it lands; bring it
    back into view by scrolling the list alone, never the page under the plate */
@@ -2912,6 +2942,7 @@ const hintTxt = () => 'Click a result to outline it here \u00b7 '+
     : psrc==='drawing'
       ? 'hover a printed label to read it, click it to select it'
       : 'hover where the drawing prints an abbreviation to read it, click it to select it')+
+  ' \u00b7 <kbd>Ctrl</kbd>-click to select several'+
   ' \u00b7 <kbd>\u2190</kbd> <kbd>\u2192</kbd> step through plates';
 /* ---------- where a line about the view goes ----------
    Two different things were sharing the strip under the plate. Commentary -- what is
@@ -2964,6 +2995,7 @@ const vhAdd=html=>{ VINFO.insertAdjacentHTML('beforeend',html); };
 /* while the plate is armed for a pick it has one job, so it says so and nothing else */
 function mark(){
   markSel();
+  markMulti();
   infArm();
   if(anArm){
     vhTell('Click a point on the plate to place the <b>note</b>.','arm:note');
@@ -3061,6 +3093,33 @@ function markSel(){
     ` ${(d*0.35).toFixed(2)} mm away; it spans plates ${r.first_plate}\u2013${r.last_plate}.`+
     `<button type="button" id="oobgo">Go to plate ${near}</button>`, 'off:'+sel);
   $('oobgo').onclick=()=>go(near);
+}
+/* the regions Ctrl-clicked in beside the selection, marked as it is: the outline where
+   there is one, the circle round the printed name where there is not. Nothing is said
+   about the ones not on this plate beyond the count, and the view is not moved for them. */
+function mselShape(a,pl){
+  const by=pl===undefined?regBy:regBuild(pl).by, o=by[a], rg=o&&!regUnd(o)?o:null;
+  if(rg) return {rg};
+  const p=pl===undefined?cur:pl, bs=isGrp(a)?[]:((LB[p]||{})[a]||[]);
+  return bs.length ? {at:bs.map((b,i)=>{ const [x,y]=ptAt(p,a,i,b), R=Math.max(b[2]*NW,b[3]*NH);
+    return [x*NW,y*NH,R*0.85+7,R*0.55+6]; })} : null;
+}
+/* the export captions name the selection; the ones beside it are named after it */
+const mselCap = () => msel.size ? '   +   '+[...msel].map(a=>byAb[a].abbr).join(', ') : '';
+function markMulti(){
+  if(!sel||!msel.size) return;
+  let h='', n=0;
+  for(const a of msel){
+    const q=mselShape(a); if(!q) continue; n++;
+    const c=(isGrp(a)?'grp ':'')+'ms';
+    h+=q.rg ? `<path class="${c}${regEst(q.rg)?' est':''}" d="${regD(q.rg)}"></path>`
+      : q.at.map(([x,y,rx,ry])=>`<ellipse class="${c}" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="${rx.toFixed(1)}" ry="${ry.toFixed(1)}"></ellipse>`).join('');
+  }
+  $('om').insertAdjacentHTML('beforeend',h);
+  const on=n+(mselShape(sel)?1:0), all=msel.size+1;
+  vhAdd(` \u00b7 <b>${all}</b> selected, ${on===all?'all':on} on this plate \u00b7 `+
+    `${esc([...msel].map(a=>byAb[a].abbr).join(', '))} beside <b>${esc(byAb[sel].abbr)}</b>`+
+    ` \u00b7 <kbd>Ctrl</kbd>-click to add or remove`);
 }
 /* the same job for a superstructure, which answers differently in every branch: it is
    never circled, its area is a sum over the members drawn here, and being off the plate
@@ -3187,9 +3246,10 @@ function cmpShow(){
 /* the selection, outlined on the second pane too where it is the same level */
 function cmpMark(){
   const g=$('om2'); if(!cmpOn||!sel){ g.innerHTML=''; return; }
-  const rg=regBuild(cmpPlate()).by[sel];
-  if(!rg || regUnd(rg)){ g.innerHTML=''; return; }
-  g.innerHTML = `<path class="${isGrp(sel)?'grp':''}${regEst(rg)?' est':''}" d="${regD(rg)}"></path>`;
+  const by=regBuild(cmpPlate()).by;
+  g.innerHTML=[sel,...msel].map(a=>{ const rg=by[a];
+    return rg&&!regUnd(rg) ? `<path class="${isGrp(a)?'grp':''}${a!==sel?' ms':''}${regEst(rg)?' est':''}" d="${regD(rg)}"></path>` : '';
+  }).join('');
 }
 /* ---------- compare: the region under the pointer, highlighted on both panes ----------
    The two plates share a frame but not a region index -- each is cut on its own level --
@@ -3792,8 +3852,12 @@ IW.addEventListener('click',e=>{
     drawMeas(); return;
   }
   const h=pickAny(f[0],f[1]);
-  if(!h) clear();                     /* bare plate, or a face the atlas leaves unnamed */
-  else if(byAb[h.ab]) select(h.ab);   /* every printed label is indexed, but guard as showTip() does */
+  /* bare plate, or a face the atlas leaves unnamed; with Ctrl held that is a slip while
+     adding to the selection, not a request to drop it */
+  if(!h){ if(!(e.ctrlKey||e.metaKey)) clear(); }
+  else if(!byAb[h.ab]) return;       /* every printed label is indexed, but guard as showTip() does */
+  else if(e.ctrlKey||e.metaKey) selToggle(h.ab);   /* add it to the selection, or take it out */
+  else { msel.clear(); select(h.ab); }
 });
 addEventListener('scroll',()=>{ if(hot) hideTip(); if(phot) pjHide(); },{passive:true,capture:true});
 let rszT=null;
@@ -4879,18 +4943,21 @@ function exportPNG(){
   }
   /* the selection, marked the way the screen marks it: the extent where there is one,
      the circle round where the name falls where there is not */
-  const bs=(LB[cur]||{})[sel]||[], rgS=regOut(sel);
-  g.strokeStyle=markC(); g.lineWidth=1.8;
-  if(rgS){
-    g.beginPath();
-    rgS.gs.forEach(gg=>{ gg.forEach(([x,y],i)=>i?g.lineTo(x,y):g.moveTo(x,y)); g.closePath(); });
-    g.fillStyle=markF(undefined,'.10'); g.fill('evenodd');
-    g.lineWidth=1.5; if(regEst(rgS)) g.setLineDash([6,4]);
-    g.stroke(); g.setLineDash([]);
-  } else bs.forEach((b,i)=>{
-    const [cx,cy]=ptAt(cur,sel,i,b), R=Math.max(b[2]*NW,b[3]*NH);
-    g.beginPath(); g.ellipse(cx*NW,cy*NH,R*0.85+7,R*0.55+6,0,0,6.2832); g.stroke();
-  });
+  /* and the regions Ctrl-clicked in beside it, each in its own color the same way */
+  for(const a of sel?[sel,...msel]:[]){
+    const bs=(LB[cur]||{})[a]||[], rgS=regOut(a);
+    g.strokeStyle=markC(a); g.lineWidth=1.8;
+    if(rgS){
+      g.beginPath();
+      rgS.gs.forEach(gg=>{ gg.forEach(([x,y],i)=>i?g.lineTo(x,y):g.moveTo(x,y)); g.closePath(); });
+      g.fillStyle=markF(a,'.10'); g.fill('evenodd');
+      g.lineWidth=1.5; if(regEst(rgS)) g.setLineDash([6,4]);
+      g.stroke(); g.setLineDash([]);
+    } else if(!isGrp(a)) bs.forEach((b,i)=>{
+      const [cx,cy]=ptAt(cur,a,i,b), R=Math.max(b[2]*NW,b[3]*NH);
+      g.beginPath(); g.ellipse(cx*NW,cy*NH,R*0.85+7,R*0.55+6,0,0,6.2832); g.stroke();
+    });
+  }
   if(mA&&mB){
     g.strokeStyle='#00875a'; g.lineWidth=2.2;
     g.beginPath(); g.moveTo(mA[0],mA[1]); g.lineTo(mB[0],mB[1]); g.stroke();
@@ -4948,7 +5015,7 @@ function exportPNG(){
   g.beginPath(); g.moveTo(0,NH+9); g.lineTo(NW,NH+9); g.stroke();
   g.textBaseline='top'; g.fillStyle='#1b1a17';
   g.font='600 19px ui-sans-serif,Segoe UI,Helvetica,Arial,sans-serif';
-  g.fillText(`Plate ${cur}`+(sel&&byAb[sel]?`   ·   ${byAb[sel].abbr} — ${byAb[sel].name}`:''),0,NH+24);
+  g.fillText(`Plate ${cur}`+(sel&&byAb[sel]?`   ·   ${byAb[sel].abbr} — ${byAb[sel].name}`+mselCap():''),0,NH+24);
   g.font='15px ui-sans-serif,Segoe UI,Helvetica,Arial,sans-serif'; g.fillStyle='#5a554c';
   g.fillText(`AP   bregma ${p.bregma.toFixed(2)}  ·  lambda ${p.lambda_.toFixed(2)}  ·  interaural ${p.interaural.toFixed(2)}  ·  occipital crest ${p.occipital_crest.toFixed(2)} mm`,0,NH+50);
   /* whatever else was drawn on the plate gets a word, so the mark is never unexplained */
@@ -5069,15 +5136,20 @@ function exportSVG(){
     });
     o.push('<g id="landmarks" fill="none" stroke="#0f766e">'+L.join('')+'</g>');
   }
-  /* as on the screen and the PNG: the extent where there is one, otherwise the circle */
-  const bs=(LB[cur]||{})[sel]||[], rgS=regOut(sel);
-  if(rgS) o.push(`<g id="highlight" fill="${markC()}" fill-opacity=".10" fill-rule="evenodd"`+
-    ` stroke="${markC()}" stroke-width="1.5"${regEst(rgS)?' stroke-dasharray="6 4"':''}>`+
-    `<path d="${regD(rgS)}"/></g>`);
-  else if(bs.length) o.push(`<g id="highlight" fill="none" stroke="${markC()}" stroke-width="1.8">`+
-    bs.map((b,i)=>{ const [cx,cy]=ptAt(cur,sel,i,b), R=Math.max(b[2]*NW,b[3]*NH);
-      return `<ellipse cx="${n2(cx*NW)}" cy="${n2(cy*NH)}" `+
-             `rx="${n2(R*0.85+7)}" ry="${n2(R*0.55+6)}"/>`; }).join('')+'</g>');
+  /* as on the screen and the PNG: the extent where there is one, otherwise the circle.
+     The selection is #highlight; each region Ctrl-clicked in beside it is a group of its
+     own, named for it, so an editor can still take them apart */
+  for(const a of sel?[sel,...msel]:[]){
+    const bs=(LB[cur]||{})[a]||[], rgS=regOut(a);
+    const id=a===sel?'id="highlight"':`class="highlight" data-abbr="${esc(a)}"`;
+    if(rgS) o.push(`<g ${id} fill="${markC(a)}" fill-opacity=".10" fill-rule="evenodd"`+
+      ` stroke="${markC(a)}" stroke-width="1.5"${regEst(rgS)?' stroke-dasharray="6 4"':''}>`+
+      `<path d="${regD(rgS)}"/></g>`);
+    else if(bs.length) o.push(`<g ${id} fill="none" stroke="${markC(a)}" stroke-width="1.8">`+
+      bs.map((b,i)=>{ const [cx,cy]=ptAt(cur,a,i,b), R=Math.max(b[2]*NW,b[3]*NH);
+        return `<ellipse cx="${n2(cx*NW)}" cy="${n2(cy*NH)}" `+
+               `rx="${n2(R*0.85+7)}" ry="${n2(R*0.55+6)}"/>`; }).join('')+'</g>');
+  }
   if(mA&&mB) o.push('<g id="measure" fill="none" stroke="#00875a" stroke-width="2.2">'+
     `<line x1="${n2(mA[0])}" y1="${n2(mA[1])}" x2="${n2(mB[0])}" y2="${n2(mB[1])}"/>`+
     [mA,mB].map(p=>`<circle cx="${n2(p[0])}" cy="${n2(p[1])}" r="4"/>`).join('')+'</g>');
@@ -5122,7 +5194,7 @@ function exportSVG(){
   const p=plateOf[cur], cap=[];
   cap.push(`<line x1="0" y1="${NH+9}" x2="${NW}" y2="${NH+9}" stroke="#dddad3" stroke-width="1"/>`);
   cap.push(svgText(0,NH+24,19,'#1b1a17',
-    `Plate ${cur}`+(sel&&byAb[sel]?`   ·   ${byAb[sel].abbr} — ${byAb[sel].name}`:''),600));
+    `Plate ${cur}`+(sel&&byAb[sel]?`   ·   ${byAb[sel].abbr} — ${byAb[sel].name}`+mselCap():''),600));
   cap.push(svgText(0,NH+50,15,'#5a554c',
     `AP   bregma ${p.bregma.toFixed(2)}  ·  lambda ${p.lambda_.toFixed(2)}  ·  `+
     `interaural ${p.interaural.toFixed(2)}  ·  occipital crest ${p.occipital_crest.toFixed(2)} mm`));
@@ -7462,6 +7534,8 @@ function writeHash(){
      Controls button and on Advanced are kept honest without a second list of triggers */
   vpanSync();
   let h='p'+cur; if(sel) h+='/'+encodeURIComponent(sel);
+  /* the regions Ctrl-clicked in beside it, each encoded, so a comma is only ever the separator */
+  if(sel&&msel.size) h+='&ms='+[...msel].map(encodeURIComponent).join(',');
   /* the plate is display:none behind the other tabs and measures nothing then; its
      fitted width is what the pan was set against, so it stands in */
   let b=iwRect(); if(!b.width&&fitW) b={width:fitW,height:fitW*NH/NW};
@@ -7606,7 +7680,13 @@ function readHash(){
 
   go(k);
   let a=m[2]; try{ a=decodeURIComponent(a||''); }catch(_){}
-  if(a&&byAb[a]) select(a); else clear();
+  if(a&&byAb[a]){
+    select(a);
+    msel.clear();
+    for(let x of (par.ms||'').split(',')){ try{ x=decodeURIComponent(x); }catch(_){ continue; }
+      if(x&&byAb[x]&&x!==a) msel.add(x); }
+    if(msel.size){ draw(); mark(); }
+  } else clear();
 
   const z=parseFloat(par.z);
   if(Number.isFinite(z)&&z>1){
@@ -8865,7 +8945,7 @@ window.__gae={toFrame,fromFrame,writeHash,readHash,tgSolve,tgPath,tgFootprint,pl
   setMax,
   welcOpen,welcSeen,
   vpan:on=>vpanOpen(on), adv:on=>advOpen(on), inf:on=>infOpen(on),
-  state:()=>({cur,sel,zoom,tab,smode,psrc,tgProbe,tgFoot,cmpOn,anShow,maxed,targSide,tgTilt,tgRoll,tgYaw,tgPlate,tgOff,fview,fvOn:fvOn(),v3two,v3ed,v3lock,mcOn,mcWash,foldOn,vpanOn,advOn,infOn})};
+  state:()=>({cur,sel,msel:[...msel],zoom,tab,smode,psrc,tgProbe,tgFoot,cmpOn,anShow,maxed,targSide,tgTilt,tgRoll,tgYaw,tgPlate,tgOff,fview,fvOn:fvOn(),v3two,v3ed,v3lock,mcOn,mcWash,foldOn,vpanOn,advOn,infOn})};
 </script>
 </body>
 </html>
