@@ -1,7 +1,7 @@
 // The "In frame" toggle: the projection and the 3-D view drawn in the working frame
 // rather than the atlas's. What is checked here is that the turn is opt-in, that it is
 // the rotation and nothing else, that the two views share the one setting, and that the
-// overlays which cannot be re-flattened at another angle say so instead of being wrong.
+// skull and landmark overlays are redrawn at the frame's angle rather than just moved.
 const { test, expect } = require('./gae');
 /* the controls these specs drive live in the view's panel, which opens closed */
 const panel = p => p.evaluate(() => window.__gae.vpan(true));
@@ -65,22 +65,43 @@ test('the two views share the one setting', async ({ page }) => {
   expect(await page.evaluate(() => window.__gae.state().fvOn)).toBe(false);
 });
 
-test('the skull and landmark overlays go dead while the view is turned', async ({ page }) => {
-  await page.goto(BUNDLE + '#p30/CPu&t=proj' + TURNED);
+test('the skull and landmark overlays turn with the view', async ({ page }) => {
+  await page.goto(BUNDLE + '#p30/CPu&t=proj&v=KL' + TURNED);
   await page.waitForTimeout(800);
-  const state = () => page.evaluate(() => ({
+  const sk = () => page.evaluate(() => document.getElementById('pjk').innerHTML);
+  const atlas = await sk();
+  expect(atlas).toContain('<path');
+  await page.click('#pjfw');
+  await page.waitForTimeout(600);
+  const st = await page.evaluate(() => ({
     sk: document.getElementById('ckpk').disabled,
     lm: document.getElementById('ckplm').disabled,
+    names: [...document.querySelectorAll('#pjlm text')].map(t => t.textContent),
   }));
-  expect(await state()).toEqual({ sk: false, lm: false });
+  expect(st).toEqual({ sk: false, lm: false,
+    names: ['bregma', 'lambda', 'interaural', 'occipital crest'] });
+  // the outline is flattened again at the frame's angle, not the stored one moved
+  const turned = await sk();
+  expect(turned).toContain('<path');
+  expect(turned).not.toBe(atlas);
+  // The vault marks are the fitted skull's own heights, turned as points; the outline is
+  // the same skull turned and flattened. So each mark has to sit on the outline -- within
+  // 0.3 mm (12 plot units), the grid and thinning tolerance of the trace.
+  const miss = await page.evaluate(() => {
+    const pts = [...document.querySelectorAll('#pjk path')].map(p =>
+      p.getAttribute('d').slice(1, -1).split('L').map(q => q.split(' ').map(Number)));
+    const seg = (c, a, b) => { const dx = b[0] - a[0], dy = b[1] - a[1], l = dx * dx + dy * dy || 1;
+      const t = Math.max(0, Math.min(1, ((c[0] - a[0]) * dx + (c[1] - a[1]) * dy) / l));
+      return Math.hypot(a[0] + t * dx - c[0], a[1] + t * dy - c[1]); };
+    const cs = [...document.querySelectorAll('#pjlm circle')].map(c => [+c.getAttribute('cx'), +c.getAttribute('cy')]);
+    return cs.slice(0, -2).map(c => Math.min(...pts.flatMap(L =>
+      L.map((a, i) => seg(c, a, L[(i + 1) % L.length])))));
+  });
+  expect(miss.length).toBe(3);                 // bregma, lambda, occipital crest
+  for (const d of miss) expect(d).toBeLessThan(12);
   await page.click('#pjfw');
-  await page.waitForTimeout(300);
-  expect(await state()).toEqual({ sk: true, lm: true });
-  // and nothing of either is drawn while it is on
-  expect(await page.evaluate(() => document.getElementById('pjk').innerHTML)).toBe('');
-  await page.click('#pjfw');
-  await page.waitForTimeout(300);
-  expect(await state()).toEqual({ sk: false, lm: false });
+  await page.waitForTimeout(400);
+  expect(await sk()).toBe(atlas);              // and the stored outline is back
 });
 
 test('fv=1 rides in the link only beside a rotation', async ({ page }) => {

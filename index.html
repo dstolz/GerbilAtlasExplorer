@@ -1669,9 +1669,11 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
       brain. Untick it and they are back in the atlas&rsquo;s orientation, which is the one
       every published figure is in. Turning a view is still not a resectioning: the same 62
       coronal sections are stood up at an angle, not recut. The skull outline and the landmark
-      rules are the one thing that cannot come along &mdash; each is flattened at the
-      atlas&rsquo;s own angle, and the outline of a turned skull is not the turned outline of
-      one &mdash; so they sit out a turned view rather than be drawn wrong in it.</p>
+      rules come along, but neither is simply turned: the outline of a turned skull is not the
+      turned outline of one, so the fitted skull is flattened again at your frame&rsquo;s
+      angle, and a landmark&rsquo;s coronal plane, once tilted, is drawn where it cuts the
+      midline (sagittal) or the horizontal through the landmark (top-down) &mdash; on the vault,
+      or for the interaural line the ear-bar axis.</p>
 
     <h3>Planning a track</h3>
     <p class="fexp"><b>Experimental.</b> New, and not yet checked against a track anybody has
@@ -1989,8 +1991,9 @@ kbd{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--chi
       The two share the one setting. Leave it unticked and both stay in the atlas&rsquo;s
       orientation, as they always have. A turned view is the same rigid rotation as every
       number above it &mdash; the 62 coronal sections stood up at an angle, not recut &mdash;
-      and the skull outline and landmark rules, which are flattened at the atlas&rsquo;s angle
-      and cannot be re-flattened at yours, are unavailable while it is on.</p>
+      and the skull outline and landmark rules turn with it: the outline is the fitted skull
+      flattened again at your angle, and each landmark rule is where its turned coronal plane
+      cuts the plane the view is taken through.</p>
     <p>An origin on its own is the exception, and deliberately so. Moving zero moves no point:
       every distance and every angle is the one the atlas printed, so the projections and the
       3-D view read their axes from your origin too, and the measure tool needs no caveat, with
@@ -5325,13 +5328,12 @@ const VIEWS={
    is turned by it and the axes become the frame's own, and without it the view stays in
    atlas coordinates and says so, which is all it could ever do before. */
 const pjq = q => fvOn() ? fRot(q.ap,q.ml,q.dv) : q;
-/* The skull silhouette and the landmark rules are the two things that cannot come along.
-   Both are flattened along the axis the view drops, and the flattening was done at the
-   atlas's angle: the outline of a turned skull is not the turned outline of a skull, and
-   a landmark whose AP is all the atlas prints stops being a line once the frame tilts.
-   So they sit out a turned view rather than being drawn wrong in it. */
-const pjSkOn = () => pjsk && !fvOn();
-const pjLmOn = () => pjlm && !fvOn();
+/* The skull silhouette and the landmark rules come along too, but neither can simply be
+   turned. The stored silhouette was flattened at the atlas's angle, and the outline of a
+   turned skull is not the turned outline of a skull -- so a turned view flattens the mesh
+   again at the frame's angle (skSil). A landmark rule is a coronal plane, and once the
+   frame tilts a plane seen along an axis it is not parallel to has no edge to draw -- so a
+   turned view draws where the plane cuts the section the view is taken through (pjLMf). */
 /* what the AP axis is counted from, once anything has moved zero */
 const pjZero = () => (shifted()||fvOn()) && FRAME.org ? esc(orgName()) : 'bregma';
 const dotTxt=q=>{ const F=shifted()||fvOn(), c=F?toFrame(q.ap,q.ml,q.dv):q;
@@ -5347,10 +5349,10 @@ const pjTicks=(k,hi,lo)=>{ const a=[];
 /* one viewBox unit is 1/40 mm on both axes, so neither view is distorted */
 /* with the skull outline on, each view opens out just far enough to hold the bone
    around the cloud; off, the axes are exactly what they always were */
-const pjHi=V=>V.hi+Math.max(pjSkOn()?(V.k==='dv'?0.7:3.3):0, pjLmOn()?(V.k==='dv'?0.8:3.0):0)
-             +fvP[V.k][1];
-const pjLo=V=>V.lo-Math.max(pjSkOn()?(V.k==='dv'?3.5:3.3):0, pjLmOn()?(V.k==='dv'?0:3.0):0)
-             -fvP[V.k][0];
+const pjPad=(V,up)=>Math.max(pjsk?(V.k==='dv'?(up?0.7:3.5):3.3):0,
+                             pjlm?(V.k==='dv'?(up?0.8:0):3.0):0);
+const pjHi=V=>V.hi+pjPad(V,1)+fvP[V.k][1];
+const pjLo=V=>V.lo-pjPad(V,0)-fvP[V.k][0];
 const pjx=ap=>PM.l+(pA0-ap)*K, pjy=(V,v)=>PM.t+(pjHi(V)-v)*K;
 /* the whole cloud, turned, measured against what the plot already holds */
 function fvBounds(){
@@ -5364,6 +5366,18 @@ function fvBounds(){
   fvP.ap=[lowPad(b.ap[0],AP1), hiPad(b.ap[1],AP0)];
   fvP.dv=[lowPad(b.dv[0],VIEWS.dv.lo), hiPad(b.dv[1],VIEWS.dv.hi)];
   fvP.ml=[lowPad(b.ml[0],VIEWS.ml.lo), hiPad(b.ml[1],VIEWS.ml.hi)];
+  /* the landmark marks are points, and a turn can carry them past the margin the atlas's
+     angle was given for them -- the ear canals, at ML +/-10.4, first. So each view also
+     grows, in the same whole millimeters, to hold the marks it draws, with 0.3 mm to spare
+     for the dot. The skull is not held this way: its outline runs past the axes at the
+     atlas's angle too (the jaw, the nose) and is clipped to the plot as it is there. */
+  if(pjlm) for(const V of Object.values(VIEWS)){
+    let top=-1e9, bot=1e9;
+    for(const p of pjLmPts(V)){ const c=fRot(p.ap,p.ml,p.dv)[V.k];
+      if(c+0.3>top) top=c+0.3; if(c-0.3<bot) bot=c-0.3; }
+    const hi=pjHi(V), lo=pjLo(V);
+    fvP[V.k][1]+=hiPad(top,hi); fvP[V.k][0]+=lowPad(bot,lo);
+  }
   pA0=AP0+fvP.ap[1]; PWv=(pA0-(AP1-fvP.ap[0]))*K;
 }
 /* axis ticks are whole millimeters, and get a real minus rather than a hyphen */
@@ -5406,9 +5420,9 @@ const pjd=(l,V)=>l.map(q=>{ const c=pjq(q);
    the same way the labels are -- everything collapsed along the axis not shown */
 function pjSk(){
   const g=$('pjk'), SK=window.__SKULL__;
-  if(!pjSkOn()||!SK||!SK.sil){ g.innerHTML=''; return; }
+  if(!pjsk||!SK||!SK.sil){ g.innerHTML=''; return; }
   const V=VIEWS[pview];
-  g.innerHTML=(SK.sil[V.k]||[]).map(lp=>
+  g.innerHTML=((fvOn()?skSil(V.k):SK.sil[V.k])||[]).map(lp=>
     '<path d="M'+lp.map(p=>pjx(p[0]).toFixed(1)+' '+pjy(V,p[1]).toFixed(1)).join('L')+'Z"/>').join('');
 }
 /* the same landmarks on the projections. Here the AP lines are exact -- they are the
@@ -5418,9 +5432,10 @@ function pjSk(){
    line across the top-down one, which is the only place it can honestly be drawn as one. */
 function pjLM(){
   const g=$('pjlm');
-  if(!pjLmOn()){ g.innerHTML=''; return; }
+  if(!pjlm){ g.innerHTML=''; return; }
   const V=VIEWS[pview], SK=window.__SKULL__, lm=SK&&SK.lm, o=[];
   const y0=PM.t, y1=PM.t+(pjHi(V)-pjLo(V))*K;
+  if(fvOn()){ pjLMf(V,lm,o,y1); g.innerHTML=o.join(''); return; }
   LM.forEach(([nm,off])=>{
     const a=-off, x=pjx(a);
     if(x<PM.l-1||x>PM.l+PWv+1) return;
@@ -5446,16 +5461,93 @@ function pjLM(){
   }
   g.innerHTML=o.join('');
 }
+/* The points a view marks, in atlas millimeters: the vault at each landmark's AP, which
+   only the sagittal view draws, and the two ear canals, which both do. The heights come
+   off the skull fit; without it there are no points, only the rules. */
+function pjLmPts(V){
+  const SK=window.__SKULL__, lm=SK&&SK.lm, o=[];
+  if(!lm) return o;
+  if(V.k==='dv') LM.forEach(([nm,off])=>{ const h=lm.vault[nm.toLowerCase()];
+    if(h!==undefined&&nm!=='Interaural') o.push({ap:-off,ml:0,dv:h}); });
+  const ia=-LMof('Interaural');
+  o.push({ap:ia,ml:-lm.ear.ml,dv:lm.ear.dv},{ap:ia,ml:lm.ear.ml,dv:lm.ear.dv});
+  return o;
+}
+/* a segment in plot units cut to the plot rectangle (Liang-Barsky), or null if none of
+   it is inside */
+function pjClip(a,b,yb){
+  const dx=b[0]-a[0], dy=b[1]-a[1]; let t0=0, t1=1;
+  for(const [p,q] of [[-dx,a[0]-PM.l],[dx,PM.l+PWv-a[0]],[-dy,a[1]-PM.t],[dy,yb-a[1]]]){
+    if(p===0){ if(q<0) return null; continue; }
+    const r=q/p;
+    if(p<0){ if(r>t1) return null; if(r>t0) t0=r; }
+    else   { if(r<t0) return null; if(r<t1) t1=r; }
+  }
+  return [a[0]+t0*dx, a[1]+t0*dy, a[0]+t1*dx, a[1]+t1*dy];
+}
+/* The landmarks in a turned view. A rule is a coronal plane, and a turned plane seen along
+   an axis it is no longer parallel to covers the whole plot, so each is drawn where it
+   cuts the section the view is taken through: the midline in the sagittal view, and in the
+   top-down one the horizontal through the landmark's own point -- on the vault, or for the
+   interaural line the ear-bar axis, so that rule is the axis carried across the plot
+   (mid-brain, as the plate guide is, where the fit gives no height). Both pass through the
+   landmark, and where the turn leaves the plane parallel to the axis dropped -- a pitch
+   alone in the sagittal view, a yaw alone in the top-down one -- the line is the plane's
+   edge exactly. The vault marks and the ear canals are points and turn exactly. In the
+   sagittal view the ear-bar axis, a point end-on at the atlas's angle, opens under a roll
+   or yaw into the short line between the two canals, and its height reference is the
+   ear-bar plane's cut at the midline, tilted as the frame tilts it. Everything is turned
+   by the rotation alone, as the dots are -- the translation is in the axis labels. */
+function pjLMf(V,lm,o,y1){
+  const R=40, pt=p=>{ const c=pjq(p); return [pjx(c.ap), pjy(V,c[V.k])]; };
+  const inside=([x,y])=>x>=PM.l-1&&x<=PM.l+PWv+1&&y>=PM.t-1&&y<=y1+1;
+  const seg=(p,q,cls)=>{ const s=pjClip(pt(p),pt(q),y1); if(!s) return null;
+    o.push(`<line${cls?` class="${cls}"`:''} x1="${s[0].toFixed(1)}" y1="${s[1].toFixed(1)}"`+
+           ` x2="${s[2].toFixed(1)}" y2="${s[3].toFixed(1)}"/>`);
+    return s; };
+  const dot=p=>{ const c=pt(p); if(inside(c))
+    o.push(`<circle cx="${c[0].toFixed(1)}" cy="${c[1].toFixed(1)}" r="4"/>`); };
+  const put=[];                               /* label boxes already placed, [x0,x1,y] */
+  LM.forEach(([nm,off])=>{
+    const a=-off, h=lm?lm.vault[nm.toLowerCase()]:undefined;
+    /* the interaural line's own point is the ear-bar axis, not the vault above it */
+    const d=!lm ? PJMID() : nm==='Interaural' ? lm.ear.dv : h===undefined ? PJMID() : h;
+    const s = V.k==='dv'
+      ? seg({ap:a,ml:0,dv:-R},{ap:a,ml:0,dv:R},'ref')
+      : seg({ap:a,ml:-R,dv:d},{ap:a,ml:R,dv:d},'ref');
+    if(!s) return;
+    /* named at the rule's lower end, as the atlas's view names it at the foot of the plot.
+       A tilted rule can end near the plot's right edge, where the name is set to its left;
+       and tilted rules end closer together than upright ones, so a name that would overrun
+       one already placed goes up a line. Widths are estimated at 7 units a character. */
+    const nmL=nm.toLowerCase(), w=nmL.length*7, [x,yb]=s[1]>s[3]?[s[0],s[1]]:[s[2],s[3]];
+    const end=x+4+w>PM.l+PWv, x0=end?x-4-w:x+4, x1=x0+w;
+    let y=yb-6;
+    while(put.some(b=>b[2]===y&&x0<b[1]+6&&x1>b[0]-6)) y-=15;
+    put.push([x0,x1,y]);
+    o.push(`<text x="${(end?x-4:x+4).toFixed(1)}" y="${y.toFixed(1)}"`+
+           `${end?' text-anchor="end"':''}>${esc(nmL)}</text>`);
+    if(V.k==='dv'&&lm&&h!==undefined&&nm!=='Interaural') dot({ap:a,ml:0,dv:h});
+  });
+  if(!lm) return;
+  const ia=-LMof('Interaural'), e=lm.ear;
+  const L={ap:ia,ml:-e.ml,dv:e.dv}, Rt={ap:ia,ml:e.ml,dv:e.dv};
+  if(V.k==='dv') seg({ap:ia-R,ml:0,dv:e.dv},{ap:ia+R,ml:0,dv:e.dv},'ref');
+  const pl=pt(L), pr=pt(Rt);
+  if(V.k==='ml'||Math.hypot(pl[0]-pr[0],pl[1]-pr[1])>1) seg(L,Rt,'');
+  dot(L); dot(Rt);
+}
 /* everything a change of view or of the skull toggle has to rebuild, in one place:
    the dot cloud caches per-view path strings, so those survive; the axes, the
-   silhouette and the plate guide are position-dependent and do not */
-function pjRefresh(){ pjAxes(); pjSk(); pjLM(); pj(); tgPJ(); anPJ(); }
+   silhouette and the plate guide are position-dependent and do not. The bounds go
+   first: a turned view sizes itself to the landmark marks when they are on. */
+function pjRefresh(){ fvBounds(); pjAxes(); pjSk(); pjLM(); pj(); tgPJ(); anPJ(); }
 
 function pj(){
   const V=VIEWS[pview];
   /* the cache key carries the axis state: extended and normal axes place every dot
      differently, so each keeps its own copy rather than fighting over one */
-  const ck=V.k+(pjSkOn()?'+':'')+(pjLmOn()?'L':'')+(fvOn()?'F':'');
+  const ck=V.k+(pjsk?'+':'')+(pjlm?'L':'')+(fvOn()?'F':'');
   $('pjb').setAttribute('d', bgd[ck]||(bgd[ck]=pjd(PTS,V)));
   /* the current filter as a middle layer: pick the auditory chip and the whole
      ascending pathway lights up at once, which is the point of having this view */
@@ -5493,8 +5585,10 @@ function pjGuide(){
 const pjTurn = () => !fvOn() ? '' :
   ` Turned into your frame (${frameTxt()}), so the axes are the ones your manipulator`+
   ` drives \u2014 the dots are a rigid rotation of the published coordinates, not a`+
-  ` resectioning. The skull outline and the landmark rules are flattened at the atlas's`+
-  ` own angle and cannot follow, so they are unavailable while this is on.`;
+  ` resectioning.`+(pjsk?` The skull outline is the fitted skull flattened again at your`+
+  ` frame's angle.`:'')+(pjlm?` Each landmark rule is where its coronal plane, turned, cuts`+
+  ` ${pview==='dv'?'the midline':'the horizontal through the landmark (on the vault; for the'+
+  ' interaural line, the ear-bar axis)'}.`:'');
 function pjNote(q){
   const V=VIEWS[pview], N=$('pjn');
   const dot='A dot is where an abbreviation is <em>printed</em> \u2014 close to its structure, not its center.';
@@ -5582,13 +5676,10 @@ let fvLast=false;
 function fvApply(force){
   $('v3f').checked=$('ckpf').checked=fview;
   $('v3fw').hidden=$('pjfw').hidden=!turned();
-  /* neither overlay can be re-flattened at the frame's angle, so while the projection is
-     turned they go dead rather than staying tickable and quietly drawing nothing */
-  $('ckpk').disabled=$('ckplm').disabled=fvOn();
   /* the dot paths are cached per axis state, and turning the view is an axis state:
      rebuild them when the orientation has changed and leave them alone when it has not,
      so typing an angle into the frame dialog does not re-lay 6,220 points each keystroke */
-  if(force||fvOn()||fvLast){ bgd={}; fld={}; fvBounds(); pjRefresh(); v3frame(); }
+  if(force||fvOn()||fvLast){ bgd={}; fld={}; pjRefresh(); v3frame(); }
   else { pjAxes(); pjGuide(); }
   fvLast=fvOn();
   v3note();
@@ -6087,6 +6178,84 @@ function skullMesh(){
   const pos=new Float32Array(SK.nv*3);
   for(let i=0;i<SK.nv*3;i++) pos[i]=SK.o[i%3]+q[i]*SK.s;
   return SKM={pos,idx:F,nf:SK.nf};
+}
+/* The skull's outline in a turned projection. The stored silhouettes were flattened at the
+   atlas's angle, and the outline of a turned skull is not the turned outline of a skull,
+   so the mesh is flattened again here: every vertex turned by the frame's rotation (the
+   rotation only, as the label dots are), every triangle filled into a 0.1 mm grid on the
+   two plotted axes, and the edge of what is filled traced as closed loops (marching
+   squares) and thinned to within 0.05 mm. A cell counts as covered within half a cell of a
+   triangle, so no sliver of the 0.42 mm decimation leaves a pinhole, and holes under 5 mm²
+   are dropped, as the stored silhouettes drop them. Checked against those at no rotation:
+   every stored point lies within 0.27 mm of the traced outline (median 0.14); the traced
+   one also follows a notch in the skull base (AP -4 to -6, DV -13 to -16) that the stored
+   one bridges. Cached per view and rotation, so a change of anything else does not redo it. */
+let SKF={};
+function skSil(k){
+  const M=skullMesh(); if(!M) return [];
+  const key=k+FRM.join(',');
+  if(SKF[key]) return SKF[key];
+  if(Object.keys(SKF).length>=16) SKF={};     /* typing an angle is one entry a keystroke */
+  const h=0.1, e=0.5, {pos,idx,nf}=M, n=pos.length/3, X=new Float32Array(n), Y=new Float32Array(n);
+  let x0=Infinity, x1=-Infinity, y0=Infinity, y1=-Infinity;
+  for(let i=0;i<n;i++){ const c=fRot(pos[i*3],pos[i*3+1],pos[i*3+2]), x=X[i]=c.ap/h, y=Y[i]=c[k]/h;
+    if(x<x0) x0=x; if(x>x1) x1=x; if(y<y0) y0=y; if(y>y1) y1=y; }
+  /* grid units are cells, with an empty border of two so every loop closes */
+  const ox=Math.floor(x0)-2, oy=Math.floor(y0)-2;
+  const W=Math.ceil(x1)-ox+3, H=Math.ceil(y1)-oy+3, g=new Uint8Array(W*H);
+  for(let f=0;f<nf;f++){
+    const a=idx[f*3], b=idx[f*3+1], c=idx[f*3+2];
+    const ax=X[a]-ox, ay=Y[a]-oy; let bx=X[b]-ox, by=Y[b]-oy, cx=X[c]-ox, cy=Y[c]-oy;
+    const ar=(bx-ax)*(cy-ay)-(by-ay)*(cx-ax);
+    if(ar===0) continue;                          /* edge-on: its neighbours cover it */
+    if(ar<0){ let t=bx; bx=cx; cx=t; t=by; by=cy; cy=t; }
+    let ux=bx-ax, uy=by-ay, l=Math.hypot(ux,uy); const p0=ux/l, q0=uy/l;
+    ux=cx-bx; uy=cy-by; l=Math.hypot(ux,uy); const p1=ux/l, q1=uy/l;
+    ux=ax-cx; uy=ay-cy; l=Math.hypot(ux,uy); const p2=ux/l, q2=uy/l;
+    const i0=Math.max(0,Math.ceil(Math.min(ax,bx,cx)-e)), i1=Math.min(W-1,Math.floor(Math.max(ax,bx,cx)+e));
+    const j0=Math.max(0,Math.ceil(Math.min(ay,by,cy)-e)), j1=Math.min(H-1,Math.floor(Math.max(ay,by,cy)+e));
+    for(let j=j0;j<=j1;j++) for(let i=i0;i<=i1;i++){
+      if(p0*(j-ay)-q0*(i-ax)<-e||p1*(j-by)-q1*(i-bx)<-e||p2*(j-cy)-q2*(i-cx)<-e) continue;
+      g[j*W+i]=1;
+    }
+  }
+  /* marching squares on the cell centers. Edge crossings are numbered by cell and side
+     (even: the horizontal edge above a center, odd: the vertical one to its right), and
+     each crossing is met by exactly two segments, so the loops chain without a search.
+     The two saddles are read as joined, which keeps a one-cell neck of bone in one piece. */
+  const T=[[],[3,0],[0,1],[3,1],[1,2],[3,2,0,1],[0,2],[3,2],[3,2],[0,2],[3,0,1,2],[1,2],[3,1],[0,1],[3,0],[]];
+  const NE=W*H*2, adj=new Int32Array(NE*2).fill(-1);
+  const eid=(i,j,s)=> s===0 ? (j*W+i)*2 : s===2 ? ((j+1)*W+i)*2 : s===3 ? (j*W+i)*2+1 : (j*W+i+1)*2+1;
+  const link=(p,q)=>{ adj[p*2+(adj[p*2]<0?0:1)]=q; adj[q*2+(adj[q*2]<0?0:1)]=p; };
+  for(let j=0;j<H-1;j++) for(let i=0;i<W-1;i++){
+    const t=T[g[j*W+i]|g[j*W+i+1]<<1|g[(j+1)*W+i+1]<<2|g[(j+1)*W+i]<<3];
+    for(let s=0;s<t.length;s+=2) link(eid(i,j,t[s]),eid(i,j,t[s+1]));
+  }
+  const at=p=>{ const c=p>>1, i=c%W, j=(c-i)/W;
+    return p&1 ? [(ox+i)*h,(oy+j+.5)*h] : [(ox+i+.5)*h,(oy+j)*h]; };
+  const seen=new Uint8Array(NE), out=[];
+  for(let s=0;s<NE;s++){
+    if(adj[s*2]<0||seen[s]) continue;
+    const L=[]; let p=s, prev=-1;
+    while(!seen[p]){ seen[p]=1; L.push(at(p)); const nx=adj[p*2]===prev?adj[p*2+1]:adj[p*2]; prev=p; p=nx; }
+    let A=0; for(let i=0;i<L.length;i++){ const u=L[i], v=L[(i+1)%L.length]; A+=u[0]*v[1]-v[0]*u[1]; }
+    if(Math.abs(A)/2>=5) out.push(skThin(L,0.05));
+  }
+  return SKF[key]=out;
+}
+/* Douglas-Peucker on a closed loop, split at the point farthest from its first */
+function skThin(L,tol){
+  const n=L.length, keep=new Uint8Array(n); let far=0, fd=-1;
+  for(let i=1;i<n;i++){ const d=(L[i][0]-L[0][0])**2+(L[i][1]-L[0][1])**2; if(d>fd){ fd=d; far=i; } }
+  keep[0]=keep[far]=1;
+  const st=[[0,far],[far,n]];
+  while(st.length){
+    const [a,b]=st.pop(), P=L[a], Q=L[b%n], dx=Q[0]-P[0], dy=Q[1]-P[1], l=Math.hypot(dx,dy)||1;
+    let m=-1, md=tol;
+    for(let i=a+1;i<b;i++){ const d=Math.abs(dy*(L[i][0]-P[0])-dx*(L[i][1]-P[1]))/l; if(d>md){ md=d; m=i; } }
+    if(m>=0){ keep[m]=1; st.push([a,m],[m,b]); }
+  }
+  return L.filter((_,i)=>keep[i]);
 }
 /* the skull's cut through one plate's plane: slice every triangle against ap=bregma,
    then chain the crossing segments into polylines by their shared quantized endpoints.
