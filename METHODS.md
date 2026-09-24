@@ -1081,12 +1081,30 @@ front of the camera, taken about the world's own center so the brain turns in pl
 atlas-to-world map has determinant −1, so the result is `S R S⁻¹`, still a rotation, and
 its inverse is still its transpose for the ray-marcher, the shading and the picker.
 
-Two things cannot come along: the skull silhouette on the projection and the landmark rules
-beside it, both flattened along the axis the view drops at the atlas's angle. The outline of
-a turned skull is not the turned outline of a skull, so their checkboxes go dead while a
-turned view is on. The 3-D shell is a real surface and turns with everything else. A turned
-view is still not a resectioning: the same rigid rotation, applied to the same 62 coronal
-sections, stood up at an angle.
+The skull silhouette and the landmark rules on the projection come along, but neither can
+simply be turned, because both are flattened along the axis the view drops. The outline of a
+turned skull is not the turned outline of a skull, so the stored silhouettes, flattened at
+the atlas's angle, are set aside and the fitted mesh is flattened again at the frame's: each
+vertex turned by the rotation (the rotation only, as the dots are), each triangle filled
+into a 0.1 mm grid on the two plotted axes with half a cell of tolerance so the decimation
+leaves no pinholes, the edge of the fill traced as closed loops by marching squares, holes
+under 5 mm² dropped as the stored silhouettes drop them, and each loop thinned to within
+0.05 mm. At no rotation every stored silhouette point lies within 0.27 mm of the traced
+outline (median 0.14 mm); the traced one also follows a notch in the skull base (AP −4 to
+−6, DV −13 to −16) that the stored one bridges. A landmark rule is a coronal plane, and a
+tilted plane seen along an axis it is no longer parallel to covers the whole plot, so it is
+drawn where it cuts the section the view is taken through: the midline in the sagittal
+view, and in the top-down one the horizontal through the landmark's own point: on the vault,
+or for the interaural line the ear-bar axis, so that rule is the axis carried across the plot
+(mid-brain where the fit gives no height). Both lines pass through the landmark itself, and
+where the turn leaves the plane parallel to the dropped axis (a pitch alone in the sagittal
+view, a yaw alone in the top-down one) the line is the plane's edge exactly. The vault marks and the ear canals are
+points and turn exactly; the interaural line, a point end-on in the sagittal view, opens into
+the short segment between the canals under a roll or yaw, and its height reference becomes
+the ear-bar plane's cut at the midline. With **Landmarks** on, the turned view's axes grow in
+whole millimeters to hold every mark it draws. The 3-D shell is a real surface and turns
+with everything else. A turned view is still not a resectioning: the same rigid rotation,
+applied to the same 62 coronal sections, stood up at an angle.
 
 Naming an origin makes the pivot irrelevant: `R(P−piv)+piv` minus `R(O−piv)+piv` is
 `R(P−O)` for every `piv`, so re-zeroing on a point *is* rotating about it, and the dialog
@@ -1360,9 +1378,8 @@ the head and out the other side, with a ring where it passes each canal and carr
 the widest half-width of the fitted skull (±11.9 mm plus 1.6 mm of margin) so it reads as a
 bar going into a head rather than a chord within one. None of it is depth-tested, **Half**
 cuts the axis at the midline, and the names ride over the canvas as text so they stay
-legible. It belongs to a pane (`&lm=1`, `&lm2=1`) and, unlike the projection's, is not stood
-down by a working frame: here the AP rules are the planes themselves, turned by the same
-model matrix as the brain. Those same heights are what the frame dialog's **Height** buttons
+legible. It belongs to a pane (`&lm=1`, `&lm2=1`) and turns with a working frame: here the AP
+rules are the planes themselves, turned by the same model matrix as the brain. Those same heights are what the frame dialog's **Height** buttons
 offer, so an interaural origin inherits this registration's error rather than being silently
 9 mm out.
 

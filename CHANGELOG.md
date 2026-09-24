@@ -6,6 +6,15 @@ carries a `version` block naming the release its derived fields were built for.
 ## [Unreleased]
 
 ### Added
+- **The skull outline and the landmarks stay on in a turned projection.** With *In frame*
+  ticked, **Skull** and **Landmarks** in the projection controls used to go dead. Now the
+  skull outline is the fitted skull mesh flattened again at the frame's angle -- the stored
+  silhouettes are the atlas's angle only -- and each landmark rule is drawn where its
+  turned coronal plane cuts the midline (sagittal) or the horizontal through the landmark
+  (top-down: its point on the vault, or for the interaural line the ear-bar axis); the vault marks and ear canals are turned as points, as the
+  label dots are. At no rotation the traced outline is within 0.27 mm of the stored one
+  everywhere it is stored (median 0.14 mm). With **Landmarks** on, a turned view widens its
+  axes in whole millimeters to keep every mark in the plot.
 - **Several regions can be selected at once.** Ctrl-click (⌘-click on a Mac) a structure on
   the plate, or a row in the results, to add it to the selection or take it out. Every
   selected region is outlined on the plate, on the compare pane and in the PNG and SVG
