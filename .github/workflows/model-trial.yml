@@ -9,7 +9,7 @@
 # original did and not against a main that already carries the fix.
 #
 # Nothing leaves the runner: no credential to push with, no pull request. The session is
-# run with the CLI directly rather than through claude-code-action, since this is started
+# run with the CLI directly (2.1.281: the pinned 2.1.263 rejects claude-opus-5-5) rather than through claude-code-action, since this is started
 # by a push and the action reads only the events it knows. What each run leaves -- the
 # commits as a bundle, the write-up, the QC pictures, the transcript, the checks -- is
 # uploaded as an artifact.
@@ -89,7 +89,7 @@ jobs:
       - name: Install Claude Code
         id: cli
         env:
-          VERSION: '2.1.263'
+          VERSION: '2.1.281'      # 2.1.263 rejects claude-opus-5-5 (needs 2.1.280+); both jobs on one CLI
         run: |
           mkdir -p "$HOME/.local/bin"
           curl -fsSL https://claude.ai/install.sh | bash -s -- "$VERSION"
