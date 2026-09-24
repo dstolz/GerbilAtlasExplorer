@@ -151,7 +151,14 @@ def test_the_tips_land_where_the_atlas_says_they_do(rows, db):
     printed word. Both rows are superseded, so the list below gains (1, 'Mi') and a second
     (1, 'aci').
 
-    190 in their own rather than 195 and 40 in a neighbor rather than 35, with the bulb
+    193 in their own rather than 195 and 37 in a neighbor rather than 35, with the right
+    bulb of plate 4 given back its granule core (20260924T134430Z). The march read aci's
+    line twice there: aci's tip was carried past the loop at the head of the tract into the
+    granule core, and GrO's was recorded out on the same line in the external plexiform
+    ring. Seeded on its printed word and on the loop, GrO's tip now sits in EPl and aci's
+    in GrO. Both rows are superseded, so the list below gains (4, 'GrO') and (4, 'aci').
+
+    188 in their own rather than 193 and 42 in a neighbor rather than 37, with the bulb
     laminae of plates 2 and 3 given to the names whose lines end in them
     (20260923T145926Z). Both IPl lines on each of the two plates and the right Mi line on
     plate 3 now sit in Mi or in the granule core rather than in IPl: each used to land in
@@ -161,13 +168,14 @@ def test_the_tips_land_where_the_atlas_says_they_do(rows, db):
     (2, 'IPl') twice, (3, 'IPl') twice and (3, 'Mi').
     """
     where = {k: [r for r in rows if L.lands(r) == k] for k in ('own', 'other', 'none')}
-    assert (len(where['own']), len(where['other']), len(where['none'])) == (190, 40, 10)
+    assert (len(where['own']), len(where['other']), len(where['none'])) == (188, 42, 10)
     for r in where['other']:
         assert r['feature'] or r['superseded_by'], (r['plate'], r['abbr'], r['index'])
     assert sorted((r['plate'], r['abbr']) for r in where['other'] if r['superseded_by']) == \
         [(1, 'IPl'), (1, 'IPl'), (1, 'Mi'), (1, 'aci'), (1, 'aci'),
          (2, 'IPl'), (2, 'IPl'), (2, 'aci'),
          (3, 'GrA'), (3, 'IPl'), (3, 'IPl'), (3, 'Mi'), (3, 'aci'), (3, 'aci'),
+         (4, 'GrO'), (4, 'aci'),
          (5, 'EPlA'), (6, 'EPlA'),
          (7, 'E'), (7, 'E'), (7, 'OV'), (7, 'OV'), (8, 'EPlA'), (9, 'E'), (9, 'OV'),
          (14, 'E'), (14, 'E'), (14, 'OV'), (14, 'OV'),
@@ -200,7 +208,7 @@ def test_filters(db, rows):
     a.shared = True
     assert len(L.select(rows, a, db)) == 42            # 21 lines, two names each
     a.shared, a.odd = False, True
-    assert len(L.select(rows, a, db)) == 50            # 40 in a neighbor, 10 in none
+    assert len(L.select(rows, a, db)) == 52            # 42 in a neighbor, 10 in none
     a.odd, a.abbr = False, 'VMHSh'
     assert {r['abbr'] for r in L.select(rows, a, db)} == {'VMHSh'}
     a.abbr = 'auditory cortex'                         # an alias resolves to its members
