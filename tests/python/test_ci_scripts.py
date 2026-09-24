@@ -140,6 +140,70 @@ def test_untouched_refuses_an_edited_correction(repo):
     assert code == 1 and 'x.json or its snapshot' in out
 
 
+SUITE = '''def test_tips():
+    """195 in their own."""
+    assert (195, 35, 10) == (195, 35, 10)
+
+
+def test_filters():
+    assert 45 == 45
+'''
+
+
+@pytest.fixture
+def suite(repo):
+    """The branch as `corrections.py rebase` leaves it: main, with a test file, merged in."""
+    git(repo, 'checkout', '-q', 'main')
+    write(repo, 'tests/python/test_x.py', SUITE)
+    git(repo, 'add', '-A')
+    git(repo, 'commit', '-qm', 'main has a suite')
+    git(repo, 'checkout', '-q', 'correction/x')
+    git(repo, 'merge', '-q', '--no-edit', 'main')
+    return repo
+
+
+def test_tests_passes_a_moved_literal(suite):
+    write(suite, 'tests/python/test_x.py', SUITE.replace('195', '193').replace('35', '37')
+          .replace('45 == 45', '47 == 47'))
+    git(suite, 'commit', '-qam', 'two literals move with the rebuild')
+    code, out = sh(suite, 'tests')
+    assert code == 0 and '2 tests and 2 assertions' in out
+
+
+def test_tests_refuses_a_test_taken_out(suite):
+    write(suite, 'tests/python/test_x.py', SUITE.split('\n\n\ndef test_filters')[0] + '\n')
+    git(suite, 'commit', '-qam', 'a failing test goes')
+    code, out = sh(suite, 'tests')
+    assert code == 1 and '1 test(s) out' in out
+
+
+def test_tests_refuses_an_assertion_taken_out(suite):
+    write(suite, 'tests/python/test_x.py', SUITE.replace('    assert 45 == 45', '    pass'))
+    git(suite, 'commit', '-qam', 'a failing assertion goes')
+    code, out = sh(suite, 'tests')
+    assert code == 1 and '1 assertion(s) out' in out
+
+
+def test_tests_refuses_a_skip(suite):
+    write(suite, 'tests/python/test_x.py',
+          SUITE.replace('def test_filters', '@pytest.mark.skip\ndef test_filters'))
+    git(suite, 'commit', '-qam', 'a failing test is skipped')
+    code, out = sh(suite, 'tests')
+    assert code == 1 and 'skips a test' in out and 'mark.skip' in out
+
+
+def test_tests_does_not_read_mains_changes_as_the_branchs(suite):
+    # main may retire a test while the correction waits; the rebase brings that in, and it
+    # is main's change, not the session's
+    git(suite, 'checkout', '-q', 'main')
+    write(suite, 'tests/python/test_x.py', SUITE.split('\n\n\ndef test_filters')[0] + '\n')
+    git(suite, 'commit', '-qam', 'main retires a test')
+    git(suite, 'checkout', '-q', 'correction/x')
+    git(suite, 'merge', '-q', '--no-edit', 'main')
+    code, out = sh(suite, 'tests')
+    assert code == 0 and '1 tests and 1 assertions' in out
+
+
 def stub_cli(cwd, name, out='', err='', code=0):
     """A `claude` that prints what the real one would and exits as it would."""
     p = os.path.join(cwd, name)

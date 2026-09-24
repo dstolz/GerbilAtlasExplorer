@@ -9,7 +9,8 @@
 #   correction.sh fix                    the files outside corrections/ this branch changes against $BASE
 #   correction.sh verdict                what the session left: a fix, a reasoned no-fix, or nothing
 #   correction.sh untouched SHA FILE...  each correction FILE (and its snapshot) is the same at SHA and HEAD
-#   correction.sh credential BIN         ask the model one word through BIN; exit 1 if it cannot be reached
+#   correction.sh tests                  the branch takes no test and no assertion out of tests/, and skips none
+#   correction.sh credential BIN        ask the model one word through BIN; exit 1 if it cannot be reached
 #   correction.sh open-pr BRANCH         open the pull request from build/pr.md (or --fill-first), print its number
 #   correction.sh wait-ci NUMBER         wait on the checks of pull request NUMBER; exit 1 if any fails
 #
@@ -24,7 +25,7 @@ out() {                                  # out key value -- to the log, and to t
   if [ -n "${GITHUB_OUTPUT:-}" ]; then printf '%s=%s\n' "$1" "$2" >> "$GITHUB_OUTPUT"; fi
 }
 
-cmd=${1:?usage: correction.sh pushed|list|fix|verdict|untouched|open-pr|wait-ci ...}
+cmd=${1:?usage: correction.sh pushed|list|fix|verdict|untouched|tests|open-pr|wait-ci ...}
 shift
 
 case "$cmd" in
@@ -98,6 +99,33 @@ case "$cmd" in
       fi
     done
     echo "the correction files are as they were pushed"
+    ;;
+  tests)
+    # What a correction may change under tests/ is a literal its rebuild moved -- a count, a
+    # list of superseded rows, the note that says what moved them. The three ways a suite
+    # goes green without the data agreeing with it are refused: a test taken out, an
+    # assertion taken out, a skip put in. Counted from where the branch left $BASE, so what
+    # main changed in the meantime is not read as the branch's.
+    base=$(git merge-base "$BASE" HEAD)
+    count() { { git grep -h -E "$1" "$2" -- tests/ || true; } | wc -l; }
+    defs='^[[:space:]]*(def test_|test\()'
+    asserts='^[[:space:]]*(assert[[:space:](]|(await )?expect(\.[a-z]+)?\()'
+    skips='pytest\.(skip|xfail|importorskip)|mark\.(skip|skipif|xfail)|(test|describe)\.(skip|fixme|only)'
+    t0=$(count "$defs" "$base"); t1=$(count "$defs" HEAD)
+    a0=$(count "$asserts" "$base"); a1=$(count "$asserts" HEAD)
+    added=$(git diff "$base" HEAD -- tests/ | grep -v '^+++' | grep '^+' | grep -E "$skips" || true)
+    bad=0
+    if [ "$t1" -lt "$t0" ]; then
+      echo "::error::the branch takes $((t0 - t1)) test(s) out of tests/ ($t0 -> $t1)"; bad=1
+    fi
+    if [ "$a1" -lt "$a0" ]; then
+      echo "::error::the branch takes $((a0 - a1)) assertion(s) out of tests/ ($a0 -> $a1)"; bad=1
+    fi
+    if [ -n "$added" ]; then
+      printf '::error::the branch skips a test:\n%s\n' "$added"; bad=1
+    fi
+    [ "$bad" -eq 0 ] || exit 1
+    echo "tests/: $t1 tests and $a1 assertions, none taken out and none skipped"
     ;;
   credential)
     # One word through the binary the session will use, with the token the workflow holds.
