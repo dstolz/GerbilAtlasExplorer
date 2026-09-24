@@ -586,6 +586,77 @@ carries a `version` block naming the release its derived fields were built for.
   are what carry the other two and a plain mesh link carries none.
 
 ### Fixed
+- **The inner plexiform layer of plate 1 takes the lamina its own line ends in, and the
+  olfactory ventricle the chamber above the one it held.** Three corrections sent together --
+  `20260923T145740Z-p01-IPl`, `-p01-E` and `-p01-aci` -- carrying one sentence between them,
+  "Fixes to aci and other leaders and region coverage", and six marks: five carrying a
+  `label_index`, and so read as the end of a printed leader line, and one a seed of its own.
+  Three of the six move a seed; three land in the face their name already holds and confirm it. Nothing is added to `svg/`: the only input
+  this branch changes is `seed_overrides` on plate 1.
+
+  **`IPl` on the right, which is a face the drawing seals and nobody was seeded in.** The
+  atlas draws two laminae between the granule layer and the external plexiform band and
+  letters them `IPl` and `Mi`. On the right the tracing seals them apart -- the inner one
+  against the core as a face of 239 px, the outer one against `EPl` as a face of 1,061 px --
+  but both names were seeded in the outer, `Mi` by its own leader tip and `IPl` by the row
+  `20260917T210251Z-p01-EPl` wrote at its ventral reach, reading the two as "run together as
+  one strip" there. The watershed then split that one face down a ridge the drawing does not
+  draw, and the inner lamina was held by nobody. `IPl`'s printed line ends at the wall between
+  the two, and the reader's mark is just inside the inner one; a `seed_overrides` row for box 0
+  puts it there. **`IPl` on the right goes 0.0445 → 0.0135 mm²** -- the inner lamina alone
+  instead of a watershed share of `Mi`'s -- **and `Mi` goes 0.2668 → 0.3123 mm²**, the whole
+  of the face the drawing gives it. Both faces are now named by one abbreviation apiece, which
+  is `faces_named_by_one_abbreviation` 3,533 → 3,536 for the atlas. On the left, where `IPl`
+  already holds the 799 px inner band, the mark is in that same face and only the point inside
+  it moves: 0.0456 → 0.0431 mm², the width of a wall.
+
+  **`E` on the right, which is one chamber further up the slit.** The atlas prints `E/OV` clear
+  of the section and draws one line from it into the olfactory ventricle, whose right-hand slit
+  the tracing leaves as a chain of chambers. `20260910T134521Z-p01-E` read that line as ending
+  in the 259 px chamber at the ventral end; this reader's mark puts it in the 322 px chamber
+  above, which the drawing seals and no name held. The line's own end lies on the wall between
+  the two, so the row for `E`'s box 0 moves and `OV`'s row -- the other half of the same printed
+  label, which this correction does not mark -- stays in the lower chamber, and the pair holds
+  both. **`E` on the right goes 0.0156 → 0.0350 mm²** and on the plate 0.0683 → 0.0877, two
+  polygons still and traced 1.00 still; over the series 1.916 → 1.935 mm² on the same 23 plates.
+
+  **`aci`, where two of three marks are confirmations and the third is declined.** On the right
+  both marks are in the 300 px dorsal chamber the box is seeded in already; the row moves three
+  page px inside its own face and a second mark is kept beside it as a seed of its own, which is
+  `seeds_moved_by_hand` 101 → 102 and `aci` 0.0347 → 0.0343 mm², a wall's width off the right
+  hemisphere. **The left-hand mark is not applied.** It is the end of the printed line -- the
+  last black pixel of the leader is at plate (476.4, 396.3) and the mark lies two px on along
+  the line's own bearing, where the row it would replace, `20260912T141111Z-p01-aci`'s, sits
+  eight px off that bearing -- but the face it falls in is the 92 px band the two boundaries
+  that same 2026-09-12 correction drew cut out between the tract's wall and the granule core,
+  and `MIN_FACE_PX` is 100. `locate` therefore finds no face for it and snaps within `SNAP_PX`
+  = 60 to the largest one around, the 15,950 px granule core: written, the row takes `aci` off
+  the tract altogether and leaves it a blob inside `GrO` -- `aci` 0.0343 → 0.0307 mm², `GrO`
+  1.5910 → 1.5812, one seed snapped where none is now, the plate's covered share 0.9840 →
+  0.9821. No input change reaches it either: sealing the mouth the slit's outline is traced
+  with, which is what welds that band's walls in the first place, leaves the band 91 px and the
+  one opposite it 77. The seed stays in the 272 px dorsal lens, which is the mirror of the
+  chamber this same correction's right-hand marks confirm for `aci`, and which its own extent
+  covers 268 of 272 px of. The extent's one run off the ink -- 7 px at ML −0.74, DV −5.48 -- is
+  not applied either: it is the reader's closure across the open channel at the foot of what
+  they drew round, and inking it cuts the 960 px left ventricle into 210 and 737 and hands the
+  210 to nobody, `E` 0.0877 → 0.0747.
+
+  `GrO` −0.0021 mm² and `EPl` −0.0004 are the width of a wall; no entry on any other plate
+  moves. Six meshes move with the interpolation -- `Mi` 0.4171 → 0.4303 mm³, `IPl` 0.6199 →
+  0.6115, `E` 0.7546 → 0.7609, `EPl` 6.9340 → 6.9368, `GrO` 8.6476 → 8.6459, `aci` 0.7261 →
+  0.7255 -- each on the same number of components. Over the atlas, points 155,932 → 155,942,
+  `section_covered_mean` 0.9725 → 0.9726, and `boundary_edges_shared_exactly` stays 1.0.
+  `METHODS.md`'s marked numbers are refreshed with them, two of the volume checks among them
+  -- `labels_in_their_own_region` 0.9600 → 0.9599, one label of 3,216, and
+  `coarsening_median_rel_error` 0.0411 → 0.0413. No test literal moves.
+
+  **One tool note.** `corrections.py inspect` says of a seed in an unnamed face "the box
+  withdraws and this face becomes `<abbr>`" without checking the face against `MIN_FACE_PX`
+  first, so on the left-hand `aci` mark it promises a face of 92 px that no seed can hold. A
+  session that took it at its word would have shipped `aci` inside the granule layer. The fix
+  belongs to `corrections.py` and is not made here.
+
 - **A structure too flat to hull is given the box its voxels fill, not `"mesh": null`.**
   `build_volumes.py` grades a structure the series barely samples `slab` and hands each of its
   connected components to `volume.hull()`, which claims the ground the component stands on
