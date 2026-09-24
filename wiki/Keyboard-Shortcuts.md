@@ -19,6 +19,7 @@
 | **Hover** the plate | Read bregma / ML / DV under the pointer (with **Coords** on) |
 | **Hover** a printed abbreviation | Read its full name |
 | **Click** a printed abbreviation | Select that structure |
+| **Ctrl-click** a structure, or a row in the results (**⌘-click** on a Mac) | Add it to the selection, or take it out. Every selected region is outlined on the plate; the card stays on the first. **Click** without Ctrl starts over. |
 | **Double-click** the plate | Zoom in at that point |
 | **Drag** the plate | Pan |
 | **Click** twice with **Measure** on | Distance and approach angle between the points |

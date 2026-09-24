@@ -6,6 +6,13 @@ carries a `version` block naming the release its derived fields were built for.
 ## [Unreleased]
 
 ### Added
+- **Several regions can be selected at once.** Ctrl-click (⌘-click on a Mac) a structure on
+  the plate, or a row in the results, to add it to the selection or take it out. Every
+  selected region is outlined on the plate, on the compare pane and in the PNG and SVG
+  exports, and the results list tints the rows; the card stays on the first one picked, and
+  taking that one out hands the card to the one added last. A plain click starts over. The
+  set rides in the link as `&ms=`, so a link opens with the same regions outlined. The
+  projections and the 3-D view still pick out the first one only.
 - **The fixer says what each mark means, reshapes what is drawn in place, and moves where a
   printed label seeds.** Five tools in a row of words -- *Pick*, *Seed +*, *Seed −*,
   *Boundary*, *Extent* -- left a first-time reader to guess the difference between a seed
