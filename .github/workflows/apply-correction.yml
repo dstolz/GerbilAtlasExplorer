@@ -240,6 +240,17 @@ jobs:
       # (run #51), as the CLI above is pinned to a version that has: `@v1` moves, and it
       # moved between the last run that finished and the two that died in under a second.
       # Move it by hand to a revision that has carried a run, never to a floating tag.
+      #
+      # Every command the session runs is held in the foreground until it ends. A Bash call
+      # that outlives its timeout -- two minutes unless the model sets one, ten at most --
+      # is moved to the background rather than killed, and under `claude -p` a background
+      # shell is killed a few seconds after the session's final message. The rebuild takes
+      # about ten minutes. Run #69 is what that costs: its last message was "Rebuild is
+      # running (plate 28 of 62 in the extents step). While it works, here's what the
+      # diagnosis found", the job's cleanup then terminated two orphaned python3
+      # processes, and the branch was left carrying nothing but its correction. With
+      # background tasks off, nothing can be put there, and the timeouts are set past any
+      # rebuild so that a long command runs to its end rather than being cut off.
       - name: Apply them
         id: claude
         # so the step below can say what the session said; it fails the job itself
@@ -248,6 +259,9 @@ jobs:
         uses: anthropics/claude-code-action@3b8197d3d486006dd4af54613517f21ac6ac625e # v1
         env:
           GH_TOKEN: ${{ github.token }}
+          CLAUDE_CODE_DISABLE_BACKGROUND_TASKS: '1'
+          BASH_DEFAULT_TIMEOUT_MS: '2700000'      # 45 minutes
+          BASH_MAX_TIMEOUT_MS: '2700000'
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           path_to_claude_code_executable: ${{ steps.cli.outputs.path }}
@@ -289,8 +303,16 @@ jobs:
             without it, a session that left no fix is read as one that stopped for no reason,
             and the run is red. Say it in your last message too.
 
+            Run every command in the foreground and wait for it, the rebuild included. This
+            session ends at its first final message, and anything still running then is
+            killed with it: never end a turn to wait on a command.
+
             A correction run changes pipeline inputs, the docs and qc/; it never edits
-            tools/, src/, tests/ or the workflows. If a tool is wrong, say so in the write-up.
+            tools/, src/ or the workflows. If a tool is wrong, say so in the write-up. In
+            tests/ it changes one thing: a literal the rebuild moved, with the note that says
+            what moved it, in a commit of its own after the fix -- never a test's logic, never
+            a test or an assertion taken out, never a skip. CI runs the tests on the pull
+            request, and a literal left stale leaves it red.
 
             ${{ steps.inspect.outputs.text }}
           # The model is named rather than left to the action's default: this is a long
@@ -370,6 +392,9 @@ jobs:
           # A session that edits the file it was applying breaks the loop guard and the
           # record of what the reader drew, whichever way it ended.
           bash tools/ci/correction.sh untouched "$GITHUB_SHA" $LIST
+          # A session may move a literal under tests/ that its rebuild moved, and nothing
+          # else there: no test taken out, no assertion taken out, no skip put in.
+          bash tools/ci/correction.sh tests
           # The plate supports none of the four causes, which the prompt allows and which is
           # an answer: the run ends here, green, with the reading in the summary. Nothing is
           # pushed and no pull request is opened, because there is nothing to read in a diff.
