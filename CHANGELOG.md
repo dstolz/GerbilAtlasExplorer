@@ -586,6 +586,105 @@ carries a `version` block naming the release its derived fields were built for.
   are what carry the other two and a plain mesh link carries none.
 
 ### Fixed
+- **The mitral layer of plates 2 and 3 takes the outer lamina its line stops in, and the
+  inner plexiform layer the inner one its line runs through to.** Nine corrections sent
+  together -- `20260923T145926Z-p02-E`, `-p02-IPl`, `-p02-Mi`, `-p02-OV`, `-p02-aci`,
+  `-p03-GrA`, `-p03-IPl`, `-p03-Mi` and `-p03-aci` -- the plate-3 five carrying one sentence,
+  "GrA label is clear on the left hemisphere of plate 3 but is unrecognized. Fixes to
+  leaders", and eleven marks between them, every one carrying a `label_index` and so read as
+  the end of a printed leader line. Five confirm the face their name already holds, one is
+  declined, and five move a seed. Nothing is added to `svg/`: the only input this branch
+  changes is `seed_overrides` on plates 2 and 3.
+
+  **The two laminae, four times over.** Between the external plexiform band and the granule
+  core each bulb carries two thin laminae, which the atlas letters `Mi` outside and `IPl`
+  inside, and prints both names above the bulb with a line drawn down into them. The tracing
+  seals the two apart along only part of each arc, so over the rest they are one face -- and
+  that one face is the same connected component as the outer lamina. Walked from its last
+  printed pixel along its own bearing, `Mi`'s line stops at or just inside the outer lamina on
+  all four bulbs, and `IPl`'s runs on to the granule wall, which is the inner one; the recorded
+  tips put both names in the outer face, so `IPl` held the whole band and `Mi` held nothing at
+  all on plate 2 and a watershed share of two neighbours on plate 3. A `seed_overrides` row
+  per box gives each name the lamina its line ends in.
+
+  On **plate 2** the leader pass read no `Mi` line at all, so `Mi`'s boxes seeded the faces the
+  words sit in -- the 25,205 px glomerular layer on the left, the 13,693 px olfactory nerve
+  layer on the right -- and lost both watersheds outright. `Mi`'s box 1 now stands in the 6,014
+  px outer ring on the left and box 0 in the 770 px outer lamina on the right, where the
+  reader's own mark is; `IPl`'s two rows take the pieces of inner lamina the drawing does seal,
+  498 px on the left and 411 px on the right, each about eight plate px along the band from
+  where its line lands. **`Mi` on plate 2 goes from no area to 0.3693 mm²** in three polygons,
+  traced 1.00 apiece, **and `IPl` 0.3752 → 0.0535 mm²** (left 0.3700 → 0.0304, right 0.0052 →
+  0.0231), three polygons to two.
+
+  On **plate 3** the right-hand `Mi` tip had been read 23 plate px short of the bulb, out in the
+  22,540 px glomerular face it then took 1,722 px of; the reader's mark puts it in the 3,660 px
+  outer lamina. On the left both lines already ended in the one 2,860 px outer face and the
+  watershed split it down a ridge the drawing does not draw; the reader's `IPl` mark moves that
+  name into the 946 px inner lamina and leaves the outer whole to `Mi`. `IPl`'s right-hand row
+  follows the same reading into the 1,652 px inner lamina, which `GrO` had absorbed. **`Mi` on
+  plate 3 goes 0.1711 → 0.3645 mm²** (left 0.0745 → 0.1624, right 0.0966 → 0.2021) **and `IPl`
+  0.2979 → 0.1481** (left 0.0950 → 0.0554, right 0.2029 → 0.0927), two polygons each either
+  way and traced 1.00 throughout. `Gl` +0.0964 and `GrO` −0.0960 are the ground the two names
+  give back to the faces they were taking a watershed share of; `EPl` +0.0042 and `aci` −0.0003
+  are the width of a wall. Over the series `Mi` 1.645 mm² on 8 plates → 2.207 on 9, and `IPl`
+  2.675 → 2.204 on the same 9.
+
+  **`GrA` on the right of plate 3 is one chamber up.** Its printed line crosses the 867 px
+  sheath `aci` is printed in and ends in the 208 px chamber inside it; the row
+  `20260917T210847Z-p03-GrA` wrote sat in the 555 px face below, eight plate px off that line
+  and past where `aci`'s own line stops. Moved, the two hemispheres agree -- chamber inside the
+  sheath on each side, the face below it unlettered on each side -- and **`GrA` goes 0.0763 →
+  0.0573 mm²**, all of it on the right (0.0316 → 0.0126); the left is untouched at 0.0447.
+  Over the series 2.176 → 2.157 mm² on the same 7 plates.
+
+  **Six marks are not written.** `E` and `aci` on plate 2 and both `aci` marks on plate 3 land
+  in the face those names already hold, within three plate px of the seed that holds it. `OV`
+  on plate 2 is the other half of the printed `E/OV`, a joined label in `label_blocks`: it
+  seeds under `E`, the app answers for it with `E`'s outline, and its mark is one page px from
+  `E`'s own, so "no area on this plate" is the design and not a fault. `IPl`'s plate-2 mark is
+  the sixth and is **declined**: it is where that line ends, 1.8 plate px from the recorded tip,
+  but at page resolution it falls on traced ink, so `locate` finds no face for it and snaps
+  within `SNAP_PX` = 60 to the largest one around, the 24,826 px external plexiform band.
+  Written, it would take `IPl` off the bulb laminae altogether. The row for that box goes to
+  the inner lamina instead, which is what the mark's own depth -- at the granule wall -- says.
+  The plate-3 sentence about `GrA` on the left is already answered on `main`: the box is in
+  `label_positions` and `20260917T210847Z-p03-GrA`'s row holds the 830 px chamber for it.
+
+  **What else moved.** On plate 2 `GrO` −0.0033, `EPl` +0.0004 and `aci` −0.0001, each a wall's
+  width; nothing on any plate but 2 and 3 moves. Nine meshes move with the interpolation --
+  `Mi` 0.4303 → 0.5193 mm³ on 8 components → 9, `IPl` 0.6115 → 0.5211 on 12 → 16, `Gl` 5.9255 →
+  5.9908, `GrO` 8.6459 → 8.6283, `EPl` 6.9368 → 6.9243, `GrA` 0.7335 → 0.7265, `aci` 0.7255 →
+  0.7216, `E` 0.7609 → 0.7604 and `ON` 3.4128 → 3.4123. Over the atlas,
+  `structure_plate_entries` 3,133 → 3,134, polygons 5,950 → 5,951, points 155,942 → 156,013,
+  `faces_named_by_one_abbreviation` 3,536 → 3,543, `seeds_moved_by_hand` 102 → 109,
+  `section_covered_mean` 0.9726 → 0.9727 and the label volume's `unnamed_fraction` 0.0197 →
+  0.0196; `boundary_edges_shared_exactly` stays 1.0. `label_inside_its_own_region` 0.9785 →
+  0.9774 is the cost of the reading and not a regression: a lamina two plate px wide does not
+  contain the word printed above the bulb, and the five tips the new rows supersede are left
+  visibly sitting where the pass put them. `METHODS.md`'s marked numbers are refreshed with
+  these, `labels_on_a_leader` 207 → 202 and `labels_relocated` 224 → 222 among them.
+
+  **Two test literals move**, both in `tests/python/test_leaders.py`, and both because the tips
+  were fixed: the tips landing in their own region 195 → 190 and in a neighbour 35 → 40, and the
+  `--odd` filter's count 45 → 50. The superseded list gains `(2, 'IPl')` twice, `(3, 'IPl')`
+  twice and `(3, 'Mi')`; no tip lands in a neighbour unexplained.
+
+  **One reading not taken.** The alternative is that the run of tracing dividing the two
+  laminae is missing rather than the seeds being in the wrong face. The drawing supports it:
+  across the stretch the tracing leaves as one face, the plate image still has a third dark
+  line down the middle of it -- on the left of plate 2 the cut at page y = 1190 is darkest at
+  x = 1550, inside the face, and the same interior minimum sits between 0.62 and 0.77 of the
+  band's width on every row from y = 1188 to 1216 and from 1300 to 1320, while the traced
+  divider (`svg/GerbilAtlas_Plate_02.svg`, the two open paths from page (1507, 1218) to (1476,
+  1297)) covers 79 px of an arc some 600 px long. Inked all the way round, each lamina would be
+  a ring of its own and every tip would land in its own without a row. It is not inked here
+  because splitting a ring takes a closed loop traced round each of four bulbs, and the only
+  source in this repository is `data/plates/drawing/NN.jpg` at 1100 × 703, where the whole band
+  is six plate px wide and its two halves three apiece. What would settle it is either arc
+  re-traced against the source the `svg/` tracing came from, or a reader drawing the divider in
+  the fixer as a boundary, which is the mark `corrections.py apply` inks.
+
 - **The inner plexiform layer of plate 1 takes the lamina its own line ends in, and the
   olfactory ventricle the chamber above the one it held.** Three corrections sent together --
   `20260923T145740Z-p01-IPl`, `-p01-E` and `-p01-aci` -- carrying one sentence between them,
