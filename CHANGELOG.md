@@ -229,6 +229,18 @@ carries a `version` block naming the release its derived fields were built for.
   that has never been here sees.
 
 ### Changed
+- **A correction run is done on Fable 5.1 at medium effort.** `apply-correction.yml` named
+  `claude-opus-5` at the default effort. Correction `20260924T134430Z` (GrO and aci on plate
+  4, #167) was run again from the state its session started from, once on
+  `claude-fable-5-1` at medium effort and once on `claude-opus-5-5` at xhigh. Both reached
+  the diagnosis #167 did and passed every check. Opus 5.5's cut matched #167's to 4 plate
+  px; Fable's differs from it by 362 px, nearly all of it the strip down the lateral side
+  of the right-hand granule layer, which it seeds as `IPl` where #167 left it to `GrO`
+  (`GrO` 2.8081 mm², `IPl` 0.2790, against 2.9058 and 0.1828). That boundary is the one
+  judged better, and the session now runs `--model claude-fable-5-1 --effort medium`; the
+  credential check asks the same model. The CLI stays at 2.1.263, on which Fable answers
+  the credential check.
+
 - **The floor under a face comes down from 400 page px to 100, and the atlas is not re-cut
   with it.** `MIN_FACE_PX` is what `locate()` will seed: a label landing in a smaller face
   is treated as landing nowhere, snapped to the largest face within `SNAP_PX` or dropped.
