@@ -1,0 +1,41 @@
+{
+ "schema": "gerbil-atlas-correction/1",
+ "id": "20261016T135927Z-p16-VO",
+ "created": "2026-10-16T13:59:27Z",
+ "author": "",
+ "plate": 16,
+ "ap_bregma_mm": 2.55,
+ "abbr": "VO",
+ "hemisphere": "both",
+ "problem": "created missing boundary between \"VO\" and \"1\"",
+ "seeds": [],
+ "boundaries": [
+  {
+   "style": "solid",
+   "closed": false,
+   "page_px": [[1338.09,1414.04],[1355.09,1434.58]],
+   "mm": [[-2.315,-6.105],[-2.195,-6.25]],
+   "note": ""
+  },
+  {
+   "style": "solid",
+   "closed": false,
+   "page_px": [[1965.73,1403.34],[1940.2,1423.2]],
+   "mm": [[2.086,-6.03],[1.907,-6.17]],
+   "note": ""
+  }
+ ],
+ "extents": [],
+ "notes": [
+  "Created boundary between \"VO\" and \"1\" in both hemisphers"
+ ],
+ "preview": null,
+ "snapshot": "corrections/20261016T135927Z-p16-VO.png",
+ "source": {
+  "commit": "",
+  "site": "https://dstolz.github.io/GerbilAtlasExplorer/",
+  "repo": "dstolz/GerbilAtlasExplorer",
+  "tool": "atlasfix (the published page) 1.0",
+  "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36"
+ }
+}
